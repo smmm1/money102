@@ -13,7 +13,7 @@ function MoneyIcon({
   name,
   className = "h-5 w-5",
 }: {
-  name: "arrow" | "plus" | "wallet" | "target" | "calendar" | "close"
+  name: "arrow" | "plus" | "wallet" | "target" | "calendar" | "close" | "reset"
   className?: string
 }) {
   const paths: Record<typeof name, ReactNode> = {
@@ -44,6 +44,13 @@ function MoneyIcon({
       </>
     ),
     close: <path d="m6 6 12 12M18 6 6 18" />,
+    reset: (
+      <>
+        <path d="M20 7v5h-5" />
+        <path d="M4.9 9a7.5 7.5 0 0 1 12.4-2L20 12M4 17v-5h5" />
+        <path d="M19.1 15a7.5 7.5 0 0 1-12.4 2L4 12" />
+      </>
+    ),
   }
 
   return (
@@ -253,6 +260,9 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
   const [goal, setGoal] = useState(
     () => Number(localStorage.getItem("lamoon-saving-goal")) || 20000,
   )
+  const [goalStartBalance, setGoalStartBalance] = useState(
+    () => Number(localStorage.getItem("lamoon-saving-goal-start-balance")) || 0,
+  )
   const [goalDraft, setGoalDraft] = useState(String(goal))
   const [goalTitle, setGoalTitle] = useState(() => localStorage.getItem("lamoon-saving-goal-title") || "เป้าหมายการออม")
   const [goalTitleDraft, setGoalTitleDraft] = useState(goalTitle)
@@ -274,7 +284,8 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
     .filter((transaction) => transaction.type === "expense")
     .reduce((sum, transaction) => sum + transaction.amount, 0)
   const balance = income - expense
-  const goalProgress = Math.max(0, Math.min((balance / goal) * 100, 100))
+  const goalSavings = Math.max(0, balance - goalStartBalance)
+  const goalProgress = Math.max(0, Math.min((goalSavings / goal) * 100, 100))
 
   const saveTransaction = (
     transaction: Omit<Transaction, "id" | "createdAt">,
@@ -362,7 +373,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/55">
               ยอดคงเหลือ
             </p>
-            <h1 className="inline-block min-w-[260px] rounded-[18px] border border-white/45 bg-black/[0.06] px-4 py-2 text-4xl font-extrabold tracking-[-0.055em] text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)] md:min-w-[360px] md:px-5 md:py-2.5 md:text-6xl">
+            <h1 className="inline-block min-w-[260px] rounded-[18px] border border-white/45 bg-white/65 px-4 py-2 text-4xl font-extrabold tracking-[-0.055em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] md:min-w-[360px] md:px-5 md:py-2.5 md:text-6xl" style={{ WebkitTextStroke: "0.35px rgba(0,0,0,0.45)" }}>
               {formatMoney.format(balance)}
             </h1>
           </div>
@@ -400,7 +411,21 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
               </p>
             </div>
           </div>
-          <button onClick={() => { setGoalTitleDraft(goalTitle); setGoalDraft(String(goal)); setEditingGoal(true) }} className="rounded-full border border-[#DCD7CA] bg-white/70 px-4 py-2 text-xs font-medium text-[#626760] transition hover:bg-[#F7F0D9]">แก้ไขเป้าหมาย</button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setGoalStartBalance(balance)
+                localStorage.setItem("lamoon-saving-goal-start-balance", String(balance))
+              }}
+              aria-label="รีเซ็ตความคืบหน้าเป้าหมาย"
+              title="รีเซ็ตความคืบหน้าเป้าหมาย"
+              className="grid h-9 w-9 place-items-center rounded-full border border-[#DCD7CA] bg-white/70 text-[#626760] transition hover:bg-[#F7F0D9]"
+            >
+              <MoneyIcon name="reset" className="h-4 w-4" />
+            </button>
+            <button onClick={() => { setGoalTitleDraft(goalTitle); setGoalDraft(String(goal)); setEditingGoal(true) }} className="rounded-full border border-[#DCD7CA] bg-white/70 px-4 py-2 text-xs font-medium text-[#626760] transition hover:bg-[#F7F0D9]">แก้ไขเป้าหมาย</button>
+          </div>
         </div>
         <div className="relative h-4 overflow-hidden rounded-full bg-[#EAE6DB]">
           <div
@@ -409,7 +434,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
           />
         </div>
         <div className="mt-3 flex justify-between text-xs text-[#858880]">
-          <span>ออมแล้ว {formatMoney.format(Math.max(balance, 0))}</span>
+          <span>ออมแล้ว {formatMoney.format(goalSavings)}</span>
           <span>{Math.round(goalProgress)}% ของเป้าหมาย</span>
         </div>
       </section>
