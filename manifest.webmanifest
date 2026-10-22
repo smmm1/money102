@@ -1,17 +1,1 @@
-{
-  "name": "บันทึกออมเงิน",
-  "short_name": "ออมเงิน",
-  "description": "เว็บบันทึกรายรับ รายจ่าย และเป้าหมายการออม",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ecfdf5",
-  "theme_color": "#059669",
-  "icons": [
-    {
-      "src": "/piggy-bank.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
-  ]
-}
+
