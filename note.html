@@ -151,9 +151,6 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
-  const board = document.getElementById("board");
-  const input = document.getElementById("noteInput");
-  const saveBtn = document.getElementById("saveBtn");
   const NOTES_KEY = "moneyeep-public-notes-v1";
   let notes = [], selectedId = null, highestZ = 10, toastTimer = null;
   const persistNotes = () => { try { localStorage.setItem(NOTES_KEY,JSON.stringify(notes)); } catch (_) { showToast("พื้นที่จัดเก็บในเบราว์เซอร์เต็ม"); } };
