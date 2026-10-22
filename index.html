@@ -33,37 +33,12 @@
 
 <link rel="stylesheet" href="/ui-system.css">
 <script src="/ui-system.js" defer></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 </head>
 <body class="ui-page-landing">
-<main class="shell">
-<header class="top">
-  <div class="brand"><span class="brandmark"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><span>พื้นที่ของฉัน</span></div>
-  <button class="login-trigger" id="openLogin" type="button"><i class="fa-regular fa-user" aria-hidden="true"></i><span id="loginButtonText">เข้าสู่ระบบ</span></button>
-</header>
-<section class="intro" aria-labelledby="page-title">
-  <p class="eyebrow">PERSONAL SPACE</p>
-  <h1 id="page-title">จัดการทุกเรื่อง<br>ในพื้นที่ของคุณ</h1>
-  <p>เลือกพื้นที่ที่ต้องการใช้งาน ทุกอย่างแยกเป็นสัดส่วนและเป็นระเบียบ</p>
-</section>
-<section class="section" aria-labelledby="apps-title">
-  <div class="section-title"><h2 id="apps-title">พื้นที่ทำงานของฉัน</h2><span>YOUR WORKSPACE</span></div>
-  <div class="grid">
-    <a class="app-card finance" href="./moneyyeep.html">
-      <div class="card-head"><span class="label">การเงิน</span><i class="fa-solid fa-wallet symbol" aria-hidden="true"></i></div>
-      <div class="card-body"><h3>ออมเงิน</h3><p>จัดการเงินออม เป้าหมาย กระปุก และติดตามรายรับรายจ่าย</p><div class="card-foot"><span>เข้าสู่ระบบการเงิน</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div></div>
-    </a>
-    <a class="app-card notes" href="./note.html">
-      <div class="card-head"><span class="label">บันทึก</span><i class="fa-solid fa-book-open symbol" aria-hidden="true"></i></div>
-      <div class="card-body"><h3>โน้ต</h3><p>รวบรวมความคิด สิ่งที่ต้องจำ และบันทึกส่วนตัวไว้ในที่เดียว</p><div class="card-foot"><span>เปิดสมุดบันทึก</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div></div>
-    </a>
-    <a class="app-card health" href="./excie.html">
-      <div class="card-head"><span class="label">สุขภาพ</span><i class="fa-solid fa-heart-pulse symbol" aria-hidden="true"></i></div>
-      <div class="card-body"><h3>สุขภาพและออกกำลังกาย</h3><p>ติดตามการออกกำลังกาย โปรไฟล์ และบันทึกสุขภาพของคุณ</p><div class="card-foot"><span>เข้าสู่พื้นที่สุขภาพ</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div></div>
-    </a> 
-  </div>
-</section>
-<footer class="footer"><span>พื้นที่ส่วนตัวของคุณ · เรียบง่าย เป็นระบบ</span><span>PERSONAL WORKSPACE</span></footer>
-</main>
+<main id="moneyeep-root" class="min-h-screen"></main>
 <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
   <section class="auth-modal">
     <button class="auth-close" id="closeLogin" type="button" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
@@ -84,6 +59,72 @@
     <p class="auth-legal">ข้อมูลบัญชีได้รับการจัดการผ่านระบบ Supabase เดิม</p>
   </section>
 </div>
+
+<script>
+(function(){
+  const h = React.createElement;
+  const pages = [
+    {href:'./moneyyeep.html', key:'finance', label:'การเงิน', title:'ออมเงิน', description:'ดูแลเงินออม รายรับรายจ่าย และเป้าหมายทางการเงิน', icon:'fa-wallet', action:'เปิดพื้นที่การเงิน'},
+    {href:'./note.html', key:'notes', label:'บันทึก', title:'โน้ตของฉัน', description:'รวบรวมความคิด รายการที่ต้องจำ และบันทึกส่วนตัว', icon:'fa-note-sticky', action:'เปิดสมุดบันทึก'},
+    {href:'./excie.html', key:'health', label:'สุขภาพ', title:'สุขภาพและออกกำลังกาย', description:'จัดการโปรไฟล์สุขภาพและบันทึกกิจกรรมของคุณ', icon:'fa-heart-pulse', action:'เปิดพื้นที่สุขภาพ'}
+  ];
+  function App(){
+    const [query,setQuery]=React.useState('');
+    const [settingsOpen,setSettingsOpen]=React.useState(false);
+    const shown=pages.filter(p=>(p.title+' '+p.label+' '+p.description).toLowerCase().includes(query.toLowerCase()));
+    return h('div',{className:'mx-auto w-full max-w-[1240px] px-5 pb-12 pt-6 sm:px-8'},
+      h('header',{className:'mb-12 flex flex-wrap items-center justify-between gap-4'},
+        h('a',{href:'./index.html',className:'flex items-center gap-3 text-inherit no-underline'},
+          h('span',{className:'grid h-11 w-11 place-items-center rounded-2xl bg-[#eef1ff] text-[#526ce5]'},h('i',{className:'fa-solid fa-piggy-bank text-lg'})),
+          h('span',null,h('strong',{className:'block text-[17px] font-extrabold tracking-tight text-[#181d2a]'},'Moneyeep'),h('small',{className:'block text-[10px] font-semibold tracking-[.16em] text-[#8992a1]'},'PERSONAL DASHBOARD'))
+        ),
+        h('div',{className:'order-3 flex w-full items-center gap-3 rounded-2xl border border-[#e8ebed] bg-white px-4 py-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)] md:order-none md:mx-auto md:max-w-[420px] md:flex-1'},
+          h('i',{className:'fa-solid fa-magnifying-glass text-sm text-[#8992a1]'}),
+          h('input',{value:query,onChange:e=>setQuery(e.target.value),placeholder:'ค้นหาพื้นที่ของคุณ...',className:'w-full border-0 bg-transparent text-sm text-[#181d2a] outline-none placeholder:text-[#9aa2af]', 'aria-label':'ค้นหาพื้นที่'})
+        ),
+        h('div',{className:'ml-auto flex items-center gap-2'},
+          h('div',{className:'relative'},
+            h('button',{type:'button',onClick:()=>setSettingsOpen(v=>!v),className:'grid h-11 w-11 place-items-center rounded-2xl border border-[#e8ebed] bg-white text-[#596273] shadow-[0_2px_12px_rgba(0,0,0,0.04)]','aria-label':'ตั้งค่า'},h('i',{className:'fa-solid fa-sliders'})),
+            settingsOpen?h('div',{className:'absolute right-0 top-14 z-20 w-52 rounded-2xl border border-[#e8ebed] bg-white p-4 text-sm shadow-xl'},h('p',{className:'mb-1 font-bold text-[#181d2a]'},'การตั้งค่า'),h('p',{className:'text-xs leading-5 text-[#7b8494]'},'การตั้งค่าบัญชีและข้อมูลจะใช้ระบบเดิมของ Moneyeep')):null
+          ),
+          h('button',{id:'openLogin',type:'button',className:'login-trigger flex items-center gap-2 rounded-2xl border border-[#e8ebed] bg-white px-4 py-3 text-sm font-semibold text-[#181d2a] shadow-[0_2px_12px_rgba(0,0,0,0.04)]'},
+            h('span',{className:'grid h-7 w-7 place-items-center rounded-full bg-[#eef1ff] text-[#526ce5]'},h('i',{className:'fa-regular fa-user text-xs'})),
+            h('span',{id:'loginButtonText'},'เข้าสู่ระบบ')
+          )
+        )
+      ),
+      h('section',{className:'mb-10'},
+        h('p',{className:'mb-3 text-[11px] font-extrabold tracking-[.2em] text-[#526ce5]'},'YOUR PERSONAL SPACE'),
+        h('h1',{className:'mb-4 max-w-3xl text-4xl font-extrabold leading-tight tracking-[-.045em] text-[#181d2a] sm:text-5xl'},'จัดการทุกเรื่องสำคัญ\nในพื้นที่เดียว',),
+        h('p',{className:'max-w-2xl text-sm leading-7 text-[#7b8494] sm:text-base'},'พื้นที่ส่วนตัวที่ออกแบบให้การเงิน บันทึก และสุขภาพของคุณเป็นระเบียบ ใช้งานง่าย และเข้าถึงได้ทันที')
+      ),
+      h('section',null,
+        h('div',{className:'mb-5 flex flex-wrap items-end justify-between gap-3'},
+          h('div',null,h('h2',{className:'text-xl font-extrabold tracking-tight text-[#181d2a]'},'พื้นที่ทำงานของฉัน'),h('p',{className:'mt-1 text-sm text-[#8992a1]'},'เลือกหน้าที่ต้องการใช้งาน')),
+          h('span',{className:'rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#7b8494] shadow-[0_2px_12px_rgba(0,0,0,0.04)]'},shown.length+' พื้นที่')
+        ),
+        h('div',{className:'grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3'},
+          shown.map(p=>h('a',{key:p.key,href:p.href,className:'app-card '+p.key+' group overflow-hidden rounded-3xl border border-[#edf0f3] bg-white text-inherit no-underline shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(24,29,42,0.08)]'},
+            h('div',{className:'card-head flex min-h-[104px] items-center justify-between px-6 py-5'},
+              h('span',{className:'rounded-full bg-white/75 px-3 py-1.5 text-xs font-bold'},p.label),
+              h('span',{className:'symbol grid h-12 w-12 place-items-center rounded-2xl bg-white/80 text-xl'},h('i',{className:'fa-solid '+p.icon}))
+            ),
+            h('div',{className:'card-body p-6'},
+              h('h3',{className:'mb-2 text-xl font-extrabold tracking-tight text-[#181d2a]'},p.title),
+              h('p',{className:'min-h-[52px] text-sm leading-6 text-[#7b8494]'},p.description),
+              h('div',{className:'card-foot mt-5 flex items-center justify-between border-t border-[#f0f2f5] pt-4 text-sm font-bold text-[#526ce5]'},h('span',null,p.action),h('i',{className:'fa-solid fa-arrow-right transition-transform group-hover:translate-x-1'}))
+            )
+          ))
+        ),
+        shown.length===0?h('div',{className:'rounded-3xl border border-dashed border-[#dce2ff] bg-white p-10 text-center text-sm text-[#7b8494]'},'ไม่พบพื้นที่ที่ตรงกับคำค้นหา'):null
+      ),
+      h('footer',{className:'mt-12 flex flex-wrap justify-between gap-3 border-t border-[#e8ebed] pt-5 text-xs text-[#8992a1]'},h('span',null,'Moneyeep · พื้นที่ส่วนตัวของคุณ'),h('span',null,'CLEAN · CALM · CONNECTED'))
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('moneyeep-root')).render(h(App));
+})();
+</script>
+
 <script>
 (() => {
   const SUPABASE_URL = window.MONEyeepSupabaseConfig?.url || 'https://xuxbvoflbrpypjtredrz.supabase.co';
@@ -130,15 +171,15 @@
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal();});
   toggleSignup.addEventListener('click',()=>setMode(mode==='signup'?'signin':'signup'));
   resetPassword.addEventListener('click',()=>setMode('reset'));
-  document.querySelectorAll('a.app-card[href]').forEach(card=>{
-    card.addEventListener('click',async e=>{
-      const path=card.getAttribute('href');
-      if(!allowedPaths.has(path)) return;
-      e.preventDefault();
-      const {data,error}=await db.auth.getSession();
-      if(error||!data.session){openModal(path);return;}
-      location.href=path;
-    });
+  document.addEventListener('click',async e=>{
+    const card=e.target.closest('a.app-card[href]');
+    if(!card) return;
+    const path=card.getAttribute('href');
+    if(!allowedPaths.has(path)) return;
+    e.preventDefault();
+    const {data,error}=await db.auth.getSession();
+    if(error||!data.session){openModal(path);return;}
+    location.href=path;
   });
   form.addEventListener('submit',async e=>{
     e.preventDefault(); clearMessage(); submit.disabled=true;
