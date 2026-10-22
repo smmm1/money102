@@ -363,26 +363,32 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
 
       <section className="relative overflow-hidden rounded-[36px] bg-[#F4C96B] p-7 md:p-10">
         <span className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-black/10" />
-        <div className="relative mb-8 flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/45">
+        <div className="relative mb-8 flex items-start justify-between gap-5">
+          <div className="min-w-0 flex-1">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/55">
               ยอดคงเหลือ
             </p>
-            <h1 className="text-4xl font-semibold tracking-[-0.055em] text-[#263329] md:text-6xl">
+            <h1 className="text-4xl font-extrabold tracking-[-0.055em] text-white drop-shadow-sm md:text-6xl">
               {formatMoney.format(balance)}
             </h1>
-            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              <span className="text-[#487453]">รายรับทั้งหมด <strong>{formatMoney.format(income)}</strong></span>
-              <span className="text-[#B4533B]">รายจ่ายทั้งหมด <strong>{formatMoney.format(expense)}</strong></span>
-            </div>
           </div>
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex shrink-0 flex-col items-end gap-3">
             <span className="grid h-14 w-14 place-items-center rounded-[20px] bg-[#FFE6A9]">
               <MoneyIcon name="wallet" className="h-6 w-6" />
             </span>
-            <button onClick={() => setHistoryOpen(true)} className="rounded-full border border-[#263329]/20 bg-white/55 px-4 py-2 text-sm font-medium text-[#263329] transition hover:bg-white">
+            <button onClick={() => setHistoryOpen(true)} className="rounded-full border border-[#263329]/20 bg-white/70 px-4 py-2 text-sm font-medium text-[#263329] transition hover:bg-white">
               ดูประวัติทั้งหมด
             </button>
+          </div>
+        </div>
+        <div className="relative grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[20px] border border-white/50 bg-white/65 p-4 md:p-5">
+            <p className="text-sm font-semibold text-[#487453] md:text-base">รายรับทั้งหมด</p>
+            <p className="mt-1 text-xl font-bold tracking-[-0.035em] text-[#263329] md:text-2xl">{formatMoney.format(income)}</p>
+          </div>
+          <div className="rounded-[20px] border border-white/50 bg-white/65 p-4 md:p-5">
+            <p className="text-sm font-semibold text-[#B4533B] md:text-base">รายจ่ายทั้งหมด</p>
+            <p className="mt-1 text-xl font-bold tracking-[-0.035em] text-[#263329] md:text-2xl">{formatMoney.format(expense)}</p>
           </div>
         </div>
       </section>
