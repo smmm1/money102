@@ -39,26 +39,7 @@
 </head>
 <body class="ui-page-landing">
 <main id="moneyeep-root" class="min-h-screen"></main>
-<div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-  <section class="auth-modal">
-    <button class="auth-close" id="closeLogin" type="button" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
-    <div class="auth-mark"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
-    <p class="auth-kicker">YOUR PERSONAL SPACE</p>
-    <h2 id="authTitle">ยินดีต้อนรับกลับ</h2>
-    <p class="auth-subtitle" id="authSubtitle">เข้าสู่ระบบเพื่อไปยังพื้นที่ส่วนตัวของคุณ</p>
-    <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
-    <form id="authForm">
-      <label class="auth-field">อีเมล<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required></label>
-      <label class="auth-field" id="passwordField">รหัสผ่าน<input id="authPassword" type="password" autocomplete="current-password" placeholder="กรอกรหัสผ่าน" required minlength="6"></label>
-      <button class="auth-submit" id="authSubmit" type="submit">เข้าสู่ระบบ</button>
-    </form>
-    <div class="auth-switches">
-      <button id="toggleSignup" type="button">สร้างบัญชีใหม่</button>
-      <button id="resetPassword" type="button">ลืมรหัสผ่าน?</button>
-    </div>
-    <p class="auth-legal">ข้อมูลบัญชีได้รับการจัดการผ่านระบบ Supabase เดิม</p>
-  </section>
-</div>
+<!-- Login removed: pages are directly accessible. Supabase data access still follows the existing RLS policies. -->
 
 <script>
 (function(){
@@ -87,9 +68,9 @@
             h('button',{type:'button',onClick:()=>setSettingsOpen(v=>!v),className:'grid h-11 w-11 place-items-center rounded-2xl border border-[#e8ebed] bg-white text-[#596273] shadow-[0_2px_12px_rgba(0,0,0,0.04)]','aria-label':'ตั้งค่า'},h('i',{className:'fa-solid fa-sliders'})),
             settingsOpen?h('div',{className:'absolute right-0 top-14 z-20 w-52 rounded-2xl border border-[#e8ebed] bg-white p-4 text-sm shadow-xl'},h('p',{className:'mb-1 font-bold text-[#181d2a]'},'การตั้งค่า'),h('p',{className:'text-xs leading-5 text-[#7b8494]'},'การตั้งค่าบัญชีและข้อมูลจะใช้ระบบเดิมของ Moneyeep')):null
           ),
-          h('button',{id:'openLogin',type:'button',className:'login-trigger flex items-center gap-2 rounded-2xl border border-[#e8ebed] bg-white px-4 py-3 text-sm font-semibold text-[#181d2a] shadow-[0_2px_12px_rgba(0,0,0,0.04)]'},
+          h('div',{className:'login-trigger flex items-center gap-2 rounded-2xl border border-[#e8ebed] bg-white px-4 py-3 text-sm font-semibold text-[#181d2a]'},
             h('span',{className:'grid h-7 w-7 place-items-center rounded-full bg-[#eef1ff] text-[#526ce5]'},h('i',{className:'fa-regular fa-user text-xs'})),
-            h('span',{id:'loginButtonText'},'เข้าสู่ระบบ')
+            h('span',{id:'loginButtonText'},'เข้าใช้งานได้เลย')
           )
         )
       ),
@@ -127,102 +108,7 @@
 </script>
 
 <script>
-(() => {
-  const SUPABASE_URL = window.MONEyeepSupabaseConfig?.url || 'https://xuxbvoflbrpypjtredrz.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = window.MONEyeepSupabaseConfig?.publishableKey || 'PASTE_XUXBVOFLBRPYPJTREDRZ_PUBLISHABLE_KEY_HERE';
-  const SUPABASE_CONFIGURED = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && !SUPABASE_PUBLISHABLE_KEY.includes('PASTE_'));
-  if (!window.supabase?.createClient) return;
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  const modal = document.getElementById('authBackdrop');
-  const form = document.getElementById('authForm');
-  const email = document.getElementById('authEmail');
-  const password = document.getElementById('authPassword');
-  const message = document.getElementById('authMessage');
-  const submit = document.getElementById('authSubmit');
-  const title = document.getElementById('authTitle');
-  const subtitle = document.getElementById('authSubtitle');
-  const passwordField = document.getElementById('passwordField');
-  const toggleSignup = document.getElementById('toggleSignup');
-  const resetPassword = document.getElementById('resetPassword');
-  let mode = 'signin';
-  let intendedPath = '';
-  const allowedPaths = new Set(['./moneyyeep.html','./note.html','./excie.html']);
-  function showMessage(text, error=false) { message.textContent=text; message.classList.add('show'); message.classList.toggle('error',error); }
-  function clearMessage() { message.textContent=''; message.classList.remove('show','error'); }
-  function setMode(next) {
-    mode=next; clearMessage();
-    const reset=mode==='reset';
-    title.textContent=reset?'ตั้งรหัสผ่านใหม่':mode==='signup'?'สร้างบัญชีใหม่':'ยินดีต้อนรับกลับ';
-    subtitle.textContent=reset?'เราจะส่งลิงก์สำหรับตั้งรหัสผ่านไปยังอีเมลของคุณ':mode==='signup'?'เริ่มต้นใช้งานพื้นที่ส่วนตัวของคุณ':'เข้าสู่ระบบเพื่อไปยังพื้นที่ส่วนตัวของคุณ';
-    passwordField.style.display=reset?'none':'block';
-    password.required=!reset;
-    password.autocomplete=mode==='signup'?'new-password':'current-password';
-    submit.textContent=reset?'ส่งลิงก์รีเซ็ต':mode==='signup'?'สร้างบัญชี':'เข้าสู่ระบบ';
-    toggleSignup.textContent=mode==='signup'?'กลับไปเข้าสู่ระบบ':'สร้างบัญชีใหม่';
-    resetPassword.style.display=reset?'none':'inline';
-  }
-  function openModal(path='') {
-    intendedPath=allowedPaths.has(path)?path:'';
-    setMode('signin'); modal.classList.add('open'); document.body.style.overflow='hidden';
-    if (!SUPABASE_CONFIGURED) showMessage('ระบบเข้าสู่ระบบยังตั้งค่า Supabase Publishable Key ไม่ครบ จึงยังล็อกอินไม่ได้ กรุณาเพิ่มคีย์สาธารณะของโปรเจกต์เดิมใน supabase-config.js ก่อน โดยห้ามใช้ service_role key', true);
-    setTimeout(()=>email.focus(),30);
-  }
-  function closeModal() { modal.classList.remove('open'); document.body.style.overflow=''; }
-  document.getElementById('openLogin').addEventListener('click',()=>openModal());
-  document.getElementById('closeLogin').addEventListener('click',closeModal);
-  modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal();});
-  toggleSignup.addEventListener('click',()=>setMode(mode==='signup'?'signin':'signup'));
-  resetPassword.addEventListener('click',()=>setMode('reset'));
-  document.addEventListener('click',async e=>{
-    const card=e.target.closest('a.app-card[href]');
-    if(!card) return;
-    const path=card.getAttribute('href');
-    if(!allowedPaths.has(path)) return;
-    e.preventDefault();
-    const {data,error}=await db.auth.getSession();
-    if(error||!data.session){openModal(path);return;}
-    location.href=path;
-  });
-  form.addEventListener('submit',async e=>{
-    e.preventDefault(); clearMessage();
-    if (!SUPABASE_CONFIGURED) { showMessage('ยังเข้าสู่ระบบไม่ได้: supabase-config.js ยังใช้คีย์ตัวอย่างอยู่ ให้ใส่ Supabase Publishable Key (หรือ anon public key แบบเดิม) จากโปรเจกต์ xuxbvoflbrpypjtredrz แล้ว Deploy ใหม่', true); return; }
-    submit.disabled=true;
-    try {
-      const mail=email.value.trim();
-      if(mode==='reset') {
-        const {error}=await db.auth.resetPasswordForEmail(mail,{redirectTo:location.origin});
-        if(error) throw error;
-        showMessage('ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว โปรดตรวจอีเมลของคุณ');
-      } else if(mode==='signup') {
-        const {data,error}=await db.auth.signUp({email:mail,password:password.value});
-        if(error) throw error;
-        if(data.session) {
-          showMessage('สร้างบัญชีสำเร็จ กำลังเปิดพื้นที่ของคุณ');
-          setTimeout(()=>intendedPath?location.assign(intendedPath):closeModal(),350);
-        } else showMessage('ส่งอีเมลยืนยันบัญชีแล้ว โปรดตรวจกล่องจดหมายก่อนเข้าสู่ระบบ');
-      } else {
-        const {data,error}=await db.auth.signInWithPassword({email:mail,password:password.value});
-        if(error) throw error;
-        if(data.session) {
-          document.getElementById('loginButtonText').textContent='เข้าสู่ระบบแล้ว';
-          closeModal();
-          if(intendedPath) location.assign(intendedPath);
-        }
-      }
-    } catch(err) { showMessage(err?.message||'ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง',true); }
-    finally { submit.disabled=false; }
-  });
-  db.auth.getSession().then(({data})=>{
-    if(data?.session) document.getElementById('loginButtonText').textContent='เข้าสู่ระบบแล้ว';
-    const params=new URLSearchParams(location.search);
-    if(params.get('login')==='1'){
-      const next=params.get('next')||'';
-      openModal(allowedPaths.has(next)?next:'');
-      history.replaceState({},'',location.pathname);
-    }
-  });
-})();
+// Login and signup are intentionally disabled. App cards open directly.
 </script>
 </body>
 </html>
