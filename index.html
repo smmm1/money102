@@ -121,7 +121,8 @@
       h('footer',{className:'mt-12 flex flex-wrap justify-between gap-3 border-t border-[#e8ebed] pt-5 text-xs text-[#8992a1]'},h('span',null,'Moneyeep · พื้นที่ส่วนตัวของคุณ'),h('span',null,'CLEAN · CALM · CONNECTED'))
     );
   }
-  ReactDOM.createRoot(document.getElementById('moneyeep-root')).render(h(App));
+  const root = ReactDOM.createRoot(document.getElementById('moneyeep-root'));
+  ReactDOM.flushSync(() => root.render(h(App)));
 })();
 </script>
 
