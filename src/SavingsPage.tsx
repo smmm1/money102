@@ -387,9 +387,9 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
             <p className="text-sm font-semibold text-[#487453] md:text-base">รายรับทั้งหมด</p>
             <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#263329] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(income)}</p>
           </div>
-          <div className="flex min-h-[132px] flex-col justify-center rounded-[24px] border border-white/60 bg-white/75 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.10)] sm:p-6 md:min-h-[150px]">
+          <div className="flex min-h-[112px] min-w-0 flex-col justify-center rounded-[22px] border border-[#E1DDCF] bg-white p-3 shadow-[0_3px_10px_rgba(0,0,0,0.04)] sm:min-h-[132px] sm:p-5 md:min-h-[145px] md:p-6">
             <p className="text-sm font-semibold text-[#B4533B] md:text-base">รายจ่ายทั้งหมด</p>
-            <p className="mt-2 text-2xl font-bold tracking-[-0.04em] text-[#263329] sm:text-3xl">{formatMoney.format(expense)}</p>
+            <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#263329] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(expense)}</p>
           </div>
         </div>
       </section>
