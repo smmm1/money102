@@ -1541,3 +1541,22 @@ body.ui-page-savings .ui-topbar-brand,body.ui-page-health .ui-topbar-brand,body.
  .moneyeep-profile-btn{padding:0 9px!important}
  .moneyeep-profile-btn>span:not(.moneyeep-avatar){display:none}
 }
+
+
+/* Normalize legacy page components to the new card and header language */
+body.ui-page-savings .ui-topbar,body.ui-page-health .ui-health-header,body.ui-page-notes .ui-topbar{
+ background:rgba(248,250,252,.94)!important;border-bottom:1px solid #e8ebed!important;
+ box-shadow:none!important;backdrop-filter:blur(16px)!important;
+}
+body.ui-page-savings .bg-white.rounded-2xl,body.ui-page-savings .bg-white.rounded-3xl,
+body.ui-page-health .bg-white.rounded-2xl,body.ui-page-health .bg-white.rounded-3xl,
+body.ui-page-notes .bg-white.rounded-2xl,body.ui-page-notes .bg-white.rounded-3xl{
+ background:#fff!important;border:1px solid #edf0f3!important;border-radius:22px!important;
+ box-shadow:0 2px 12px rgba(0,0,0,.04)!important;
+}
+body.ui-page-savings .text-gray-800,body.ui-page-health .text-gray-800,body.ui-page-notes .text-gray-800{color:#181d2a!important}
+body.ui-page-savings .text-gray-500,body.ui-page-health .text-gray-500,body.ui-page-notes .text-gray-500{color:#7b8494!important}
+body.ui-page-savings .bg-emerald-600{background:#168451!important}
+body.ui-page-savings .text-emerald-700{color:#168451!important}
+body.ui-page-health .bg-rose-600,body.ui-page-health .bg-rose-700{background:#748efe!important}
+body.ui-page-health .text-rose-700{color:#526ce5!important}
