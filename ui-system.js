@@ -1,5 +1,5 @@
 /* Moneyeep shared modern dashboard shell.
-   Page-specific data and Supabase logic remain owned by the original page scripts. */
+   Shared navigation, search, and display settings only. */
 (function () {
   'use strict';
   document.documentElement.classList.add('moneyeep-ui-ready');
@@ -21,13 +21,8 @@
         <div class="moneyeep-popover" data-popover="settings" hidden>
           <strong>การตั้งค่า</strong><span>รูปแบบหน้าจอ Moneyeep</span><a href="./index.html">กลับหน้าหลัก</a>
         </div>
-      </div>
-      <div class="moneyeep-tool-wrap">
-        <button class="moneyeep-profile-btn" type="button" aria-label="บัญชีผู้ใช้" aria-expanded="false" data-menu="profile"><span class="moneyeep-avatar"><i class="fa-regular fa-user"></i></span><span>บัญชี</span><i class="fa-solid fa-chevron-down text-[10px]"></i></button>
-        <div class="moneyeep-popover" data-popover="profile" hidden>
-          <strong>บัญชี Moneyeep</strong><span>ใช้ระบบเข้าสู่ระบบเดิมของคุณ</span><a href="./index.html">หน้าหลักและเข้าสู่ระบบ</a>
-        </div>
       </div>`;
+
     brand.insertAdjacentElement('afterend', tools);
     const search = tools.querySelector('input[type="search"]');
     search.addEventListener('keydown', event => {
