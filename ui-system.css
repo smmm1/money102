@@ -429,8 +429,6 @@ body.ui-page-health #exerciseContent #exerciseBMI,body.ui-page-health #exerciseC
 body.ui-page-health #exerciseContent #exerciseCalendarGrid button{min-height:34px!important;border-radius:9px!important;background:#f2f3ed!important;color:#50594b!important;border:1px solid transparent!important}
 body.ui-page-health #exerciseContent #exerciseCalendarGrid button:hover{border-color:#bdc9b5!important;background:#e8ede3!important}
 body.ui-page-health #exerciseContent #exerciseD,body.ui-page-health #exerciseContent [id*="List"]{min-width:0!important}
-body.ui-page-health #authNotice{max-width:540px!important;margin:36px auto!important;border:1px solid var(--ui-border)!important;border-radius:22px!important;background:var(--ui-card)!important;box-shadow:none!important}
-body.ui-page-health #authNotice>a{border-radius:999px!important;background:var(--ui-accent-dark)!important}
 @media(max-width:700px){body.ui-page-health #exerciseContent.exercise-grid.redesign-health-grid:not(.hidden){grid-template-columns:minmax(0,1fr)!important;gap:13px!important}body.ui-page-health .exercise-card,body.ui-page-health #exerciseContent>.grid>div{padding:17px!important}body.ui-page-health .exercise-shell.ui-health-header{padding:18px 16px 0!important}}
 /* Savings: polish the real widgets, tabs, transaction rows and dialogs instead of only the page shell. */
 body.ui-page-savings .cream-card{border-color:var(--ui-border)!important;border-radius:19px!important;box-shadow:none!important}
