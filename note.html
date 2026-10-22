@@ -128,7 +128,7 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
           <div class="ui-topbar-copy"><h1>โน้ต</h1><p class="subhead">เขียนไว้ก่อน เดี๋ยวค่อยจัดการทีหลัง</p></div>
         </div>
         <button class="ui-header-primary" type="button" onclick="document.getElementById('noteInput').focus()"><i class="fa-solid fa-plus"></i><span>เขียนโน้ต</span></button>
-        <button class="signout" id="signoutBtn" type="button"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>ออกจากระบบ</span></button>
+        <span class="signout" aria-label="ไม่ต้องเข้าสู่ระบบ"><i class="fa-solid fa-unlock"></i><span>เข้าใช้งานได้เลย</span></span>
       </div>
     </header>
     <div class="content">
@@ -256,13 +256,12 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
   input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,240)+'px';});
   document.getElementById('noteSearch').addEventListener('input',renderNotes);
   document.getElementById('noteFilter').addEventListener('change',renderNotes);
-  document.getElementById('signoutBtn').addEventListener('click',async()=>{await db.auth.signOut();location.href='/';});
+  
   board.addEventListener('click',e=>{if(e.target===board){selectedId=null;document.querySelectorAll('.sticky-note').forEach(el=>el.classList.remove('selected'));}});
   async function init(){
-    const {data,error}=await db.auth.getSession();
-    if(error||!data.session){location.replace('/?login=1&next=./note.html');return;}
-    currentUser=data.session.user;await loadNotes();
-    db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||!session)location.href='/';});
+    const {data}=await db.auth.getSession();
+    currentUser=data?.session?.user||null;
+    await loadNotes();
   }
   window.addEventListener('resize',()=>{notes.forEach(n=>{const el=board.querySelector('[data-id="'+CSS.escape(n.id)+'"]');if(!el)return;const pos=keepInside(n._x||0,n._y||0,el);n._x=pos.x;el.style.left=pos.x+'px';});});
   init();
