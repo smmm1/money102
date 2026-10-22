@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react"
 import SavingsPage from "./SavingsPage"
+import NotesPage from "./NotesPage"
 
 type Page = "home" | "saving" | "health" | "notes"
 
@@ -539,6 +540,8 @@ export default function App() {
         <SavingsPage onBack={() => navigate("home")} />
       ) : page === "health" ? (
         <HealthDashboard />
+      ) : page === "notes" ? (
+        <NotesPage onBack={() => navigate("home")} />
       ) : (
         <DetailPage page={page} />
       )}
