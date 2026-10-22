@@ -373,7 +373,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/55">
               ยอดคงเหลือ
             </p>
-            <h1 className="inline-block min-w-[260px] rounded-[18px] border border-white/45 bg-white/65 px-4 py-2 text-4xl font-extrabold tracking-[-0.055em] text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)] md:min-w-[360px] md:px-5 md:py-2.5 md:text-6xl" style={{ WebkitTextStroke: "0.35px rgba(0,0,0,0.45)" }}>
+            <h1 className="mt-1 inline-block min-w-[260px] rounded-[12px] border border-white/55 bg-black/[0.06] px-3 py-1.5 text-xl font-bold tracking-[-0.035em] text-[#263329] md:min-w-[360px] md:text-2xl">
               {formatMoney.format(balance)}
             </h1>
           </div>
