@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="ศูนย์รวมพื้นที่ส่วนตัว: การเงิน โน้ต และสุขภาพ">
+<title>พื้นที่ของฉัน</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<style>
+:root{color-scheme:light;--ink:#202923;--muted:#7b837e;--line:#e9ece9;--green:#2e7754;--green-bg:#edf6ef;--amber:#a96c22;--amber-bg:#fbf2e6;--blue:#39749b;--blue-bg:#edf5fa}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font-family:"IBM Plex Sans Thai","Plus Jakarta Sans",sans-serif;-webkit-font-smoothing:antialiased}
+.shell{width:min(100% - 48px,1080px);margin:0 auto;padding:54px 0 40px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:72px}.brand{display:flex;align-items:center;gap:11px;font-weight:700;letter-spacing:-.3px}.brandmark{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line);border-radius:12px;color:#34473a;font-size:16px}.login-trigger{display:inline-flex;align-items:center;gap:9px;padding:10px 16px;border:1px solid #dfe5df;border-radius:999px;background:#fff;color:#2e5b40;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s}.login-trigger:hover{background:#f6f9f6;border-color:#bfcfc2}.login-trigger i{font-size:12px}
+.auth-backdrop{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(24,34,27,.28);backdrop-filter:blur(5px)}.auth-backdrop.open{display:flex}.auth-modal{width:min(100%,410px);background:#fff;border:1px solid #e8ece8;border-radius:22px;padding:30px;box-shadow:0 24px 80px rgba(20,40,25,.16);position:relative}.auth-close{position:absolute;right:17px;top:17px;width:34px;height:34px;border:0;border-radius:50%;background:#f5f7f5;color:#6d776f;cursor:pointer}.auth-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:#edf6ef;color:#2e7754;font-size:17px;margin-bottom:22px}.auth-kicker{font:700 10px "Plus Jakarta Sans",sans-serif;letter-spacing:1.5px;color:#7e8a80;margin:0 0 9px}.auth-modal h2{font-size:25px;letter-spacing:-.6px;margin:0;color:#202923}.auth-subtitle{font-size:13px;color:#7b837e;margin:9px 0 24px;line-height:1.7}.auth-field{display:block;margin:0 0 15px;font-size:12px;font-weight:600;color:#47544a}.auth-field input{display:block;width:100%;height:46px;margin-top:7px;padding:0 13px;border:1px solid #e3e8e3;border-radius:11px;outline:0;font-family:inherit;font-size:14px;font-weight:400;color:#202923;background:#fcfdfc}.auth-field input:focus{border-color:#78a588;box-shadow:0 0 0 3px #edf6ef}.auth-submit{width:100%;height:47px;border:0;border-radius:11px;background:#2e7754;color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-top:4px}.auth-submit:disabled{opacity:.6;cursor:wait}.auth-switches{display:flex;justify-content:space-between;gap:12px;margin-top:17px}.auth-switches button{border:0;background:none;color:#6b786e;font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;padding:3px 0}.auth-switches button:hover{color:#2e7754}.auth-message{display:none;margin:0 0 15px;padding:10px 12px;border-radius:10px;background:#f5f8f5;color:#3b6d4b;font-size:12px;line-height:1.6}.auth-message.show{display:block}.auth-message.error{background:#fff3f1;color:#a44739}.auth-legal{margin:20px 0 0;text-align:center;color:#a1a8a2;font-size:10px}
+.profile{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:#707a73;background:#fff}
+.eyebrow{font:700 11px "Plus Jakarta Sans",sans-serif;letter-spacing:1.8px;text-transform:uppercase;color:#8b938d;margin:0 0 12px}.intro h1{font-size:clamp(30px,4vw,43px);letter-spacing:-1.2px;line-height:1.25;margin:0;font-weight:700}.intro p:last-child{margin:13px 0 0;color:var(--muted);font-size:15px}.section{margin-top:52px}.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.section-title h2{font-size:16px;font-weight:600;margin:0}.section-title span{font-size:12px;color:#969d98}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.app-card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;min-height:220px;transition:border-color .2s,transform .2s,box-shadow .2s}.app-card:hover{transform:translateY(-3px);border-color:#d5dcd6;box-shadow:0 12px 28px #17251b0a}.card-head{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}.card-head .label{font-size:12px;font-weight:600;letter-spacing:.2px}.card-head .symbol{font-size:17px}.finance .card-head{background:var(--green-bg);color:var(--green)}.notes .card-head{background:var(--amber-bg);color:var(--amber)}.health .card-head{background:var(--blue-bg);color:var(--blue)}.card-body{padding:21px 20px 18px;display:flex;flex-direction:column;min-height:160px}.card-body h3{font-size:19px;letter-spacing:-.25px;margin:0;font-weight:600}.card-body p{font-size:13px;color:var(--muted);line-height:1.7;margin:8px 0 22px}.card-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;color:#9aa19c;font-size:12px}.card-foot i{font-size:12px;color:#7b857e;transition:transform .2s}.app-card:hover .card-foot i{transform:translateX(3px)}.future{border:1px dashed #dfe4df;background:#fdfefd}.future .card-head{background:#f7f8f7;color:#7e8981}.future .card-body h3{color:#68716b}.future .card-foot{color:#9aa19c}.footer{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #f0f2f0;margin-top:58px;padding-top:18px;color:#a0a6a1;font-size:11px}
+@media(max-width:760px){.shell{width:min(100% - 36px,520px);padding-top:27px}.top{margin-bottom:48px}.section{margin-top:38px}.grid{grid-template-columns:1fr;gap:12px}.app-card{min-height:0}.card-head{height:52px;padding:0 17px}.card-body{min-height:130px;padding:17px}.card-body p{margin-bottom:15px}.footer{margin-top:40px;flex-direction:column}.intro p:last-child{font-size:14px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
+
+/* Minimal landing header — no oversized top bar */
+.shell{width:min(100% - 40px,1080px);padding:28px 0 36px}
+.top{margin-bottom:52px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.brandmark{width:32px;height:32px;border-radius:9px;background:transparent}
+.login-trigger{padding:8px 12px;border-radius:9px;background:transparent;box-shadow:none}
+@media(max-width:600px){.shell{width:calc(100% - 28px);padding-top:18px}.top{margin-bottom:34px}.login-trigger{padding:8px 10px}}
+</style>
+
+<link rel="stylesheet" href="/ui-system.css">
+<script src="/ui-system.js" defer></script>
+</head>
+<body class="ui-page-landing">
+<main class="shell">
+<header class="top">
+  <div class="brand"><span class="brandmark"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><span>พื้นที่ของฉัน</span></div>
+  <button class="login-trigger" id="openLogin" type="button"><i class="fa-regular fa-user" aria-hidden="true"></i><span id="loginButtonText">เข้าสู่ระบบ</span></button>
+</header>
+<section class="intro" aria-labelledby="page-title">
+  <p class="eyebrow">PERSONAL SPACE</p>
+  <h1 id="page-title">จัดการทุกเรื่อง<br>ในพื้นที่ของคุณ</h1>
+  <p>เลือกพื้นที่ที่ต้องการใช้งาน ทุกอย่างแยกเป็นสัดส่วนและเป็นระเบียบ</p>
+</section>
+<section class="section" aria-labelledby="apps-title">
+  <div class="section-title"><h2 id="apps-title">พื้นที่ทำงานของฉัน</h2><span>YOUR WORKSPACE</span></div>
+  <div class="grid">
+    <a class="app-card finance" href="./moneyyeep.html">
+      <div class="card-head"><span class="label">การเงิน</span><i class="fa-solid fa-wallet symbol" aria-hidden="true"></i></div>
+      <div class="card-body"><h3>ออมเงิน</h3><p>จัดการเงินออม เป้าหมาย กระปุก และติดตามรายรับรายจ่าย</p><div class="card-foot"><span>เข้าสู่ระบบการเงิน</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div></div>
+    </a>
+    <a class="app-card notes" href="./note.html">
+      <div class="card-head"><span class="label">บันทึก</span><i class="fa-solid fa-book-open symbol" aria-hidden="true"></i></div>
+      <div class="card-body"><h3>โน้ต</h3><p>รวบรวมความคิด สิ่งที่ต้องจำ และบันทึกส่วนตัวไว้ในที่เดียว</p><div class="card-foot"><span>เปิดสมุดบันทึก</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div></div>
+    </a>
+    <a class="app-card health" href="./excie.html">
+      <div class="card-head"><span class="label">สุขภาพ</span><i class="fa-solid fa-heart-pulse symbol" aria-hidden="true"></i></div>
+      <div class="card-body"><h3>สุขภาพและออกกำลังกาย</h3><p>ติดตามการออกกำลังกาย โปรไฟล์ และบันทึกสุขภาพของคุณ</p><div class="card-foot"><span>เข้าสู่พื้นที่สุขภาพ</span><i class="fa-solid fa-arrow-right" aria-hidden="true"></i></div></div>
+    </a> 
+  </div>
+</section>
+<footer class="footer"><span>พื้นที่ส่วนตัวของคุณ · เรียบง่าย เป็นระบบ</span><span>PERSONAL WORKSPACE</span></footer>
+</main>
+<div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <section class="auth-modal">
+    <button class="auth-close" id="closeLogin" type="button" aria-label="ปิด"><i class="fa-solid fa-xmark"></i></button>
+    <div class="auth-mark"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></div>
+    <p class="auth-kicker">YOUR PERSONAL SPACE</p>
+    <h2 id="authTitle">ยินดีต้อนรับกลับ</h2>
+    <p class="auth-subtitle" id="authSubtitle">เข้าสู่ระบบเพื่อไปยังพื้นที่ส่วนตัวของคุณ</p>
+    <p class="auth-message" id="authMessage" role="status" aria-live="polite"></p>
+    <form id="authForm">
+      <label class="auth-field">อีเมล<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+      <label class="auth-field" id="passwordField">รหัสผ่าน<input id="authPassword" type="password" autocomplete="current-password" placeholder="กรอกรหัสผ่าน" required minlength="6"></label>
+      <button class="auth-submit" id="authSubmit" type="submit">เข้าสู่ระบบ</button>
+    </form>
+    <div class="auth-switches">
+      <button id="toggleSignup" type="button">สร้างบัญชีใหม่</button>
+      <button id="resetPassword" type="button">ลืมรหัสผ่าน?</button>
+    </div>
+    <p class="auth-legal">ข้อมูลบัญชีได้รับการจัดการผ่านระบบ Supabase เดิม</p>
+  </section>
+</div>
+<script>
+(() => {
+  const SUPABASE_URL = window.MONEyeepSupabaseConfig?.url || 'https://xuxbvoflbrpypjtredrz.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = window.MONEyeepSupabaseConfig?.publishableKey || 'PASTE_XUXBVOFLBRPYPJTREDRZ_PUBLISHABLE_KEY_HERE';
+  if (!window.supabase?.createClient) return;
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const modal = document.getElementById('authBackdrop');
+  const form = document.getElementById('authForm');
+  const email = document.getElementById('authEmail');
+  const password = document.getElementById('authPassword');
+  const message = document.getElementById('authMessage');
+  const submit = document.getElementById('authSubmit');
+  const title = document.getElementById('authTitle');
+  const subtitle = document.getElementById('authSubtitle');
+  const passwordField = document.getElementById('passwordField');
+  const toggleSignup = document.getElementById('toggleSignup');
+  const resetPassword = document.getElementById('resetPassword');
+  let mode = 'signin';
+  let intendedPath = '';
+  const allowedPaths = new Set(['./moneyyeep.html','./note.html','./excie.html']);
+  function showMessage(text, error=false) { message.textContent=text; message.classList.add('show'); message.classList.toggle('error',error); }
+  function clearMessage() { message.textContent=''; message.classList.remove('show','error'); }
+  function setMode(next) {
+    mode=next; clearMessage();
+    const reset=mode==='reset';
+    title.textContent=reset?'ตั้งรหัสผ่านใหม่':mode==='signup'?'สร้างบัญชีใหม่':'ยินดีต้อนรับกลับ';
+    subtitle.textContent=reset?'เราจะส่งลิงก์สำหรับตั้งรหัสผ่านไปยังอีเมลของคุณ':mode==='signup'?'เริ่มต้นใช้งานพื้นที่ส่วนตัวของคุณ':'เข้าสู่ระบบเพื่อไปยังพื้นที่ส่วนตัวของคุณ';
+    passwordField.style.display=reset?'none':'block';
+    password.required=!reset;
+    password.autocomplete=mode==='signup'?'new-password':'current-password';
+    submit.textContent=reset?'ส่งลิงก์รีเซ็ต':mode==='signup'?'สร้างบัญชี':'เข้าสู่ระบบ';
+    toggleSignup.textContent=mode==='signup'?'กลับไปเข้าสู่ระบบ':'สร้างบัญชีใหม่';
+    resetPassword.style.display=reset?'none':'inline';
+  }
+  function openModal(path='') {
+    intendedPath=allowedPaths.has(path)?path:'';
+    setMode('signin'); modal.classList.add('open'); document.body.style.overflow='hidden';
+    setTimeout(()=>email.focus(),30);
+  }
+  function closeModal() { modal.classList.remove('open'); document.body.style.overflow=''; }
+  document.getElementById('openLogin').addEventListener('click',()=>openModal());
+  document.getElementById('closeLogin').addEventListener('click',closeModal);
+  modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeModal();});
+  toggleSignup.addEventListener('click',()=>setMode(mode==='signup'?'signin':'signup'));
+  resetPassword.addEventListener('click',()=>setMode('reset'));
+  document.querySelectorAll('a.app-card[href]').forEach(card=>{
+    card.addEventListener('click',async e=>{
+      const path=card.getAttribute('href');
+      if(!allowedPaths.has(path)) return;
+      e.preventDefault();
+      const {data,error}=await db.auth.getSession();
+      if(error||!data.session){openModal(path);return;}
+      location.href=path;
+    });
+  });
+  form.addEventListener('submit',async e=>{
+    e.preventDefault(); clearMessage(); submit.disabled=true;
+    try {
+      const mail=email.value.trim();
+      if(mode==='reset') {
+        const {error}=await db.auth.resetPasswordForEmail(mail,{redirectTo:location.origin});
+        if(error) throw error;
+        showMessage('ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว โปรดตรวจอีเมลของคุณ');
+      } else if(mode==='signup') {
+        const {data,error}=await db.auth.signUp({email:mail,password:password.value});
+        if(error) throw error;
+        if(data.session) {
+          showMessage('สร้างบัญชีสำเร็จ กำลังเปิดพื้นที่ของคุณ');
+          setTimeout(()=>intendedPath?location.assign(intendedPath):closeModal(),350);
+        } else showMessage('ส่งอีเมลยืนยันบัญชีแล้ว โปรดตรวจกล่องจดหมายก่อนเข้าสู่ระบบ');
+      } else {
+        const {data,error}=await db.auth.signInWithPassword({email:mail,password:password.value});
+        if(error) throw error;
+        if(data.session) {
+          document.getElementById('loginButtonText').textContent='เข้าสู่ระบบแล้ว';
+          closeModal();
+          if(intendedPath) location.assign(intendedPath);
+        }
+      }
+    } catch(err) { showMessage(err?.message||'ดำเนินการไม่สำเร็จ กรุณาลองอีกครั้ง',true); }
+    finally { submit.disabled=false; }
+  });
+  db.auth.getSession().then(({data})=>{
+    if(data?.session) document.getElementById('loginButtonText').textContent='เข้าสู่ระบบแล้ว';
+    const params=new URLSearchParams(location.search);
+    if(params.get('login')==='1'){
+      const next=params.get('next')||'';
+      openModal(allowedPaths.has(next)?next:'');
+      history.replaceState({},'',location.pathname);
+    }
+  });
+})();
+</script>
+</body>
+</html>
