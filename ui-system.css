@@ -1353,7 +1353,6 @@ body.ui-page-health .text-rose-700{color:#526ce5!important}
 
 
 /* Unified UI pass — landing page is the visual source of truth. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 :root{
   --unified-ink:#181d2a;
   --unified-muted:#7b8494;
@@ -1405,7 +1404,7 @@ body.ui-page-savings .ui-topbar-inner,body.ui-page-health .ui-health-header .ui-
 body.ui-page-savings .ui-topbar-brand,body.ui-page-health .ui-topbar-brand,body.ui-page-notes .ui-topbar-brand{
   display:flex!important;align-items:center!important;gap:12px!important;min-width:0!important;flex:1 1 auto!important;
 }
-body.ui-page-savings .ui-topbar-icon,body.ui-page-health .ui-topbar-icon,body.ui-page-notes .ui-topbar-icon{
+body.ui-page-savings .ui-topbar-icon,body.ui-page-health .ui-topbar-icon,body.ui-page-notes .ui-topbar-icon,body.ui-page-notes .ui-topbar-brand>span:first-child{
   width:40px!important;height:40px!important;min-width:40px!important;display:grid!important;place-items:center!important;
   border-radius:12px!important;background:#eef1ff!important;color:#526ce5!important;font-size:16px!important;
 }
