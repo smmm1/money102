@@ -83,7 +83,7 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
         {!editing && <button onClick={startNew} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition hover:bg-[#3B4A3E]">＋ เขียนโน้ตใหม่</button>}
       </header>
 
-      {editing && <form onSubmit={saveEntry} className="fixed left-1/2 top-1/2 z-50 m-0 max-h-[92dvh] w-[calc(100vw-24px)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[#E1DDCF] bg-[#FCFBF7] p-5 shadow-[0_24px_80px_rgba(25,35,27,0.22)] sm:p-7">
+      {editing && <><button type="button" aria-label="ปิดหน้าต่างโน้ต" onClick={() => { setEditing(false); setEditingId(null) }} className="fixed inset-0 z-40 cursor-default bg-[#1E2921]/40 backdrop-blur-sm" /><form onSubmit={saveEntry} className="fixed left-1/2 top-1/2 z-50 m-0 max-h-[92dvh] w-[calc(100vw-24px)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[#E1DDCF] bg-[#FCFBF7] p-5 shadow-[0_24px_80px_rgba(25,35,27,0.22)] sm:p-7">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div><p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#8C8D78]">{editingId ? "EDIT ENTRY" : "NEW ENTRY"}</p><h2 className="mt-1 text-xl font-semibold text-[#263329]">{editingId ? "แก้ไขโน้ต" : "เขียนโน้ตใหม่"}</h2></div>
           <button type="button" onClick={() => { setEditing(false); setEditingId(null) }} className="rounded-full px-3 py-2 text-sm text-[#858880] hover:bg-[#F5F3EC]">ยกเลิก</button>
@@ -100,7 +100,7 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
           </div>
         </fieldset>
         <div className="mt-6 flex justify-end"><button type="submit" className="h-11 w-full rounded-full bg-[#263329] px-7 text-sm font-medium text-white hover:bg-[#3B4A3E] sm:w-auto">บันทึกโน้ต</button></div>
-      </form>}
+      </form></>}
 
       <section>
         <div className="mb-5 rounded-[20px] border border-[#E1DDCF] bg-white/70 p-4 md:flex md:items-center md:justify-between md:gap-5">
