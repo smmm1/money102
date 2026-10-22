@@ -6,8 +6,6 @@
   <meta name="theme-color" content="#fffbed">
   <title>โน้ต — NOTE SPACE</title>
   <link rel="icon" type="image/svg+xml" href="/note-icon.svg">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src=&quot;https://unpkg.com/@supabase/supabase-js@2&quot;"></script>
-  <script src="/supabase-config.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +31,7 @@
     .eyebrow{font-size:10px;letter-spacing:2px;font-weight:800;color:#b49a39;margin:0 0 5px}
     h1{margin:0;font-size:clamp(22px,3vw,30px);letter-spacing:-.7px}
     .subhead{margin:5px 0 0;font-size:12px;color:#a49a76}
-    .signout{border:1px solid #eee6d0;background:#fffefa;color:#8b7b43;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:700}
+
     .content{max-width:1400px;margin:0 auto;padding:clamp(18px,3vw,38px)}
     .composer{max-width:900px;margin:0 auto 34px;display:flex;align-items:stretch;gap:0;border:1px solid #eee7cf;border-radius:20px;background:white;box-shadow:0 12px 32px #a38a2110;overflow:hidden;transition:box-shadow .2s,border-color .2s}
     .composer:focus-within{border-color:#e7d59a;box-shadow:0 0 0 4px #f8f0d066,0 12px 32px #a38a2110}
@@ -89,7 +87,7 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
 .topbar>div:first-child{gap:12px!important}
 .eyebrow{color:#9b7d12;letter-spacing:1.6px}
 .subhead{color:var(--ui-muted)}
-.signout{border-color:var(--ui-border);background:#fff;color:#617168;border-radius:12px;padding:10px 13px}
+
 .content{max-width:1400px;padding:24px clamp(18px,3vw,36px)}
 .composer{border-color:var(--ui-border);border-radius:22px;box-shadow:0 8px 26px rgba(38,55,43,.055)}
 .composer:focus-within{border-color:var(--ui-accent-line);box-shadow:0 0 0 4px #f7edc6aa,0 8px 26px rgba(38,55,43,.055)}
@@ -128,7 +126,6 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
           <div class="ui-topbar-copy"><h1>โน้ต</h1><p class="subhead">เขียนไว้ก่อน เดี๋ยวค่อยจัดการทีหลัง</p></div>
         </div>
         <button class="ui-header-primary" type="button" onclick="document.getElementById('noteInput').focus()"><i class="fa-solid fa-plus"></i><span>เขียนโน้ต</span></button>
-        <span class="signout" aria-label="ไม่ต้องเข้าสู่ระบบ"><i class="fa-solid fa-unlock"></i><span>เข้าใช้งานได้เลย</span></span>
       </div>
     </header>
     <div class="content">
@@ -154,21 +151,16 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
 </div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script>
-  const SUPABASE_URL = window.MONEyeepSupabaseConfig?.url || 'https://xuxbvoflbrpypjtredrz.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = window.MONEyeepSupabaseConfig?.publishableKey || 'PASTE_XUXBVOFLBRPYPJTREDRZ_PUBLISHABLE_KEY_HERE';
-  if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-    document.getElementById('composer').addEventListener('submit', e => {
-      e.preventDefault();
-      alert('เชื่อมต่อระบบบันทึกไม่สำเร็จ กรุณาเปิดอินเทอร์เน็ตแล้วรีเฟรชหน้าอีกครั้ง');
-    });
-    document.querySelector('.content').insertAdjacentHTML('afterbegin', '<p role="alert" style="margin:0 auto 16px;max-width:900px;padding:12px 16px;border-radius:12px;background:#fff2eb;color:#a33b25;font-size:13px">โหลดระบบฐานข้อมูลไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้า</p>');
-    throw new Error('Supabase client library failed to load');
-  }
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const board = document.getElementById("board");
+  const input = document.getElementById("noteInput");
+  const saveBtn = document.getElementById("saveBtn");
+  const NOTES_KEY = "moneyeep-public-notes-v1";
+  let notes = [], selectedId = null, highestZ = 10, toastTimer = null;
+  const persistNotes = () => { try { localStorage.setItem(NOTES_KEY,JSON.stringify(notes)); } catch (_) { showToast("พื้นที่จัดเก็บในเบราว์เซอร์เต็ม"); } };
   const board = document.getElementById('board');
   const input = document.getElementById('noteInput');
   const saveBtn = document.getElementById('saveBtn');
-  let currentUser = null, notes = [], selectedId = null, highestZ = 10, toastTimer = null;
+
   const colors = ['#fff3cf','#f8efc9','#fff7df','#f6edc4','#faf2d3'];
   const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function showToast(message){const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300);}
@@ -185,12 +177,7 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
       return matchesText&&matchesFilter;
     });
   }
-  async function loadNotes(){
-    const {data,error}=await db.from('finance_notes').select('*').order('created_at',{ascending:false});
-    if(error){showToast('โหลดโน๊ตไม่สำเร็จ กรุณาลองใหม่');console.error(error);return;}
-    notes=(data||[]).map((n,i)=>{const pos=(n.position_x===0&&n.position_y===0)?defaultPosition(i):{x:n.position_x,y:n.position_y};return {...n,_x:pos.x,_y:pos.y,_z:10+i};});
-    renderNotes();
-  }
+  async function loadNotes(){try{const raw=JSON.parse(localStorage.getItem(NOTES_KEY)||"[]");notes=(Array.isArray(raw)?raw:[]).map((n,i)=>{const d=defaultPosition(i),pos=(n.position_x===0&&n.position_y===0)?d:{x:n.position_x??n._x??d.x,y:n.position_y??n._y??d.y};return {...n,_x:pos.x,_y:pos.y,_z:n._z||10+i};});}catch(_){notes=[];}renderNotes();}
   function renderNotes(){
     board.querySelectorAll('.sticky-note').forEach(el=>el.remove());
     const visibleNotes=getVisibleNotes();
@@ -235,34 +222,19 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
     const end=async()=>{if(!drag||drag.id!==note.id)return;drag=null;document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',end);await persistPosition(note);};
     document.addEventListener('pointermove',move);document.addEventListener('pointerup',end,{once:true});
   }
-  async function persistPosition(note){
-    const {error}=await db.from('finance_notes').update({position_x:Math.round(note._x||0),position_y:Math.round(note._y||0)}).eq('id',note.id);
-    if(error)showToast('ย้ายโน๊ตแล้ว แต่บันทึกตำแหน่งไม่สำเร็จ');
-  }
-  async function createNote(content){
-    const pos=defaultPosition(notes.length),rotation=Math.round((Math.random()*4-2)*10)/10;
-    const {data,error}=await db.from('finance_notes').insert({user_id:currentUser.id,content,is_pinned:false,position_x:pos.x,position_y:pos.y,rotation}).select().single();
-    if(error){showToast('บันทึกไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่'));console.error('Create note failed:',error);return;}
-    notes.unshift({...data,_x:pos.x,_y:pos.y,_z:++highestZ,_pop:true});selectedId=data.id;renderNotes();
-    const el=board.querySelector('[data-id="'+CSS.escape(data.id)+'"]');if(el)el.classList.add('note-pop');
-    input.value='';input.style.height='auto';showToast('บันทึกแล้ว แปะโน๊ตให้เรียบร้อย ✨');
-    setTimeout(()=>el?.classList.remove('note-pop'),500);
-  }
-  async function togglePin(id){const note=notes.find(n=>n.id===id);if(!note)return;const next=!note.is_pinned;const {error}=await db.from('finance_notes').update({is_pinned:next}).eq('id',id);if(error){showToast('เปลี่ยนหมุดไม่สำเร็จ');return;}note.is_pinned=next;selectedId=id;renderNotes();showToast(next?'ปักหมุดโน๊ตแล้ว':'เลิกปักหมุดแล้ว');}
+  async function persistPosition(note){const n=notes.find(x=>x.id===note.id);if(n){n.position_x=Math.round(note._x||0);n.position_y=Math.round(note._y||0);persistNotes();}}
+  async function createNote(content){const pos=defaultPosition(notes.length),now=new Date().toISOString(),rotation=Math.round((Math.random()*4-2)*10)/10;const data={id:crypto.randomUUID(),content,is_pinned:false,position_x:pos.x,position_y:pos.y,rotation,created_at:now,updated_at:now,_x:pos.x,_y:pos.y,_z:++highestZ,_pop:true};notes.unshift(data);persistNotes();selectedId=data.id;renderNotes();const el=board.querySelector('[data-id="'+CSS.escape(data.id)+'"]');if(el)el.classList.add("note-pop");input.value="";input.style.height="auto";showToast("บันทึกแล้ว แปะโน๊ตให้เรียบร้อย ✨");setTimeout(()=>el?.classList.remove("note-pop"),500);}
+  async function togglePin(id){const note=notes.find(n=>n.id===id);if(!note)return;note.is_pinned=!note.is_pinned;note.updated_at=new Date().toISOString();selectedId=id;persistNotes();renderNotes();showToast(note.is_pinned?"ปักหมุดโน๊ตแล้ว":"เลิกปักหมุดแล้ว");}
   function startEdit(id){const note=notes.find(n=>n.id===id);if(!note)return;notes.forEach(n=>n._editing=false);note._editing=true;selectedId=id;renderNotes();}
-  async function saveEdit(id,content){const clean=String(content||'').trim();if(!clean){showToast('โน๊ตห้ามว่างเปล่า');return;}if(clean.length>10000){showToast('ข้อความยาวเกิน 10,000 ตัวอักษร');return;}const {error}=await db.from('finance_notes').update({content:clean,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('แก้ไขไม่สำเร็จ กรุณาลองใหม่');return;}const note=notes.find(n=>n.id===id);if(note){note.content=clean;note.updated_at=new Date().toISOString();note._editing=false;}renderNotes();showToast('บันทึกการแก้ไขแล้ว');}
-  async function deleteNote(id){if(!confirm('ลบโพสต์อิทนี้ใช่ไหม? ลบแล้วจะกู้คืนไม่ได้'))return;const {error}=await db.from('finance_notes').delete().eq('id',id);if(error){showToast('ลบไม่สำเร็จ กรุณาลองใหม่');return;}notes=notes.filter(n=>n.id!==id);if(selectedId===id)selectedId=null;renderNotes();showToast('ลบโน๊ตแล้ว');}
-  document.getElementById('composer').addEventListener('submit',async e=>{e.preventDefault();const content=input.value.trim();if(!content){input.focus();showToast('เขียนอะไรสักนิดก่อนบันทึกนะ');return;}if(!currentUser){showToast('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');return;}saveBtn.disabled=true;saveBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก…</span>';try{await createNote(content);}catch(err){console.error('Save note exception:',err);showToast('บันทึกไม่สำเร็จ: '+(err?.message||'เกิดข้อผิดพลาด'));}finally{saveBtn.disabled=false;saveBtn.innerHTML='<i class="fa-solid fa-plus"></i><span>บันทึก</span>';}});
+  async function saveEdit(id,content){const clean=String(content||"").trim();if(!clean){showToast("โน๊ตห้ามว่างเปล่า");return;}if(clean.length>10000){showToast("ข้อความยาวเกิน 10,000 ตัวอักษร");return;}const note=notes.find(n=>n.id===id);if(note){note.content=clean;note.updated_at=new Date().toISOString();note._editing=false;persistNotes();}renderNotes();showToast("บันทึกการแก้ไขแล้ว");}
+  async function deleteNote(id){if(!confirm("ลบโพสต์อิทนี้ใช่ไหม? ลบแล้วจะกู้คืนไม่ได้"))return;notes=notes.filter(n=>n.id!==id);persistNotes();if(selectedId===id)selectedId=null;renderNotes();showToast("ลบโน๊ตแล้ว");}
+  document.getElementById("composer").addEventListener('submit',async e=>{e.preventDefault();const content=input.value.trim();if(!content){input.focus();showToast("เขียนอะไรสักนิดก่อนบันทึกนะ");return;}saveBtn.disabled=true;saveBtn.innerHTML='<i class="fa-solid fa-spinner fa-spin"></i><span>กำลังบันทึก…</span>';try{await createNote(content);}catch(err){console.error('Save note exception:',err);showToast('บันทึกไม่สำเร็จ: '+(err?.message||'เกิดข้อผิดพลาด'));}finally{saveBtn.disabled=false;saveBtn.innerHTML='<i class="fa-solid fa-plus"></i><span>บันทึก</span>';}});
   input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,240)+'px';});
   document.getElementById('noteSearch').addEventListener('input',renderNotes);
   document.getElementById('noteFilter').addEventListener('change',renderNotes);
   
   board.addEventListener('click',e=>{if(e.target===board){selectedId=null;document.querySelectorAll('.sticky-note').forEach(el=>el.classList.remove('selected'));}});
-  async function init(){
-    const {data}=await db.auth.getSession();
-    currentUser=data?.session?.user||null;
-    await loadNotes();
-  }
+  async function init(){await loadNotes();}
   window.addEventListener('resize',()=>{notes.forEach(n=>{const el=board.querySelector('[data-id="'+CSS.escape(n.id)+'"]');if(!el)return;const pos=keepInside(n._x||0,n._y||0,el);n._x=pos.x;el.style.left=pos.x+'px';});});
   init();
 </script>
