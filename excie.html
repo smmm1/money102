@@ -193,16 +193,11 @@ body{background-color:#f7f8f4;background-image:radial-gradient(#dce8dd .7px,tran
       </div>
     </div>
     <button type="button" class="ui-header-primary" onclick="createExerciseProfile()"><i class="fa-solid fa-plus"></i><span>สร้างโปรไฟล์</span></button>
-    <button type="button" id="healthSignoutBtn" class="ui-topbar-action"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>ออกจากระบบ</span></button>
+    <span class="ui-topbar-action" aria-label="ไม่ต้องเข้าสู่ระบบ"><i class="fa-solid fa-unlock"></i><span>เข้าใช้งานได้เลย</span></span>
   </div>
 </header>
 <main class="exercise-shell">
-  <div id="authNotice" class="cream-card rounded-3xl p-6 text-center hidden">
-    <i class="fa-solid fa-lock text-3xl text-rose-700"></i>
-    <h2 class="font-extrabold text-lg mt-3">กรุณาเข้าสู่ระบบออมตังก่อน</h2>
-    <p class="text-sm text-gray-500 mt-2">หน้าออกกำลังกายใช้บัญชีเดิมและบันทึกข้อมูลแยกตามผู้ใช้</p>
-    <a href="/" class="inline-block mt-4 rounded-xl bg-rose-600 px-5 py-3 text-white font-bold">ไปหน้าเข้าสู่ระบบ</a>
-  </div>
+  <!-- Login prompt removed; access is open. -->
   <div id="exerciseApp" class="hidden">
     <div id="exerciseLoading" class="cream-card rounded-3xl p-5 text-center text-sm text-gray-500">กำลังโหลดข้อมูลของคุณ…</div>
     <div id="exerciseContent" class="exercise-grid hidden mt-4">
@@ -330,17 +325,15 @@ let currentUser = null;
     function renderExerciseStats(){const wrap=document.getElementById('exerciseCategoryStats');wrap.innerHTML='';const types=['running','weightlifting','pushups','squats'],totals=types.map(type=>({type,count:exerciseLogs.filter(x=>x.activity_type===type).length,calories:exerciseLogs.filter(x=>x.activity_type===type).reduce((a,x)=>a+x.calories_estimated,0),distance:exerciseLogs.filter(x=>x.activity_type===type).reduce((a,x)=>a+(Number(x.distance_km)||0),0),reps:exerciseLogs.filter(x=>x.activity_type===type).reduce((a,x)=>a+(Number(x.reps)||0),0)}));if(!exerciseLogs.length){wrap.innerHTML='<p class="text-xs text-gray-400">บันทึกกิจกรรมแล้วสถิติจะแสดงที่นี่</p>';return;}totals.forEach(t=>{const row=document.createElement('div');row.className='rounded-xl bg-cream-100 p-3';const head=document.createElement('div');head.className='flex justify-between text-xs font-bold';const name=document.createElement('span');name.textContent=exerciseNames[t.type];const count=document.createElement('span');count.textContent=t.count+' รายการ';head.append(name,count);const desc=document.createElement('p');desc.className='text-[11px] text-gray-500 mt-1';desc.textContent=(t.type==='running'?'ระยะรวม '+t.distance.toFixed(2)+' กม. • ':'จำนวนครั้งรวม '+t.reps.toLocaleString('th-TH')+' • ')+'แคลอรีประมาณ '+exerciseMoneyNum(t.calories)+' kcal';row.append(head,desc);wrap.appendChild(row);});}
     function renderExerciseComparison(){const a=document.getElementById('exerciseCompareA').value,b=document.getElementById('exerciseCompareB').value,wrap=document.getElementById('exerciseComparison');wrap.innerHTML='';[a,b].forEach((date,index)=>{const logs=exerciseLogs.filter(x=>x.exercise_date===date),box=document.createElement('div');box.className='rounded-2xl bg-cream-100 p-3';const title=document.createElement('p');title.className='font-bold text-gray-700 mb-2';title.textContent=(index===0?'วันที่ A':'วันที่ B')+' • '+(date||'—');const stats=document.createElement('p');stats.className='text-gray-600 leading-6 whitespace-pre-line';stats.textContent=logs.length+' กิจกรรม\n'+exerciseMoneyNum(logs.reduce((n,x)=>n+x.calories_estimated,0))+' kcal\nวิ่ง '+logs.filter(x=>x.activity_type==='running').reduce((n,x)=>n+(Number(x.distance_km)||0),0).toFixed(2)+' กม.\nวิดพื้น '+logs.filter(x=>x.activity_type==='pushups').reduce((n,x)=>n+(Number(x.reps)||0),0)+' ครั้ง\nสควอต '+logs.filter(x=>x.activity_type==='squats').reduce((n,x)=>n+(Number(x.reps)||0),0)+' ครั้ง';box.append(title,stats);wrap.appendChild(box);});}
 async function bootExcelsior(){
-  const {data,error}=await db.auth.getSession();
-  if(error){document.getElementById('authNotice').classList.remove('hidden');document.getElementById('authNotice').insertAdjacentHTML('beforeend','<p class="text-xs text-rose-600 mt-2">ตรวจสอบเซสชันไม่สำเร็จ กรุณาเข้าสู่ระบบใหม่</p>');return;}
-  currentUser=data.session?.user||null;
-  if(!currentUser){location.replace('/?login=1&next=./excie.html');return;}
+  const {data}=await db.auth.getSession();
+  currentUser=data?.session?.user||null;
   document.getElementById('exerciseApp').classList.remove('hidden');
   await loadExerciseData();
   document.getElementById('exerciseLoading').classList.add('hidden');
   document.getElementById('exerciseContent').classList.remove('hidden');
 }
 db.auth.onAuthStateChange((_event,session)=>{if(session?.user){currentUser=session.user;}});
-document.getElementById('healthSignoutBtn')?.addEventListener('click',async()=>{const button=document.getElementById('healthSignoutBtn');button.disabled=true;const {error}=await db.auth.signOut();if(error){button.disabled=false;alert('ออกจากระบบไม่สำเร็จ: '+error.message);return;}location.assign('/');});
+
 bootExcelsior();
 </script>
 </body>
