@@ -192,71 +192,6 @@ button:not(.unstyled),select,input,textarea{border-radius:12px}
 </head>
 <body class="pb-24 ui-page-savings">
 
-  <section id="authScreen" class="auth-screen hidden">
-    <div class="auth-orb auth-orb-one" aria-hidden="true"></div>
-    <div class="auth-orb auth-orb-two" aria-hidden="true"></div>
-    <div class="auth-layout">
-      <aside class="auth-welcome">
-        <div class="auth-brand">
-          <span class="auth-brand-icon"><img src="/piggy-bank.svg" alt="" /></span>
-          <span>ออมตัง<span class="auth-brand-dot">.</span></span>
-        </div>
-        <div class="auth-hero-art" aria-hidden="true">
-          <span class="auth-spark spark-one">✦</span><span class="auth-spark spark-two">✧</span>
-          <span class="auth-coin coin-one">฿</span><span class="auth-coin coin-two">฿</span>
-          <div class="auth-piggy"><img src="/piggy-bank.svg" alt="" /></div>
-          <div class="auth-floating-note"><span class="auth-note-icon">↗</span><span><b>ค่อย ๆ เก็บ</b><small>เป้าหมายใกล้ขึ้นทุกวัน</small></span></div>
-        </div>
-        <div class="auth-welcome-copy">
-          <p class="auth-eyebrow">YOUR MONEY, YOUR GOALS</p>
-          <h1>เริ่มเก็บเงิน<br />เพื่อสิ่งที่ <span>ตั้งใจ</span></h1>
-          <p>จดรายรับรายจ่าย วางแผนเป้าหมาย แล้วค่อย ๆ เติบโตไปทีละวัน</p>
-        </div>
-        <div class="auth-desktop-preview" aria-label="ตัวอย่างหน้าสรุปการเงิน">
-          <div class="auth-preview-top"><span class="auth-preview-window-dots"><i></i><i></i><i></i></span><span>ภาพรวมการเงิน</span><i class="fa-solid fa-ellipsis"></i></div>
-          <div class="auth-preview-greeting"><div><small>สวัสดี วันนี้มาออมกัน ✨</small><b>สรุปการเงินของคุณ</b></div><span class="auth-preview-avatar"><i class="fa-solid fa-piggy-bank"></i></span></div>
-          <div class="auth-preview-stats">
-            <div class="auth-preview-stat"><span><i class="fa-solid fa-arrow-down"></i> รายรับ</span><b>฿12,500</b><small>เดือนนี้</small></div>
-            <div class="auth-preview-stat"><span><i class="fa-solid fa-arrow-up"></i> รายจ่าย</span><b>฿7,250</b><small>เดือนนี้</small></div>
-            <div class="auth-preview-stat auth-preview-saved"><span><i class="fa-solid fa-wallet"></i> คงเหลือ</span><b>฿5,250</b><small>ยอดสะสม</small></div>
-          </div>
-          <div class="auth-preview-bottom">
-            <div class="auth-preview-chart"><div class="auth-preview-section-title"><b>เงินเข้า - ออก</b><small>7 วันล่าสุด</small></div><div class="auth-bars" aria-hidden="true"><span style="--bar-a:42%;--bar-b:24%"></span><span style="--bar-a:62%;--bar-b:32%"></span><span style="--bar-a:48%;--bar-b:20%"></span><span style="--bar-a:78%;--bar-b:42%"></span><span style="--bar-a:55%;--bar-b:29%"></span><span style="--bar-a:88%;--bar-b:38%"></span><span style="--bar-a:68%;--bar-b:25%"></span></div><div class="auth-chart-days"><span>จ.</span><span>อ.</span><span>พ.</span><span>พฤ.</span><span>ศ.</span><span>ส.</span><span>อา.</span></div></div>
-            <div class="auth-preview-goal"><div class="auth-preview-section-title"><b>เป้าหมายออมเงิน</b><i class="fa-solid fa-bullseye"></i></div><div class="auth-goal-illustration"><i class="fa-solid fa-piggy-bank"></i><span>฿</span></div><b class="auth-goal-name">เก็บเงินก้อนแรก</b><div class="auth-goal-track"><span></span></div><div class="auth-goal-meta"><span>฿7,500</span><b>75%</b></div></div>
-          </div>
-          <div class="auth-preview-foot"><i class="fa-solid fa-shield-heart"></i> ข้อมูลส่วนตัวของคุณ • จัดการได้ในที่เดียว</div>
-        </div>
-        <div class="auth-benefits"><span><i class="fa-solid fa-circle-check"></i> จัดการเงินง่าย ๆ</span><span><i class="fa-solid fa-shield-heart"></i> ข้อมูลส่วนตัวของคุณ</span></div>
-      </aside>
-      <div class="auth-form-side">
-        <div class="auth-form-card">
-          <div class="auth-form-heading">
-            <span class="auth-mobile-logo"><img src="/piggy-bank.svg" alt="" /></span>
-            <p class="auth-form-kicker">ยินดีต้อนรับกลับมา 👋</p>
-            <h2>เข้าสู่บัญชีของคุณ</h2>
-            <p>กรอกข้อมูลเพื่อไปต่อกับเป้าหมายการออม</p>
-          </div>
-          <div id="authMessage" role="status" class="hidden rounded-xl p-3 text-sm"></div>
-          <form id="authForm" class="auth-form-fields">
-            <label class="auth-label">อีเมล
-              <span class="auth-input-wrap"><i class="fa-regular fa-envelope"></i><input id="authEmail" type="email" autocomplete="email" required placeholder="you@example.com" /></span>
-            </label>
-            <label id="passwordLabel" class="auth-label">รหัสผ่าน
-              <span class="auth-input-wrap"><i class="fa-solid fa-lock"></i><input id="authPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="อย่างน้อย 8 ตัวอักษร" /></span>
-            </label>
-            <button id="authSubmit" type="submit" class="auth-submit">เข้าสู่ระบบ <i class="fa-solid fa-arrow-right"></i></button>
-          </form>
-          <div class="auth-secondary-actions">
-            <button id="toggleSignup" type="button">ยังไม่มีบัญชี? <b>สร้างบัญชี</b></button>
-            <button id="resetPassword" type="button">ลืมรหัสผ่าน?</button>
-          </div>
-          <div class="auth-privacy"><i class="fa-solid fa-shield-halved"></i><span>ข้อมูลการเงินของคุณเป็นส่วนตัว<br /><small>เชื่อมต่อและจัดเก็บอย่างปลอดภัย</small></span></div>
-        </div>
-        <p class="auth-footer">เก็บทีละนิด ให้ความฝันเป็นจริงทีละหน่อย <span>♥</span></p>
-      </div>
-    </div>
-  </section>
-
   <div id="appShell">
   <div class="app-layout">
   <aside class="exercise-sidebar">
@@ -282,7 +217,7 @@ button:not(.unstyled),select,input,textarea{border-radius:12px}
       </div>
       <div class="flex gap-2">
         <button type="button" class="ui-header-primary" onclick="openAddModal()"><i class="fa-solid fa-plus"></i><span>เพิ่มรายการ</span></button>
-        <button onclick="signOut()" class="text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 transition-all font-medium">ออกจากระบบ</button>
+        <a href="./index.html" class="text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-xl border border-gray-200 transition-all font-medium no-underline">หน้าหลัก</a>
         <button onclick="clearAllData()" class="text-xs text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-200 transition-all font-medium">
           <i class="fa-solid fa-rotate-left"></i> <span class="hidden sm:inline">รีเซ็ต</span>
         </button>
@@ -510,7 +445,7 @@ button:not(.unstyled),select,input,textarea{border-radius:12px}
     const SUPABASE_URL = window.MONEyeepSupabaseConfig?.url || 'https://xuxbvoflbrpypjtredrz.supabase.co';
     const SUPABASE_PUBLISHABLE_KEY = window.MONEyeepSupabaseConfig?.publishableKey || 'PASTE_XUXBVOFLBRPYPJTREDRZ_PUBLISHABLE_KEY_HERE';
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-    let transactions = [], recurringItems = [], currentUser = null, authMode = 'signin';
+    let transactions = [], recurringItems = [], currentUser = null;
     let dateTimeTimer = null;
     function refreshCurrentDateTime() {
       const label = document.getElementById('currentDateTimeText');
@@ -531,24 +466,37 @@ button:not(.unstyled),select,input,textarea{border-radius:12px}
     const money = n => '฿' + Number(n || 0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
     const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const dateOnly = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    function showAuthMessage(message, error=false) { const el=document.getElementById('authMessage'); el.textContent=message; el.className=`rounded-xl p-3 text-sm ${error?'bg-rose-50 text-rose-700':'bg-emerald-50 text-emerald-800'}`; }
-    function setAuthMode(mode) { authMode=mode; document.getElementById('authSubmit').textContent=mode==='signup'?'สร้างบัญชี':mode==='reset'?'ส่งลิงก์รีเซ็ตรหัสผ่าน':'เข้าสู่ระบบ'; document.getElementById('passwordLabel').classList.toggle('hidden',mode==='reset'); document.getElementById('authPassword').required=mode!=='reset'; document.getElementById('authPassword').autocomplete=mode==='signup'?'new-password':'current-password'; document.getElementById('toggleSignup').textContent=mode==='signup'?'กลับไปเข้าสู่ระบบ':'สร้างบัญชี'; }
-    document.getElementById('toggleSignup').addEventListener('click',()=>setAuthMode(authMode==='signup'?'signin':'signup'));
-    document.getElementById('resetPassword').addEventListener('click',()=>setAuthMode(authMode==='reset'?'signin':'reset'));
-    document.getElementById('authForm').addEventListener('submit',async e=>{
-      e.preventDefault(); const email=document.getElementById('authEmail').value.trim().toLowerCase(), password=document.getElementById('authPassword').value;
-      const btn=document.getElementById('authSubmit'); btn.disabled=true; btn.textContent='กำลังดำเนินการ…';
-      try {
-        if(authMode==='signup') { const {data,error}=await db.auth.signUp({email,password}); if(error) throw error; showAuthMessage(data.session?'สร้างบัญชีสำเร็จ':'สร้างบัญชีแล้ว หากเปิดยืนยันอีเมล โปรดตรวจกล่องจดหมายก่อนเข้าสู่ระบบ'); if(data.session) await enterApp(data.session.user); }
-        else if(authMode==='reset') { const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin}); if(error) throw error; showAuthMessage('ส่งลิงก์รีเซ็ตรหัสผ่านแล้ว โปรดตรวจอีเมล'); }
-        else { const {data,error}=await db.auth.signInWithPassword({email,password}); if(error) throw error; await enterApp(data.user); }
-      } catch(err) { showAuthMessage(err.message || 'ดำเนินการไม่สำเร็จ กรุณาลองใหม่',true); }
-      finally { btn.disabled=false; setAuthMode(authMode); }
+    async function enterApp(user) {
+      currentUser = user || null;
+      document.getElementById('appShell').classList.remove('hidden');
+      document.getElementById('signedInLabel').textContent = currentUser ? ('บัญชี: ' + (currentUser.email || 'ผู้ใช้')) : 'โหมดเข้าใช้งานโดยไม่ล็อกอิน';
+      setDefaultDateTime();
+      if (currentUser) {
+        try { await loadSavingsGoal(); } catch (err) { console.warn('โหลดเป้าหมายออมเงินไม่สำเร็จ', err); }
+        await loadData();
+      } else {
+        transactions = [];
+        recurringItems = [];
+        renderApp();
+      }
+      refreshCurrentDateTime();
+      if (!dateTimeTimer) dateTimeTimer = setInterval(refreshCurrentDateTime, 1000);
+    }
+    db.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        if (!currentUser || currentUser.id !== session.user.id) setTimeout(() => enterApp(session.user), 0);
+      } else if (currentUser) {
+        currentUser = null;
+        transactions = [];
+        recurringItems = [];
+        renderApp();
+        document.getElementById('signedInLabel').textContent = 'โหมดเข้าใช้งานโดยไม่ล็อกอิน';
+      }
     });
-    async function enterApp(user) { currentUser=user; document.getElementById('authScreen').classList.add('hidden'); document.getElementById('appShell').classList.remove('hidden'); document.getElementById('signedInLabel').textContent='บัญชี: '+(user.email||'ผู้ใช้'); setDefaultDateTime(); try { await loadSavingsGoal(); } catch(err) { alert('โหลดเป้าหมายออมเงินไม่สำเร็จ: '+(err.message||'กรุณาลองใหม่')); } await loadData(); refreshCurrentDateTime(); if(!dateTimeTimer) dateTimeTimer=setInterval(refreshCurrentDateTime,1000); }
-    async function signOut() { const {error}=await db.auth.signOut(); if(error){alert('ออกจากระบบไม่สำเร็จ: '+error.message);return;} transactions=[];recurringItems=[];currentUser=null;document.getElementById('appShell').classList.add('hidden');document.getElementById('authScreen').classList.remove('hidden');document.getElementById('authEmail').value='';document.getElementById('authPassword').value='';setAuthMode('signin'); }
-    db.auth.onAuthStateChange((event,session)=>{ if(session?.user && !currentUser) { setTimeout(()=>enterApp(session.user),0); } else if(!session?.user && currentUser) { currentUser=null; transactions=[]; recurringItems=[]; document.getElementById('authScreen').classList.add('hidden'); document.getElementById('appShell').classList.remove('hidden'); document.getElementById('signedInLabel').textContent='โหมดเข้าใช้งานโดยไม่ล็อกอิน'; renderApp(); } });
-    document.addEventListener('DOMContentLoaded',async()=>{ const {data:{session}}=await db.auth.getSession(); if(session?.user) { await enterApp(session.user); } else { currentUser=null; document.getElementById('authScreen').classList.add('hidden'); document.getElementById('appShell').classList.remove('hidden'); document.getElementById('signedInLabel').textContent='โหมดเข้าใช้งานโดยไม่ล็อกอิน'; setDefaultDateTime(); renderApp(); refreshCurrentDateTime(); if(!dateTimeTimer) dateTimeTimer=setInterval(refreshCurrentDateTime,1000); } });
+    document.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await db.auth.getSession();
+      await enterApp(session?.user || null);
+    });
     async function loadData() {
       if(!currentUser) return;
       try {
