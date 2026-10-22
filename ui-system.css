@@ -92,15 +92,6 @@ body.ui-page-notes .topbar .brand-icon{
   background:var(--ui-accent-soft)!important;color:var(--ui-accent-strong)!important;box-shadow:none!important;
 }
 body.ui-page-savings .app-content>header .w-10 img{object-fit:contain!important}
-body.ui-page-savings .app-content>header a,body.ui-page-savings .app-content>header button,
-body.ui-page-health .exercise-main>header a,body.ui-page-notes .topbar .signout{
-  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
-  min-height:34px!important;padding:7px 10px!important;border:1px solid var(--ui-line)!important;border-radius:8px!important;
-  background:var(--ui-card)!important;color:#58645c!important;box-shadow:none!important;font-size:11px!important;
-  font-weight:600!important;text-decoration:none!important;white-space:nowrap;
-}
-body.ui-page-savings .app-content>header a:hover,body.ui-page-savings .app-content>header button:hover,
-body.ui-page-health .exercise-main>header a:hover,body.ui-page-notes .topbar .signout:hover{background:var(--ui-accent-soft)!important}
 /* Health page's introductory banner becomes a quiet standard card, not a separate visual system. */
 body.ui-page-health .exercise-main>header>div.mt-5.rounded-3xl{
   width:100%!important;max-width:1280px!important;margin:12px auto 0!important;padding:17px 19px!important;
@@ -169,8 +160,6 @@ body.ui-page-notes .board-title,body.ui-page-notes .board-title span,body.ui-pag
   body.ui-page-savings .app-content>header,body.ui-page-health .exercise-main>header,body.ui-page-notes .topbar{padding:15px 14px 8px!important}
   body.ui-page-savings .app-content>header h1,body.ui-page-health .exercise-main>header h1,body.ui-page-notes .topbar h1{font-size:19px!important}
   body.ui-page-savings .app-content>header p,body.ui-page-health .exercise-main>header p,body.ui-page-notes .topbar .eyebrow,body.ui-page-notes .topbar .subhead{font-size:10px!important}
-  body.ui-page-savings .app-content>header a,body.ui-page-savings .app-content>header button,
-  body.ui-page-health .exercise-main>header a,body.ui-page-notes .topbar .signout{min-height:32px!important;padding:6px 8px!important;font-size:10px!important}
   body.ui-page-health .exercise-main>header>div.mt-5.rounded-3xl{margin-top:9px!important;padding:13px!important}
   body.ui-page-health .exercise-main>header>div.mt-5.rounded-3xl h1{font-size:18px!important}
   body.ui-page-savings .app-content main,body.ui-page-health .exercise-main main,body.ui-page-notes .content,
@@ -209,21 +198,12 @@ body.ui-page-savings .ui-topbar p,body.ui-page-notes .ui-topbar .subhead,body.ui
  display:block!important;margin:3px 0 0!important;color:var(--ui-muted)!important;font-size:11px!important;
  font-weight:400!important;letter-spacing:0!important;line-height:1.4!important;
 }
-body.ui-page-savings .ui-topbar a,body.ui-page-savings .ui-topbar button,body.ui-page-notes .ui-topbar .signout,body.ui-page-health .ui-topbar-action{
- display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
- min-height:34px!important;margin:0!important;padding:7px 10px!important;border:1px solid var(--ui-line)!important;
- border-radius:8px!important;background:var(--ui-card)!important;color:#58645c!important;box-shadow:none!important;
- font-size:11px!important;font-weight:600!important;line-height:1.3!important;text-decoration:none!important;
- white-space:nowrap!important;cursor:pointer;
-}
-body.ui-page-savings .ui-topbar a:hover,body.ui-page-savings .ui-topbar button:hover,body.ui-page-notes .ui-topbar .signout:hover,body.ui-page-health .ui-topbar-action:hover{background:var(--ui-accent-soft)!important}
 body.ui-page-health .ui-health-header>div.mt-5.rounded-3xl{max-width:1280px!important;margin:14px auto 0!important}
 @media(max-width:900px){
  body.ui-page-savings .ui-topbar,body.ui-page-notes .ui-topbar,body.ui-page-health .ui-health-header{padding:11px 14px!important}
  body.ui-page-savings .ui-topbar-inner,body.ui-page-notes .ui-topbar-inner,body.ui-page-health .ui-topbar-inner{min-height:40px!important;gap:9px!important}
  body.ui-page-savings .ui-topbar h1,body.ui-page-notes .ui-topbar h1,body.ui-page-health .ui-topbar h1{font-size:17px!important}
  body.ui-page-savings .ui-topbar p,body.ui-page-notes .ui-topbar .subhead,body.ui-page-health .ui-topbar-subtitle{font-size:10px!important}
- body.ui-page-savings .ui-topbar a,body.ui-page-savings .ui-topbar button,body.ui-page-notes .ui-topbar .signout,body.ui-page-health .ui-topbar-action{min-height:32px!important;padding:6px 8px!important;font-size:10px!important}
 }
 @media(max-width:420px){
  body.ui-page-savings .ui-topbar,body.ui-page-notes .ui-topbar,body.ui-page-health .ui-health-header{padding:10px!important}
@@ -363,7 +343,6 @@ body.ui-page-notes .ui-topbar-inner{max-width:none!important;padding:0 0 25px!im
 body.ui-page-notes .ui-topbar-brand .brand-icon{width:42px!important;height:42px!important;border-radius:14px!important;background:var(--red-ink)!important;color:#fff!important;box-shadow:none!important}
 body.ui-page-notes .ui-topbar-copy h1{font-size:13px!important;font-weight:650!important;color:var(--red-ink)!important}
 body.ui-page-notes .ui-topbar-copy p{font-size:10px!important;color:var(--red-muted)!important}
-body.ui-page-notes .signout{border:1px solid var(--red-line)!important;border-radius:999px!important;background:var(--red-white)!important;color:#60685b!important;padding:10px 15px!important}
 .redesign-notes-content{max-width:none!important;padding:30px clamp(22px,4vw,58px) 70px!important;display:grid!important;grid-template-columns:minmax(250px,.72fr) minmax(0,1.5fr)!important;gap:22px!important;align-items:start!important}
 .redesign-notes-content>.redesign-page-heading{grid-column:1/-1!important;margin-bottom:0!important}
 .redesign-compose-panel{grid-column:1!important;position:sticky!important;top:24px!important;padding:24px!important;background:#f0f1e9!important;border:1px solid #e2e5da!important;border-radius:var(--red-radius)!important}
@@ -428,7 +407,6 @@ body.ui-page-notes .toast{border:1px solid #e1e5da!important;border-radius:12px!
 /* Health page: no duplicate tracking banner; understated sage actions, consistent inputs and stat cards. */
 body.ui-page-health .exercise-shell.ui-health-header{padding-top:28px!important;padding-bottom:18px!important;background:transparent!important;border:0!important;box-shadow:none!important}
 body.ui-page-health .exercise-shell.ui-health-header .ui-topbar-inner{padding-bottom:22px!important;border-bottom:1px solid var(--ui-border)!important}
-body.ui-page-health .exercise-shell.ui-health-header .ui-topbar-action{border:1px solid var(--ui-border)!important;border-radius:999px!important;background:var(--ui-card)!important;color:#4f5d49!important;box-shadow:none!important}
 body.ui-page-health #exerciseContent.exercise-grid.redesign-health-grid.hidden{display:none!important}
 body.ui-page-health #exerciseContent.exercise-grid.redesign-health-grid:not(.hidden){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important;align-items:start!important}
 body.ui-page-health #exerciseContent>.exercise-wide,body.ui-page-health #exerciseContent>.exercise-card.exercise-wide{grid-column:1/-1!important}
@@ -546,42 +524,6 @@ body.ui-page-health .ui-health-header .ui-topbar-subtitle{
   letter-spacing:0!important;
   text-transform:none!important;
 }
-body.ui-page-savings .ui-topbar>div>div:last-child,
-body.ui-page-notes .ui-topbar-inner>button,
-body.ui-page-health .ui-health-header>.ui-topbar-inner>.ui-topbar-action{
-  flex-shrink:0!important;
-}
-body.ui-page-savings .ui-topbar a,
-body.ui-page-savings .ui-topbar button,
-body.ui-page-notes .ui-topbar .signout,
-body.ui-page-health .ui-health-header .ui-topbar-action{
-  min-height:36px!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:7px!important;
-  padding:8px 13px!important;
-  border:1px solid var(--ui-border)!important;
-  border-radius:999px!important;
-  background:var(--ui-card)!important;
-  color:var(--ui-muted)!important;
-  font-family:inherit!important;
-  font-size:11px!important;
-  line-height:1.2!important;
-  font-weight:600!important;
-  text-decoration:none!important;
-  box-shadow:none!important;
-  white-space:nowrap!important;
-  transition:background .16s,border-color .16s,color .16s!important;
-}
-body.ui-page-savings .ui-topbar a:hover,
-body.ui-page-savings .ui-topbar button:hover,
-body.ui-page-notes .ui-topbar .signout:hover,
-body.ui-page-health .ui-health-header .ui-topbar-action:hover{
-  background:var(--ui-accent-soft)!important;
-  border-color:var(--ui-accent-line)!important;
-  color:var(--ui-accent-strong)!important;
-}
 /* Keep the health hero as page content, not part of the shared navigation bar. */
 body.ui-page-health .ui-health-header>.mt-5{margin-top:22px!important}
 body.ui-page-landing .redesign-landing-top{
@@ -603,17 +545,12 @@ body.ui-page-landing .redesign-landing-top{
   body.ui-page-savings .ui-topbar p,
   body.ui-page-notes .ui-topbar .subhead,
   body.ui-page-health .ui-health-header .ui-topbar-subtitle{max-width:48vw!important;font-size:9px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  body.ui-page-savings .ui-topbar a,
-  body.ui-page-savings .ui-topbar button,
-  body.ui-page-notes .ui-topbar .signout,
-  body.ui-page-health .ui-health-header .ui-topbar-action{min-height:32px!important;padding:6px 9px!important;font-size:10px!important;gap:5px!important}
   body.ui-page-health .ui-health-header>.mt-5{margin-top:16px!important}
 }
 @media(max-width:390px){
   body.ui-page-savings .ui-topbar p,
   body.ui-page-notes .ui-topbar .subhead,
   body.ui-page-health .ui-health-header .ui-topbar-subtitle{display:none!important}
-  body.ui-page-savings .ui-topbar button,body.ui-page-notes .ui-topbar .signout,body.ui-page-health .ui-health-header .ui-topbar-action{padding:6px 8px!important}
 }
 
 
@@ -688,29 +625,6 @@ body.ui-page-health .ui-health-header>.ui-topbar-inner .ui-topbar-subtitle {
   font-weight: 400 !important;
   text-transform: none !important;
 }
-body.ui-page-notes .main>header.ui-topbar .signout,
-body.ui-page-health .ui-health-header>.ui-topbar-inner .ui-topbar-action {
-  min-height: 36px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 7px !important;
-  padding: 8px 13px !important;
-  border: 1px solid #e7e5dc !important;
-  border-radius: 999px !important;
-  background: #fffefa !important;
-  color: #58645c !important;
-  font-size: 11px !important;
-  font-weight: 600 !important;
-  text-decoration: none !important;
-  white-space: nowrap !important;
-  box-shadow: none !important;
-}
-body.ui-page-notes .main>header.ui-topbar .signout:hover,
-body.ui-page-health .ui-health-header>.ui-topbar-inner .ui-topbar-action:hover {
-  background: #f0f2eb !important;
-  border-color: #dce2d3 !important;
-}
 body.ui-page-health .exercise-main>header.ui-health-header {
   position: relative !important;
   display: block !important;
@@ -753,8 +667,6 @@ body.ui-page-health .ui-health-header>div.mt-5.rounded-3xl {
   body.ui-page-health .ui-health-header>.ui-topbar-inner .ui-topbar-copy h1 { font-size: 14px !important; }
   body.ui-page-notes .main>header.ui-topbar .subhead,
   body.ui-page-health .ui-health-header>.ui-topbar-inner .ui-topbar-subtitle { font-size: 9px !important; }
-  body.ui-page-notes .main>header.ui-topbar .signout,
-  body.ui-page-health .ui-health-header>.ui-topbar-inner .ui-topbar-action { min-height: 32px !important; padding: 6px 9px !important; font-size: 10px !important; }
   body.ui-page-health .ui-health-header>.ui-topbar-inner { min-height: 60px !important; padding: 8px 14px !important; gap: 8px !important; }
   body.ui-page-health .ui-health-header>div.mt-5.rounded-3xl { margin: 12px 14px 0 !important; }
 }
@@ -1038,30 +950,6 @@ body.ui-page-notes .redesign-sidebar,
 body.ui-page-health .redesign-sidebar {
   box-sizing: border-box !important;
 }
-body.ui-page-health button.ui-topbar-action {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  min-height: 40px !important;
-  padding: 8px 13px !important;
-  border: 1px solid var(--workspace-line) !important;
-  border-radius: 12px !important;
-  background: var(--workspace-surface) !important;
-  color: var(--workspace-muted) !important;
-  font: inherit !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-}
-body.ui-page-health button.ui-topbar-action:hover {
-  background: var(--workspace-accent-soft) !important;
-  color: var(--workspace-accent) !important;
-}
-body.ui-page-health button.ui-topbar-action:disabled {
-  opacity: .6 !important;
-  cursor: wait !important;
-}
 @media (max-width: 760px) {
   body.ui-page-savings .redesign-sidebar,
   body.ui-page-notes .redesign-sidebar,
@@ -1123,38 +1011,6 @@ body.ui-page-health button.ui-topbar-action:disabled {
     border-radius: 9px !important;
     font-size: 14px !important;
   }
-}
-
-
-/* Shared topbar controls: logout should look and behave consistently on every workspace page. */
-body.ui-page-savings .app-content > header.ui-topbar button[onclick="signOut()"],
-body.ui-page-notes .main > header.ui-topbar #signoutBtn,
-body.ui-page-health .exercise-main > .ui-health-topbar-shell button.ui-topbar-action {
-  box-sizing: border-box !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  min-height: 38px !important;
-  padding: 8px 12px !important;
-  border: 1px solid var(--workspace-line) !important;
-  border-radius: 11px !important;
-  background: var(--workspace-surface) !important;
-  color: var(--workspace-muted) !important;
-  box-shadow: none !important;
-  font-family: inherit !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  line-height: 1.2 !important;
-  white-space: nowrap !important;
-  cursor: pointer !important;
-}
-body.ui-page-savings .app-content > header.ui-topbar button[onclick="signOut()"]:hover,
-body.ui-page-notes .main > header.ui-topbar #signoutBtn:hover,
-body.ui-page-health .exercise-main > .ui-health-topbar-shell button.ui-topbar-action:hover {
-  border-color: var(--workspace-accent) !important;
-  background: var(--workspace-accent-soft) !important;
-  color: var(--workspace-accent) !important;
 }
 body.ui-page-health .exercise-main > header.ui-health-header {
   padding: 0 !important;
@@ -1276,11 +1132,6 @@ body.ui-page-health .ui-health-header .ui-header-primary:hover {
   background: var(--payd-primary-hover) !important; transform: translateY(-1px);
 }
 body.ui-page-savings .ui-topbar .flex.gap-2 { flex-wrap: wrap; justify-content: flex-end; }
-body.ui-page-savings .ui-topbar .flex.gap-2 > button:not(.ui-header-primary),
-body.ui-page-notes .topbar .signout,
-body.ui-page-health .ui-health-header .ui-topbar-action {
-  min-height: 38px !important; border-radius: 11px !important;
-}
 body.ui-page-savings .app-content > main,
 body.ui-page-notes .content,
 body.ui-page-health .exercise-main > main {
