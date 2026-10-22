@@ -378,11 +378,11 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         <div className="relative grid gap-3 sm:grid-cols-2">
           <div className="rounded-[20px] border border-white/50 bg-white/65 p-4 shadow-[0_3px_8px_rgba(0,0,0,0.12)] md:p-5">
             <p className="text-sm font-semibold text-[#487453] md:text-base">รายรับทั้งหมด</p>
-            <p className="mt-1 inline-block rounded-[12px] border border-white/55 bg-black/[0.06] px-3 py-1.5 text-xl font-bold tracking-[-0.035em] text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)] md:text-2xl">{formatMoney.format(income)}</p>
+            <p className="mt-1 inline-block rounded-[12px] border border-white/45 bg-[#263329] px-3 py-1.5 text-xl font-bold tracking-[-0.035em] text-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)] md:text-2xl">{formatMoney.format(income)}</p>
           </div>
           <div className="rounded-[20px] border border-white/50 bg-white/65 p-4 shadow-[0_3px_8px_rgba(0,0,0,0.12)] md:p-5">
             <p className="text-sm font-semibold text-[#B4533B] md:text-base">รายจ่ายทั้งหมด</p>
-            <p className="mt-1 inline-block rounded-[12px] border border-white/55 bg-black/[0.06] px-3 py-1.5 text-xl font-bold tracking-[-0.035em] text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)] md:text-2xl">{formatMoney.format(expense)}</p>
+            <p className="mt-1 inline-block rounded-[12px] border border-white/45 bg-[#263329] px-3 py-1.5 text-xl font-bold tracking-[-0.035em] text-white shadow-[0_3px_8px_rgba(0,0,0,0.22)] drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)] md:text-2xl">{formatMoney.format(expense)}</p>
           </div>
         </div>
       </section>
