@@ -68,9 +68,9 @@
             h('button',{type:'button',onClick:()=>setSettingsOpen(v=>!v),className:'grid h-11 w-11 place-items-center rounded-2xl border border-[#e8ebed] bg-white text-[#596273] shadow-[0_2px_12px_rgba(0,0,0,0.04)]','aria-label':'ตั้งค่า'},h('i',{className:'fa-solid fa-sliders'})),
             settingsOpen?h('div',{className:'absolute right-0 top-14 z-20 w-52 rounded-2xl border border-[#e8ebed] bg-white p-4 text-sm shadow-xl'},h('p',{className:'mb-1 font-bold text-[#181d2a]'},'การตั้งค่า'),h('p',{className:'text-xs leading-5 text-[#7b8494]'},'การตั้งค่าบัญชีและข้อมูลจะใช้ระบบเดิมของ Moneyeep')):null
           ),
-          h('div',{className:'login-trigger flex items-center gap-2 rounded-2xl border border-[#e8ebed] bg-white px-4 py-3 text-sm font-semibold text-[#181d2a]'},
+          h('div',{className:'flex items-center gap-2 rounded-2xl border border-[#e8ebed] bg-white px-4 py-3 text-sm font-semibold text-[#596273]','aria-label':'เข้าใช้งานโดยไม่ล็อกอิน'},
             h('span',{className:'grid h-7 w-7 place-items-center rounded-full bg-[#eef1ff] text-[#526ce5]'},h('i',{className:'fa-regular fa-user text-xs'})),
-            h('span',{id:'loginButtonText'},'เข้าใช้งานได้เลย')
+            h('span',null,'เข้าใช้งานได้เลย')
           )
         )
       ),
