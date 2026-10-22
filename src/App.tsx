@@ -532,6 +532,8 @@ export default function App() {
         <Home />
       ) : page === "saving" ? (
         <SavingsPage onBack={() => navigate("home")} />
+      ) : page === "health" ? (
+        <HealthDashboard />
       ) : (
         <DetailPage page={page} />
       )}
