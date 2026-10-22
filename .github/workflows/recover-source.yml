@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "src.zip"
+      - "src"
       - "vite.config.ts"
       - ".github/workflows/recover-source.yml"
 permissions:
