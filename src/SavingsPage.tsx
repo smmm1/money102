@@ -78,14 +78,18 @@ function dateKey(date = new Date()) {
 function TransactionModal({
   onClose,
   onSave,
+  initialDate = dateKey(),
+  compact = false,
 }: {
   onClose: () => void
   onSave: (transaction: Omit<Transaction, "id" | "createdAt">) => void
+  initialDate?: string
+  compact?: boolean
 }) {
   const [type, setType] = useState<Transaction["type"]>("income")
   const [amount, setAmount] = useState("")
   const [detail, setDetail] = useState("")
-  const [date, setDate] = useState(dateKey())
+  const [date, setDate] = useState(initialDate)
 
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) =>
@@ -110,9 +114,9 @@ function TransactionModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="transaction-title"
-        className="w-full rounded-t-[32px] bg-[#FCFAF3] p-6 shadow-2xl sm:max-w-[560px] sm:rounded-[32px] sm:p-8"
+        className={`w-full rounded-t-[32px] bg-[#FCFAF3] p-5 shadow-2xl sm:rounded-[28px] sm:p-6 ${compact ? "sm:max-w-[430px]" : "sm:max-w-[560px] sm:p-8"}`}
       >
-        <div className="mb-7 flex items-start justify-between">
+        <div className="mb-5 flex items-start justify-between">
           <div>
             <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[#E2734B]">
               รายการใหม่
@@ -250,8 +254,14 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
     () => Number(localStorage.getItem("lamoon-saving-goal")) || 20000,
   )
   const [goalDraft, setGoalDraft] = useState(String(goal))
+  const [goalTitle, setGoalTitle] = useState(() => localStorage.getItem("lamoon-saving-goal-title") || "เป้าหมายการออม")
+  const [goalTitleDraft, setGoalTitleDraft] = useState(goalTitle)
   const [editingGoal, setEditingGoal] = useState(false)
+  const [editingGoalTitle, setEditingGoalTitle] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [quickDate, setQuickDate] = useState<string | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [historySearch, setHistorySearch] = useState("")
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date()
     return new Date(now.getFullYear(), now.getMonth(), 1)
@@ -291,6 +301,26 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
     }
   }
 
+  const saveGoalTitle = () => {
+    const nextTitle = goalTitleDraft.trim()
+    if (nextTitle) {
+      setGoalTitle(nextTitle)
+      localStorage.setItem("lamoon-saving-goal-title", nextTitle)
+      setEditingGoalTitle(false)
+    }
+  }
+
+  const exportCsv = () => {
+    const rows = [["วันที่", "ประเภท", "รายละเอียด", "จำนวนเงิน"], ...filteredHistory.map((item) => [item.date, item.type === "income" ? "รายรับ" : "รายจ่าย", item.detail, String(item.amount)])]
+    const csv = "\uFEFF" + rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n")
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }))
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `ประวัติออมเงิน-${dateKey()}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   const year = calendarMonth.getFullYear()
   const month = calendarMonth.getMonth()
   const firstWeekday = new Date(year, month, 1).getDay()
@@ -304,6 +334,12 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
   )
   const history = [...transactions]
     .filter((transaction) => !selectedDate || transaction.date === selectedDate)
+    .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+  const filteredHistory = [...transactions]
+    .filter((transaction) => {
+      const query = historySearch.trim().toLocaleLowerCase()
+      return !query || [transaction.date, transaction.detail, transaction.type === "income" ? "รายรับ" : "รายจ่าย", String(transaction.amount)].some((value) => value.toLocaleLowerCase().includes(query))
+    })
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
   const groupedHistory = history.reduce<Record<string, Transaction[]>>(
     (groups, transaction) => {
@@ -327,37 +363,27 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
 
       <section className="relative overflow-hidden rounded-[36px] bg-[#F4C96B] p-7 md:p-10">
         <span className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-black/10" />
-        <div className="relative mb-10 flex items-start justify-between">
+        <div className="relative mb-8 flex flex-wrap items-start justify-between gap-5">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/45">
-              ภาพรวมการเงิน
+              ยอดคงเหลือ
             </p>
             <h1 className="text-4xl font-semibold tracking-[-0.055em] text-[#263329] md:text-6xl">
-              เงินของฉัน
+              {formatMoney.format(balance)}
             </h1>
-          </div>
-          <span className="grid h-14 w-14 place-items-center rounded-[20px] bg-[#FFE6A9]">
-            <MoneyIcon name="wallet" className="h-6 w-6" />
-          </span>
-        </div>
-        <div className="relative grid gap-3 md:grid-cols-3">
-          {[
-            { label: "ยอดคงเหลือ", value: balance, tone: "text-[#263329]" },
-            { label: "รายรับทั้งหมด", value: income, tone: "text-[#487453]" },
-            { label: "รายจ่ายทั้งหมด", value: expense, tone: "text-[#B4533B]" },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-[22px] bg-white/55 p-5 backdrop-blur"
-            >
-              <p className="text-xs font-medium text-black/50">{item.label}</p>
-              <p
-                className={`mt-2 text-2xl font-semibold tracking-[-0.04em] ${item.tone}`}
-              >
-                {formatMoney.format(item.value)}
-              </p>
+            <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <span className="text-[#487453]">รายรับทั้งหมด <strong>{formatMoney.format(income)}</strong></span>
+              <span className="text-[#B4533B]">รายจ่ายทั้งหมด <strong>{formatMoney.format(expense)}</strong></span>
             </div>
-          ))}
+          </div>
+          <div className="flex flex-col items-end gap-3">
+            <span className="grid h-14 w-14 place-items-center rounded-[20px] bg-[#FFE6A9]">
+              <MoneyIcon name="wallet" className="h-6 w-6" />
+            </span>
+            <button onClick={() => setHistoryOpen(true)} className="rounded-full border border-[#263329]/20 bg-white/55 px-4 py-2 text-sm font-medium text-[#263329] transition hover:bg-white">
+              ดูประวัติทั้งหมด
+            </button>
+          </div>
         </div>
       </section>
 
@@ -368,7 +394,16 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
               <MoneyIcon name="target" />
             </span>
             <div>
-              <p className="text-sm text-[#858880]">เป้าหมายการออม</p>
+              {editingGoalTitle ? (
+                <div className="flex flex-wrap gap-2">
+                  <input autoFocus value={goalTitleDraft} onChange={(event) => setGoalTitleDraft(event.target.value)} className="h-9 w-48 rounded-full border border-[#DAD5C7] bg-white px-3 text-sm outline-none focus:border-[#829685]" />
+                  <button onClick={saveGoalTitle} className="h-9 rounded-full bg-[#263329] px-3 text-xs text-white">บันทึกชื่อ</button>
+                </div>
+              ) : (
+                <button onClick={() => { setGoalTitleDraft(goalTitle); setEditingGoalTitle(true) }} className="text-left text-sm text-[#858880] hover:text-[#263329]" title="เปลี่ยนชื่อเป้าหมาย">
+                  {goalTitle} <span className="ml-1 text-xs underline underline-offset-4">เปลี่ยนชื่อ</span>
+                </button>
+              )}
               <p className="mt-0.5 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
                 {formatMoney.format(goal)}
               </p>
@@ -457,7 +492,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
               return day ? (
                 <button
                   key={fullDate}
-                  onClick={() => setSelectedDate(active ? null : fullDate)}
+                  onClick={() => { setSelectedDate(fullDate); setQuickDate(fullDate) }}
                   className={`relative mx-auto my-1 grid h-9 w-9 place-items-center rounded-full text-sm ${
                     active
                       ? "bg-[#263329] text-white"
@@ -581,6 +616,50 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
           onClose={() => setModalOpen(false)}
           onSave={saveTransaction}
         />
+      )}
+      {quickDate && (
+        <TransactionModal
+          compact
+          initialDate={quickDate}
+          onClose={() => setQuickDate(null)}
+          onSave={(transaction) => { saveTransaction(transaction); setQuickDate(null) }}
+        />
+      )}
+      {historyOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#172019]/50 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(event) => event.target === event.currentTarget && setHistoryOpen(false)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="history-title" className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-[#DEDACF] bg-[#FCFAF3] shadow-2xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E2D7] p-5 sm:p-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#E2734B]">ออมเงิน</p>
+                <h2 id="history-title" className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#263329]">ประวัติการเงินทั้งหมด</h2>
+              </div>
+              <button onClick={() => setHistoryOpen(false)} aria-label="ปิดประวัติ" className="grid h-10 w-10 place-items-center rounded-full bg-[#F0ECE1] text-[#70736D] hover:bg-[#E7E1D4]"><MoneyIcon name="close" /></button>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 p-5 sm:px-6">
+              <input value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="ค้นหาวันที่ รายละเอียด ประเภท หรือจำนวนเงิน..." className="h-11 min-w-[220px] flex-1 rounded-full border border-[#DEDACF] bg-white px-4 text-sm outline-none focus:border-[#829685]" />
+              <button onClick={exportCsv} className="h-11 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition hover:bg-[#334437]">ดาวน์โหลด CSV</button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto px-5 pb-5 sm:px-6">
+              <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                <thead className="sticky top-0 bg-[#F0ECE1] text-xs text-[#6F736C]">
+                  <tr><th className="border-b border-[#DEDACF] px-4 py-3 font-semibold">วันที่</th><th className="border-b border-[#DEDACF] px-4 py-3 font-semibold">ประเภท</th><th className="border-b border-[#DEDACF] px-4 py-3 font-semibold">รายละเอียด</th><th className="border-b border-[#DEDACF] px-4 py-3 text-right font-semibold">จำนวนเงิน</th></tr>
+                </thead>
+                <tbody>
+                  {filteredHistory.map((item) => (
+                    <tr key={item.id} className="border-b border-[#E7E2D7] hover:bg-[#F5F2E9]">
+                      <td className="whitespace-nowrap px-4 py-3 text-[#6F736C]">{item.date}</td>
+                      <td className={`whitespace-nowrap px-4 py-3 font-medium ${item.type === "income" ? "text-[#487453]" : "text-[#B4533B]"}`}>{item.type === "income" ? "รายรับ" : "รายจ่าย"}</td>
+                      <td className="px-4 py-3 text-[#263329]">{item.detail}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-[#263329]">{item.type === "income" ? "+" : "−"}{formatMoney.format(item.amount)}</td>
+                    </tr>
+                  ))}
+                  {!filteredHistory.length && <tr><td colSpan={4} className="px-4 py-12 text-center text-[#858880]">ไม่พบรายการที่ตรงกับคำค้น</td></tr>}
+                </tbody>
+                <tfoot className="sticky bottom-0 bg-[#F0ECE1]"><tr><td colSpan={3} className="px-4 py-3 text-sm font-semibold text-[#263329]">รวม {filteredHistory.length} รายการ</td><td className="px-4 py-3 text-right text-xs text-[#6F736C]">รายรับ {formatMoney.format(filteredHistory.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0))} · รายจ่าย {formatMoney.format(filteredHistory.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0))}</td></tr></tfoot>
+              </table>
+            </div>
+          </section>
+        </div>
       )}
       <button
         onClick={() => setModalOpen(true)}
