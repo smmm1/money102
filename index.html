@@ -130,6 +130,7 @@
 (() => {
   const SUPABASE_URL = window.MONEyeepSupabaseConfig?.url || 'https://xuxbvoflbrpypjtredrz.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = window.MONEyeepSupabaseConfig?.publishableKey || 'PASTE_XUXBVOFLBRPYPJTREDRZ_PUBLISHABLE_KEY_HERE';
+  const SUPABASE_CONFIGURED = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY && !SUPABASE_PUBLISHABLE_KEY.includes('PASTE_'));
   if (!window.supabase?.createClient) return;
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   const modal = document.getElementById('authBackdrop');
@@ -163,6 +164,7 @@
   function openModal(path='') {
     intendedPath=allowedPaths.has(path)?path:'';
     setMode('signin'); modal.classList.add('open'); document.body.style.overflow='hidden';
+    if (!SUPABASE_CONFIGURED) showMessage('ระบบเข้าสู่ระบบยังตั้งค่า Supabase Publishable Key ไม่ครบ จึงยังล็อกอินไม่ได้ กรุณาเพิ่มคีย์สาธารณะของโปรเจกต์เดิมใน supabase-config.js ก่อน โดยห้ามใช้ service_role key', true);
     setTimeout(()=>email.focus(),30);
   }
   function closeModal() { modal.classList.remove('open'); document.body.style.overflow=''; }
@@ -183,7 +185,9 @@
     location.href=path;
   });
   form.addEventListener('submit',async e=>{
-    e.preventDefault(); clearMessage(); submit.disabled=true;
+    e.preventDefault(); clearMessage();
+    if (!SUPABASE_CONFIGURED) { showMessage('ยังเข้าสู่ระบบไม่ได้: supabase-config.js ยังใช้คีย์ตัวอย่างอยู่ ให้ใส่ Supabase Publishable Key (หรือ anon public key แบบเดิม) จากโปรเจกต์ xuxbvoflbrpypjtredrz แล้ว Deploy ใหม่', true); return; }
+    submit.disabled=true;
     try {
       const mail=email.value.trim();
       if(mode==='reset') {
