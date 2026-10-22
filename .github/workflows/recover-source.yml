@@ -1,0 +1,34 @@
+name: Recover archived source
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src.zip"
+      - ".github/workflows/recover-source.yml"
+permissions:
+  contents: write
+jobs:
+  recover:
+    if: ${{ !contains(github.event.head_commit.message, '[source-recovery]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Restore source files from archive
+        run: |
+          mkdir -p src
+          unzip -o src.zip -d src
+          echo "Recovered files:"
+          find src -maxdepth 2 -type f -print
+          echo "Imports:"
+          grep -RhoE "from ['\"][^'\"]+['\"]" src --include='*.tsx' --include='*.ts' | sort -u || true
+      - name: Commit recovered source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src
+          if ! git diff --cached --quiet; then
+            git commit -m "[source-recovery] Restore source files from src.zip"
+            git push
+          fi
