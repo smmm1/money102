@@ -270,6 +270,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
   const [modalOpen, setModalOpen] = useState(false)
   const [quickDate, setQuickDate] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const [historySearch, setHistorySearch] = useState("")
   const [calendarMonth, setCalendarMonth] = useState(() => {
     const now = new Date()
@@ -366,34 +367,30 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </button>
       </div>
 
-      <section className="relative overflow-hidden rounded-[36px] bg-[#F4C96B] p-7 md:p-10">
+      <section className="relative overflow-hidden rounded-[36px] bg-[#F4C96B] p-5 sm:p-7 md:p-9">
         <span className="absolute -right-16 -top-20 h-64 w-64 rounded-full border border-black/10" />
-        <div className="relative mb-8 flex items-start justify-between gap-5">
-          <div className="min-w-0 flex-1">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/55">
-              ยอดคงเหลือ
-            </p>
-            <h1 className="mt-1 inline-block min-w-[260px] rounded-[12px] border border-white/55 bg-black/[0.06] px-3 py-1.5 text-xl font-bold tracking-[-0.035em] text-[#263329] md:min-w-[360px] md:text-2xl">
-              {formatMoney.format(balance)}
-            </h1>
-          </div>
-          <div className="flex shrink-0 flex-col items-end gap-3">
-            <span className="grid h-14 w-14 place-items-center rounded-[20px] bg-[#FFE6A9]">
-              <MoneyIcon name="wallet" className="h-6 w-6" />
-            </span>
-            <button onClick={() => setHistoryOpen(true)} className="rounded-full border border-[#263329]/20 bg-white/70 px-4 py-2 text-sm font-medium text-[#263329] transition hover:bg-white">
-              ดูประวัติทั้งหมด
-            </button>
-          </div>
+        <div className="relative mb-5 flex items-center justify-end gap-2 sm:mb-6">
+          <button
+            type="button"
+            onClick={() => setResetConfirmOpen(true)}
+            aria-label="รีเซ็ตยอดทั้งหมด"
+            title="รีเซ็ตยอดทั้งหมด"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#263329]/20 bg-white/70 text-[#263329] transition hover:rotate-[-35deg] hover:bg-white"
+          >
+            <MoneyIcon name="reset" className="h-[18px] w-[18px]" />
+          </button>
+          <button onClick={() => setHistoryOpen(true)} className="rounded-full border border-[#263329]/20 bg-white/70 px-4 py-2.5 text-sm font-medium text-[#263329] transition hover:bg-white">
+            ดูประวัติทั้งหมด
+          </button>
         </div>
-        <div className="relative grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[20px] border border-white/50 bg-white/65 p-4 shadow-[0_3px_8px_rgba(0,0,0,0.12)] md:p-5">
+        <div className="relative mx-auto grid max-w-[860px] gap-4 sm:grid-cols-2 sm:gap-5">
+          <div className="flex min-h-[132px] flex-col justify-center rounded-[24px] border border-white/60 bg-white/75 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.10)] sm:p-6 md:min-h-[150px]">
             <p className="text-sm font-semibold text-[#487453] md:text-base">รายรับทั้งหมด</p>
-            <p className="mt-1 text-xl font-bold tracking-[-0.035em] text-[#263329] md:text-2xl">{formatMoney.format(income)}</p>
+            <p className="mt-2 text-2xl font-bold tracking-[-0.04em] text-[#263329] sm:text-3xl">{formatMoney.format(income)}</p>
           </div>
-          <div className="rounded-[20px] border border-white/50 bg-white/65 p-4 shadow-[0_3px_8px_rgba(0,0,0,0.12)] md:p-5">
+          <div className="flex min-h-[132px] flex-col justify-center rounded-[24px] border border-white/60 bg-white/75 p-5 shadow-[0_4px_12px_rgba(0,0,0,0.10)] sm:p-6 md:min-h-[150px]">
             <p className="text-sm font-semibold text-[#B4533B] md:text-base">รายจ่ายทั้งหมด</p>
-            <p className="mt-1 text-xl font-bold tracking-[-0.035em] text-[#263329] md:text-2xl">{formatMoney.format(expense)}</p>
+            <p className="mt-2 text-2xl font-bold tracking-[-0.04em] text-[#263329] sm:text-3xl">{formatMoney.format(expense)}</p>
           </div>
         </div>
       </section>
@@ -603,6 +600,19 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </div>
       </section>
 
+      {resetConfirmOpen && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-[#172019]/50 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && setResetConfirmOpen(false)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="reset-all-title" className="w-full max-w-[400px] rounded-[26px] border border-[#E1DDCF] bg-[#FCFAF3] p-6 shadow-2xl">
+            <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[#F8DDD4] text-[#B4533B]"><MoneyIcon name="reset" className="h-5 w-5" /></span>
+            <h2 id="reset-all-title" className="text-xl font-semibold text-[#263329]">รีเซ็ตยอดทั้งหมด?</h2>
+            <p className="mt-2 text-sm leading-6 text-[#6F736C]">ระบบจะลบรายการรายรับและรายจ่ายทั้งหมด ทำให้ยอดรวมกลับเป็น ฿0 และล้างประวัติการเงิน การกระทำนี้ย้อนกลับไม่ได้</p>
+            <div className="mt-6 flex gap-2">
+              <button type="button" onClick={() => setResetConfirmOpen(false)} className="h-11 flex-1 rounded-full border border-[#DEDACF] bg-white text-sm text-[#626760]">ยกเลิก</button>
+              <button type="button" onClick={() => { setTransactions([]); localStorage.setItem("lamoon-transactions", "[]"); setGoalStartBalance(0); localStorage.setItem("lamoon-saving-goal-start-balance", "0"); setSelectedDate(null); setQuickDate(null); setResetConfirmOpen(false) }} className="h-11 flex-1 rounded-full bg-[#B4533B] text-sm font-medium text-white hover:bg-[#9D4632]">ยืนยันรีเซ็ต</button>
+            </div>
+          </section>
+        </div>
+      )}
       {editingGoal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#172019]/45 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && setEditingGoal(false)}>
           <section role="dialog" aria-modal="true" aria-labelledby="goal-edit-title" className="w-full max-w-[390px] rounded-[26px] border border-[#E1DDCF] bg-[#FCFAF3] p-5 shadow-2xl sm:p-6">
