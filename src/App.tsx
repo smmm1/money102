@@ -270,7 +270,7 @@ function Home() {
   )
 }
 
-function ProgressRing({ value, label }: { value: number label: string }) {
+function ProgressRing({ value, label }: { value: number; label: string }) {
   return (
     <div
       className="grid h-36 w-36 place-items-center rounded-full"
