@@ -158,6 +158,24 @@ function Home() {
     day: "numeric",
     month: "long",
   }).format(new Date())
+  const [savingOverview, setSavingOverview] = useState({ balance: 0, goal: 20000, hasData: false })
+
+  useEffect(() => {
+    try {
+      const transactions = JSON.parse(localStorage.getItem("lamoon-transactions") || "[]") as {
+        type: "income" | "expense"
+        amount: number
+      }[]
+      const goal = Number(localStorage.getItem("lamoon-saving-goal")) || 20000
+      const income = transactions.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+      const expense = transactions.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+      setSavingOverview({ balance: income - expense, goal, hasData: transactions.length > 0 })
+    } catch {
+      setSavingOverview({ balance: 0, goal: Number(localStorage.getItem("lamoon-saving-goal")) || 20000, hasData: false })
+    }
+  }, [])
+
+  const savingPercent = Math.max(0, Math.min(Math.round((savingOverview.balance / savingOverview.goal) * 100), 100))
 
   return (
     <main>
@@ -169,10 +187,10 @@ function Home() {
               {today}
             </div>
             <h1 className="text-[clamp(2.8rem,7vw,5.7rem)] font-semibold leading-[0.98] tracking-[-0.065em] text-[#263329]">
-              วันนี้ อยากดูแล
+              ยินดี
               <br />
               <span className="font-light italic text-[#E2734B]">
-                เรื่องไหนดี?
+                ต้อนรับ
               </span>
             </h1>
           </div>
@@ -192,9 +210,9 @@ function Home() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               {[
-                ["68%", "การออม"],
-                ["7 ชม.", "การนอน"],
-                ["3", "งานวันนี้"],
+                [savingOverview.hasData ? `${savingPercent}%` : "—", "การออม"],
+                ["—", "การนอน"],
+                ["—", "งานวันนี้"],
               ].map(([value, label]) => (
                 <div
                   key={label}
