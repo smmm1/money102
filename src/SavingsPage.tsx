@@ -257,7 +257,6 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
   const [goalTitle, setGoalTitle] = useState(() => localStorage.getItem("lamoon-saving-goal-title") || "เป้าหมายการออม")
   const [goalTitleDraft, setGoalTitleDraft] = useState(goalTitle)
   const [editingGoal, setEditingGoal] = useState(false)
-  const [editingGoalTitle, setEditingGoalTitle] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [quickDate, setQuickDate] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -292,21 +291,16 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
     setCalendarMonth(new Date(savedDate.getFullYear(), savedDate.getMonth(), 1))
   }
 
-  const saveGoal = () => {
+  const saveGoal = (event: FormEvent) => {
+    event.preventDefault()
     const nextGoal = Number(goalDraft)
-    if (nextGoal > 0) {
-      setGoal(nextGoal)
-      localStorage.setItem("lamoon-saving-goal", String(nextGoal))
-      setEditingGoal(false)
-    }
-  }
-
-  const saveGoalTitle = () => {
     const nextTitle = goalTitleDraft.trim()
-    if (nextTitle) {
+    if (nextGoal > 0 && nextTitle) {
+      setGoal(nextGoal)
       setGoalTitle(nextTitle)
+      localStorage.setItem("lamoon-saving-goal", String(nextGoal))
       localStorage.setItem("lamoon-saving-goal-title", nextTitle)
-      setEditingGoalTitle(false)
+      setEditingGoal(false)
     }
   }
 
@@ -368,7 +362,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
             <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/55">
               ยอดคงเหลือ
             </p>
-            <h1 className="text-4xl font-extrabold tracking-[-0.055em] text-white drop-shadow-sm md:text-6xl">
+            <h1 className="inline-block rounded-[18px] border border-white/45 bg-black/[0.06] px-4 py-2 text-4xl font-extrabold tracking-[-0.055em] text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)] md:px-5 md:py-2.5 md:text-6xl">
               {formatMoney.format(balance)}
             </h1>
           </div>
@@ -400,46 +394,13 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
               <MoneyIcon name="target" />
             </span>
             <div>
-              {editingGoalTitle ? (
-                <div className="flex flex-wrap gap-2">
-                  <input autoFocus value={goalTitleDraft} onChange={(event) => setGoalTitleDraft(event.target.value)} className="h-9 w-48 rounded-full border border-[#DAD5C7] bg-white px-3 text-sm outline-none focus:border-[#829685]" />
-                  <button onClick={saveGoalTitle} className="h-9 rounded-full bg-[#263329] px-3 text-xs text-white">บันทึกชื่อ</button>
-                </div>
-              ) : (
-                <button onClick={() => { setGoalTitleDraft(goalTitle); setEditingGoalTitle(true) }} className="text-left text-sm text-[#858880] hover:text-[#263329]" title="เปลี่ยนชื่อเป้าหมาย">
-                  {goalTitle} <span className="ml-1 text-xs underline underline-offset-4">เปลี่ยนชื่อ</span>
-                </button>
-              )}
+              <p className="text-sm text-[#858880]">{goalTitle}</p>
               <p className="mt-0.5 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
                 {formatMoney.format(goal)}
               </p>
             </div>
           </div>
-          {editingGoal ? (
-            <div className="flex gap-2">
-              <input
-                autoFocus
-                type="number"
-                min="1"
-                value={goalDraft}
-                onChange={(event) => setGoalDraft(event.target.value)}
-                className="h-10 w-36 rounded-full border border-[#DAD5C7] bg-white px-4 text-sm outline-none focus:border-[#829685]"
-              />
-              <button
-                onClick={saveGoal}
-                className="h-10 rounded-full bg-[#263329] px-4 text-sm text-white"
-              >
-                บันทึก
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setEditingGoal(true)}
-              className="rounded-full border border-[#DCD7CA] px-4 py-2 text-xs font-medium text-[#626760] hover:bg-[#F4F1E8]"
-            >
-              แก้ไขเป้าหมาย
-            </button>
-          )}
+          <button onClick={() => { setGoalTitleDraft(goalTitle); setGoalDraft(String(goal)); setEditingGoal(true) }} className="rounded-full border border-[#DCD7CA] bg-white/70 px-4 py-2 text-xs font-medium text-[#626760] transition hover:bg-[#F7F0D9]">แก้ไขเป้าหมาย</button>
         </div>
         <div className="relative h-4 overflow-hidden rounded-full bg-[#EAE6DB]">
           <div
@@ -617,6 +578,21 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </div>
       </section>
 
+      {editingGoal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#172019]/45 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && setEditingGoal(false)}>
+          <section role="dialog" aria-modal="true" aria-labelledby="goal-edit-title" className="w-full max-w-[390px] rounded-[26px] border border-[#E1DDCF] bg-[#FCFAF3] p-5 shadow-2xl sm:p-6">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B18A2E]">เป้าหมายการออม</p><h2 id="goal-edit-title" className="mt-1 text-xl font-semibold text-[#263329]">แก้ไขเป้าหมาย</h2></div>
+              <button type="button" onClick={() => setEditingGoal(false)} aria-label="ปิด" className="grid h-9 w-9 place-items-center rounded-full bg-[#F0ECE1] text-[#70736D]"><MoneyIcon name="close" className="h-4 w-4" /></button>
+            </div>
+            <form onSubmit={saveGoal} className="space-y-4">
+              <label className="block"><span className="mb-1.5 block text-sm font-medium text-[#4C554D]">ชื่อเป้าหมาย</span><input autoFocus required maxLength={60} value={goalTitleDraft} onChange={(event) => setGoalTitleDraft(event.target.value)} className="h-12 w-full rounded-2xl border border-[#DEDACF] bg-white px-4 text-sm outline-none focus:border-[#B79A50] focus:ring-4 focus:ring-[#F4C96B]/20" /></label>
+              <label className="block"><span className="mb-1.5 block text-sm font-medium text-[#4C554D]">ยอดเงินที่ต้องการ</span><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-[#858880]">฿</span><input required type="number" min="1" step="1" value={goalDraft} onChange={(event) => setGoalDraft(event.target.value)} className="h-12 w-full rounded-2xl border border-[#DEDACF] bg-white pl-9 pr-4 text-base font-semibold outline-none focus:border-[#B79A50] focus:ring-4 focus:ring-[#F4C96B]/20" /></div></label>
+              <div className="flex gap-2 pt-1"><button type="button" onClick={() => setEditingGoal(false)} className="h-11 flex-1 rounded-full border border-[#DEDACF] bg-white text-sm text-[#626760]">ยกเลิก</button><button type="submit" className="h-11 flex-1 rounded-full bg-[#263329] text-sm font-medium text-white hover:bg-[#334437]">บันทึกเป้าหมาย</button></div>
+            </form>
+          </section>
+        </div>
+      )}
       {modalOpen && (
         <TransactionModal
           onClose={() => setModalOpen(false)}
