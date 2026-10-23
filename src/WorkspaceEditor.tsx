@@ -48,13 +48,43 @@ function elementAtPath(root: HTMLElement, path: string): HTMLElement | null {
   }
   return current
 }
+
+type EditableTextItem = { key: string; id: string; path: string; text: string; tag: string }
+const protectedWorkspaceIds = ["saving-summary", "saving-goal", "saving-activity", "health-metrics", "health-entry-panels", "health-history", "health-progress", "health-calendar"]
+function scanEditableTexts(overrides: TextOverrides): EditableTextItem[] {
+  const items: EditableTextItem[] = []
+  document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
+    const id = root.dataset.workspaceId
+    if (!id || id.startsWith("note-") || protectedWorkspaceIds.includes(id)) return
+    root.querySelectorAll<HTMLElement>("*").forEach((leaf) => {
+      if (leaf.children.length || !leaf.textContent?.trim() || leaf.closest("input, textarea, select, option, script, style, svg, [data-workspace-editor-ui], [contenteditable='true']")) return
+      if (leaf.classList.contains("workspace-drag-handle") || leaf.classList.contains("workspace-resize-handle")) return
+      const path = textPath(leaf, root)
+      if (!path) return
+      const key = id + ":" + path
+      items.push({ key, id, path, text: overrides[key] ?? leaf.textContent.trim(), tag: leaf.tagName.toLowerCase() })
+    })
+  })
+  return items.filter((item, index, all) => all.findIndex((candidate) => candidate.key === item.key) === index)
+}
+
 function applyTextOverrides(overrides: TextOverrides) {
   document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
-    Object.entries(overrides).forEach(([key, value]) => {
-      const prefix = root.dataset.workspaceId + ":"
-      if (!key.startsWith(prefix)) return
-      const target = elementAtPath(root, key.slice(prefix.length))
-      if (target && target.children.length === 0 && target.textContent !== value && !target.isContentEditable) target.textContent = value
+    const prefix = root.dataset.workspaceId + ":"
+    root.querySelectorAll<HTMLElement>("*").forEach((target) => {
+      if (target.children.length !== 0 || target.isContentEditable || target.closest("[data-workspace-editor-ui], .workspace-drag-handle, .workspace-resize-handle")) return
+      const path = textPath(target, root)
+      if (!path) return
+      const key = prefix + path
+      const override = overrides[key]
+      if (target.hasAttribute("data-workspace-original-text")) {
+        const original = target.getAttribute("data-workspace-original-text") || ""
+        const next = override === undefined ? original : override
+        if (target.textContent !== next) target.textContent = next
+      } else if (override !== undefined) {
+        target.setAttribute("data-workspace-original-text", target.textContent || "")
+        if (target.textContent !== override) target.textContent = override
+      }
     })
   })
 }
@@ -67,6 +97,9 @@ export default function WorkspaceEditor() {
   const [textOverrides, setTextOverrides] = useState<TextOverrides>(readTextOverrides)
   const [savedTextOverrides, setSavedTextOverrides] = useState<TextOverrides>(readTextOverrides)
   const [activeId, setActiveId] = useState("")
+  const [textSearch, setTextSearch] = useState("")
+  const [selectedTextKey, setSelectedTextKey] = useState("")
+  const [textScanVersion, setTextScanVersion] = useState(0)
   const [viewportMobile, setViewportMobile] = useState(isMobile)
   const viewportKey = viewportMobile ? "mobile" : "desktop"
   const activeLayout = draft[viewportKey]
@@ -192,12 +225,18 @@ export default function WorkspaceEditor() {
   }
   const open = () => { const latest = readStore(); const latestStyle = readStyle(); const latestText = readTextOverrides(); setSaved(latest); setDraft(latest); setSavedStyle(latestStyle); setStyle(latestStyle); setSavedTextOverrides(latestText); setTextOverrides(latestText); setMode("editing") }
   const count = useMemo(() => Object.keys(activeLayout).length, [activeLayout])
+  const editableTexts = useMemo(() => scanEditableTexts(textOverrides), [textOverrides, textScanVersion, mode])
+  const filteredTexts = useMemo(() => {
+    const query = textSearch.trim().toLocaleLowerCase()
+    return editableTexts.filter((item) => !query || item.text.toLocaleLowerCase().includes(query) || item.id.toLocaleLowerCase().includes(query))
+  }, [editableTexts, textSearch])
+  const selectedText = editableTexts.find((item) => item.key === selectedTextKey)
   return <>
     {mode === null && <button onClick={open} className="fixed right-5 top-[76px] z-40 inline-flex h-10 items-center gap-2 rounded-full border border-[#DEDACF] bg-[#FCFBF7]/95 px-4 text-sm font-medium text-[#354337] shadow-lg backdrop-blur transition hover:-translate-y-0.5 md:right-8 md:top-[88px]" aria-label="ปรับแต่งหน้าตาและเลย์เอาต์"><span aria-hidden="true">✣</span><span className="hidden sm:inline">จัดหน้าเว็บ</span></button>}
     {mode !== null && <>
       <div className="pointer-events-none fixed inset-0 z-[80] border-2 border-dashed border-[#52785B]/40" aria-hidden="true" />
       <section className="fixed inset-x-3 bottom-3 z-[120] mx-auto max-h-[72vh] max-w-4xl overflow-y-auto rounded-[24px] border border-[#DEDACF] bg-[#FCFBF7]/97 p-4 shadow-[0_24px_90px_rgba(25,35,27,0.25)] backdrop-blur-xl md:bottom-5 md:p-5" data-workspace-editor-ui="true" aria-label="ตัวแก้ไขพื้นที่ทำงาน">
-        <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">CUSTOM WORKSPACE · {viewportMobile ? "MOBILE" : "DESKTOP"}</p><h2 className="mt-1 text-lg font-semibold text-[#263329]">{mode === "editing" ? "จัดวางองค์ประกอบได้ตามใจ" : "ดูตัวอย่างการจัดหน้า"}</h2><p className="mt-1 text-xs leading-5 text-[#777C73]">จับสัญลักษณ์ ⠿ เพื่อย้าย · จับ ↘ เพื่อปรับความกว้าง · ข้อมูลออมเงินและโน้ตไม่ถูกแก้ไข</p></div><span className="rounded-full bg-[#E6F0E7] px-3 py-1.5 text-xs text-[#52785B]">{count} รายการที่ปรับตำแหน่งแล้ว</span></div>
+        <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">CUSTOM WORKSPACE · {viewportMobile ? "MOBILE" : "DESKTOP"}</p><h2 className="mt-1 text-lg font-semibold text-[#263329]">{mode === "editing" ? "จัดวางองค์ประกอบได้ตามใจ" : "ดูตัวอย่างการจัดหน้า"}</h2><p className="mt-1 text-xs leading-5 text-[#777C73]">จับ ⠿ เพื่อย้าย · จับ ↘ เพื่อปรับความกว้าง · แก้คำได้จากโหมดแก้ไขข้อความด้านล่าง</p></div><span className="rounded-full bg-[#E6F0E7] px-3 py-1.5 text-xs text-[#52785B]">{count} รายการที่ปรับตำแหน่งแล้ว</span></div>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           <label className="flex items-center gap-2 rounded-full border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">โทนสี<select value={style.accent} onChange={(event) => setStyle((old) => ({ ...old, accent: event.target.value }))} className="bg-transparent text-xs text-[#263329] outline-none"><option value="sage">เขียวละมุน</option><option value="rose">ชมพูอบอุ่น</option><option value="ocean">ฟ้าเย็น</option><option value="mono">ขาวดำ</option></select></label>
           <label className="flex items-center gap-2 rounded-full border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ระยะห่าง<select value={style.scale} onChange={(event) => setStyle((old) => ({ ...old, scale: event.target.value }))} className="bg-transparent text-xs text-[#263329] outline-none"><option value="comfortable">สบายตา</option><option value="compact">กระชับ</option><option value="spacious">โปร่ง</option></select></label>
@@ -211,7 +250,32 @@ export default function WorkspaceEditor() {
           <label className="flex items-center gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ตัวอักษร<select value={style.letterSpacing} onChange={(event) => setStyle((old) => ({ ...old, letterSpacing: event.target.value }))} className="min-w-0 bg-transparent text-xs text-[#263329] outline-none"><option value="normal">ปกติ</option><option value="-0.02em">ชิด</option><option value="0.03em">ห่าง</option></select></label>
           <button onClick={() => { const reset = { ...defaultStyle }; setStyle(reset); document.documentElement.style.setProperty("--workspace-font-family", "'Noto Sans Thai', sans-serif"); }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#354337]">คืนค่ารูปแบบตัวอักษร</button>
           <button onClick={() => { if (window.confirm("คืนข้อความที่แก้ไขทั้งหมดให้เป็นข้อความเดิมใช่ไหม?")) { setTextOverrides({}); applyTextOverrides({}); } }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#9A722F]">คืนค่าข้อความเดิม</button>
-          <p className="col-span-full text-[11px] leading-5 text-[#858880]">ดับเบิลคลิกข้อความบนหน้าเว็บเพื่อแก้คำได้ · การเปลี่ยนข้อความเป็นการปรับหน้าตา ไม่เปลี่ยนข้อมูลธุรกรรมหรือเนื้อหาโน้ต</p>
+          <div className="col-span-full rounded-2xl border border-[#D9E3D7] bg-[#F5F8F3] p-3 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div><h3 className="text-sm font-semibold text-[#263329]">แก้ไขข้อความและหัวข้อ</h3><p className="mt-1 text-[11px] leading-5 text-[#777C73]">เลือกข้อความจากรายการ แล้วแก้ชื่อหัวข้อ ป้ายกำกับ หรือข้อความบนปุ่มได้ โดยไม่แก้ข้อมูลที่บันทึกไว้</p></div>
+              <button type="button" onClick={() => setTextScanVersion((value) => value + 1)} className="rounded-full border border-[#D9E3D7] bg-white px-3 py-2 text-xs font-medium text-[#354337]">สแกนข้อความใหม่</button>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+              <div className="min-w-0">
+                <input value={textSearch} onChange={(event) => setTextSearch(event.target.value)} placeholder="ค้นหาหัวข้อหรือข้อความ..." aria-label="ค้นหาข้อความที่แก้ไขได้" className="w-full rounded-xl border border-[#DEDACF] bg-white px-3 py-2.5 text-sm text-[#263329] outline-none focus:border-[#9BB39D]" />
+                <div className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[#E6E8E0] bg-white p-1.5">
+                  {filteredTexts.length === 0 ? <p className="px-3 py-4 text-xs text-[#858880]">ไม่พบข้อความที่แก้ไขได้ ลองกดสแกนข้อความใหม่</p> : filteredTexts.map((item) => <button key={item.key} type="button" onClick={() => setSelectedTextKey(item.key)} className={`block w-full rounded-lg px-3 py-2 text-left text-xs transition ${selectedTextKey === item.key ? "bg-[#E4EDE2] text-[#263329]" : "text-[#5F675E] hover:bg-[#F5F6F1]"}`}><span className="block truncate font-medium">{item.text}</span><span className="mt-0.5 block truncate text-[10px] opacity-65">{item.id} · {item.tag}</span></button>)}
+                </div>
+                <p className="mt-1.5 text-[10px] text-[#858880]">พบ {editableTexts.length} ข้อความ · รายการข้อมูลออมเงิน สุขภาพ และโน้ตที่บันทึกไว้ถูกกันออก</p>
+              </div>
+              <div className="min-w-0 rounded-xl border border-[#E6E8E0] bg-white p-3">
+                {selectedText ? <>
+                  <label className="block text-xs font-medium text-[#6D716B]" htmlFor="workspace-text-value">ข้อความใหม่</label>
+                  <textarea id="workspace-text-value" value={textOverrides[selectedText.key] ?? selectedText.text} onChange={(event) => setTextOverrides((old) => ({ ...old, [selectedText.key]: event.target.value }))} rows={3} maxLength={180} className="mt-1.5 w-full resize-y rounded-xl border border-[#DEDACF] bg-[#FCFBF7] px-3 py-2.5 text-sm text-[#263329] outline-none focus:border-[#9BB39D]" />
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => { setTextOverrides((old) => { const next = { ...old }; delete next[selectedText.key]; return next }); }} className="rounded-full border border-[#DEDACF] px-3 py-2 text-xs text-[#6D716B]">คืนข้อความนี้</button>
+                    <button type="button" onClick={() => { const node = document.querySelector<HTMLElement>("[data-workspace-id='" + selectedText.id + "']"); const target = node ? elementAtPath(node, selectedText.path) : null; if (target) { target.scrollIntoView({ behavior: "smooth", block: "center" }); target.style.outline = "2px solid #78977A"; window.setTimeout(() => { if (target.isConnected) target.style.outline = ""; }, 1800); } }} className="rounded-full bg-[#E4EDE2] px-3 py-2 text-xs font-medium text-[#354337]">ชี้ตำแหน่งบนหน้า</button>
+                  </div>
+                </> : <p className="py-5 text-xs leading-5 text-[#858880]">เลือกข้อความจากรายการทางซ้ายเพื่อเริ่มแก้ไขได้เลย</p>}
+              </div>
+            </div>
+          </div>
+          <p className="col-span-full text-[11px] leading-5 text-[#858880]">แก้ข้อความผ่านแผงนี้หรือดับเบิลคลิกข้อความบนหน้าเว็บได้ การแก้ไขจะมีผลหลังจากกดบันทึก และยกเลิกได้ก่อนบันทึก</p>
           <button onClick={() => setMode(mode === "editing" ? "preview" : "editing")} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#354337]">{mode === "editing" ? "ดูตัวอย่าง" : "กลับไปแก้ไข"}</button>
           <button onClick={reset} className="rounded-full border border-[#E6D7C7] bg-white px-4 py-2 text-xs font-medium text-[#9A722F]">คืนค่าตำแหน่ง</button><div className="flex-1" />
           <button onClick={cancel} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#6D716B]">ยกเลิก</button><button onClick={saveLayout} className="rounded-full bg-[#263329] px-5 py-2 text-xs font-medium text-white hover:bg-[#3B4A3E]">บันทึก</button>
