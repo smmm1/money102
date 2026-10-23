@@ -70,11 +70,21 @@ function scanEditableTexts(overrides: TextOverrides): EditableTextItem[] {
 
 function applyTextOverrides(overrides: TextOverrides) {
   document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
-    Object.entries(overrides).forEach(([key, value]) => {
-      const prefix = root.dataset.workspaceId + ":"
-      if (!key.startsWith(prefix)) return
-      const target = elementAtPath(root, key.slice(prefix.length))
-      if (target && target.children.length === 0 && target.textContent !== value && !target.isContentEditable) target.textContent = value
+    const prefix = root.dataset.workspaceId + ":"
+    root.querySelectorAll<HTMLElement>("*").forEach((target) => {
+      if (target.children.length !== 0 || target.isContentEditable || target.closest("[data-workspace-editor-ui], .workspace-drag-handle, .workspace-resize-handle")) return
+      const path = textPath(target, root)
+      if (!path) return
+      const key = prefix + path
+      const override = overrides[key]
+      if (target.hasAttribute("data-workspace-original-text")) {
+        const original = target.getAttribute("data-workspace-original-text") || ""
+        const next = override === undefined ? original : override
+        if (target.textContent !== next) target.textContent = next
+      } else if (override !== undefined) {
+        target.setAttribute("data-workspace-original-text", target.textContent || "")
+        if (target.textContent !== override) target.textContent = override
+      }
     })
   })
 }
