@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react"
 import SavingsPage from "./SavingsPage"
 import NotesPage from "./NotesPage"
-import WorkspaceEditor from "./WorkspaceEditor"
 import CloudAuth, { AccountMenu } from "./CloudAuth"
 
 type Page = "home" | "saving" | "health" | "notes"
@@ -121,6 +120,7 @@ function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => 
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
           <span className="hidden lg:inline">ค้นหา</span><kbd className="hidden rounded-md bg-[#F3F0E7] px-1.5 py-0.5 text-[10px] text-[#858880] lg:inline">⌘ K</kbd>
         </button>
+        <a href="/back.html" className="inline-flex h-10 items-center gap-2 rounded-full bg-[#263329] px-4 text-sm font-medium text-white shadow-sm transition hover:bg-[#3B4A3E]" aria-label="เปิดระบบจัดหน้าเว็บ"><span aria-hidden="true">✣</span><span className="hidden sm:inline">จัดหน้าเว็บ</span><span aria-hidden="true">↗</span></a>
         <AccountMenu />
       </div>
     </header>
@@ -712,7 +712,6 @@ function AppContent() {
         <NotesPage onBack={() => navigate("home")} />
       ) : null}
       <QuickSwitcher open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={navigate} />
-      <WorkspaceEditor />
       <footer data-workspace-id="site-footer" className="mx-auto flex max-w-[1180px] items-center justify-between border-t border-[#DEDACD] px-5 py-7 text-xs text-[#8D9088] md:px-8">
         <span>ละมุน — พื้นที่เล็ก ๆ เพื่อชีวิตที่เป็นระเบียบ</span>
         <button
