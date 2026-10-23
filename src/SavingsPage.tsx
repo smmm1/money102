@@ -683,7 +683,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         onClick={() => setModalOpen(true)}
         aria-label="บันทึกเงิน"
         title="บันทึกเงิน"
-        className="fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#263329] text-white shadow-[0_14px_35px_rgba(38,51,41,0.3)] transition-all hover:-translate-y-1 hover:scale-105 hover:bg-[#334437] md:bottom-9 md:right-9 md:h-[72px] md:w-[72px]"
+        className="fixed bottom-24 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#263329] text-white shadow-[0_14px_35px_rgba(38,51,41,0.3)] transition-all hover:-translate-y-1 hover:scale-105 hover:bg-[#334437] md:bottom-9 md:right-9 md:h-[72px] md:w-[72px]"
       >
         <MoneyIcon name="plus" className="h-6 w-6 md:h-8 md:w-8" />
       </button>
