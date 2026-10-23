@@ -32,8 +32,8 @@ async function api(path: string, init: RequestInit = {}) {
   if (token) headers.set("Authorization", `Bearer ${token}`)
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
   const response = await fetch(`${apiUrl}${path}`, { ...init, headers })
-  const body = await response.json().catch(() => ({})) as { error?: string; [key: string]: unknown }
-  if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`)
+  const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; [key: string]: unknown }
+  if (!response.ok) throw new Error([body.error, body.detail].filter(Boolean).join(': ') || `Request failed (${response.status})`)
   return body
 }
 
