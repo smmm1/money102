@@ -120,7 +120,7 @@ function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => 
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
           <span className="hidden lg:inline">ค้นหา</span><kbd className="hidden rounded-md bg-[#F3F0E7] px-1.5 py-0.5 text-[10px] text-[#858880] lg:inline">⌘ K</kbd>
         </button>
-        <a href="/back.html" className="inline-flex h-10 items-center gap-2 rounded-full bg-[#263329] px-4 text-sm font-medium text-white shadow-sm transition hover:bg-[#3B4A3E]" aria-label="เปิดระบบจัดหน้าเว็บ"><span aria-hidden="true">✣</span><span className="hidden sm:inline">จัดหน้าเว็บ</span><span aria-hidden="true">↗</span></a>
+        {window.self === window.top && <a href="/back.html" title="จัดหน้าเว็บ" className="grid h-10 w-10 place-items-center rounded-full border border-[#E2DED1] bg-white/80 text-[#263329] shadow-sm transition hover:border-[#C9C4B5] hover:bg-white" aria-label="เปิดระบบจัดหน้าเว็บ"><svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></svg></a>}
         <AccountMenu />
       </div>
     </header>
@@ -387,71 +387,8 @@ function Home() {
             </h2>
             <p className="mt-1 text-xs text-[#868980]">เลือกการ์ดที่อยากเห็น และจัดลำดับได้ตามใจ</p>
           </div>
-          <button
-            onClick={() => setCustomizing((open) => !open)}
-            aria-expanded={customizing}
-            className="shrink-0 rounded-full border border-[#DEDACF] bg-white/80 px-4 py-2.5 text-sm font-medium text-[#354337] shadow-sm transition hover:bg-white"
-          >
-            ⚙ ปรับแต่งหน้า
-          </button>
-        </div>
 
-        {customizing && (
-          <section aria-label="ปรับแต่งหน้า Home" className="mb-5 rounded-[26px] border border-[#DEDACF] bg-white/85 p-5 shadow-[0_12px_40px_rgba(48,52,43,0.05)] md:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="font-semibold text-[#263329]">จัดหน้า Home ของคุณ</h3>
-                <p className="mt-1 text-sm text-[#7D8178]">การตั้งค่านี้บันทึกไว้ในเบราว์เซอร์เครื่องนี้</p>
-              </div>
-              <button
-                onClick={() => setLayout({ order: [...DEFAULT_HOME_LAYOUT.order], hidden: [] })}
-                className="rounded-full border border-[#DEDACF] px-3 py-2 text-xs font-medium text-[#6D716B] hover:bg-[#F5F2E9]"
-              >
-                คืนค่าเริ่มต้น
-              </button>
-            </div>
-            <div className="mt-4 space-y-2">
-              {layout.order.map((id, index) => {
-                const section = sections.find((item) => item.id === id)!
-                const isVisible = !layout.hidden.includes(id)
-                return (
-                  <div key={id} className="flex items-center gap-3 rounded-2xl bg-[#F7F5EE] p-3">
-                    <input
-                      type="checkbox"
-                      checked={isVisible}
-                      onChange={(event) => toggleSection(id, event.target.checked)}
-                      aria-label={`แสดงการ์ด${section.title}`}
-                      className="h-4 w-4 accent-[#52785B]"
-                    />
-                    <span className={`${section.iconBg} grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#263329]`}>
-                      <Icon name={section.icon} className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-[#263329]">{section.title}</p>
-                      <p className="text-xs text-[#888B83]">{isVisible ? "แสดงบนหน้าหลัก" : "ซ่อนจากหน้าหลัก"}</p>
-                    </div>
-                    <button
-                      onClick={() => moveSection(id, -1)}
-                      disabled={index === 0}
-                      aria-label={`เลื่อน${section.title}ขึ้น`}
-                      className="grid h-9 w-9 place-items-center rounded-full border border-[#DEDACF] bg-white text-[#4B554C] disabled:opacity-30"
-                    >↑</button>
-                    <button
-                      onClick={() => moveSection(id, 1)}
-                      disabled={index === layout.order.length - 1}
-                      aria-label={`เลื่อน${section.title}ลง`}
-                      className="grid h-9 w-9 place-items-center rounded-full border border-[#DEDACF] bg-white text-[#4B554C] disabled:opacity-30"
-                    >↓</button>
-                  </div>
-                )
-              })}
-            </div>
-            {visibleSections.length === 0 && <p className="mt-3 text-sm text-[#A85D58]">ซ่อนการ์ดทั้งหมดอยู่ — เลือกอย่างน้อยหนึ่งการ์ดเพื่อแสดงบนหน้าหลัก</p>}
-            <div className="mt-4 flex justify-end">
-              <button onClick={() => setCustomizing(false)} className="rounded-full bg-[#263329] px-5 py-2.5 text-sm font-medium text-white">เสร็จแล้ว</button>
-            </div>
-          </section>
-        )}
+        </div>
 
         {visibleSections.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
