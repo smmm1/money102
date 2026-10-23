@@ -72,15 +72,17 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <main className="mx-auto max-w-[1180px] px-5 pb-16 pt-5 md:px-8 md:pt-8">
-      <header className="mb-7 flex flex-wrap items-end justify-between gap-4">
+    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <button onClick={onBack} className="mb-4 block text-sm text-[#747970] hover:text-[#263329]">← กลับหน้าหลัก</button>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8C8D78]">YOUR COMMONPLACE BOOK</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B68A43]">พื้นที่ความคิด · NOTES</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">สมุดสะสมความคิด</h1>
-          <p className="mt-2 text-sm text-[#858880]">เก็บสิ่งที่ชอบ ไอเดีย และความรู้สึกในแต่ละวัน</p>
+          <p className="mt-1.5 text-sm leading-6 text-[#858880]">เก็บสิ่งที่ชอบ ไอเดีย และความรู้สึกในแต่ละวัน</p>
         </div>
-        {!editing && <button onClick={startNew} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition hover:bg-[#3B4A3E]">＋ เขียนโน้ตใหม่</button>}
+        <div className="flex items-center gap-2">
+          <button onClick={onBack} className="inline-flex h-10 items-center rounded-full border border-[#DEDACF] bg-white/75 px-4 text-sm font-medium text-[#626760] hover:bg-white">หน้าหลัก</button>
+          {!editing && <button onClick={startNew} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition hover:bg-[#3B4A3E]">＋ เขียนโน้ตใหม่</button>}
+        </div>
       </header>
 
       {editing && <><button type="button" aria-label="ปิดหน้าต่างโน้ต" onClick={() => { setEditing(false); setEditingId(null) }} className="fixed inset-0 z-40 cursor-default bg-[#1E2921]/40 backdrop-blur-sm" /><form onSubmit={saveEntry} className="fixed left-1/2 top-1/2 z-50 m-0 max-h-[92dvh] w-[calc(100vw-24px)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[#E1DDCF] bg-[#FCFBF7] p-5 shadow-[0_24px_80px_rgba(25,35,27,0.22)] sm:p-7">
