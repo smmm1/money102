@@ -175,3 +175,60 @@ nav button:focus-visible { outline-color: var(--mll-mint); }
   .mll-home { padding-bottom: 1rem; }
   .mll-home [data-workspace-id="home-welcome"] { gap: .75rem; }
 }
+
+
+/* MLL — editorial design system inspired by warm editorial landing pages */
+.mll-global-header{position:sticky;top:0;z-index:40;background:#F3F0E7}
+.mll-announcement{display:flex;align-items:center;justify-content:center;gap:9px;min-height:30px;padding:5px 16px;background:#F87562;color:#141513;font-size:10px;font-weight:600;letter-spacing:.035em;text-align:center}
+.mll-announcement-dot{width:6px;height:6px;border-radius:50%;background:#141513;flex:none}
+.mll-announcement-tail{font-weight:400;opacity:.72}
+.mll-nav-shell{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;max-width:none;min-height:76px;margin:0;padding:12px clamp(18px,4vw,64px);border-bottom:1px solid #141513;background:#F3F0E7}
+.mll-nav-shell>button:first-child{flex:none}
+.mll-nav-shell .group>span:first-child{width:38px;height:38px;border-radius:4px;background:#141513}
+.mll-nav-shell .group>span:last-child{font-size:23px;letter-spacing:-.07em}
+.mll-editorial-nav{align-items:center;gap:clamp(10px,2vw,30px);margin-inline:auto}
+.mll-editorial-nav button{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:10px 0;color:#686B62;font-size:13px;white-space:nowrap}
+.mll-editorial-nav button>span{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.06em;color:#A4A094}
+.mll-editorial-nav button.is-active{color:#141513;font-weight:700}
+.mll-editorial-nav button.is-active>span{color:#F87562}
+.mll-nav-actions{display:flex;align-items:center;gap:8px;flex:none}
+.mll-search-trigger,.mll-builder-trigger{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border:1px solid #D7D2C4;background:transparent;padding:0 12px;color:#141513;font-size:12px}
+.mll-search-trigger kbd{padding:2px 4px;border:1px solid #E0DCCE;color:#7A7B72;font-size:9px}
+.mll-builder-trigger{width:40px;padding:0}
+[data-workspace-id="site-header"]{background:#F3F0E7!important;border-color:#141513!important}
+.mll-home{background:#F3F0E7}
+.mll-home>section{max-width:1320px!important;padding-left:clamp(18px,4vw,64px)!important;padding-right:clamp(18px,4vw,64px)!important}
+.mll-home [data-workspace-id="home-welcome"]>section:first-child{border-radius:3px!important}
+.mll-home [data-workspace-id="home-snapshot"]{border-radius:3px!important;border-color:#141513!important}
+.mll-home [data-workspace-id="home-snapshot"]>div:nth-child(2){border-radius:3px!important}
+.mll-home [data-workspace-id="home-snapshot"]>div:nth-child(3)>div{border-radius:2px!important;border-color:#D8D3C5!important;background:transparent}
+.mll-home [data-workspace-id="home-welcome"]+div{border-top:1px solid #141513;padding-top:24px}
+main[data-workspace-id="saving-page"],main[data-workspace-id="notes-page"],main:has([data-workspace-id="health-metrics"]){max-width:1320px!important;padding-left:clamp(18px,4vw,64px)!important;padding-right:clamp(18px,4vw,64px)!important}
+main[data-workspace-id="saving-page"]>header,main[data-workspace-id="notes-page"]>header,main:has([data-workspace-id="health-metrics"])>header{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;min-height:230px;margin:0 0 30px!important;padding:36px clamp(22px,4vw,52px)!important;border:1px solid #141513;background:#FCFBF7}
+main[data-workspace-id="saving-page"]>header:before,main[data-workspace-id="notes-page"]>header:before,main:has([data-workspace-id="health-metrics"])>header:before{content:"";position:absolute;z-index:-1;right:4%;top:18%;width:170px;height:170px;border:1px solid #DEDACF;border-radius:50%;box-shadow:0 0 0 26px #F3F0E7,0 0 0 27px #DEDACF,0 0 0 56px #FCFBF7,0 0 0 57px #DEDACF;opacity:.75;pointer-events:none}
+main[data-workspace-id="saving-page"]>header h1,main[data-workspace-id="notes-page"]>header h1,main:has([data-workspace-id="health-metrics"])>header h1{position:relative;z-index:1;max-width:680px;font-size:clamp(2.6rem,6vw,5.2rem)!important;line-height:.98!important;letter-spacing:-.07em!important}
+main[data-workspace-id="saving-page"]>header p,main[data-workspace-id="notes-page"]>header p,main:has([data-workspace-id="health-metrics"])>header p{position:relative;z-index:1}
+main[data-workspace-id="saving-page"]>header>div:last-child,main[data-workspace-id="notes-page"]>header>div:last-child{position:relative;z-index:2}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"],main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"],main[data-workspace-id="notes-page"] [data-workspace-id="notes-filters"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id]{border-radius:3px!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"],main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div,main[data-workspace-id="notes-page"] [data-workspace-id="notes-filters"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-entry-panels"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-history"]{border-color:#D8D3C5;background:#FCFBF7}
+main[data-workspace-id="notes-page"] article{border-radius:3px!important;box-shadow:none!important}
+main[data-workspace-id="notes-page"] article:hover{border-color:#F87562!important;transform:translateY(-3px)}
+main[data-workspace-id="notes-page"] article:nth-child(3n+1){background:#FCFBF7}
+main[data-workspace-id="notes-page"] article:nth-child(3n+2){background:#FBF1C9}
+main[data-workspace-id="notes-page"] article:nth-child(3n){background:#E4F2E7}
+main[data-workspace-id="saving-page"] section,main:has([data-workspace-id="health-metrics"]) section{box-shadow:none}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div{border-radius:3px!important;box-shadow:none;border-color:#141513;background:#FCFBF7}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div:first-child{border-top:5px solid #7BC596}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div:last-child{border-top:5px solid #F87562}
+main[data-workspace-id="saving-page"] button,main[data-workspace-id="notes-page"] button,main:has([data-workspace-id="health-metrics"]) button{transition:background-color .18s,border-color .18s,color .18s,transform .18s}
+main[data-workspace-id="saving-page"] button:hover,main[data-workspace-id="notes-page"] button:hover,main:has([data-workspace-id="health-metrics"]) button:hover{transform:translateY(-1px)}
+main[data-workspace-id="saving-page"] input,main[data-workspace-id="saving-page"] textarea,main[data-workspace-id="saving-page"] select,main[data-workspace-id="notes-page"] input,main[data-workspace-id="notes-page"] textarea,main:has([data-workspace-id="health-metrics"]) input,main:has([data-workspace-id="health-metrics"]) textarea,main:has([data-workspace-id="health-metrics"]) select{border-radius:3px!important}
+[data-workspace-id="site-footer"]{max-width:none!important;padding-left:clamp(18px,4vw,64px)!important;padding-right:clamp(18px,4vw,64px)!important;border-color:#141513!important}
+@media(max-width:767px){
+ .mll-announcement{font-size:9px;min-height:28px;gap:6px}.mll-announcement-tail{display:none}
+ .mll-nav-shell{min-height:64px;padding:10px 16px;gap:8px}.mll-nav-shell .group{gap:8px}.mll-nav-shell .group>span:first-child{width:34px;height:34px}.mll-nav-shell .group>span:last-child{font-size:20px}
+ .mll-nav-actions{gap:5px}.mll-search-trigger{width:38px;padding:0}.mll-search-trigger span,.mll-search-trigger kbd{display:none}.mll-builder-trigger{width:36px;min-height:38px}
+ main[data-workspace-id="saving-page"]>header,main[data-workspace-id="notes-page"]>header,main:has([data-workspace-id="health-metrics"])>header{align-items:flex-start;flex-direction:column;min-height:205px;padding:25px 20px!important}
+ main[data-workspace-id="saving-page"]>header:before,main[data-workspace-id="notes-page"]>header:before,main:has([data-workspace-id="health-metrics"])>header:before{right:10px;top:25px;width:80px;height:80px;box-shadow:0 0 0 15px #F3F0E7,0 0 0 16px #DEDACF,0 0 0 32px #FCFBF7,0 0 0 33px #DEDACF}
+ main[data-workspace-id="saving-page"]>header h1,main[data-workspace-id="notes-page"]>header h1,main:has([data-workspace-id="health-metrics"])>header h1{font-size:clamp(2.3rem,12vw,3.6rem)!important}
+}
