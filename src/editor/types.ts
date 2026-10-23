@@ -54,6 +54,12 @@ export function isSafeLink(value: unknown, image = false): value is string {
   return /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(value);
 }
 
+export function isSafeStyleValue(key: string, value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 120 || !CSS_VALUE_PATTERN.test(value)) return false;
+  if (key === "textAlign") return ["left", "center", "right"].includes(value);
+  return STYLE_KEYS.has(key as keyof ElementStyles);
+}
+
 export function validateEditorDocument(value: unknown): value is EditorDocument {
   if (!value || typeof value !== "object") return false;
   const doc = value as Partial<EditorDocument>;
@@ -74,8 +80,7 @@ export function validateEditorDocument(value: unknown): value is EditorDocument 
     if (item.src !== undefined && !isSafeLink(item.src, true)) return false;
     if (!item.styles || typeof item.styles !== "object" || Array.isArray(item.styles)) return false;
     for (const [key, styleValue] of Object.entries(item.styles)) {
-      if (!STYLE_KEYS.has(key as keyof ElementStyles) || typeof styleValue !== "string" || styleValue.length > 120 || !CSS_VALUE_PATTERN.test(styleValue)) return false;
-      if (key === "textAlign" && !["left", "center", "right"].includes(styleValue)) return false;
+      if (!isSafeStyleValue(key, styleValue)) return false;
     }
     if (!Array.isArray(item.children) || item.children.length > 200) return false;
     return item.children.every((child) => visit(child, depth + 1));
