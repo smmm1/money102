@@ -12,7 +12,7 @@ function download(filename: string, content: string, type: string) {
   anchor.href = url; anchor.download = filename; anchor.click();
   URL.revokeObjectURL(url);
 }
-function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] || char); }
+function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] || char)); }
 function renderHtml(node: ReturnType<typeof useEditorStore>["document"]["root"]): string {
   const style = Object.entries(node.styles).map(([key, value]) => {
     const cssKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
