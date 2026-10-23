@@ -25,6 +25,7 @@ export default function WorkspaceEditor() {
   const [saved, setSaved] = useState<LayoutStore>(readStore)
   const [draft, setDraft] = useState<LayoutStore>(readStore)
   const [style, setStyle] = useState(readStyle)
+  const [savedStyle, setSavedStyle] = useState(readStyle)
   const [activeId, setActiveId] = useState("")
   const [viewportMobile, setViewportMobile] = useState(isMobile)
   const viewportKey = viewportMobile ? "mobile" : "desktop"
@@ -49,7 +50,6 @@ export default function WorkspaceEditor() {
   useEffect(() => {
     document.documentElement.dataset.workspaceScale = style.scale
     document.documentElement.dataset.workspaceAccent = style.accent
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(style))
   }, [style])
   useEffect(() => {
     if (mode !== "editing") return
@@ -107,14 +107,14 @@ export default function WorkspaceEditor() {
     return () => cleanup.forEach((fn) => fn())
   }, [mode, draft, viewportKey])
   const saveLayout = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); setSaved(draft); setMode(null); setActiveId(""); applyLayout(draft[viewportKey])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); localStorage.setItem(SETTINGS_KEY, JSON.stringify(style)); setSaved(draft); setSavedStyle(style); setMode(null); setActiveId(""); applyLayout(draft[viewportKey])
   }
-  const cancel = () => { setDraft(saved); applyLayout(saved[viewportKey]); setMode(null); setActiveId("") }
+  const cancel = () => { setDraft(saved); setStyle(savedStyle); applyLayout(saved[viewportKey]); setMode(null); setActiveId("") }
   const reset = () => {
     if (!window.confirm("คืนค่าตำแหน่งและขนาดขององค์ประกอบทั้งหมดใช่ไหม? ข้อมูลออมเงินและโน้ตจะไม่ถูกลบ")) return
     const clean = emptyStore(); setDraft(clean); setSaved(clean); localStorage.removeItem(STORAGE_KEY); applyLayout(clean[viewportKey]); setActiveId("")
   }
-  const open = () => { const latest = readStore(); setSaved(latest); setDraft(latest); setMode("editing") }
+  const open = () => { const latest = readStore(); const latestStyle = readStyle(); setSaved(latest); setDraft(latest); setSavedStyle(latestStyle); setStyle(latestStyle); setMode("editing") }
   const count = useMemo(() => Object.keys(activeLayout).length, [activeLayout])
   return <>
     {mode === null && <button onClick={open} className="fixed right-5 top-[76px] z-40 inline-flex h-10 items-center gap-2 rounded-full border border-[#DEDACF] bg-[#FCFBF7]/95 px-4 text-sm font-medium text-[#354337] shadow-lg backdrop-blur transition hover:-translate-y-0.5 md:right-8 md:top-[88px]" aria-label="ปรับแต่งหน้าตาและเลย์เอาต์"><span aria-hidden="true">✣</span><span className="hidden sm:inline">จัดหน้าเว็บ</span></button>}
