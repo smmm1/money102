@@ -400,6 +400,29 @@ export default function WorkspaceEditor() {
           <button onClick={() => { const reset = { ...defaultStyle }; setStyle(reset); document.documentElement.style.setProperty("--workspace-font-family", "'Noto Sans Thai', sans-serif"); }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#354337]">คืนค่ารูปแบบตัวอักษร</button>
           <button onClick={() => { if (window.confirm("คืนข้อความที่แก้ไขทั้งหมดให้เป็นข้อความเดิมใช่ไหม?")) { setTextOverrides({}); setTextSizes({}); applyTextOverrides({}, {}); } }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#9A722F]">คืนค่าข้อความเดิม</button>
           <div className="col-span-full rounded-2xl border border-[#D9E3D7] bg-[#F5F8F3] p-3 sm:p-4">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div><h3 className="text-sm font-semibold text-[#263329]">แก้ไขหน้าตาองค์ประกอบเดิม</h3><p className="mt-1 text-[11px] leading-5 text-[#777C73]">เลือกส่วนของหน้าเพื่อเปลี่ยนสีพื้นหลัง สีข้อความ ระยะห่าง มุมโค้ง และไอคอนแรกที่พบในส่วนนั้น</p></div>
+              <button type="button" onClick={() => setTextScanVersion((value) => value + 1)} className="rounded-full border border-[#D9E3D7] bg-white px-3 py-2 text-xs font-medium text-[#354337]">สแกนส่วนหน้าใหม่</button>
+            </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+              <div className="min-w-0">
+                <label className="block text-xs font-medium text-[#6D716B]" htmlFor="workspace-element-id">ส่วนของหน้า</label>
+                <select id="workspace-element-id" value={activeId} onChange={(event) => setActiveId(event.target.value)} className="mt-1.5 w-full rounded-xl border border-[#DEDACF] bg-white px-3 py-2.5 text-xs text-[#263329]">
+                  <option value="">เลือกส่วนที่ต้องการแก้ไข…</option>
+                  {workspaceElements.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+                </select>
+                <p className="mt-2 text-[10px] leading-5 text-[#858880]">รองรับส่วนที่มี data-workspace-id บนหน้าเดิม หากไม่พบองค์ประกอบให้เพิ่ม ID ในโค้ดหน้าเว็บก่อน</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center justify-between gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">พื้นหลัง <input aria-label="สีพื้นหลังองค์ประกอบ" type="color" value={activeElementOverride.backgroundColor || "#ffffff"} onChange={(event) => setActiveElementOverride({ backgroundColor: event.target.value })} className="h-7 w-9 border-0 bg-transparent p-0" disabled={!activeId}/></label>
+                <label className="flex items-center justify-between gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">สีข้อความ <input aria-label="สีข้อความองค์ประกอบ" type="color" value={activeElementOverride.color || "#263329"} onChange={(event) => setActiveElementOverride({ color: event.target.value })} className="h-7 w-9 border-0 bg-transparent p-0" disabled={!activeId}/></label>
+                <label className="flex flex-col gap-1 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">Padding<input aria-label="ระยะห่างองค์ประกอบ" value={activeElementOverride.padding || ""} onChange={(event) => setActiveElementOverride({ padding: event.target.value })} placeholder="เช่น 16px" className="min-w-0 rounded-lg border border-[#E7E8E1] px-2 py-1.5 text-xs" disabled={!activeId}/></label>
+                <label className="flex flex-col gap-1 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">มุมโค้ง<input aria-label="มุมโค้งองค์ประกอบ" value={activeElementOverride.borderRadius || ""} onChange={(event) => setActiveElementOverride({ borderRadius: event.target.value })} placeholder="เช่น 16px" className="min-w-0 rounded-lg border border-[#E7E8E1] px-2 py-1.5 text-xs" disabled={!activeId}/></label>
+                <label className="col-span-full flex flex-col gap-1 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">แทนที่ไอคอนด้วย Emoji<input aria-label="แทนที่ไอคอนองค์ประกอบ" value={activeElementOverride.icon || ""} onChange={(event) => setActiveElementOverride({ icon: event.target.value })} placeholder="เช่น ✦ ♡ 🐷 (เว้นว่างเพื่อคืนไอคอนเดิม)" maxLength={12} className="min-w-0 rounded-lg border border-[#E7E8E1] px-2 py-1.5 text-xs" disabled={!activeId}/></label>
+              </div>
+            </div>
+          </div>
+          <div className="col-span-full rounded-2xl border border-[#D9E3D7] bg-[#F5F8F3] p-3 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div><h3 className="text-sm font-semibold text-[#263329]">แก้ไขข้อความและหัวข้อ</h3><p className="mt-1 text-[11px] leading-5 text-[#777C73]">กดปากกา ✎ ที่อยู่ข้างข้อความบนหน้าเว็บ หรือเลือกจากรายการ แล้วปรับข้อความและขนาดได้ทันที</p></div>
               <button type="button" onClick={() => setTextScanVersion((value) => value + 1)} className="rounded-full border border-[#D9E3D7] bg-white px-3 py-2 text-xs font-medium text-[#354337]">สแกนข้อความใหม่</button>
