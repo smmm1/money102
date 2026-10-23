@@ -20,6 +20,7 @@ export function AccountMenu() {
 }
 type LocalSnapshot = Record<string, string>
 const TOKEN_KEY = "money102_cloudflare_session"
+const OWNER_KEY = "money102_cloudflare_owner"
 const LOCAL_PREFIX = "lamoon-"
 const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || "https://money102-api.s2mtha16.workers.dev").replace(/\/$/, "")
 
@@ -93,13 +94,21 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       if (cancelled) return
       const localSnapshot = readLocalSnapshot()
       const cloudSnapshot = result.payload && typeof result.payload === "object" ? result.payload : {}
-      const mergedSnapshot = { ...localSnapshot, ...cloudSnapshot }
-      const migrationResponse = await api("/api/state", {
+      const previousOwner = localStorage.getItem(OWNER_KEY)
+      const sameAccount = !previousOwner || previousOwner === user.id
+      const mergedSnapshot = sameAccount ? { ...localSnapshot, ...cloudSnapshot } : cloudSnapshot
+
+      // Keep local app data isolated when switching accounts in the same browser.
+      if (!sameAccount) {
+        Object.keys(localSnapshot).forEach((key) => localStorage.removeItem(key))
+      }
+      await api("/api/state", {
         method: "PUT",
         body: JSON.stringify({ payload: mergedSnapshot }),
       })
       if (cancelled) return
       restoreSnapshot(mergedSnapshot)
+      localStorage.setItem(OWNER_KEY, user.id)
       setCloudReady(true)
     })().catch((error: unknown) => {
       if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
