@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import SavingsPage from "./SavingsPage"
 import NotesPage from "./NotesPage"
 import WorkspaceEditor from "./WorkspaceEditor"
-import CloudAuth from "./CloudAuth"
+import CloudAuth, { AccountMenu } from "./CloudAuth"
 
 type Page = "home" | "saving" | "health" | "notes"
 
@@ -121,7 +121,7 @@ function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => 
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
           <span className="hidden lg:inline">ค้นหา</span><kbd className="hidden rounded-md bg-[#F3F0E7] px-1.5 py-0.5 text-[10px] text-[#858880] lg:inline">⌘ K</kbd>
         </button>
-        <div aria-label="พื้นที่ส่วนตัว" className="grid h-10 w-10 place-items-center rounded-full bg-[#F0C8B6] text-sm font-semibold text-[#733F34]">L</div>
+        <AccountMenu />
       </div>
     </header>
   )
