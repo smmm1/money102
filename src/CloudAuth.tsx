@@ -1,6 +1,24 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react"
 
 type AppUser = { id: string; email: string }
+const AuthAccountContext = createContext<{ user: AppUser; signOut: () => Promise<void> } | null>(null)
+
+export function AccountMenu() {
+  const account = useContext(AuthAccountContext)
+  const [open, setOpen] = useState(false)
+  if (!account) return null
+  const { user, signOut } = account
+  return (
+    <div className="relative">
+      <button type="button" aria-label="เปิดเมนูบัญชี" aria-expanded={open} onClick={() => setOpen(value => !value)} className="group flex items-center gap-2 rounded-full border border-[#E5E0D3] bg-white/85 py-1.5 pl-1.5 pr-2.5 shadow-[0_4px_16px_rgba(38,51,41,0.06)] backdrop-blur-xl transition hover:border-[#C9D4C5] hover:bg-white hover:shadow-[0_8px_24px_rgba(38,51,41,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A9C83]/50 sm:gap-2.5 sm:pl-2 sm:pr-3">
+        <span className="relative grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#E8EEE5] to-[#C8D9C7] text-[11px] font-bold tracking-wide text-[#35513A] ring-1 ring-white sm:h-9 sm:w-9">{user.email.split("@")[0].slice(0, 2).toUpperCase()}<span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#6F9B70]" /></span>
+        <span className="hidden min-w-0 text-left sm:block"><span className="block max-w-[145px] truncate text-xs font-semibold text-[#344236]">{user.email}</span><span className="mt-0.5 block text-[10px] font-medium text-[#7D897B]">พื้นที่ส่วนตัว</span></span>
+        <svg aria-hidden="true" className={`h-4 w-4 shrink-0 text-[#7B8579] transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m7 10 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </button>
+      {open && <><button type="button" aria-label="ปิดเมนูบัญชี" className="fixed inset-0 z-[-1] cursor-default" onClick={() => setOpen(false)} /><div className="absolute right-0 top-full z-[120] mt-2.5 w-[min(19rem,calc(100vw-2rem))] overflow-hidden rounded-[22px] border border-[#E5E0D3] bg-[#FCFBF7] p-2 shadow-[0_20px_60px_rgba(38,51,41,0.16)]"><div className="rounded-[16px] bg-[#F1F3EB] px-3.5 py-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8A967F]">บัญชีของคุณ</p><p className="mt-1 break-all text-sm font-semibold text-[#344236]">{user.email}</p><div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#D9E4D4] bg-white/80 px-2.5 py-1 text-[10px] font-medium text-[#55745A]"><span className="h-1.5 w-1.5 rounded-full bg-[#6F9B70]" /> เชื่อมต่อ Cloudflare แล้ว</div></div><button type="button" onClick={() => { setOpen(false); void signOut() }} className="mt-1.5 flex w-full items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-left text-sm font-medium text-[#8D5148] transition hover:bg-[#F8EAE6]"><span className="grid h-8 w-8 place-items-center rounded-xl bg-[#F6E4DF] text-[#8D5148]"><svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 17l5-5-5-5M15 12H3" /><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></svg></span><span>ออกจากระบบ</span></button></div></>}
+    </div>
+  )
+}
 type LocalSnapshot = Record<string, string>
 const TOKEN_KEY = "money102_cloudflare_session"
 const LOCAL_PREFIX = "lamoon-"
@@ -171,51 +189,8 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     </section>
   </main>
   if (!cloudReady) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5"><section className="max-w-xl rounded-3xl bg-white p-7 shadow-sm"><p className="text-sm leading-6 text-[#5F665D]">{cloudError || "กำลังโหลดข้อมูลของคุณจาก Cloudflare D1…"}</p><button onClick={() => { void signOut() }} className="mt-4 rounded-full border px-4 py-2 text-sm">ออกจากระบบ</button></section></main>
-  return <>
-    <div className="fixed right-4 top-4 z-[100]">
-      <button
-        type="button"
-        aria-label="เปิดเมนูบัญชี"
-        aria-expanded={accountMenuOpen}
-        onClick={() => setAccountMenuOpen((open) => !open)}
-        className="group flex items-center gap-2.5 rounded-full border border-[#E5E0D3] bg-white/90 py-1.5 pl-1.5 pr-3 shadow-[0_8px_28px_rgba(38,51,41,0.09)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:border-[#C9D4C5] hover:shadow-[0_12px_32px_rgba(38,51,41,0.13)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A9C83]/50 sm:gap-3 sm:pl-2"
-      >
-        <span className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#E8EEE5] to-[#C8D9C7] text-xs font-bold tracking-wide text-[#35513A] ring-1 ring-white">
-          {user.email.split("@")[0].slice(0, 2).toUpperCase()}
-          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#6F9B70]" />
-        </span>
-        <span className="hidden min-w-0 text-left sm:block">
-          <span className="block max-w-[150px] truncate text-xs font-semibold text-[#344236]">{user.email}</span>
-          <span className="mt-0.5 block text-[10px] font-medium tracking-wide text-[#7D897B]">พื้นที่ส่วนตัว</span>
-        </span>
-        <svg aria-hidden="true" className={`h-4 w-4 shrink-0 text-[#7B8579] transition-transform ${accountMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m7 10 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-      </button>
-      {accountMenuOpen && (
-        <>
-          <button type="button" aria-label="ปิดเมนูบัญชี" className="fixed inset-0 -z-10 cursor-default" onClick={() => setAccountMenuOpen(false)} />
-          <div className="absolute right-0 mt-2.5 w-[min(19rem,calc(100vw-2rem))] overflow-hidden rounded-[22px] border border-[#E5E0D3] bg-[#FCFBF7] p-2 shadow-[0_20px_60px_rgba(38,51,41,0.16)]">
-            <div className="rounded-[16px] bg-[#F1F3EB] px-3.5 py-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#8A967F]">บัญชีของคุณ</p>
-              <p className="mt-1 break-all text-sm font-semibold text-[#344236]">{user.email}</p>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#D9E4D4] bg-white/80 px-2.5 py-1 text-[10px] font-medium text-[#55745A]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#6F9B70]" /> เชื่อมต่อ Cloudflare แล้ว
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => { setAccountMenuOpen(false); void signOut() }}
-              className="mt-1.5 flex w-full items-center gap-2.5 rounded-[14px] px-3.5 py-3 text-left text-sm font-medium text-[#8D5148] transition hover:bg-[#F8EAE6]"
-            >
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[#F6E4DF] text-[#8D5148]">
-                <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10 17l5-5-5-5M15 12H3" /><path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" /></svg>
-              </span>
-              <span>ออกจากระบบ</span>
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+  return <AuthAccountContext.Provider value={{ user, signOut }}>
     {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}
     {children}
-  </>
+  </AuthAccountContext.Provider>
 }
