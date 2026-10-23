@@ -113,7 +113,7 @@ export const editorActions = {
     emit();
   },
   importDocument(document: EditorDocument) {
-    const imported = { ...document, page: makePageId(), updatedAt: new Date().toISOString() };
+    const imported = { ...document, page: makePageId(), updatedAt: new Date().toISOString(), root: refreshNodeIds(document.root, true) };
     commitDocument(imported, false);
     state = { ...state, selectedId: "root", history: [], future: [] };
     emit();
