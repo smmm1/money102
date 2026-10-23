@@ -153,7 +153,10 @@ const sections = [
 type HomeSnapshot = {
   income: number
   expense: number
+  monthIncome: number
+  monthExpense: number
   goal: number
+  goalStartBalance: number
   healthWeight: number | null
   todayExerciseCount: number
   todayWellness: boolean
@@ -165,7 +168,10 @@ type HomeSnapshot = {
 const EMPTY_HOME_SNAPSHOT: HomeSnapshot = {
   income: 0,
   expense: 0,
+  monthIncome: 0,
+  monthExpense: 0,
   goal: 20000,
+  goalStartBalance: 0,
   healthWeight: null,
   todayExerciseCount: 0,
   todayWellness: false,
@@ -184,9 +190,12 @@ function readHomeSnapshot(): HomeSnapshot {
     const transactions = JSON.parse(localStorage.getItem("lamoon-transactions") || "[]") as {
       type: "income" | "expense"; amount: number; date?: string
     }[]
-    snapshot.income = transactions.filter((item) => item.date?.startsWith(monthPrefix) && item.type === "income").reduce((sum, item) => sum + Number(item.amount || 0), 0)
-    snapshot.expense = transactions.filter((item) => item.date?.startsWith(monthPrefix) && item.type === "expense").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    snapshot.income = transactions.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    snapshot.expense = transactions.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    snapshot.monthIncome = transactions.filter((item) => item.date?.startsWith(monthPrefix) && item.type === "income").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    snapshot.monthExpense = transactions.filter((item) => item.date?.startsWith(monthPrefix) && item.type === "expense").reduce((sum, item) => sum + Number(item.amount || 0), 0)
     snapshot.goal = Number(localStorage.getItem("lamoon-saving-goal")) || 20000
+    snapshot.goalStartBalance = Number(localStorage.getItem("lamoon-saving-goal-start-balance")) || 0
   } catch {}
 
   try {
@@ -228,8 +237,10 @@ function Home() {
   const money = (amount: number) => new Intl.NumberFormat("th-TH", {
     style: "currency", currency: "THB", maximumFractionDigits: 0,
   }).format(amount)
-  const monthNet = snapshot.income - snapshot.expense
-  const savingPercent = Math.max(0, Math.min(Math.round((monthNet / snapshot.goal) * 100), 100))
+  const monthNet = snapshot.monthIncome - snapshot.monthExpense
+  const currentBalance = snapshot.income - snapshot.expense
+  const goalProgress = Math.max(0, currentBalance - snapshot.goalStartBalance)
+  const savingPercent = Math.max(0, Math.min(Math.round((goalProgress / snapshot.goal) * 100), 100))
 
   useEffect(() => {
     const refresh = () => {
@@ -254,7 +265,7 @@ function Home() {
 
   const cardDetails: Record<(typeof sections)[number]["id"], string> = {
     saving: snapshot.income + snapshot.expense > 0
-      ? `เดือนนี้รับเข้า ${money(snapshot.income)} · จ่ายออก ${money(snapshot.expense)}`
+      ? `เดือนนี้รับเข้า ${money(snapshot.monthIncome)} · จ่ายออก ${money(snapshot.monthExpense)}`
       : "ยังไม่มีรายการเงินของเดือนนี้",
     health: snapshot.healthWeight !== null
       ? `น้ำหนักล่าสุด ${snapshot.healthWeight} กก. · วันนี้ออกกำลัง ${snapshot.todayExerciseCount} ครั้ง`
@@ -296,7 +307,7 @@ function Home() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
-                <p className="font-semibold text-[#263329]">{snapshot.income + snapshot.expense > 0 ? `${savingPercent}%` : "—"}</p>
+                <p className="font-semibold text-[#263329]">{snapshot.goal > 0 && (snapshot.income + snapshot.expense > 0 || snapshot.goalStartBalance > 0) ? `${savingPercent}%` : "—"}</p>
                 <p className="mt-0.5 text-xs text-[#83857D]">เป้าเงินเดือนนี้</p>
               </div>
               <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
@@ -308,7 +319,7 @@ function Home() {
                 <p className="mt-0.5 text-xs text-[#83857D]">โน้ตทั้งหมด</p>
               </div>
             </div>
-            <p className="mt-4 text-xs text-[#858880]">ยอดสุทธิเดือนนี้ {money(monthNet)}</p>
+            <p className="mt-4 text-xs text-[#858880]">ยอดคงเหลือทั้งหมด {money(currentBalance)} · สุทธิเดือนนี้ {money(monthNet)}</p>
           </div>
         </div>
 
