@@ -10,7 +10,7 @@ export function AccountMenu() {
   const { user, signOut } = account
   return (
     <div className="relative">
-      <button type="button" aria-label="เปิดเมนูบัญชี" aria-expanded={open} onClick={() => setOpen(value => !value)} className="group grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#E5E0D3] bg-white/85 p-0 shadow-[0_2px_8px_rgba(38,51,41,0.05)] backdrop-blur transition hover:border-[#C9D4C5] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A9C83]/50"
+      <button type="button" aria-label="เปิดเมนูบัญชี" aria-expanded={open} onClick={() => setOpen(value => !value)} className="group grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[#E5E0D3] bg-white/85 p-0 shadow-[0_2px_8px_rgba(38,51,41,0.05)] backdrop-blur transition hover:border-[#C9D4C5] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8A9C83]/50">
         <span className="relative grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-[#E8EEE5] to-[#C8D9C7] text-[9px] font-bold tracking-wide text-[#35513A]">{user.email.split("@")[0].slice(0, 2).toUpperCase()}<span className="absolute bottom-0 right-0 h-1.5 w-1.5 rounded-full border border-white bg-[#6F9B70]" /></span>
         <svg aria-hidden="true" className={`hidden h-3 w-3 text-[#7B8579] transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="m7 10 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
