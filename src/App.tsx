@@ -98,36 +98,26 @@ function navigate(page: Page) {
 
 function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => void }) {
   return (
-    <header data-workspace-id="site-header" className="sticky top-0 z-30 mx-auto flex w-full max-w-[1180px] items-center justify-between border-b border-[#E2DED1]/70 bg-[#FCFBF7]/85 px-5 py-3 backdrop-blur-xl md:px-8 md:py-4">
-      <Logo />
-      <nav data-workspace-id="desktop-nav" aria-label="เมนูหลัก" className="hidden items-center gap-1 rounded-full border border-[#E2DED1] bg-white/70 p-1.5 backdrop-blur md:flex">
-        {(Object.keys(pageTitles) as Page[]).map((page) => (
-          <button
-            key={page}
-            data-workspace-id={`desktop-nav-${page}`}
-            onClick={() => navigate(page)}
-            className={`rounded-full px-4 py-2 text-sm transition-colors ${
-              current === page
-                ? page === "saving" ? "bg-[#3E6B4B] text-white" : page === "health" ? "bg-[#B96E69] text-white" : page === "notes" ? "bg-[#B68A43] text-white" : "bg-[#141513] text-white"
-                : "text-[#6D716B] hover:bg-white hover:text-[#141513]"
-            }`}
-          >
-            {pageTitles[page]}
-          </button>
-        ))}
-      </nav>
-      <div className="flex items-center gap-2">
-        <button onClick={onOpenSearch} className="inline-flex h-10 items-center gap-2 rounded-full border border-[#E2DED1] bg-white/75 px-3 text-sm text-[#6D716B] transition hover:border-[#C9C4B5] hover:bg-white" aria-label="ค้นหาและไปยังหน้า (Ctrl/⌘ K)">
-          <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
-          <span className="hidden lg:inline">ค้นหา</span><kbd className="hidden rounded-md bg-[#F3F0E7] px-1.5 py-0.5 text-[10px] text-[#858880] lg:inline">⌘ K</kbd>
-        </button>
-        {window.self === window.top && <a href="/back.html" title="จัดหน้าเว็บ" className="grid h-10 w-10 place-items-center rounded-full border border-[#E2DED1] bg-white/80 text-[#141513] shadow-sm transition hover:border-[#C9C4B5] hover:bg-white" aria-label="เปิดระบบจัดหน้าเว็บ"><svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></svg></a>}
-        <AccountMenu />
-      </div>
-    </header>
+    <div className="mll-global-header">
+      <div className="mll-announcement"><span className="mll-announcement-dot" /> พื้นที่ส่วนตัวของคุณ · เงิน สุขภาพ และความคิด <span className="mll-announcement-tail">ออกแบบให้ใช้ชีวิตได้ชัดขึ้น</span></div>
+      <header data-workspace-id="site-header" className="mll-nav-shell">
+        <Logo />
+        <nav data-workspace-id="desktop-nav" aria-label="เมนูหลัก" className="mll-editorial-nav hidden md:flex">
+          {(Object.keys(pageTitles) as Page[]).map((page) => (
+            <button key={page} data-workspace-id={`desktop-nav-${page}`} onClick={() => navigate(page)} aria-current={current === page ? "page" : undefined} className={current === page ? "is-active" : ""}>
+              <span>{page === "home" ? "00" : page === "saving" ? "01" : page === "health" ? "02" : "03"}</span>{pageTitles[page]}
+            </button>
+          ))}
+        </nav>
+        <div className="mll-nav-actions">
+          <button onClick={onOpenSearch} className="mll-search-trigger" aria-label="ค้นหาและไปยังหน้า (Ctrl/⌘ K)"><svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg><span className="hidden lg:inline">ค้นหา</span><kbd>⌘ K</kbd></button>
+          {window.self === window.top && <a href="/back.html" title="จัดหน้าเว็บ" className="mll-builder-trigger" aria-label="เปิดระบบจัดหน้าเว็บ"><svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z"/><path d="m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z"/></svg></a>}
+          <AccountMenu />
+        </div>
+      </header>
+    </div>
   )
 }
-
 const sections = [
   {
     id: "saving" as const,
