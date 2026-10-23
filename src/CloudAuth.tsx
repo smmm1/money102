@@ -22,14 +22,12 @@ function readLocalSnapshot(): LocalSnapshot {
 }
 
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  const existing: string[] = []
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i)
-    if (key?.startsWith(LOCAL_PREFIX)) existing.push(key)
-  }
-  existing.forEach((key) => localStorage.removeItem(key))
+  // Non-destructive restore: only write keys present in the merged snapshot.
+  // Never remove browser keys during migration; preserve local data if sync is interrupted.
   Object.entries(snapshot || {}).forEach(([key, value]) => {
-    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") localStorage.setItem(key, value)
+    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") {
+      localStorage.setItem(key, value)
+    }
   })
 }
 
