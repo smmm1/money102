@@ -363,10 +363,6 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
           <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">ออมเงิน</h1>
           <p className="mt-1.5 text-sm leading-6 text-[#858880]">ติดตามรายรับ รายจ่าย และความคืบหน้าสู่เป้าหมาย</p>
         </div>
-        <button onClick={onBack} className="inline-flex h-10 items-center gap-2 rounded-full border border-[#DEDACF] bg-white/75 px-4 text-sm font-medium text-[#626760] transition hover:bg-white">
-          <MoneyIcon name="arrow" className="h-4 w-4 rotate-180" />
-          หน้าหลัก
-        </button>
       </header>
 
       <section data-workspace-id="saving-summary" className="relative overflow-hidden rounded-[28px] bg-transparent p-0">
@@ -380,7 +376,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
           >
             <MoneyIcon name="reset" className="h-[18px] w-[18px]" />
           </button>
-          <button onClick={() => setHistoryOpen(true)} className="rounded-full border border-[#263329]/20 bg-white/70 px-4 py-2.5 text-sm font-medium text-[#263329] transition hover:bg-white">
+          <button onClick={() => setHistoryOpen(true)} className="inline-flex h-10 items-center justify-center rounded-full border border-[#263329]/20 bg-white/70 px-4 text-sm font-medium leading-none text-[#263329] transition hover:bg-white">
             ดูประวัติทั้งหมด
           </button>
         </div>
