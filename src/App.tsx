@@ -621,119 +621,6 @@ function HealthDashboard() {
   )
 }
 
-function DetailPage({ page }: { page: Exclude<Page, "home"> }) {
-  const section = sections.find((item) => item.id === page)!
-  const content = {
-    saving: {
-      heading: "ทุกก้าวเล็ก ๆ พาเราเข้าใกล้เป้าหมาย",
-      stat: "฿6,800",
-      statLabel: "ออมแล้วในเดือนนี้",
-      list: ["เงินสำรองฉุกเฉิน", "ทริปญี่ปุ่น", "คอมพิวเตอร์เครื่องใหม่"],
-    },
-    health: {
-      heading: "ร่างกายที่ดี เริ่มจากความสม่ำเสมอ",
-      stat: "5,840",
-      statLabel: "ก้าวเดินวันนี้",
-      list: ["ดื่มน้ำ 6–8 แก้ว", "เดินให้ครบ 8,000 ก้าว", "เข้านอนก่อน 23:00 น."],
-    },
-    notes: {
-      heading: "จดไว้ แล้วค่อยกลับมาต่อยอด",
-      stat: "12",
-      statLabel: "โน้ตทั้งหมด",
-      list: ["ไอเดียโปรเจกต์ใหม่", "รายการซื้อของเข้าบ้าน", "สิ่งที่อยากทำเดือนนี้"],
-    },
-  }[page]
-
-  return (
-    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-7 md:px-8 md:pt-12">
-      <button
-        onClick={() => navigate("home")}
-        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-[#6F736C] transition-colors hover:text-[#263329]"
-      >
-        <Icon name="arrow" className="h-4 w-4 rotate-180" />
-        กลับหน้าหลัก
-      </button>
-      <section
-        className={`${section.color} relative overflow-hidden rounded-[36px] p-7 md:p-12`}
-      >
-        <span className="absolute -right-20 -top-24 h-72 w-72 rounded-full border border-black/10" />
-        <div className="relative grid gap-10 md:grid-cols-[1fr_auto] md:items-end">
-          <div>
-            <span
-              className={`${section.iconBg} mb-8 grid h-16 w-16 place-items-center rounded-[22px]`}
-            >
-              <Icon name={section.icon} className="h-7 w-7" />
-            </span>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-black/45">
-              {section.eyebrow}
-            </p>
-            <h1 className="text-5xl font-semibold tracking-[-0.06em] text-[#263329] md:text-7xl">
-              {section.title}
-            </h1>
-            <p className="mt-4 max-w-xl text-lg leading-8 text-[#3F493F]/70">
-              {content.heading}
-            </p>
-          </div>
-          <button className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition-transform hover:-translate-y-0.5">
-            <Icon name="plus" className="h-4 w-4" />
-            เพิ่มรายการใหม่
-          </button>
-        </div>
-      </section>
-
-      <section data-workspace-id="detail-page-content" className="mt-5 grid gap-5 md:grid-cols-[0.85fr_1.3fr]">
-        <div className="flex min-h-[290px] flex-col items-center justify-center rounded-[30px] border border-[#E1DDCF] bg-white/55 p-7">
-          <ProgressRing
-            value={page === "saving" ? 68 : page === "health" ? 73 : 80}
-            label="ความคืบหน้า"
-          />
-          <p className="mt-6 text-3xl font-semibold tracking-[-0.04em] text-[#263329]">
-            {content.stat}
-          </p>
-          <p className="mt-1 text-sm text-[#878A82]">{content.statLabel}</p>
-        </div>
-        <div className="rounded-[30px] border border-[#E1DDCF] bg-white/55 p-6 md:p-8">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-[-0.03em] text-[#263329]">
-              รายการล่าสุด
-            </h2>
-            <button className="text-sm font-medium text-[#52785B]">
-              ดูทั้งหมด
-            </button>
-          </div>
-          <div className="space-y-3">
-            {content.list.map((item, index) => (
-              <div
-                key={item}
-                className="flex items-center gap-4 rounded-2xl bg-[#F4F1E8] p-4 transition-transform hover:translate-x-1"
-              >
-                <span
-                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-full ${
-                    index === 0
-                      ? "bg-[#263329] text-white"
-                      : "bg-white text-[#8C8E87]"
-                  }`}
-                >
-                  <Icon
-                    name={index === 0 ? "check" : "note"}
-                    className="h-4 w-4"
-                  />
-                </span>
-                <span className="flex-1 text-sm font-medium text-[#3D463E]">
-                  {item}
-                </span>
-                <span className="text-xs text-[#999B94]">
-                  {index === 0 ? "วันนี้" : `${index + 1} วันก่อน`}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </main>
-  )
-}
-
 function QuickSwitcher({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate: (page: Page) => void }) {
   const [query, setQuery] = useState("")
   useEffect(() => { if (open) setQuery("") }, [open])
@@ -823,9 +710,7 @@ function AppContent() {
         <HealthDashboard />
       ) : page === "notes" ? (
         <NotesPage onBack={() => navigate("home")} />
-      ) : (
-        <DetailPage page={page} />
-      )}
+      ) : null}
       <QuickSwitcher open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={navigate} />
       <WorkspaceEditor />
       <footer data-workspace-id="site-footer" className="mx-auto flex max-w-[1180px] items-center justify-between border-t border-[#DEDACD] px-5 py-7 text-xs text-[#8D9088] md:px-8">
