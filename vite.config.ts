@@ -14,6 +14,14 @@ export default defineConfig({
       "@": path.resolve(rootDir, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(rootDir, "index.html"),
+        back: path.resolve(rootDir, "back.html"),
+      },
+    },
+  },
   server: {
     host: "0.0.0.0",
     port: Number(process.env.PORT || 8443),
