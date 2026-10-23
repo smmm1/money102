@@ -118,6 +118,7 @@ export default function WorkspaceEditor() {
       const root = leaf?.closest<HTMLElement>("[data-workspace-id]")
       if (!leaf || !root || leaf.children.length > 0 || !leaf.textContent?.trim() || leaf.closest("input, textarea, select, option, script, style, svg")) return
       const id = root.dataset.workspaceId
+      if (!id || id.startsWith("note-") || ["saving-summary", "saving-goal", "saving-activity", "health-metrics", "health-entry-panels", "health-history", "health-progress", "health-calendar"].includes(id)) return
       const path = textPath(leaf, root)
       if (!id || !path) return
       event.preventDefault()
@@ -195,7 +196,7 @@ export default function WorkspaceEditor() {
     {mode === null && <button onClick={open} className="fixed right-5 top-[76px] z-40 inline-flex h-10 items-center gap-2 rounded-full border border-[#DEDACF] bg-[#FCFBF7]/95 px-4 text-sm font-medium text-[#354337] shadow-lg backdrop-blur transition hover:-translate-y-0.5 md:right-8 md:top-[88px]" aria-label="ปรับแต่งหน้าตาและเลย์เอาต์"><span aria-hidden="true">✣</span><span className="hidden sm:inline">จัดหน้าเว็บ</span></button>}
     {mode !== null && <>
       <div className="pointer-events-none fixed inset-0 z-[80] border-2 border-dashed border-[#52785B]/40" aria-hidden="true" />
-      <section className="fixed inset-x-3 bottom-3 z-[120] mx-auto max-w-4xl rounded-[24px] border border-[#DEDACF] bg-[#FCFBF7]/97 p-4 shadow-[0_24px_90px_rgba(25,35,27,0.25)] backdrop-blur-xl md:bottom-5 md:p-5" data-workspace-editor-ui="true" aria-label="ตัวแก้ไขพื้นที่ทำงาน">
+      <section className="fixed inset-x-3 bottom-3 z-[120] mx-auto max-h-[72vh] max-w-4xl overflow-y-auto rounded-[24px] border border-[#DEDACF] bg-[#FCFBF7]/97 p-4 shadow-[0_24px_90px_rgba(25,35,27,0.25)] backdrop-blur-xl md:bottom-5 md:p-5" data-workspace-editor-ui="true" aria-label="ตัวแก้ไขพื้นที่ทำงาน">
         <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">CUSTOM WORKSPACE · {viewportMobile ? "MOBILE" : "DESKTOP"}</p><h2 className="mt-1 text-lg font-semibold text-[#263329]">{mode === "editing" ? "จัดวางองค์ประกอบได้ตามใจ" : "ดูตัวอย่างการจัดหน้า"}</h2><p className="mt-1 text-xs leading-5 text-[#777C73]">จับสัญลักษณ์ ⠿ เพื่อย้าย · จับ ↘ เพื่อปรับความกว้าง · ข้อมูลออมเงินและโน้ตไม่ถูกแก้ไข</p></div><span className="rounded-full bg-[#E6F0E7] px-3 py-1.5 text-xs text-[#52785B]">{count} รายการที่ปรับตำแหน่งแล้ว</span></div>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           <label className="flex items-center gap-2 rounded-full border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">โทนสี<select value={style.accent} onChange={(event) => setStyle((old) => ({ ...old, accent: event.target.value }))} className="bg-transparent text-xs text-[#263329] outline-none"><option value="sage">เขียวละมุน</option><option value="rose">ชมพูอบอุ่น</option><option value="ocean">ฟ้าเย็น</option><option value="mono">ขาวดำ</option></select></label>
