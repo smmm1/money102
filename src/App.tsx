@@ -94,11 +94,11 @@ function navigate(page: Page) {
   window.location.hash = page === "home" ? "" : page
 }
 
-function Header({ current }: { current: Page }) {
+function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => void }) {
   return (
-    <header className="mx-auto flex w-full max-w-[1180px] items-center justify-between px-5 py-5 md:px-8 md:py-7">
+    <header className="sticky top-0 z-30 mx-auto flex w-full max-w-[1180px] items-center justify-between border-b border-[#E2DED1]/70 bg-[#FCFBF7]/85 px-5 py-3 backdrop-blur-xl md:px-8 md:py-4">
       <Logo />
-      <nav className="hidden items-center gap-1 rounded-full border border-[#E2DED1] bg-white/60 p-1.5 backdrop-blur md:flex">
+      <nav aria-label="เมนูหลัก" className="hidden items-center gap-1 rounded-full border border-[#E2DED1] bg-white/70 p-1.5 backdrop-blur md:flex">
         {(Object.keys(pageTitles) as Page[]).map((page) => (
           <button
             key={page}
@@ -113,8 +113,12 @@ function Header({ current }: { current: Page }) {
           </button>
         ))}
       </nav>
-      <div className="grid h-10 w-10 place-items-center rounded-full bg-[#F0C8B6] text-sm font-semibold text-[#733F34]">
-        L
+      <div className="flex items-center gap-2">
+        <button onClick={onOpenSearch} className="inline-flex h-10 items-center gap-2 rounded-full border border-[#E2DED1] bg-white/75 px-3 text-sm text-[#6D716B] transition hover:border-[#C9C4B5] hover:bg-white" aria-label="ค้นหาและไปยังหน้า (Ctrl/⌘ K)">
+          <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+          <span className="hidden lg:inline">ค้นหา</span><kbd className="hidden rounded-md bg-[#F3F0E7] px-1.5 py-0.5 text-[10px] text-[#858880] lg:inline">⌘ K</kbd>
+        </button>
+        <div aria-label="พื้นที่ส่วนตัว" className="grid h-10 w-10 place-items-center rounded-full bg-[#F0C8B6] text-sm font-semibold text-[#733F34]">L</div>
       </div>
     </header>
   )
@@ -726,12 +730,66 @@ function DetailPage({ page }: { page: Exclude<Page, "home"> }) {
   )
 }
 
+function QuickSwitcher({ open, onClose, onNavigate }: { open: boolean; onClose: () => void; onNavigate: (page: Page) => void }) {
+  const [query, setQuery] = useState("")
+  useEffect(() => { if (open) setQuery("") }, [open])
+  useEffect(() => {
+    if (!open) return
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose() }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open, onClose])
+  if (!open) return null
+  const options: { page: Page; label: string; description: string; icon: string }[] = [
+    { page: "home", label: "หน้าหลัก", description: "ภาพรวมพื้นที่ส่วนตัว", icon: "⌂" },
+    { page: "saving", label: "ออมเงิน", description: "รายรับ รายจ่าย และเป้าหมาย", icon: "↗" },
+    { page: "health", label: "สุขภาพ", description: "น้ำหนักและกิจกรรม", icon: "♡" },
+    { page: "notes", label: "สมุดสะสมความคิด", description: "โน้ต อารมณ์ และไอเดีย", icon: "✳" },
+  ]
+  const filtered = options.filter((option) => (option.label + " " + option.description).toLowerCase().includes(query.trim().toLowerCase()))
+  return (
+    <div className="fixed inset-0 z-[100] grid items-start justify-center bg-[#172019]/35 px-3 pt-[12vh] backdrop-blur-sm sm:px-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <section role="dialog" aria-modal="true" aria-label="ค้นหาและเปลี่ยนหน้า" className="w-full max-w-lg overflow-hidden rounded-[26px] border border-[#E1DDCF] bg-[#FCFBF7] shadow-[0_28px_100px_rgba(25,35,27,0.25)]">
+        <div className="flex items-center gap-3 border-b border-[#EAE6DB] px-5">
+          <svg aria-hidden="true" className="h-5 w-5 shrink-0 text-[#8C9187]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาหน้าหรือสิ่งที่ต้องการ…" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-[#263329] outline-none placeholder:text-[#A2A49C]" />
+          <kbd className="rounded-md border border-[#E1DDCF] px-2 py-1 text-[10px] text-[#858880]">ESC</kbd>
+        </div>
+        <div className="p-2">
+          <p className="px-3 pb-2 pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#9A9D94]">ไปยังพื้นที่</p>
+          {filtered.map((option) => <button key={option.page} onClick={() => { onNavigate(option.page); onClose() }} className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-[#F2F0E7] focus-visible:bg-[#F2F0E7]">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-lg text-[#52785B] shadow-sm">{option.icon}</span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-[#263329]">{option.label}</span><span className="mt-0.5 block text-xs text-[#858880]">{option.description}</span></span>
+            <span className="text-[#A2A49C]">↵</span>
+          </button>)}
+          {!filtered.length && <p className="px-3 py-8 text-center text-sm text-[#858880]">ไม่พบหน้าที่ตรงกับคำค้น</p>}
+        </div>
+        <div className="border-t border-[#EAE6DB] px-5 py-3 text-[11px] text-[#96998F]">กด Ctrl/⌘ K เพื่อเปิดได้ทุกเมื่อ · Esc เพื่อปิด</div>
+      </section>
+    </div>
+  )
+}
+
 export default function App() {
   const getPage = (): Page => {
     const hash = window.location.hash.replace("#", "") as Page
     return ["saving", "health", "notes"].includes(hash) ? hash : "home"
   }
   const [page, setPage] = useState<Page>(getPage)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const openSearch = () => setSearchOpen(true)
+
+  useEffect(() => {
+    const onShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        setSearchOpen((open) => !open)
+      }
+      if (event.key === "Escape") setSearchOpen(false)
+    }
+    window.addEventListener("keydown", onShortcut)
+    return () => window.removeEventListener("keydown", onShortcut)
+  }, [])
 
   useEffect(() => {
     const onHashChange = () => {
@@ -743,8 +801,16 @@ export default function App() {
   }, [])
 
   return (
-    <div className="min-h-screen">
-      <Header current={page} />
+    <div className="min-h-screen pb-20 md:pb-0">
+      <Header current={page} onOpenSearch={openSearch} />
+      <nav aria-label="เมนูมือถือ" className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-4 rounded-[22px] border border-[#E2DED1] bg-[#FCFBF7]/95 p-1.5 shadow-[0_12px_38px_rgba(38,51,41,0.14)] backdrop-blur-xl md:hidden">
+        {(["home", "saving", "health", "notes"] as Page[]).map((item) => (
+          <button key={item} onClick={() => navigate(item)} aria-current={page === item ? "page" : undefined} className={"flex min-w-0 flex-col items-center gap-1 rounded-[16px] px-1 py-2 text-[10px] font-medium transition " + (page === item ? "bg-[#263329] text-white shadow-sm" : "text-[#72786F] hover:bg-white")}>
+            <span className="text-base leading-5">{item === "home" ? "⌂" : item === "saving" ? "↗" : item === "health" ? "♡" : "✳"}</span>
+            <span>{pageTitles[item]}</span>
+          </button>
+        ))}
+      </nav>
       {page === "home" ? (
         <Home />
       ) : page === "saving" ? (
@@ -756,6 +822,7 @@ export default function App() {
       ) : (
         <DetailPage page={page} />
       )}
+      <QuickSwitcher open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={navigate} />
       <footer className="mx-auto flex max-w-[1180px] items-center justify-between border-t border-[#DEDACD] px-5 py-7 text-xs text-[#8D9088] md:px-8">
         <span>ละมุน — พื้นที่เล็ก ๆ เพื่อชีวิตที่เป็นระเบียบ</span>
         <button

@@ -27,9 +27,34 @@
     cursor: pointer;
   }
 
-  button:focus-visible {
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
     outline: 3px solid rgba(82, 120, 91, 0.4);
     outline-offset: 3px;
+  }
+
+  ::selection {
+    background: rgba(82, 120, 91, 0.18);
+    color: #263329;
+  }
+
+  :target {
+    scroll-margin-top: 6rem;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #D6D2C6 transparent;
+  }
+}
+
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px;
   }
 }
 
