@@ -5,12 +5,12 @@ type Entry = { id: string; title: string; body: string; tags: string[]; mood: Mo
 
 const STORAGE_KEY = "lamoon-commonplace-notes-v1"
 const moods: { id: Mood; label: string; icon: string; tone: string }[] = [
-  { id: "happy", label: "ดีใจ", icon: "☀", tone: "bg-[#F8F0D9] text-[#8A6B27]" },
-  { id: "neutral", label: "เฉย ๆ", icon: "—", tone: "bg-[#EEF0E8] text-[#68735F]" },
+  { id: "happy", label: "ดีใจ", icon: "☀", tone: "bg-[#F8F0D9] text-[#B68A43]" },
+  { id: "neutral", label: "เฉย ๆ", icon: "—", tone: "bg-[#EEF0E8] text-[#B68A43]" },
   { id: "sad", label: "เศร้า", icon: "☁", tone: "bg-[#E9EEF1] text-[#607782]" },
 ]
 const moodLabel = (mood: Mood) => moods.find((m) => m.id === mood) ?? moods[1]
-const inputClass = "mt-1.5 w-full rounded-xl border border-[#E1DDCF] bg-white px-3.5 py-3 text-sm text-[#263329] outline-none placeholder:text-[#A2A49C] focus:border-[#9AA68F]"
+const inputClass = "mt-1.5 w-full rounded-xl border border-[#E1DDCF] bg-white px-3.5 py-3 text-sm text-[#263329] outline-none placeholder:text-[#A2A49C] focus:border-[#F0DCA9]"
 
 function readEntries(): Entry[] {
   try {
@@ -114,7 +114,7 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
 
         <div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm font-semibold text-[#354036]">บันทึกของคุณ</h2><span className="text-xs text-[#92958D]">{filtered.length} รายการ</span></div>
         {filtered.length > 0 ? <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((entry) => <article key={entry.id} className="group flex min-h-[220px] flex-col rounded-[22px] border border-[#E5E1D7] bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#C9CEBE] hover:shadow-[0_8px_24px_rgba(38,51,41,0.06)]">
+          {filtered.map((entry) => <article key={entry.id} className="group flex min-h-[220px] flex-col rounded-[22px] border border-[#E5E1D7] bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#F0DCA9] hover:shadow-[0_8px_24px_rgba(38,51,41,0.06)]">
             <div className="flex items-center justify-between gap-2">
               <span className={"inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] " + moodLabel(entry.mood).tone}>{moodLabel(entry.mood).icon} {moodLabel(entry.mood).label}</span>
               <div className="flex items-center gap-2">
@@ -127,11 +127,11 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
             {!!entry.tags.length && <div className="mt-4 flex flex-wrap gap-1.5">{entry.tags.slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-[#F4F2EB] px-2.5 py-1 text-[11px] text-[#74796F]">#{tag}</span>)}{entry.tags.length > 3 && <span className="px-1 py-1 text-[11px] text-[#92958D]">+{entry.tags.length - 3}</span>}</div>}
             <div className="mt-5 flex items-center justify-between border-t border-[#F0EEE7] pt-3">
               <span className="text-[11px] text-[#A0A197]">{dateLabel(entry.updatedAt)}</span>
-              <div className="flex gap-3"><button onClick={() => startEdit(entry)} className="text-xs text-[#5E6B5C] hover:text-[#263329]">แก้ไข</button><button onClick={() => removeEntry(entry.id)} className="text-xs text-[#A65D4D] hover:text-[#854536]">ลบ</button></div>
+              <div className="flex gap-3"><button onClick={() => startEdit(entry)} className="text-xs text-[#9A722F] hover:text-[#263329]">แก้ไข</button><button onClick={() => removeEntry(entry.id)} className="text-xs text-[#B68A43] hover:text-[#9A722F]">ลบ</button></div>
             </div>
           </article>)}
         </div> : <div className="rounded-[24px] border border-dashed border-[#DAD8CC] bg-white/50 px-5 py-14 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#F0EEE4] text-xl text-[#65715F]">✳</span>
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#F0EEE4] text-xl text-[#B68A43]">✳</span>
           <h3 className="mt-4 text-lg font-semibold text-[#263329]">{entries.length ? "ไม่พบโน้ตที่ค้นหา" : "สมุดยังว่างอยู่"}</h3>
           <p className="mt-2 text-sm text-[#858880]">{entries.length ? "ลองเปลี่ยนคำค้นหาหรือตัวกรองอารมณ์" : "เริ่มเก็บความคิดแรกของคุณไว้ที่นี่"}</p>
           {!entries.length && !editing && <button onClick={startNew} className="mt-5 rounded-full bg-[#263329] px-5 py-2.5 text-sm font-medium text-white">เขียนบันทึกแรก</button>}
