@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import SavingsPage from "./SavingsPage"
 import NotesPage from "./NotesPage"
 import WorkspaceEditor from "./WorkspaceEditor"
+import CloudAuth from "./CloudAuth"
 
 type Page = "home" | "saving" | "health" | "notes"
 
@@ -773,7 +774,7 @@ function QuickSwitcher({ open, onClose, onNavigate }: { open: boolean; onClose: 
   )
 }
 
-export default function App() {
+function AppContent() {
   const getPage = (): Page => {
     const hash = window.location.hash.replace("#", "") as Page
     return ["saving", "health", "notes"].includes(hash) ? hash : "home"
@@ -839,4 +840,9 @@ export default function App() {
       </footer>
     </div>
   )
+}
+
+
+export default function App() {
+  return <CloudAuth><AppContent /></CloudAuth>
 }
