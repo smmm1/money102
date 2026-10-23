@@ -78,14 +78,14 @@ function Icon({
 function Logo() {
   return (
     <button
-      className="group flex shrink-0 items-center gap-2"
+      className="group flex items-center gap-3"
       onClick={() => navigate("home")}
       aria-label="กลับหน้าหลัก"
     >
-      <span className="grid h-8 w-8 place-items-center rounded-[11px] bg-[#263329] text-[#F9F7EF] transition-transform group-hover:-rotate-3">
+      <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#263329] text-[#F9F7EF] transition-transform group-hover:-rotate-3">
         <Icon name="sparkle" className="h-5 w-5" />
       </span>
-      <span className="text-[18px] font-semibold tracking-[-0.04em] text-[#263329]">
+      <span className="text-[22px] font-semibold tracking-[-0.04em] text-[#263329]">
         ละมุน
       </span>
     </button>
@@ -98,15 +98,15 @@ function navigate(page: Page) {
 
 function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => void }) {
   return (
-    <header data-workspace-id="site-header" className="sticky top-0 z-30 mx-auto flex w-full max-w-[1180px] items-center justify-between gap-2 border-b border-[#E2DED1]/70 bg-[#FCFBF7]/85 px-3 py-2 backdrop-blur-xl sm:px-4 md:px-6 md:py-2.5">
+    <header data-workspace-id="site-header" className="sticky top-0 z-30 mx-auto flex w-full max-w-[1180px] items-center justify-between border-b border-[#E2DED1]/70 bg-[#FCFBF7]/85 px-5 py-3 backdrop-blur-xl md:px-8 md:py-4">
       <Logo />
-      <nav data-workspace-id="desktop-nav" aria-label="เมนูหลัก" className="hidden shrink-0 items-center gap-0.5 rounded-full border border-[#E2DED1] bg-white/70 p-1 backdrop-blur md:flex">
+      <nav data-workspace-id="desktop-nav" aria-label="เมนูหลัก" className="hidden items-center gap-1 rounded-full border border-[#E2DED1] bg-white/70 p-1.5 backdrop-blur md:flex">
         {(Object.keys(pageTitles) as Page[]).map((page) => (
           <button
             key={page}
             data-workspace-id={`desktop-nav-${page}`}
             onClick={() => navigate(page)}
-            className={`whitespace-nowrap rounded-full px-2.5 py-1.5 text-xs transition-colors ${
+            className={`rounded-full px-4 py-2 text-sm transition-colors ${
               current === page
                 ? page === "saving" ? "bg-[#52785B] text-white" : page === "health" ? "bg-[#B96E69] text-white" : page === "notes" ? "bg-[#B68A43] text-white" : "bg-[#263329] text-white"
                 : "text-[#6D716B] hover:bg-white hover:text-[#263329]"
@@ -116,8 +116,8 @@ function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => 
           </button>
         ))}
       </nav>
-      <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        <button onClick={onOpenSearch} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[#E2DED1] bg-white/75 px-2.5 text-xs text-[#6D716B] transition hover:border-[#C9C4B5] hover:bg-white" aria-label="ค้นหาและไปยังหน้า (Ctrl/⌘ K)">
+      <div className="flex items-center gap-2">
+        <button onClick={onOpenSearch} className="inline-flex h-10 items-center gap-2 rounded-full border border-[#E2DED1] bg-white/75 px-3 text-sm text-[#6D716B] transition hover:border-[#C9C4B5] hover:bg-white" aria-label="ค้นหาและไปยังหน้า (Ctrl/⌘ K)">
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
           <span className="hidden lg:inline">ค้นหา</span><kbd className="hidden rounded-md bg-[#F3F0E7] px-1.5 py-0.5 text-[10px] text-[#858880] lg:inline">⌘ K</kbd>
         </button>
