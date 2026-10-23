@@ -237,151 +237,47 @@ function readHomeSnapshot(): HomeSnapshot {
 function Home() {
   const [now, setNow] = useState(() => new Date())
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
-  const visibleSections = sections
-  const today = new Intl.DateTimeFormat("th-TH", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  }).format(now)
-  const money = (amount: number) => new Intl.NumberFormat("th-TH", {
-    style: "currency", currency: "THB", maximumFractionDigits: 0,
-  }).format(amount)
-  const monthNet = snapshot.monthIncome - snapshot.monthExpense
-  const currentBalance = snapshot.income - snapshot.expense
-  const goalProgress = Math.max(0, currentBalance - snapshot.goalStartBalance)
-  const savingPercent = Math.max(0, Math.min(Math.round((goalProgress / snapshot.goal) * 100), 100))
-
+  const today = new Intl.DateTimeFormat("th-TH", { weekday: "long", day: "numeric", month: "long" }).format(now)
+  const money = (amount: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(amount)
+  const balance = snapshot.income - snapshot.expense
+  const net = snapshot.monthIncome - snapshot.monthExpense
+  const progress = Math.max(0, Math.min(Math.round((Math.max(0, balance - snapshot.goalStartBalance) / snapshot.goal) * 100), 100))
   useEffect(() => {
-    const refresh = () => {
-      setSnapshot(readHomeSnapshot())
-      setNow(new Date())
-    }
-    const onStorage = (event: StorageEvent) => {
-      if (!event.key || event.key.startsWith("lamoon-")) refresh()
-    }
-    window.addEventListener("storage", onStorage)
-    window.addEventListener("focus", refresh)
-    document.addEventListener("visibilitychange", refresh)
-    const clock = window.setInterval(() => setNow(new Date()), 60_000)
-    refresh()
-    return () => {
-      window.removeEventListener("storage", onStorage)
-      window.removeEventListener("focus", refresh)
-      document.removeEventListener("visibilitychange", refresh)
-      window.clearInterval(clock)
-    }
+    const refresh = () => { setSnapshot(readHomeSnapshot()); setNow(new Date()) }
+    const onStorage = (event: StorageEvent) => { if (!event.key || event.key.startsWith("lamoon-")) refresh() }
+    window.addEventListener("storage", onStorage); window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", refresh)
+    const clock = window.setInterval(() => setNow(new Date()), 60000); refresh()
+    return () => { window.removeEventListener("storage", onStorage); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); window.clearInterval(clock) }
   }, [])
-
-  const cardDetails: Record<(typeof sections)[number]["id"], string> = {
-    saving: snapshot.income + snapshot.expense > 0
-      ? `เดือนนี้รับเข้า ${money(snapshot.monthIncome)} · จ่ายออก ${money(snapshot.monthExpense)}`
-      : "ยังไม่มีรายการเงินของเดือนนี้",
-    health: snapshot.healthWeight !== null
-      ? `น้ำหนักล่าสุด ${snapshot.healthWeight} กก. · วันนี้ออกกำลัง ${snapshot.todayExerciseCount} ครั้ง`
-      : snapshot.todayExerciseCount > 0
-        ? `วันนี้ออกกำลัง ${snapshot.todayExerciseCount} ครั้ง`
-        : "ยังไม่มีข้อมูลสุขภาพ",
-    notes: snapshot.notesCount > 0
-      ? `${snapshot.notesCount} โน้ต · ปักหมุด ${snapshot.pinnedCount} รายการ`
-      : "สมุดยังว่าง เริ่มเก็บความคิดได้เลย",
-  }
-
-  return (
-    <main>
-      <section className="mx-auto max-w-[1180px] px-5 pb-10 pt-8 md:px-8 md:pb-16 md:pt-16">
-        <div data-workspace-id="home-welcome" className="mb-12 grid gap-10 lg:grid-cols-[1fr_420px] lg:items-end">
-          <div className="max-w-2xl">
-            <div className="mb-5 flex items-center gap-2 text-sm font-medium text-[#70746E]">
-              <span className="h-2 w-2 rounded-full bg-[#E8885C]" />
-              {today}
-            </div>
-            <h1 className="text-[clamp(2.8rem,7vw,5.7rem)] font-semibold leading-[0.98] tracking-[-0.065em] text-[#141513]">
-              ยินดี
-              <br />
-              <span className="font-light italic text-[#3E6B4B]">ต้อนรับ</span>
-            </h1>
-            <p className="mt-5 max-w-md text-sm leading-7 text-[#777C73]">
-              ภาพรวมจากข้อมูลที่คุณบันทึกไว้ อัปเดตเมื่อกลับมาใช้งานหรือมีการเปลี่ยนแปลงข้อมูล
-            </p>
-          </div>
-          <div data-workspace-id="home-snapshot" className="rounded-[30px] border border-[#DED9CA] bg-white/60 p-6 shadow-[0_18px_60px_rgba(48,52,43,0.06)] backdrop-blur">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#96988F]">ภาพรวมของคุณ</p>
-                <p className="mt-1 text-lg font-semibold text-[#141513]">ข้อมูลล่าสุด</p>
-              </div>
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#E2F2E7] text-[#3E6B4B]">
-                <Icon name="sparkle" className="h-5 w-5" />
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
-                <p className="font-semibold text-[#141513]">{snapshot.goal > 0 && (snapshot.income + snapshot.expense > 0 || snapshot.goalStartBalance > 0) ? `${savingPercent}%` : "—"}</p>
-                <p className="mt-0.5 text-xs text-[#83857D]">เป้าเงินเดือนนี้</p>
-              </div>
-              <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
-                <p className="font-semibold text-[#141513]">{snapshot.healthWeight !== null ? `${snapshot.healthWeight}` : "—"}</p>
-                <p className="mt-0.5 text-xs text-[#83857D]">น้ำหนักล่าสุด กก.</p>
-              </div>
-              <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
-                <p className="font-semibold text-[#141513]">{snapshot.notesCount}</p>
-                <p className="mt-0.5 text-xs text-[#83857D]">โน้ตทั้งหมด</p>
-              </div>
-            </div>
-            <p className="mt-4 text-xs text-[#858880]">ยอดคงเหลือทั้งหมด {money(currentBalance)} · สุทธิเดือนนี้ {money(monthNet)}</p>
-          </div>
-        </div>
-
-        <div className="mb-5 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-[#3E6B4B]">พื้นที่ของคุณ</p>
-            <h2 className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-[#141513] md:text-3xl">
-              เลือกสิ่งที่อยากจัดการ
-            </h2>
-            <p className="mt-1 text-xs text-[#868980]">เลือกการ์ดที่อยากเห็น และจัดลำดับได้ตามใจ</p>
-          </div>
-
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {visibleSections.map((section, index) => (
-            <button
-              key={section.id}
-              data-workspace-id={`home-card-${section.id}`}
-              onClick={() => navigate(section.id)}
-              className={`${section.color} card-rise group relative min-h-[320px] overflow-hidden rounded-[32px] p-6 text-left md:p-7`}
-            >
-              <span className="absolute -right-10 -top-12 h-40 w-40 rounded-full border border-black/10" />
-              <span className="absolute -right-1 top-10 h-24 w-24 rounded-full border border-black/10" />
-              <div className="relative flex h-full flex-col justify-between">
-                <div className="flex items-start justify-between">
-                  <span className={`${section.iconBg} grid h-14 w-14 place-items-center rounded-[20px] text-[#141513]`}>
-                    <Icon name={section.icon} className="h-6 w-6" />
-                  </span>
-                  <span className="text-sm font-medium text-black/45">0{index + 1}</span>
-                </div>
-                <div className="mt-16">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-black/45">{section.eyebrow}</p>
-                  <div className="flex items-end justify-between gap-5">
-                    <div>
-                      <h3 className="text-4xl font-semibold tracking-[-0.05em] text-[#141513]">{section.title}</h3>
-                      <p className="mt-2 max-w-[230px] text-sm leading-6 text-[#3F493F]/75">{section.description}</p>
-                    </div>
-                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#141513] text-white transition-transform duration-300 group-hover:-rotate-45">
-                      <Icon name="arrow" className="h-5 w-5" />
-                    </span>
-                  </div>
-                  <div className="mt-6 border-t border-black/10 pt-4 text-xs font-medium text-black/55">{cardDetails[section.id]}</div>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-    </main>
-  )
+  const cards = [
+    { id: "saving" as const, no: "01", eyebrow: "MONEY", title: "ออมเงิน", desc: "จัดการรายรับ รายจ่าย และเป้าหมายทางการเงิน", status: snapshot.income + snapshot.expense ? "ยอดคงเหลือ " + money(balance) : "เริ่มบันทึกรายการแรก", icon: "bank" as const, bg: "#E4F2E7", accent: "#477653" },
+    { id: "health" as const, no: "02", eyebrow: "WELLBEING", title: "สุขภาพ", desc: "ติดตามน้ำหนัก การออกกำลัง และความสม่ำเสมอ", status: snapshot.healthWeight !== null ? "น้ำหนักล่าสุด " + snapshot.healthWeight + " กก." : "เริ่มบันทึกสุขภาพ", icon: "heart" as const, bg: "#FCE4DE", accent: "#C65E4E" },
+    { id: "notes" as const, no: "03", eyebrow: "THOUGHTS", title: "โน้ต", desc: "เก็บไอเดีย ความทรงจำ และเรื่องที่อยากจำ", status: snapshot.notesCount + " รายการ · ปักหมุด " + snapshot.pinnedCount, icon: "note" as const, bg: "#FBF1C9", accent: "#92730B" },
+  ]
+  return <main className="mll-home">
+    <section className="mx-auto max-w-[1240px] px-5 pb-12 pt-7 md:px-8 md:pt-10 lg:pt-12">
+      <div className="mb-7 flex flex-wrap items-center justify-between gap-3"><p className="flex items-center gap-2 text-xs font-semibold tracking-[.12em] text-[#686B62]"><span className="h-2 w-2 rounded-full bg-[#7BC596]" />{today} <span className="text-[#B6B3A8]">/</span> YOUR PRIVATE SPACE</p><span className="rounded-full border border-[#DCD7C9] bg-white/60 px-3 py-1.5 text-xs text-[#686B62]">Mll · พื้นที่ส่วนตัว</span></div>
+      <div data-workspace-id="home-welcome" className="grid gap-4 lg:grid-cols-[1.08fr_.92fr]">
+        <section className="relative flex min-h-[330px] flex-col justify-between overflow-hidden rounded-[30px] bg-[#141513] p-7 text-[#F3F0E7] sm:p-10 lg:min-h-[405px] lg:p-12">
+          <span className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full border border-white/10" /><span className="pointer-events-none absolute right-3 top-20 h-36 w-36 rounded-full border border-white/10" />
+          <div className="relative"><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-[#7BC596]">MAKE ROOM FOR WHAT MATTERS</p><h1 className="mt-7 text-[clamp(2.8rem,6vw,5.2rem)] font-medium leading-[.98] tracking-[-.065em]">ชีวิตที่เป็น<br /><span className="font-light italic text-[#7BC596]">แบบของคุณ</span></h1><p className="mt-5 max-w-md text-sm leading-7 text-white/60">จัดการเงิน ดูแลตัวเอง และเก็บความคิดสำคัญไว้ในพื้นที่เดียวที่เรียบง่าย</p></div>
+          <div className="relative mt-8 flex items-center justify-between gap-3 border-t border-white/15 pt-5"><span className="text-xs text-white/50">หนึ่งพื้นที่ สำหรับทุกเรื่องที่สำคัญ</span><button onClick={() => navigate("saving")} className="inline-flex items-center gap-2 rounded-full bg-[#F3F0E7] px-4 py-2.5 text-sm font-semibold text-[#141513] hover:bg-[#7BC596]">เริ่มต้น <Icon name="arrow" className="h-4 w-4" /></button></div>
+        </section>
+        <section data-workspace-id="home-snapshot" className="flex flex-col rounded-[30px] border border-[#DED9CA] bg-[#FCFBF7] p-6 sm:p-8 lg:p-9">
+          <div className="flex items-start justify-between"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#7A7D73]">YOUR OVERVIEW</p><h2 className="mt-2 text-2xl font-semibold tracking-[-.04em] text-[#141513]">ภาพรวมของคุณ</h2></div><span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#E4F2E7] text-[#315A3D]"><Icon name="sparkle" className="h-5 w-5" /></span></div>
+          <div className="mt-7 rounded-[22px] bg-[#F3F0E7] p-5"><p className="text-xs text-[#74776D]">ยอดคงเหลือทั้งหมด</p><p className="mt-2 break-words text-[clamp(1.7rem,3vw,2.5rem)] font-semibold tracking-[-.055em] text-[#141513]">{money(balance)}</p><div className="mt-4 flex items-center justify-between gap-3 border-t border-[#DED9CA] pt-3 text-xs"><span className="text-[#74776D]">สุทธิเดือนนี้</span><span className={net >= 0 ? "font-semibold text-[#315A3D]" : "font-semibold text-[#B94E3D]"}>{net >= 0 ? "+" : "−"}{money(Math.abs(net))}</span></div></div>
+          <div className="mt-4 grid flex-1 grid-cols-3 gap-2">{[{ label: "GOAL", value: snapshot.goal > 0 && (snapshot.income + snapshot.expense > 0 || snapshot.goalStartBalance > 0) ? progress + "%" : "—", sub: "ความคืบหน้า" }, { label: "HEALTH", value: snapshot.healthWeight ?? "—", sub: "น้ำหนัก · กก." }, { label: "NOTES", value: snapshot.notesCount, sub: "บันทึกทั้งหมด" }].map(item => <div key={item.label} className="rounded-2xl border border-[#E6E1D5] p-3"><span className="block text-[10px] tracking-wide text-[#777A71]">{item.label}</span><strong className="mt-2 block text-xl font-semibold text-[#141513]">{item.value}</strong><span className="mt-1 block text-[10px] text-[#777A71]">{item.sub}</span></div>)}</div>
+        </section>
+      </div>
+      <div className="mb-5 mt-14 flex flex-wrap items-end justify-between gap-4"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-[#55745B]">YOUR WORKSPACE</p><h2 className="mt-2 text-3xl font-semibold tracking-[-.05em] text-[#141513] md:text-4xl">ทุกอย่างที่สำคัญ</h2></div><p className="max-w-sm text-sm leading-6 text-[#777A71]">สามพื้นที่หลัก ออกแบบให้ใช้งานง่ายและต่อเนื่องกัน</p></div>
+      <div className="grid gap-4 md:grid-cols-3">{cards.map(card => <button key={card.id} data-workspace-id={`home-card-${card.id}`} onClick={() => navigate(card.id)} className="group overflow-hidden rounded-[26px] border border-[#E0DCCE] bg-[#FCFBF7] text-left transition duration-300 hover:-translate-y-1 hover:border-[#B8B5A8] hover:shadow-[0_18px_48px_rgba(20,21,19,.08)]">
+        <div className="relative flex min-h-[138px] items-start justify-between overflow-hidden p-5 sm:p-6" style={{ backgroundColor: card.bg }}><span className="absolute -right-8 -top-10 h-36 w-36 rounded-full border border-[#141513]/10 transition-transform duration-500 group-hover:scale-110" /><span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-white/80 text-[#141513]"><Icon name={card.icon} className="h-5 w-5" /></span><span className="relative rounded-full border border-[#141513]/10 px-3 py-1 text-[10px] font-semibold tracking-[.14em] text-[#141513]/65">{card.no} / 03</span></div>
+        <div className="p-5 sm:p-6"><p className="text-[10px] font-semibold tracking-[.18em]" style={{ color: card.accent }}>{card.eyebrow}</p><div className="mt-2 flex items-center justify-between gap-3"><h3 className="text-2xl font-semibold tracking-[-.04em] text-[#141513]">{card.title}</h3><span className="grid h-9 w-9 place-items-center rounded-full bg-[#141513] text-white transition-transform duration-300 group-hover:-rotate-45"><Icon name="arrow" className="h-4 w-4" /></span></div><p className="mt-3 min-h-[48px] text-sm leading-6 text-[#74776D]">{card.desc}</p><div className="mt-5 border-t border-[#E9E4D9] pt-4 text-xs font-medium text-[#4F534A]">{card.status}</div></div>
+      </button>)}</div>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-[#DED9CA] bg-white/55 px-5 py-4 text-xs text-[#777A71]"><span>พื้นที่ที่ออกแบบมาให้เบาสบาย ใช้ได้ทุกวัน</span><span className="font-semibold tracking-[.12em] text-[#141513]">Mll <span className="font-normal text-[#A7A69B]">/ MAKE ROOM FOR WHAT MATTERS</span></span></div>
+    </section>
+  </main>
 }
-
 
 function ProgressRing({ value, label }: { value: number; label: string }) {
   return (
