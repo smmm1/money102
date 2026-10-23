@@ -364,7 +364,7 @@ export default function WorkspaceEditor() {
           <button onClick={reset} className="rounded-full border border-[#E6D7C7] bg-white px-4 py-2 text-xs font-medium text-[#9A722F]">คืนค่าตำแหน่ง</button><div className="flex-1" />
           <button onClick={cancel} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#6D716B]">ยกเลิก</button><button onClick={saveLayout} className="rounded-full bg-[#263329] px-5 py-2 text-xs font-medium text-white hover:bg-[#3B4A3E]">บันทึก</button>
         </div>
-        </div>
+        </div>}
         <button type="button" aria-label="ลากเพื่อปรับขนาดหน้าต่าง" title="ลากเพื่อปรับขนาด" className="absolute bottom-1 right-1 z-10 grid h-7 w-7 cursor-nwse-resize place-items-center rounded-lg border border-[#D9D4C6] bg-white/95 text-sm text-[#354337]" style={{ touchAction: "none" }} onPointerDown={(event) => {
           event.preventDefault(); event.stopPropagation()
           popupResizeRef.current = { startX: event.clientX, startY: event.clientY, width: popupPrefs.width, height: popupPrefs.height }
