@@ -129,54 +129,142 @@ const sections = [
     icon: "bank" as const,
     color: "bg-[#E6F0E7]",
     iconBg: "bg-[#D5E4D6]",
-    detail: "เป้าหมายเดือนนี้ 68%",
   },
   {
     id: "health" as const,
     eyebrow: "ดูแลตัวเอง",
     title: "สุขภาพ",
-    description: "บันทึกการนอน น้ำดื่ม และการเคลื่อนไหว",
+    description: "ติดตามน้ำหนักและการเคลื่อนไหวของคุณ",
     icon: "heart" as const,
     color: "bg-[#F8E5E3]",
     iconBg: "bg-[#F0CECB]",
-    detail: "วันนี้เดินแล้ว 5,840 ก้าว",
   },
   {
     id: "notes" as const,
     eyebrow: "พื้นที่ความคิด",
     title: "โน้ต",
-    description: "เก็บทุกไอเดียและเรื่องสำคัญไว้ใกล้ตัว",
+    description: "เก็บไอเดีย ความทรงจำ และเรื่องสำคัญ",
     icon: "note" as const,
     color: "bg-[#F8EED7]",
     iconBg: "bg-[#F0DCA9]",
-    detail: "มี 3 โน้ตที่ปักหมุด",
   },
 ]
 
+type HomeSnapshot = {
+  income: number
+  expense: number
+  goal: number
+  healthWeight: number | null
+  todayExerciseCount: number
+  todayWellness: boolean
+  notesCount: number
+  pinnedCount: number
+  lastNoteTitle: string
+}
+
+const EMPTY_HOME_SNAPSHOT: HomeSnapshot = {
+  income: 0,
+  expense: 0,
+  goal: 20000,
+  healthWeight: null,
+  todayExerciseCount: 0,
+  todayWellness: false,
+  notesCount: 0,
+  pinnedCount: 0,
+  lastNoteTitle: "",
+}
+
+function readHomeSnapshot(): HomeSnapshot {
+  const snapshot = { ...EMPTY_HOME_SNAPSHOT }
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  const monthPrefix = today.slice(0, 7)
+
+  try {
+    const transactions = JSON.parse(localStorage.getItem("lamoon-transactions") || "[]") as {
+      type: "income" | "expense"; amount: number; date?: string
+    }[]
+    snapshot.income = transactions.filter((item) => item.date?.startsWith(monthPrefix) && item.type === "income").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    snapshot.expense = transactions.filter((item) => item.date?.startsWith(monthPrefix) && item.type === "expense").reduce((sum, item) => sum + Number(item.amount || 0), 0)
+    snapshot.goal = Number(localStorage.getItem("lamoon-saving-goal")) || 20000
+  } catch {}
+
+  try {
+    const health = JSON.parse(localStorage.getItem("lamoon-health-dashboard-v1") || "null") as {
+      profiles?: { id: string; name: string; height: number; age: number }[]
+      activeProfileId?: string
+      records?: { profileId: string; date: string; type: string; weight?: number; exercise?: string }[]
+    } | null
+    if (health) {
+      const profile = health.profiles?.find((item) => item.id === health.activeProfileId) || health.profiles?.[0]
+      const records = (health.records || []).filter((item) => !profile || item.profileId === profile.id).sort((a, b) => b.date.localeCompare(a.date))
+      const latestWeight = records.find((item) => item.type === "weight" && typeof item.weight === "number")
+      snapshot.healthWeight = latestWeight?.weight ?? null
+      snapshot.todayExerciseCount = records.filter((item) => item.type === "exercise" && item.date === today).length
+      snapshot.todayWellness = records.some((item) => item.type === "wellness" && item.date === today)
+    }
+  } catch {}
+
+  try {
+    const notes = JSON.parse(localStorage.getItem("lamoon-commonplace-notes-v1") || "[]") as {
+      title?: string; pinned?: boolean; updatedAt?: string
+    }[]
+    snapshot.notesCount = notes.length
+    snapshot.pinnedCount = notes.filter((item) => item.pinned).length
+    snapshot.lastNoteTitle = [...notes].sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0]?.title || ""
+  } catch {}
+
+  return snapshot
+}
+
 function Home() {
+  const [now, setNow] = useState(() => new Date())
+  const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
   const today = new Intl.DateTimeFormat("th-TH", {
     weekday: "long",
     day: "numeric",
     month: "long",
-  }).format(new Date())
-  const [savingOverview, setSavingOverview] = useState({ balance: 0, goal: 20000, hasData: false })
+  }).format(now)
+  const money = (amount: number) => new Intl.NumberFormat("th-TH", {
+    style: "currency", currency: "THB", maximumFractionDigits: 0,
+  }).format(amount)
+  const monthNet = snapshot.income - snapshot.expense
+  const savingPercent = Math.max(0, Math.min(Math.round((monthNet / snapshot.goal) * 100), 100))
 
   useEffect(() => {
-    try {
-      const transactions = JSON.parse(localStorage.getItem("lamoon-transactions") || "[]") as {
-        type: "income" | "expense"
-        amount: number
-      }[]
-      const goal = Number(localStorage.getItem("lamoon-saving-goal")) || 20000
-      const income = transactions.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount || 0), 0)
-      const expense = transactions.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount || 0), 0)
-      setSavingOverview({ balance: income - expense, goal, hasData: transactions.length > 0 })
-    } catch {
-      setSavingOverview({ balance: 0, goal: Number(localStorage.getItem("lamoon-saving-goal")) || 20000, hasData: false })
+    const refresh = () => {
+      setSnapshot(readHomeSnapshot())
+      setNow(new Date())
+    }
+    const onStorage = (event: StorageEvent) => {
+      if (!event.key || event.key.startsWith("lamoon-")) refresh()
+    }
+    window.addEventListener("storage", onStorage)
+    window.addEventListener("focus", refresh)
+    document.addEventListener("visibilitychange", refresh)
+    const clock = window.setInterval(() => setNow(new Date()), 60_000)
+    refresh()
+    return () => {
+      window.removeEventListener("storage", onStorage)
+      window.removeEventListener("focus", refresh)
+      document.removeEventListener("visibilitychange", refresh)
+      window.clearInterval(clock)
     }
   }, [])
 
-  const savingPercent = Math.max(0, Math.min(Math.round((savingOverview.balance / savingOverview.goal) * 100), 100))
+  const cardDetails: Record<(typeof sections)[number]["id"], string> = {
+    saving: snapshot.income + snapshot.expense > 0
+      ? `เดือนนี้รับเข้า ${money(snapshot.income)} · จ่ายออก ${money(snapshot.expense)}`
+      : "ยังไม่มีรายการเงินของเดือนนี้",
+    health: snapshot.healthWeight !== null
+      ? `น้ำหนักล่าสุด ${snapshot.healthWeight} กก. · วันนี้ออกกำลัง ${snapshot.todayExerciseCount} ครั้ง`
+      : snapshot.todayExerciseCount > 0
+        ? `วันนี้ออกกำลัง ${snapshot.todayExerciseCount} ครั้ง`
+        : "ยังไม่มีข้อมูลสุขภาพ",
+    notes: snapshot.notesCount > 0
+      ? `${snapshot.notesCount} โน้ต · ปักหมุด ${snapshot.pinnedCount} รายการ`
+      : "สมุดยังว่าง เริ่มเก็บความคิดได้เลย",
+  }
 
   return (
     <main>
@@ -190,40 +278,37 @@ function Home() {
             <h1 className="text-[clamp(2.8rem,7vw,5.7rem)] font-semibold leading-[0.98] tracking-[-0.065em] text-[#263329]">
               ยินดี
               <br />
-              <span className="font-light italic text-[#52785B]">
-                ต้อนรับ
-              </span>
+              <span className="font-light italic text-[#52785B]">ต้อนรับ</span>
             </h1>
+            <p className="mt-5 max-w-md text-sm leading-7 text-[#777C73]">
+              ภาพรวมจากข้อมูลที่คุณบันทึกไว้ อัปเดตเมื่อกลับมาใช้งานหรือมีการเปลี่ยนแปลงข้อมูล
+            </p>
           </div>
           <div className="rounded-[30px] border border-[#DED9CA] bg-white/60 p-6 shadow-[0_18px_60px_rgba(48,52,43,0.06)] backdrop-blur">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#96988F]">
-                  ภาพรวมของคุณ
-                </p>
-                <p className="mt-1 text-lg font-semibold text-[#263329]">
-                  ไปได้ดีเลย
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#96988F]">ภาพรวมของคุณ</p>
+                <p className="mt-1 text-lg font-semibold text-[#263329]">ข้อมูลล่าสุด</p>
               </div>
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#FCE1D3] text-[#C65E3D]">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#E6F0E7] text-[#52785B]">
                 <Icon name="sparkle" className="h-5 w-5" />
               </span>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              {[
-                [savingOverview.hasData ? `${savingPercent}%` : "—", "การออม"],
-                ["—", "การนอน"],
-                ["—", "งานวันนี้"],
-              ].map(([value, label]) => (
-                <div
-                  key={label}
-                  className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5"
-                >
-                  <p className="font-semibold text-[#263329]">{value}</p>
-                  <p className="mt-0.5 text-xs text-[#83857D]">{label}</p>
-                </div>
-              ))}
+              <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
+                <p className="font-semibold text-[#263329]">{snapshot.income + snapshot.expense > 0 ? `${savingPercent}%` : "—"}</p>
+                <p className="mt-0.5 text-xs text-[#83857D]">เป้าเงินเดือนนี้</p>
+              </div>
+              <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
+                <p className="font-semibold text-[#263329]">{snapshot.healthWeight !== null ? `${snapshot.healthWeight}` : "—"}</p>
+                <p className="mt-0.5 text-xs text-[#83857D]">น้ำหนักล่าสุด กก.</p>
+              </div>
+              <div className="rounded-2xl bg-[#F5F2E9] px-3 py-3.5">
+                <p className="font-semibold text-[#263329]">{snapshot.notesCount}</p>
+                <p className="mt-0.5 text-xs text-[#83857D]">โน้ตทั้งหมด</p>
+              </div>
             </div>
+            <p className="mt-4 text-xs text-[#858880]">ยอดสุทธิเดือนนี้ {money(monthNet)}</p>
           </div>
         </div>
 
@@ -234,9 +319,7 @@ function Home() {
               เลือกสิ่งที่อยากจัดการ
             </h2>
           </div>
-          <p className="hidden text-sm text-[#868980] md:block">
-            ทุกอย่างอยู่ในที่เดียว
-          </p>
+          <p className="hidden text-sm text-[#868980] md:block">ข้อมูลจากหน้าที่ใช้อยู่จริง</p>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-3">
@@ -250,35 +333,23 @@ function Home() {
               <span className="absolute -right-1 top-10 h-24 w-24 rounded-full border border-black/10" />
               <div className="relative flex h-full flex-col justify-between">
                 <div className="flex items-start justify-between">
-                  <span
-                    className={`${section.iconBg} grid h-14 w-14 place-items-center rounded-[20px] text-[#263329]`}
-                  >
+                  <span className={`${section.iconBg} grid h-14 w-14 place-items-center rounded-[20px] text-[#263329]`}>
                     <Icon name={section.icon} className="h-6 w-6" />
                   </span>
-                  <span className="text-sm font-medium text-black/45">
-                    0{index + 1}
-                  </span>
+                  <span className="text-sm font-medium text-black/45">0{index + 1}</span>
                 </div>
                 <div className="mt-16">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-black/45">
-                    {section.eyebrow}
-                  </p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-black/45">{section.eyebrow}</p>
                   <div className="flex items-end justify-between gap-5">
                     <div>
-                      <h3 className="text-4xl font-semibold tracking-[-0.05em] text-[#263329]">
-                        {section.title}
-                      </h3>
-                      <p className="mt-2 max-w-[230px] text-sm leading-6 text-[#3F493F]/75">
-                        {section.description}
-                      </p>
+                      <h3 className="text-4xl font-semibold tracking-[-0.05em] text-[#263329]">{section.title}</h3>
+                      <p className="mt-2 max-w-[230px] text-sm leading-6 text-[#3F493F]/75">{section.description}</p>
                     </div>
                     <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#263329] text-white transition-transform duration-300 group-hover:-rotate-45">
                       <Icon name="arrow" className="h-5 w-5" />
                     </span>
                   </div>
-                  <div className="mt-6 border-t border-black/10 pt-4 text-xs font-medium text-black/50">
-                    {section.detail}
-                  </div>
+                  <div className="mt-6 border-t border-black/10 pt-4 text-xs font-medium text-black/55">{cardDetails[section.id]}</div>
                 </div>
               </div>
             </button>
@@ -288,6 +359,7 @@ function Home() {
     </main>
   )
 }
+
 
 function ProgressRing({ value, label }: { value: number; label: string }) {
   return (
