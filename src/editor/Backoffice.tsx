@@ -45,10 +45,13 @@ export default function Backoffice() {
   return <div className="builder-app">
     <header className="builder-topbar">
       <a className="builder-brand" href="/"><span className="builder-brand-mark">m</span><span><b>money102</b><small>VISUAL BUILDER</small></span></a>
-      <div className="builder-page-title"><span className="builder-breadcrumb">{workspace === "legacy" ? "Existing pages" : "New design"}</span><span>/</span>{workspace === "builder" ? <input aria-label="ชื่อหน้า" value={document.title} onChange={(e) => editorActions.setTitle(e.target.value)} /><select aria-label="เลือกหน้าร่าง" value={document.page} onChange={(e) => editorActions.switchPage(e.target.value)}>{pages.map((page) => <option key={page.page} value={page.page}>{page.title}</option>)}</select> : <span className="builder-page-title-static">หน้าเว็บเดิม</span>}</div>
+      <div className="builder-page-title"><span className="builder-breadcrumb">{workspace === "legacy" ? "Existing pages" : "New design"}</span><span>/</span>{workspace === "builder" ? <><input aria-label="ชื่อหน้า" value={document.title} onChange={(e) => editorActions.setTitle(e.target.value)} /><select aria-label="เลือกหน้าร่าง" value={document.page} onChange={(e) => editorActions.switchPage(e.target.value)}>{pages.map((page) => <option key={page.page} value={page.page}>{page.title}</option>)}</select></> : <span className="builder-page-title-static">หน้าเว็บเดิม</span>}</div>
       <div className="builder-top-actions">
-        {workspace === "builder" && <><button className="builder-quiet-button" onClick={() => editorActions.undo()} disabled={!useEditorStore().history.length}>↶ Undo</button>
-        <button className="builder-quiet-button" onClick={() => editorActions.redo()} disabled={!useEditorStore().future.length}>↷ Redo</button>
+        {workspace === "builder" && <><button className="builder-quiet-button" onClick={() => editorActions.createPage()}>＋ Page</button>
+        <button className="builder-quiet-button" onClick={() => editorActions.duplicatePage()}>Duplicate</button>
+        <button className="builder-quiet-button" onClick={() => { if (pages.length > 1 && window.confirm("ลบหน้าร่างนี้หรือไม่?")) editorActions.deletePage(); }} disabled={pages.length <= 1}>Delete</button>
+        <button className="builder-quiet-button" onClick={() => editorActions.undo()} disabled={!history.length}>↶ Undo</button>
+        <button className="builder-quiet-button" onClick={() => editorActions.redo()} disabled={!future.length}>↷ Redo</button>
         <button className="builder-quiet-button" onClick={() => fileInput.current?.click()}>Import JSON</button>
         <input ref={fileInput} hidden type="file" accept="application/json,.json" onChange={(e) => void importJson(e.target.files?.[0])} />
         <button className="builder-export-button" onClick={() => setExportOpen(true)}>Export / Save ↗</button></>}
