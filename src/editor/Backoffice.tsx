@@ -29,23 +29,23 @@ function renderHtml(node: ReturnType<typeof useEditorStore>["document"]["root"])
   return `<section style="${style}">${node.type === "card" ? `<h3>${escapeHtml(node.icon || "")} ${content}</h3>` : ""}${children}</section>`;
 }
 export default function Backoffice() {
-  const { document, selected, selectedId, viewport } = useEditorStore();
+  const { document, pages, selected, selectedId, viewport, history, future } = useEditorStore();
   const [exportOpen, setExportOpen] = useState(false);
   const [workspace, setWorkspace] = useState<"builder" | "legacy">("legacy");
   const fileInput = useRef<HTMLInputElement>(null);
   const importJson = async (file?: File) => {
     if (!file) return;
     try {
-      const parsed = JSON.parse(await file.text());
+      const parsed: unknown = JSON.parse(await file.text());
       if (!validateEditorDocument(parsed)) throw new Error("invalid");
-      localStorage.setItem("money102-visual-builder-draft-v1", JSON.stringify(parsed));
-      window.location.reload();
+      editorActions.importDocument(parsed);
+      if (fileInput.current) fileInput.current.value = "";
     } catch { window.alert("ไฟล์ JSON ไม่ถูกต้อง หรือไม่ใช่ Schema ของ Visual Builder รุ่นนี้"); }
   };
   return <div className="builder-app">
     <header className="builder-topbar">
       <a className="builder-brand" href="/"><span className="builder-brand-mark">m</span><span><b>money102</b><small>VISUAL BUILDER</small></span></a>
-      <div className="builder-page-title"><span className="builder-breadcrumb">{workspace === "legacy" ? "Existing pages" : "New design"}</span><span>/</span>{workspace === "builder" ? <input aria-label="ชื่อหน้า" value={document.title} onChange={(e) => editorActions.setTitle(e.target.value)} /> : <span className="builder-page-title-static">หน้าเว็บเดิม</span>}</div>
+      <div className="builder-page-title"><span className="builder-breadcrumb">{workspace === "legacy" ? "Existing pages" : "New design"}</span><span>/</span>{workspace === "builder" ? <input aria-label="ชื่อหน้า" value={document.title} onChange={(e) => editorActions.setTitle(e.target.value)} /><select aria-label="เลือกหน้าร่าง" value={document.page} onChange={(e) => editorActions.switchPage(e.target.value)}>{pages.map((page) => <option key={page.page} value={page.page}>{page.title}</option>)}</select> : <span className="builder-page-title-static">หน้าเว็บเดิม</span>}</div>
       <div className="builder-top-actions">
         {workspace === "builder" && <><button className="builder-quiet-button" onClick={() => editorActions.undo()} disabled={!useEditorStore().history.length}>↶ Undo</button>
         <button className="builder-quiet-button" onClick={() => editorActions.redo()} disabled={!useEditorStore().future.length}>↷ Redo</button>
