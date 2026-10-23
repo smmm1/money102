@@ -138,7 +138,7 @@ html[data-workspace-editor="on"] [data-workspace-id]:hover {
 /* Fine-grained typography controls */
 html { --workspace-font-family: 'Noto Sans Thai', sans-serif; --workspace-font-size: 15px; --workspace-heading-scale: 1; --workspace-font-weight: 400; --workspace-heading-weight: 600; --workspace-text-color: #263329; --workspace-line-height: 1.6; --workspace-letter-spacing: normal; }
 body { font-family: var(--workspace-font-family); font-size: var(--workspace-font-size); font-weight: var(--workspace-font-weight); line-height: var(--workspace-line-height); letter-spacing: var(--workspace-letter-spacing); color: var(--workspace-text-color); }
-body :where(p, span, label, button, a, li, input, textarea, select, small, strong, em, th, td) { font-family: var(--workspace-font-family); font-weight: var(--workspace-font-weight); letter-spacing: var(--workspace-letter-spacing); }
+body :where(p, span, label, button, a, li, input, textarea, select, small, strong, em, th, td) { font-family: var(--workspace-font-family); font-size: var(--workspace-font-size); font-weight: var(--workspace-font-weight); letter-spacing: var(--workspace-letter-spacing); }
 body :where(h1, h2, h3, h4, h5, h6) { font-family: var(--workspace-font-family); font-weight: var(--workspace-heading-weight); letter-spacing: var(--workspace-letter-spacing); }
 body h1 { font-size: calc(clamp(2rem, 4vw, 3.75rem) * var(--workspace-heading-scale)); }
 body h2 { font-size: calc(clamp(1.35rem, 2.4vw, 2rem) * var(--workspace-heading-scale)); }
