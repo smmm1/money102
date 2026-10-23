@@ -48,6 +48,9 @@ export default function WorkspaceEditor() {
   }, [])
   useEffect(() => { applyLayout(activeLayout) }, [activeLayout, applyLayout, viewportKey, mode])
   useEffect(() => {
+    document.documentElement.dataset.workspaceEditor = mode === "editing" ? "on" : "off"
+  }, [mode])
+  useEffect(() => {
     document.documentElement.dataset.workspaceScale = style.scale
     document.documentElement.dataset.workspaceAccent = style.accent
   }, [style])
