@@ -175,7 +175,7 @@ export default function WorkspaceEditor() {
       setTextOverrides(updated)
     }
     document.addEventListener("dblclick", onTextClick, true)
-    const pencilButtons: HTMLButtonElement[] = []
+    const cleanup: (() => void)[] = []
     document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
       const id = root.dataset.workspaceId
       if (!id || id.startsWith("note-") || protectedWorkspaceIds.includes(id)) return
@@ -207,7 +207,6 @@ export default function WorkspaceEditor() {
         }
         pencil.addEventListener("click", openTextEditor)
         document.body.appendChild(pencil)
-        pencilButtons.push(pencil)
         place()
         window.addEventListener("scroll", place, true)
         window.addEventListener("resize", place)
@@ -215,7 +214,6 @@ export default function WorkspaceEditor() {
       })
     })
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-workspace-id]"))
-    const cleanup: (() => void)[] = []
     elements.forEach((element) => {
       const id = element.dataset.workspaceId
       if (!id || element.querySelector(":scope > .workspace-drag-handle")) return
