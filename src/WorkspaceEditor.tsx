@@ -116,7 +116,7 @@ export default function WorkspaceEditor() {
       if (!target || target.closest(".workspace-drag-handle, .workspace-resize-handle, [data-workspace-editor-ui]")) return
       const leaf = target.closest<HTMLElement>("[data-workspace-id]") ? target : null
       const root = leaf?.closest<HTMLElement>("[data-workspace-id]")
-      if (!leaf || !root || leaf.children.length > 0 || !leaf.textContent?.trim() || leaf.closest("input, textarea, select, option, script, style, svg, button")) return
+      if (!leaf || !root || leaf.children.length > 0 || !leaf.textContent?.trim() || leaf.closest("input, textarea, select, option, script, style, svg")) return
       const id = root.dataset.workspaceId
       const path = textPath(leaf, root)
       if (!id || !path) return
@@ -126,7 +126,6 @@ export default function WorkspaceEditor() {
       if (next === null || next.trim() === "") return
       const updated = { ...textOverrides, [id + ":" + path]: next.trim() }
       setTextOverrides(updated)
-      localStorage.setItem(TEXT_KEY, JSON.stringify(updated))
     }
     document.addEventListener("dblclick", onTextClick, true)
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-workspace-id]"))
@@ -210,6 +209,7 @@ export default function WorkspaceEditor() {
           <label className="flex items-center gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ระยะบรรทัด<select value={style.lineHeight} onChange={(event) => setStyle((old) => ({ ...old, lineHeight: event.target.value }))} className="min-w-0 bg-transparent text-xs text-[#263329] outline-none"><option value="1.35">แน่น</option><option value="1.6">ปกติ</option><option value="1.85">โปร่ง</option></select></label>
           <label className="flex items-center gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ตัวอักษร<select value={style.letterSpacing} onChange={(event) => setStyle((old) => ({ ...old, letterSpacing: event.target.value }))} className="min-w-0 bg-transparent text-xs text-[#263329] outline-none"><option value="normal">ปกติ</option><option value="-0.02em">ชิด</option><option value="0.03em">ห่าง</option></select></label>
           <button onClick={() => { const reset = { ...defaultStyle }; setStyle(reset); document.documentElement.style.setProperty("--workspace-font-family", "'Noto Sans Thai', sans-serif"); }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#354337]">คืนค่ารูปแบบตัวอักษร</button>
+          <button onClick={() => { if (window.confirm("คืนข้อความที่แก้ไขทั้งหมดให้เป็นข้อความเดิมใช่ไหม?")) { setTextOverrides({}); localStorage.removeItem(TEXT_KEY); applyTextOverrides({}); } }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#9A722F]">คืนค่าข้อความเดิม</button>
           <p className="col-span-full text-[11px] leading-5 text-[#858880]">ดับเบิลคลิกข้อความบนหน้าเว็บเพื่อแก้คำได้ · การเปลี่ยนข้อความเป็นการปรับหน้าตา ไม่เปลี่ยนข้อมูลธุรกรรมหรือเนื้อหาโน้ต</p>
           <button onClick={() => setMode(mode === "editing" ? "preview" : "editing")} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#354337]">{mode === "editing" ? "ดูตัวอย่าง" : "กลับไปแก้ไข"}</button>
           <button onClick={reset} className="rounded-full border border-[#E6D7C7] bg-white px-4 py-2 text-xs font-medium text-[#9A722F]">คืนค่าตำแหน่ง</button><div className="flex-1" />
