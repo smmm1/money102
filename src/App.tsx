@@ -233,54 +233,10 @@ function readHomeSnapshot(): HomeSnapshot {
   return snapshot
 }
 
-type HomeSectionId = (typeof sections)[number]["id"]
-type HomeLayout = { order: HomeSectionId[]; hidden: HomeSectionId[] }
-const DEFAULT_HOME_LAYOUT: HomeLayout = {
-  order: sections.map((section) => section.id),
-  hidden: [],
-}
-
-function readHomeLayout(): HomeLayout {
-  try {
-    const saved = JSON.parse(localStorage.getItem("lamoon-home-layout-v1") || "null") as Partial<HomeLayout> | null
-    if (saved) {
-      const validIds = sections.map((section) => section.id)
-      const order = Array.isArray(saved.order)
-        ? [...saved.order.filter((id): id is HomeSectionId => validIds.includes(id as HomeSectionId)), ...validIds.filter((id) => !saved.order!.includes(id))]
-        : [...validIds]
-      const hidden = Array.isArray(saved.hidden)
-        ? saved.hidden.filter((id): id is HomeSectionId => validIds.includes(id as HomeSectionId))
-        : []
-      return { order, hidden }
-    }
-  } catch {}
-  return { order: [...DEFAULT_HOME_LAYOUT.order], hidden: [] }
-}
-
 function Home() {
   const [now, setNow] = useState(() => new Date())
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
-  const [layout, setLayout] = useState<HomeLayout>(readHomeLayout)
-  const [customizing, setCustomizing] = useState(false)
-  const visibleSections = layout.order
-    .filter((id) => !layout.hidden.includes(id))
-    .map((id) => sections.find((section) => section.id === id)!)
-  const moveSection = (id: HomeSectionId, direction: -1 | 1) => {
-    setLayout((current) => {
-      const order = [...current.order]
-      const index = order.indexOf(id)
-      const next = index + direction
-      if (index < 0 || next < 0 || next >= order.length) return current
-      ;[order[index], order[next]] = [order[next], order[index]]
-      return { ...current, order }
-    })
-  }
-  const toggleSection = (id: HomeSectionId, checked: boolean) => {
-    setLayout((current) => ({
-      ...current,
-      hidden: checked ? current.hidden.filter((item) => item !== id) : [...current.hidden, id],
-    }))
-  }
+  const visibleSections = sections
   const today = new Intl.DateTimeFormat("th-TH", {
     weekday: "long",
     day: "numeric",
@@ -293,10 +249,6 @@ function Home() {
   const currentBalance = snapshot.income - snapshot.expense
   const goalProgress = Math.max(0, currentBalance - snapshot.goalStartBalance)
   const savingPercent = Math.max(0, Math.min(Math.round((goalProgress / snapshot.goal) * 100), 100))
-
-  useEffect(() => {
-    localStorage.setItem("lamoon-home-layout-v1", JSON.stringify(layout))
-  }, [layout])
 
   useEffect(() => {
     const refresh = () => {
@@ -390,9 +342,8 @@ function Home() {
 
         </div>
 
-        {visibleSections.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {visibleSections.map((section, index) => (
+          {visibleSections.map((section) => (
             <button
               key={section.id}
               data-workspace-id={`home-card-${section.id}`}
@@ -425,13 +376,6 @@ function Home() {
             </button>
           ))}
         </div>
-        ) : (
-          <div className="rounded-[28px] border border-dashed border-[#D8D3C6] bg-white/45 px-6 py-14 text-center">
-            <p className="font-medium text-[#263329]">หน้าหลักยังว่างอยู่</p>
-            <p className="mt-2 text-sm text-[#858980]">กด “ปรับแต่งหน้า” แล้วเลือกการ์ดที่อยากแสดง</p>
-            <button onClick={() => setCustomizing(true)} className="mt-4 rounded-full bg-[#263329] px-5 py-2.5 text-sm text-white">เลือกการ์ด</button>
-          </div>
-        )}
       </section>
     </main>
   )
