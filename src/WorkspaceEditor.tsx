@@ -18,6 +18,7 @@ type WorkspaceStyle = { accent: string; scale: string; font: string; size: numbe
 const defaultStyle: WorkspaceStyle = { accent: "sage", scale: "comfortable", font: "noto", size: 15, headingSize: 1, weight: "400", headingWeight: "600", textColor: "#263329", lineHeight: "1.6", letterSpacing: "normal" }
 const TEXT_KEY = "lamoon-workspace-text-v1"
 const TEXT_SIZE_KEY = "lamoon-workspace-text-sizes-v1"
+const ELEMENT_OVERRIDES_KEY = "lamoon-workspace-element-overrides-v1"
 const POPUP_KEY = "lamoon-workspace-popup-v1"
 type PopupPrefs = { x: number; y: number; width: number; height: number; collapsed: boolean }
 function readPopupPrefs(): PopupPrefs {
@@ -30,6 +31,56 @@ function readPopupPrefs(): PopupPrefs {
 }
 type TextOverrides = Record<string, string>
 type TextSizes = Record<string, number>
+type ElementOverride = { backgroundColor?: string; color?: string; padding?: string; borderRadius?: string; icon?: string }
+type ElementOverrides = Record<string, ElementOverride>
+function readElementOverrides(): ElementOverrides {
+  try {
+    const value = JSON.parse(localStorage.getItem(ELEMENT_OVERRIDES_KEY) || "{}") as Record<string, unknown>
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {}
+    const result: ElementOverrides = {}
+    Object.entries(value).forEach(([id, raw]) => {
+      if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !raw || typeof raw !== "object") return
+      const item = raw as Record<string, unknown>
+      const safe = (v: unknown) => typeof v === "string" && v.length <= 100 && /^[#(),.%\\w\\s-]*$/.test(v) ? v : undefined
+      const icon = typeof item.icon === "string" && item.icon.length <= 12 ? item.icon : undefined
+      result[id] = { backgroundColor: safe(item.backgroundColor), color: safe(item.color), padding: safe(item.padding), borderRadius: safe(item.borderRadius), icon }
+    })
+    return result
+  } catch { return {} }
+}
+function applyElementOverrides(overrides: ElementOverrides) {
+  document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
+    const id = root.dataset.workspaceId
+    if (!id) return
+    const value = overrides[id] || {}
+    const applyStyle = (key: "backgroundColor" | "color" | "padding" | "borderRadius", next: string | undefined) => {
+      const attr = "data-workspace-original-" + key.toLowerCase()
+      if (!root.hasAttribute(attr)) root.setAttribute(attr, root.style[key] || "")
+      root.style[key] = next || root.getAttribute(attr) || ""
+    }
+    applyStyle("backgroundColor", value.backgroundColor)
+    applyStyle("color", value.color)
+    applyStyle("padding", value.padding)
+    applyStyle("borderRadius", value.borderRadius)
+    const svg = root.querySelector<SVGElement>("svg")
+    let iconNode = root.querySelector<HTMLElement>(":scope > [data-workspace-icon-override]")
+    if (value.icon && svg) {
+      if (!svg.hasAttribute("data-workspace-original-display")) svg.setAttribute("data-workspace-original-display", svg.style.display || "")
+      svg.style.display = "none"
+      if (!iconNode) {
+        iconNode = document.createElement("span")
+        iconNode.dataset.workspaceIconOverride = "true"
+        iconNode.dataset.workspaceEditorUi = "true"
+        Object.assign(iconNode.style, { display: "inline-grid", placeItems: "center", lineHeight: "1", marginInlineEnd: "0.25em" })
+        root.insertBefore(iconNode, root.firstChild)
+      }
+      if (iconNode.textContent !== value.icon) iconNode.textContent = value.icon
+    } else {
+      if (iconNode) iconNode.remove()
+      if (svg?.hasAttribute("data-workspace-original-display")) svg.style.display = svg.getAttribute("data-workspace-original-display") || ""
+    }
+  })
+}
 function readTextSizes(): TextSizes { try { const value = JSON.parse(localStorage.getItem(TEXT_SIZE_KEY) || "{}"); return value && typeof value === "object" ? value : {} } catch { return {} } }
 function readTextOverrides(): TextOverrides {
   try { const value = JSON.parse(localStorage.getItem(TEXT_KEY) || "{}"); return value && typeof value === "object" ? value : {} } catch { return {} }
@@ -122,6 +173,8 @@ export default function WorkspaceEditor() {
   const [savedTextOverrides, setSavedTextOverrides] = useState<TextOverrides>(readTextOverrides)
   const [textSizes, setTextSizes] = useState<TextSizes>(readTextSizes)
   const [savedTextSizes, setSavedTextSizes] = useState<TextSizes>(readTextSizes)
+  const [elementOverrides, setElementOverrides] = useState<ElementOverrides>(readElementOverrides)
+  const [savedElementOverrides, setSavedElementOverrides] = useState<ElementOverrides>(readElementOverrides)
   const [activeId, setActiveId] = useState("")
   const [textSearch, setTextSearch] = useState("")
   const [selectedTextKey, setSelectedTextKey] = useState("")
@@ -129,6 +182,12 @@ export default function WorkspaceEditor() {
   const [viewportMobile, setViewportMobile] = useState(isMobile)
   const viewportKey = viewportMobile ? "mobile" : "desktop"
   const activeLayout = draft[viewportKey]
+  const workspaceElements = useMemo(() => Array.from(document.querySelectorAll<HTMLElement>("[data-workspace-id]")).map((element) => ({ id: element.dataset.workspaceId || "", label: element.getAttribute("aria-label") || element.dataset.workspaceId || "" })).filter((item) => item.id && !item.id.startsWith("note-")), [mode, textScanVersion])
+  const activeElementOverride = elementOverrides[activeId] || {}
+  const setActiveElementOverride = (patch: Partial<ElementOverride>) => {
+    if (!activeId) return
+    setElementOverrides((current) => ({ ...current, [activeId]: { ...(current[activeId] || {}), ...patch } }))
+  }
   useEffect(() => {
     try { localStorage.setItem(POPUP_KEY, JSON.stringify(popupPrefs)) } catch { /* storage may be unavailable */ }
   }, [popupPrefs])
@@ -168,6 +227,12 @@ export default function WorkspaceEditor() {
     root.style.setProperty("--workspace-line-height", style.lineHeight)
     root.style.setProperty("--workspace-letter-spacing", style.letterSpacing)
   }, [style])
+  useEffect(() => {
+    applyElementOverrides(elementOverrides)
+    const observer = new MutationObserver(() => applyElementOverrides(elementOverrides))
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [elementOverrides])
   useEffect(() => {
     applyTextOverrides(textOverrides, textSizes)
     const observer = new MutationObserver(() => applyTextOverrides(textOverrides, textSizes))
@@ -285,14 +350,14 @@ export default function WorkspaceEditor() {
     return () => { document.removeEventListener("dblclick", onTextClick, true); cleanup.forEach((fn) => fn()) }
   }, [mode, draft, viewportKey, textOverrides])
   const saveLayout = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); localStorage.setItem(SETTINGS_KEY, JSON.stringify(style)); localStorage.setItem(TEXT_KEY, JSON.stringify(textOverrides)); localStorage.setItem(TEXT_SIZE_KEY, JSON.stringify(textSizes)); setSaved(draft); setSavedStyle(style); setSavedTextOverrides(textOverrides); setSavedTextSizes(textSizes); setMode(null); setActiveId(""); applyLayout(draft[viewportKey])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); localStorage.setItem(SETTINGS_KEY, JSON.stringify(style)); localStorage.setItem(TEXT_KEY, JSON.stringify(textOverrides)); localStorage.setItem(TEXT_SIZE_KEY, JSON.stringify(textSizes)); localStorage.setItem(ELEMENT_OVERRIDES_KEY, JSON.stringify(elementOverrides)); setSavedElementOverrides(elementOverrides); setSaved(draft); setSavedStyle(style); setSavedTextOverrides(textOverrides); setSavedTextSizes(textSizes); setMode(null); setActiveId(""); applyLayout(draft[viewportKey])
   }
-  const cancel = () => { setDraft(saved); setStyle(savedStyle); setTextOverrides(savedTextOverrides); setTextSizes(savedTextSizes); applyTextOverrides(savedTextOverrides, savedTextSizes); applyLayout(saved[viewportKey]); setMode(null); setActiveId("") }
+  const cancel = () => { setDraft(saved); setStyle(savedStyle); setTextOverrides(savedTextOverrides); setTextSizes(savedTextSizes); setElementOverrides(savedElementOverrides); applyElementOverrides(savedElementOverrides); applyTextOverrides(savedTextOverrides, savedTextSizes); applyLayout(saved[viewportKey]); setMode(null); setActiveId("") }
   const reset = () => {
     if (!window.confirm("คืนค่าตำแหน่งและขนาดขององค์ประกอบทั้งหมดใช่ไหม? ข้อมูลออมเงินและโน้ตจะไม่ถูกลบ")) return
     const clean = emptyStore(); setDraft(clean); setSaved(clean); localStorage.removeItem(STORAGE_KEY); applyLayout(clean[viewportKey]); setActiveId("")
   }
-  const open = () => { const latest = readStore(); const latestStyle = readStyle(); const latestText = readTextOverrides(); const latestSizes = readTextSizes(); setSaved(latest); setDraft(latest); setSavedStyle(latestStyle); setStyle(latestStyle); setSavedTextOverrides(latestText); setTextOverrides(latestText); setSavedTextSizes(latestSizes); setTextSizes(latestSizes); setSelectedTextKey(""); setMode("editing") }
+  const open = () => { const latest = readStore(); const latestStyle = readStyle(); const latestText = readTextOverrides(); const latestSizes = readTextSizes(); const latestElementOverrides = readElementOverrides(); setSavedElementOverrides(latestElementOverrides); setElementOverrides(latestElementOverrides); applyElementOverrides(latestElementOverrides); setSaved(latest); setDraft(latest); setSavedStyle(latestStyle); setStyle(latestStyle); setSavedTextOverrides(latestText); setTextOverrides(latestText); setSavedTextSizes(latestSizes); setTextSizes(latestSizes); setSelectedTextKey(""); setMode("editing") }
   const count = useMemo(() => Object.keys(activeLayout).length, [activeLayout])
   const editableTexts = useMemo(() => scanEditableTexts(textOverrides), [textOverrides, textScanVersion, mode])
   const filteredTexts = useMemo(() => {
