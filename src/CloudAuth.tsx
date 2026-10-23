@@ -184,14 +184,14 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   if (!user) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5">
     <section className="w-full max-w-md rounded-[28px] border border-[#E5E0D3] bg-[#FCFBF7] p-7 shadow-[0_20px_60px_rgba(38,51,41,0.08)] sm:p-9">
       <div className="mb-7 grid h-12 w-12 place-items-center rounded-2xl bg-[#E8EEE5] text-2xl">🐷</div>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#9B8450]">LAMOON · PRIVATE SPACE</p>
-      <h1 className="mt-2 text-2xl font-semibold text-[#263329]">{mode === "signin" ? "ยินดีต้อนรับกลับ" : "สร้างบัญชีของคุณ"}</h1>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#9B8450]">MLL · YOUR PRIVATE SPACE</p>
+      <h1 className="mt-2 text-2xl font-semibold text-[#141513]">{mode === "signin" ? "ยินดีต้อนรับกลับ" : "สร้างบัญชีของคุณ"}</h1>
       <p className="mt-2 text-sm leading-6 text-[#777D73]">เข้าสู่ระบบเพื่อเก็บข้อมูลออมเงิน สุขภาพ และโน้ตไว้ใน Cloudflare D1</p>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block text-sm font-medium text-[#414A41]">อีเมล<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
         <label className="block text-sm font-medium text-[#414A41]">รหัสผ่าน<input type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
         {message && <p role="status" className="text-sm leading-5 text-[#8B5B42]">{message}</p>}
-        <button disabled={busy} className="h-12 w-full rounded-full bg-[#263329] text-sm font-medium text-white disabled:opacity-60">{busy ? "กำลังดำเนินการ…" : mode === "signin" ? "เข้าสู่ระบบ" : "สมัครบัญชี"}</button>
+        <button disabled={busy} className="h-12 w-full rounded-full bg-[#141513] text-sm font-medium text-white disabled:opacity-60">{busy ? "กำลังดำเนินการ…" : mode === "signin" ? "เข้าสู่ระบบ" : "สมัครบัญชี"}</button>
       </form>
       <button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage("") }} className="mt-5 w-full text-sm text-[#55745A]">{mode === "signin" ? "ยังไม่มีบัญชี Cloudflare? สมัครใหม่" : "มีบัญชีแล้ว? เข้าสู่ระบบ"}</button>
     </section>

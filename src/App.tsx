@@ -82,11 +82,11 @@ function Logo() {
       onClick={() => navigate("home")}
       aria-label="กลับหน้าหลัก"
     >
-      <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#263329] text-[#F9F7EF] transition-transform group-hover:-rotate-3">
+      <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#141513] text-[#F9F7EF] transition-transform group-hover:-rotate-3">
         <Icon name="sparkle" className="h-5 w-5" />
       </span>
       <span className="text-[22px] font-semibold tracking-[-0.04em] text-[#263329]">
-        ละมุน
+        Mll
       </span>
     </button>
   )
@@ -596,7 +596,7 @@ function AppContent() {
       <QuickSwitcher open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={navigate} />
       <WorkspaceEditor />
       <footer data-workspace-id="site-footer" className="mx-auto flex max-w-[1180px] items-center justify-between border-t border-[#DEDACD] px-5 py-7 text-xs text-[#8D9088] md:px-8">
-        <span>ละมุน — พื้นที่เล็ก ๆ เพื่อชีวิตที่เป็นระเบียบ</span>
+        <span>Mll — พื้นที่ส่วนตัวสำหรับจัดการชีวิตในแบบของคุณ</span>
         <button
           onClick={() => navigate("home")}
           className="flex items-center gap-1.5 hover:text-[#263329]"

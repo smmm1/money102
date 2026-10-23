@@ -44,7 +44,7 @@ export default function Backoffice() {
   };
   return <div className="builder-app">
     <header className="builder-topbar">
-      <a className="builder-brand" href="/"><span className="builder-brand-mark">m</span><span><b>money102</b><small>VISUAL BUILDER</small></span></a>
+      <a className="builder-brand" href="/"><span className="builder-brand-mark">m</span><span><b>Mll</b><small>VISUAL BUILDER</small></span></a>
       <div className="builder-page-title"><span className="builder-breadcrumb">{workspace === "legacy" ? "Existing pages" : "New design"}</span><span>/</span>{workspace === "builder" ? <><input aria-label="ชื่อหน้า" value={document.title} onChange={(e) => editorActions.setTitle(e.target.value)} /><select aria-label="เลือกหน้าร่าง" value={document.page} onChange={(e) => editorActions.switchPage(e.target.value)}>{pages.map((page) => <option key={page.page} value={page.page}>{page.title}</option>)}</select></> : <span className="builder-page-title-static">หน้าเว็บเดิม</span>}</div>
       <div className="builder-top-actions">
         {workspace === "builder" && <><button className="builder-quiet-button" onClick={() => editorActions.createPage()}>＋ Page</button>
