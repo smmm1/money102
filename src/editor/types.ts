@@ -75,6 +75,7 @@ export function validateEditorDocument(value: unknown): value is EditorDocument 
     if (!item.styles || typeof item.styles !== "object" || Array.isArray(item.styles)) return false;
     for (const [key, styleValue] of Object.entries(item.styles)) {
       if (!STYLE_KEYS.has(key as keyof ElementStyles) || typeof styleValue !== "string" || styleValue.length > 120 || !CSS_VALUE_PATTERN.test(styleValue)) return false;
+      if (key === "textAlign" && !["left", "center", "right"].includes(styleValue)) return false;
     }
     if (!Array.isArray(item.children) || item.children.length > 200) return false;
     return item.children.every((child) => visit(child, depth + 1));
