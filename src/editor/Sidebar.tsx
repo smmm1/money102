@@ -11,8 +11,8 @@ function TreeItem({ node, depth = 0, selectedId }: { node: PageElement; depth?: 
   </div>;
 }
 
-export default function Sidebar({ root, selectedId }: { root: PageElement; selectedId: string }) {
-  const add = (type: ElementType) => editorActions.add(type, selectedId === "root" || ["section", "container", "card"].includes(root.type) ? selectedId : "root");
+export default function Sidebar({ root, selectedId, selectedType }: { root: PageElement; selectedId: string; selectedType: ElementType }) {
+  const add = (type: ElementType) => editorActions.add(type, selectedId === "root" || ["section", "container", "card"].includes(selectedType) ? selectedId : "root");
   return <aside className="builder-sidebar">
     <div className="builder-panel-heading"><div><p className="builder-eyebrow">LIBRARY</p><h2>องค์ประกอบ</h2></div><span className="builder-count">{COMPONENT_LIBRARY.length}</span></div>
     <p className="builder-muted">คลิกเพื่อเพิ่มลงใน Element ที่เลือก หรือใช้การลากวาง</p>
