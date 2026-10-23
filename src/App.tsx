@@ -343,7 +343,7 @@ function Home() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {visibleSections.map((section) => (
+          {visibleSections.map((section, index) => (
             <button
               key={section.id}
               data-workspace-id={`home-card-${section.id}`}
