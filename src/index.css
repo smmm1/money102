@@ -232,3 +232,32 @@ main[data-workspace-id="saving-page"] input,main[data-workspace-id="saving-page"
  main[data-workspace-id="saving-page"]>header:before,main[data-workspace-id="notes-page"]>header:before,main:has([data-workspace-id="health-metrics"])>header:before{right:10px;top:25px;width:80px;height:80px;box-shadow:0 0 0 15px #F3F0E7,0 0 0 16px #DEDACF,0 0 0 32px #FCFBF7,0 0 0 33px #DEDACF}
  main[data-workspace-id="saving-page"]>header h1,main[data-workspace-id="notes-page"]>header h1,main:has([data-workspace-id="health-metrics"])>header h1{font-size:clamp(2.3rem,12vw,3.6rem)!important}
 }
+
+
+/* Editorial navigation and content rhythm refinements */
+[data-workspace-id="mobile-nav"]{border-radius:3px!important;border-color:#141513!important;background:#F3F0E7!important;box-shadow:0 -5px 28px #1415130d!important;backdrop-filter:blur(18px)}
+[data-workspace-id="mobile-nav"] button{border-radius:2px!important;box-shadow:none!important}
+[data-workspace-id="mobile-nav"] button[aria-current="page"]{background:#141513!important;color:#F3F0E7!important}
+.mll-home .mll-tool-card,.mll-home [data-workspace-id^="workspace-card"]{border-radius:3px!important}
+.mll-home article,.mll-home [data-workspace-id*="card"]{box-shadow:none}
+main[data-workspace-id="saving-page"]>section,main[data-workspace-id="notes-page"]>section,main:has([data-workspace-id="health-metrics"])>section{scroll-margin-top:130px}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"]>div:first-child{align-items:center}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"] .goal-progress{background:#7BC596}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div:first-child{background:#FCFBF7}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div:last-child{background:#FCFBF7}
+main[data-workspace-id="notes-page"] [data-workspace-id="notes-filters"]{padding:18px}
+main[data-workspace-id="notes-page"] article{min-height:240px;padding:22px}
+main[data-workspace-id="notes-page"] article h3{font-size:22px;letter-spacing:-.045em}
+main[data-workspace-id="notes-page"] article p{line-height:1.8}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]{border-top:5px solid #F87562}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-entry-panels"]{border-top:5px solid #7BC596}
+@media(max-width:767px){
+ [data-workspace-id="mobile-nav"]{bottom:8px!important;left:8px!important;right:8px!important;padding:5px!important}
+ [data-workspace-id="mobile-nav"] button{padding-top:8px!important;padding-bottom:8px!important}
+ .mll-home>section{padding-top:22px!important}
+ .mll-home [data-workspace-id="home-welcome"]{gap:10px}
+ .mll-home [data-workspace-id="home-welcome"]>section:first-child{min-height:360px!important;padding:26px!important}
+ main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"]{padding:20px!important}
+ main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div{padding:18px!important}
+ main[data-workspace-id="notes-page"] article{min-height:190px;padding:18px}
+}
