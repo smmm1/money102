@@ -356,16 +356,18 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
   )
 
   return (
-    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-7 md:px-8 md:pt-12">
-      <div className="mb-7">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-2 text-sm font-medium text-[#6F736C] hover:text-[#263329]"
-        >
+    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#52785B]">จัดการการเงิน · FINANCE</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">ออมเงิน</h1>
+          <p className="mt-1.5 text-sm leading-6 text-[#858880]">ติดตามรายรับ รายจ่าย และความคืบหน้าสู่เป้าหมาย</p>
+        </div>
+        <button onClick={onBack} className="inline-flex h-10 items-center gap-2 rounded-full border border-[#DEDACF] bg-white/75 px-4 text-sm font-medium text-[#626760] transition hover:bg-white">
           <MoneyIcon name="arrow" className="h-4 w-4 rotate-180" />
-          กลับหน้าหลัก
+          หน้าหลัก
         </button>
-      </div>
+      </header>
 
       <section className="relative overflow-hidden rounded-[28px] bg-transparent p-0">
         <div className="relative mb-4 flex flex-wrap items-center justify-end gap-2 sm:mb-5">
