@@ -17,7 +17,10 @@ function isMobile() { return typeof window !== "undefined" && window.matchMedia(
 type WorkspaceStyle = { accent: string; scale: string; font: string; size: number; headingSize: number; weight: string; headingWeight: string; textColor: string; lineHeight: string; letterSpacing: string }
 const defaultStyle: WorkspaceStyle = { accent: "sage", scale: "comfortable", font: "noto", size: 15, headingSize: 1, weight: "400", headingWeight: "600", textColor: "#263329", lineHeight: "1.6", letterSpacing: "normal" }
 const TEXT_KEY = "lamoon-workspace-text-v1"
+const TEXT_SIZE_KEY = "lamoon-workspace-text-sizes-v1"
 type TextOverrides = Record<string, string>
+type TextSizes = Record<string, number>
+function readTextSizes(): TextSizes { try { const value = JSON.parse(localStorage.getItem(TEXT_SIZE_KEY) || "{}"); return value && typeof value === "object" ? value : {} } catch { return {} } }
 function readTextOverrides(): TextOverrides {
   try { const value = JSON.parse(localStorage.getItem(TEXT_KEY) || "{}"); return value && typeof value === "object" ? value : {} } catch { return {} }
 }
@@ -68,7 +71,7 @@ function scanEditableTexts(overrides: TextOverrides): EditableTextItem[] {
   return items.filter((item, index, all) => all.findIndex((candidate) => candidate.key === item.key) === index)
 }
 
-function applyTextOverrides(overrides: TextOverrides) {
+function applyTextOverrides(overrides: TextOverrides, sizes: TextSizes = {}) {
   document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
     const prefix = root.dataset.workspaceId + ":"
     root.querySelectorAll<HTMLElement>("*").forEach((target) => {
@@ -77,6 +80,14 @@ function applyTextOverrides(overrides: TextOverrides) {
       if (!path) return
       const key = prefix + path
       const override = overrides[key]
+      const size = sizes[key]
+      if (target.hasAttribute("data-workspace-original-size")) {
+        const originalSize = target.getAttribute("data-workspace-original-size") || ""
+        target.style.fontSize = size ? `${size}px` : originalSize
+      } else if (size) {
+        target.setAttribute("data-workspace-original-size", target.style.fontSize || "")
+        target.style.fontSize = `${size}px`
+      }
       if (target.hasAttribute("data-workspace-original-text")) {
         const original = target.getAttribute("data-workspace-original-text") || ""
         const next = override === undefined ? original : override
@@ -96,6 +107,8 @@ export default function WorkspaceEditor() {
   const [savedStyle, setSavedStyle] = useState<WorkspaceStyle>(readStyle)
   const [textOverrides, setTextOverrides] = useState<TextOverrides>(readTextOverrides)
   const [savedTextOverrides, setSavedTextOverrides] = useState<TextOverrides>(readTextOverrides)
+  const [textSizes, setTextSizes] = useState<TextSizes>(readTextSizes)
+  const [savedTextSizes, setSavedTextSizes] = useState<TextSizes>(readTextSizes)
   const [activeId, setActiveId] = useState("")
   const [textSearch, setTextSearch] = useState("")
   const [selectedTextKey, setSelectedTextKey] = useState("")
@@ -137,11 +150,11 @@ export default function WorkspaceEditor() {
     root.style.setProperty("--workspace-letter-spacing", style.letterSpacing)
   }, [style])
   useEffect(() => {
-    applyTextOverrides(textOverrides)
-    const observer = new MutationObserver(() => applyTextOverrides(textOverrides))
+    applyTextOverrides(textOverrides, textSizes)
+    const observer = new MutationObserver(() => applyTextOverrides(textOverrides, textSizes))
     observer.observe(document.body, { childList: true, subtree: true })
     return () => observer.disconnect()
-  }, [textOverrides])
+  }, [textOverrides, textSizes])
   useEffect(() => {
     if (mode !== "editing") return
     const onTextClick = (event: MouseEvent) => {
@@ -162,6 +175,45 @@ export default function WorkspaceEditor() {
       setTextOverrides(updated)
     }
     document.addEventListener("dblclick", onTextClick, true)
+    const pencilButtons: HTMLButtonElement[] = []
+    document.querySelectorAll<HTMLElement>("[data-workspace-id]").forEach((root) => {
+      const id = root.dataset.workspaceId
+      if (!id || id.startsWith("note-") || protectedWorkspaceIds.includes(id)) return
+      root.querySelectorAll<HTMLElement>("*").forEach((leaf) => {
+        if (leaf.children.length || !leaf.textContent?.trim() || leaf.closest("input, textarea, select, option, script, style, svg, [data-workspace-editor-ui], [contenteditable='true']")) return
+        const path = textPath(leaf, root)
+        if (!path) return
+        const pencil = document.createElement("button")
+        pencil.type = "button"
+        pencil.className = "workspace-text-pencil"
+        pencil.textContent = "✎"
+        pencil.title = "แก้ไขข้อความและขนาดตัวอักษร"
+        pencil.setAttribute("aria-label", `แก้ไขข้อความ: ${leaf.textContent.trim().slice(0, 40)}`)
+        pencil.setAttribute("data-workspace-editor-ui", "true")
+        Object.assign(pencil.style, { position: "fixed", zIndex: "115", width: "25px", height: "25px", borderRadius: "50%", border: "1px solid #D9E3D7", background: "#FCFBF7", color: "#354337", boxShadow: "0 2px 8px #26332924", fontSize: "14px", lineHeight: "1", display: "grid", placeItems: "center", cursor: "pointer" })
+        const place = () => {
+          if (!leaf.isConnected) return
+          const rect = leaf.getBoundingClientRect()
+          pencil.style.left = `${Math.min(window.innerWidth - 30, Math.max(4, rect.right + 3))}px`
+          pencil.style.top = `${Math.min(window.innerHeight - 30, Math.max(4, rect.top - 3))}px`
+          pencil.style.display = rect.width && rect.height && rect.bottom > 0 && rect.top < window.innerHeight ? "grid" : "none"
+        }
+        const openTextEditor = (event: MouseEvent) => {
+          event.preventDefault(); event.stopPropagation()
+          setSelectedTextKey(id + ":" + path)
+          setTextSearch("")
+          const panel = document.querySelector<HTMLElement>("[data-workspace-editor-ui='true']")
+          panel?.scrollTo({ top: panel.scrollHeight, behavior: "smooth" })
+        }
+        pencil.addEventListener("click", openTextEditor)
+        document.body.appendChild(pencil)
+        pencilButtons.push(pencil)
+        place()
+        window.addEventListener("scroll", place, true)
+        window.addEventListener("resize", place)
+        cleanup.push(() => { pencil.removeEventListener("click", openTextEditor); window.removeEventListener("scroll", place, true); window.removeEventListener("resize", place); pencil.remove() })
+      })
+    })
     const elements = Array.from(document.querySelectorAll<HTMLElement>("[data-workspace-id]"))
     const cleanup: (() => void)[] = []
     elements.forEach((element) => {
@@ -216,14 +268,14 @@ export default function WorkspaceEditor() {
     return () => { document.removeEventListener("dblclick", onTextClick, true); cleanup.forEach((fn) => fn()) }
   }, [mode, draft, viewportKey, textOverrides])
   const saveLayout = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); localStorage.setItem(SETTINGS_KEY, JSON.stringify(style)); localStorage.setItem(TEXT_KEY, JSON.stringify(textOverrides)); setSaved(draft); setSavedStyle(style); setSavedTextOverrides(textOverrides); setMode(null); setActiveId(""); applyLayout(draft[viewportKey])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(draft)); localStorage.setItem(SETTINGS_KEY, JSON.stringify(style)); localStorage.setItem(TEXT_KEY, JSON.stringify(textOverrides)); localStorage.setItem(TEXT_SIZE_KEY, JSON.stringify(textSizes)); setSaved(draft); setSavedStyle(style); setSavedTextOverrides(textOverrides); setSavedTextSizes(textSizes); setMode(null); setActiveId(""); applyLayout(draft[viewportKey])
   }
-  const cancel = () => { setDraft(saved); setStyle(savedStyle); setTextOverrides(savedTextOverrides); applyTextOverrides(savedTextOverrides); applyLayout(saved[viewportKey]); setMode(null); setActiveId("") }
+  const cancel = () => { setDraft(saved); setStyle(savedStyle); setTextOverrides(savedTextOverrides); setTextSizes(savedTextSizes); applyTextOverrides(savedTextOverrides, savedTextSizes); applyLayout(saved[viewportKey]); setMode(null); setActiveId("") }
   const reset = () => {
     if (!window.confirm("คืนค่าตำแหน่งและขนาดขององค์ประกอบทั้งหมดใช่ไหม? ข้อมูลออมเงินและโน้ตจะไม่ถูกลบ")) return
     const clean = emptyStore(); setDraft(clean); setSaved(clean); localStorage.removeItem(STORAGE_KEY); applyLayout(clean[viewportKey]); setActiveId("")
   }
-  const open = () => { const latest = readStore(); const latestStyle = readStyle(); const latestText = readTextOverrides(); setSaved(latest); setDraft(latest); setSavedStyle(latestStyle); setStyle(latestStyle); setSavedTextOverrides(latestText); setTextOverrides(latestText); setMode("editing") }
+  const open = () => { const latest = readStore(); const latestStyle = readStyle(); const latestText = readTextOverrides(); const latestSizes = readTextSizes(); setSaved(latest); setDraft(latest); setSavedStyle(latestStyle); setStyle(latestStyle); setSavedTextOverrides(latestText); setTextOverrides(latestText); setSavedTextSizes(latestSizes); setTextSizes(latestSizes); setSelectedTextKey(""); setMode("editing") }
   const count = useMemo(() => Object.keys(activeLayout).length, [activeLayout])
   const editableTexts = useMemo(() => scanEditableTexts(textOverrides), [textOverrides, textScanVersion, mode])
   const filteredTexts = useMemo(() => {
@@ -236,7 +288,7 @@ export default function WorkspaceEditor() {
     {mode !== null && <>
       <div className="pointer-events-none fixed inset-0 z-[80] border-2 border-dashed border-[#52785B]/40" aria-hidden="true" />
       <section className="fixed inset-x-3 bottom-3 z-[120] mx-auto max-h-[72vh] max-w-4xl overflow-y-auto rounded-[24px] border border-[#DEDACF] bg-[#FCFBF7]/97 p-4 shadow-[0_24px_90px_rgba(25,35,27,0.25)] backdrop-blur-xl md:bottom-5 md:p-5" data-workspace-editor-ui="true" aria-label="ตัวแก้ไขพื้นที่ทำงาน">
-        <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">CUSTOM WORKSPACE · {viewportMobile ? "MOBILE" : "DESKTOP"}</p><h2 className="mt-1 text-lg font-semibold text-[#263329]">{mode === "editing" ? "จัดวางองค์ประกอบได้ตามใจ" : "ดูตัวอย่างการจัดหน้า"}</h2><p className="mt-1 text-xs leading-5 text-[#777C73]">จับ ⠿ เพื่อย้าย · จับ ↘ เพื่อปรับความกว้าง · แก้คำได้จากโหมดแก้ไขข้อความด้านล่าง</p></div><span className="rounded-full bg-[#E6F0E7] px-3 py-1.5 text-xs text-[#52785B]">{count} รายการที่ปรับตำแหน่งแล้ว</span></div>
+        <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">CUSTOM WORKSPACE · {viewportMobile ? "MOBILE" : "DESKTOP"}</p><h2 className="mt-1 text-lg font-semibold text-[#263329]">{mode === "editing" ? "จัดวางองค์ประกอบได้ตามใจ" : "ดูตัวอย่างการจัดหน้า"}</h2><p className="mt-1 text-xs leading-5 text-[#777C73]">เปิดโหมดนี้แล้วกดปากกาข้างหัวข้อเพื่อแก้ข้อความและขนาด · จับ ⠿ เพื่อย้าย · จับ ↘ เพื่อปรับความกว้าง</p></div><span className="rounded-full bg-[#E6F0E7] px-3 py-1.5 text-xs text-[#52785B]">{count} รายการที่ปรับตำแหน่งแล้ว</span></div>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           <label className="flex items-center gap-2 rounded-full border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">โทนสี<select value={style.accent} onChange={(event) => setStyle((old) => ({ ...old, accent: event.target.value }))} className="bg-transparent text-xs text-[#263329] outline-none"><option value="sage">เขียวละมุน</option><option value="rose">ชมพูอบอุ่น</option><option value="ocean">ฟ้าเย็น</option><option value="mono">ขาวดำ</option></select></label>
           <label className="flex items-center gap-2 rounded-full border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ระยะห่าง<select value={style.scale} onChange={(event) => setStyle((old) => ({ ...old, scale: event.target.value }))} className="bg-transparent text-xs text-[#263329] outline-none"><option value="comfortable">สบายตา</option><option value="compact">กระชับ</option><option value="spacious">โปร่ง</option></select></label>
@@ -249,10 +301,10 @@ export default function WorkspaceEditor() {
           <label className="flex items-center gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ระยะบรรทัด<select value={style.lineHeight} onChange={(event) => setStyle((old) => ({ ...old, lineHeight: event.target.value }))} className="min-w-0 bg-transparent text-xs text-[#263329] outline-none"><option value="1.35">แน่น</option><option value="1.6">ปกติ</option><option value="1.85">โปร่ง</option></select></label>
           <label className="flex items-center gap-2 rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">ตัวอักษร<select value={style.letterSpacing} onChange={(event) => setStyle((old) => ({ ...old, letterSpacing: event.target.value }))} className="min-w-0 bg-transparent text-xs text-[#263329] outline-none"><option value="normal">ปกติ</option><option value="-0.02em">ชิด</option><option value="0.03em">ห่าง</option></select></label>
           <button onClick={() => { const reset = { ...defaultStyle }; setStyle(reset); document.documentElement.style.setProperty("--workspace-font-family", "'Noto Sans Thai', sans-serif"); }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#354337]">คืนค่ารูปแบบตัวอักษร</button>
-          <button onClick={() => { if (window.confirm("คืนข้อความที่แก้ไขทั้งหมดให้เป็นข้อความเดิมใช่ไหม?")) { setTextOverrides({}); applyTextOverrides({}); } }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#9A722F]">คืนค่าข้อความเดิม</button>
+          <button onClick={() => { if (window.confirm("คืนข้อความที่แก้ไขทั้งหมดให้เป็นข้อความเดิมใช่ไหม?")) { setTextOverrides({}); setTextSizes({}); applyTextOverrides({}, {}); } }} className="rounded-xl border border-[#DEDACF] bg-white px-3 py-2 text-xs font-medium text-[#9A722F]">คืนค่าข้อความเดิม</button>
           <div className="col-span-full rounded-2xl border border-[#D9E3D7] bg-[#F5F8F3] p-3 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div><h3 className="text-sm font-semibold text-[#263329]">แก้ไขข้อความและหัวข้อ</h3><p className="mt-1 text-[11px] leading-5 text-[#777C73]">เลือกข้อความจากรายการ แล้วแก้ชื่อหัวข้อ ป้ายกำกับ หรือข้อความบนปุ่มได้ โดยไม่แก้ข้อมูลที่บันทึกไว้</p></div>
+              <div><h3 className="text-sm font-semibold text-[#263329]">แก้ไขข้อความและหัวข้อ</h3><p className="mt-1 text-[11px] leading-5 text-[#777C73]">กดปากกา ✎ ที่อยู่ข้างข้อความบนหน้าเว็บ หรือเลือกจากรายการ แล้วปรับข้อความและขนาดได้ทันที</p></div>
               <button type="button" onClick={() => setTextScanVersion((value) => value + 1)} className="rounded-full border border-[#D9E3D7] bg-white px-3 py-2 text-xs font-medium text-[#354337]">สแกนข้อความใหม่</button>
             </div>
             <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
@@ -275,7 +327,7 @@ export default function WorkspaceEditor() {
               </div>
             </div>
           </div>
-          <p className="col-span-full text-[11px] leading-5 text-[#858880]">แก้ข้อความผ่านแผงนี้หรือดับเบิลคลิกข้อความบนหน้าเว็บได้ การแก้ไขจะมีผลหลังจากกดบันทึก และยกเลิกได้ก่อนบันทึก</p>
+          <p className="col-span-full text-[11px] leading-5 text-[#858880]">กดปากกาข้างข้อความเพื่อเลือกแก้ไข · ปรับขนาดได้รายข้อความ · กดบันทึกเมื่อเสร็จ หรือยกเลิกเพื่อคืนค่าก่อนแก้</p>
           <button onClick={() => setMode(mode === "editing" ? "preview" : "editing")} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#354337]">{mode === "editing" ? "ดูตัวอย่าง" : "กลับไปแก้ไข"}</button>
           <button onClick={reset} className="rounded-full border border-[#E6D7C7] bg-white px-4 py-2 text-xs font-medium text-[#9A722F]">คืนค่าตำแหน่ง</button><div className="flex-1" />
           <button onClick={cancel} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#6D716B]">ยกเลิก</button><button onClick={saveLayout} className="rounded-full bg-[#263329] px-5 py-2 text-xs font-medium text-white hover:bg-[#3B4A3E]">บันทึก</button>
