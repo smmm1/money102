@@ -4,8 +4,8 @@
 @layer base {
   :root {
     font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif;
-    color: #263329;
-    background: #F8F6EF;
+    color: #141513;
+    background: #F3F0E7;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
@@ -20,7 +20,7 @@
     background:
       radial-gradient(circle at 8% 3%, rgba(245, 197, 27, 0.12), transparent 25rem),
       radial-gradient(circle at 92% 5%, rgba(123, 197, 150, 0.12), transparent 24rem),
-      #F8F6EF;
+      #F3F0E7;
   }
 
   button {
@@ -136,7 +136,7 @@ html[data-workspace-editor="on"] [data-workspace-id]:hover {
 
 
 /* Fine-grained typography controls */
-html { --mll-cream: #F3F0E7; --mll-ink: #141513; --mll-coral: #F87562; --mll-mint: #7BC596; --mll-yellow: #F5C51B; --workspace-font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif; --workspace-font-size: 15px; --workspace-heading-scale: 1; --workspace-font-weight: 400; --workspace-heading-weight: 600; --workspace-text-color: #263329; --workspace-line-height: 1.6; --workspace-letter-spacing: normal; }
+html { --mll-cream: #F3F0E7; --mll-ink: #141513; --mll-coral: #F87562; --mll-mint: #7BC596; --mll-yellow: #F5C51B; --workspace-font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif; --workspace-font-size: 15px; --workspace-heading-scale: 1; --workspace-font-weight: 400; --workspace-heading-weight: 600; --workspace-text-color: #141513; --workspace-line-height: 1.6; --workspace-letter-spacing: normal; }
 body { font-family: var(--workspace-font-family); font-size: var(--workspace-font-size); font-weight: var(--workspace-font-weight); line-height: var(--workspace-line-height); letter-spacing: var(--workspace-letter-spacing); color: var(--workspace-text-color); }
 body :where(p, span, label, button, a, li, input, textarea, select, small, strong, em, th, td) { font-family: var(--workspace-font-family); font-size: var(--workspace-font-size); font-weight: var(--workspace-font-weight); letter-spacing: var(--workspace-letter-spacing); }
 body :where(h1, h2, h3, h4, h5, h6) { font-family: var(--workspace-font-family); font-weight: var(--workspace-heading-weight); letter-spacing: var(--workspace-letter-spacing); }
@@ -146,3 +146,32 @@ body h3 { font-size: calc(1.2rem * var(--workspace-heading-scale)); }
 body h4, body h5, body h6 { font-size: calc(1.05rem * var(--workspace-heading-scale)); }
 html[data-workspace-editor="on"] [data-workspace-id] :where(p, span, h1, h2, h3, label, a, button) { cursor: text; }
 html[data-workspace-editor="on"] [data-workspace-id] :where(p, span, h1, h2, h3, label, a, button):hover { text-decoration: underline dotted rgba(82, 120, 91, 0.6); text-underline-offset: 3px; }
+
+
+/* Mll shared surface and interaction system */
+:root {
+  --mll-cream: #F3F0E7;
+  --mll-ink: #141513;
+  --mll-coral: #F87562;
+  --mll-mint: #7BC596;
+  --mll-yellow: #F5C51B;
+  --mll-border: #E0DCCE;
+  --mll-surface: #FCFBF7;
+}
+body { color: var(--mll-ink); }
+:where(button, a) {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 180ms;
+}
+:where(input, textarea, select) { border-radius: 14px; }
+[data-workspace-id="site-header"] {
+  background: rgba(243, 240, 231, .94);
+  border-color: #DED9CA;
+}
+.mll-home button:focus-visible,
+header button:focus-visible,
+nav button:focus-visible { outline-color: var(--mll-mint); }
+@media (max-width: 767px) {
+  .mll-home { padding-bottom: 1rem; }
+  .mll-home [data-workspace-id="home-welcome"] { gap: .75rem; }
+}
