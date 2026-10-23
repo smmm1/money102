@@ -1,0 +1,13 @@
+name = "money102-api"
+main = "worker/index.ts"
+compatibility_date = "2026-10-23"
+
+# After creating a D1 database, replace the placeholder below with its real ID.
+# Do not deploy until the D1 binding and Worker secrets are configured.
+[[d1_databases]]
+binding = "DB"
+database_name = "money102-data"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[vars]
+APP_ORIGIN = "https://money102-web.onrender.com"
