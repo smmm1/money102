@@ -4,6 +4,7 @@ import Canvas from "./Canvas";
 import PropertyPanel from "./PropertyPanel";
 import LegacyPageEditor from "./LegacyPageEditor";
 import { editorActions, useEditorStore } from "./useEditorStore";
+import { validateEditorDocument } from "./types";
 import "./backoffice.css";
 
 function download(filename: string, content: string, type: string) {
@@ -36,7 +37,7 @@ export default function Backoffice() {
     if (!file) return;
     try {
       const parsed = JSON.parse(await file.text());
-      if (parsed?.version !== 1 || !parsed.root || !Array.isArray(parsed.root.children)) throw new Error("invalid");
+      if (!validateEditorDocument(parsed)) throw new Error("invalid");
       localStorage.setItem("money102-visual-builder-draft-v1", JSON.stringify(parsed));
       window.location.reload();
     } catch { window.alert("ไฟล์ JSON ไม่ถูกต้อง หรือไม่ใช่ Schema ของ Visual Builder รุ่นนี้"); }
@@ -47,6 +48,7 @@ export default function Backoffice() {
       <div className="builder-page-title"><span className="builder-breadcrumb">{workspace === "legacy" ? "Existing pages" : "New design"}</span><span>/</span>{workspace === "builder" ? <input aria-label="ชื่อหน้า" value={document.title} onChange={(e) => editorActions.setTitle(e.target.value)} /> : <span className="builder-page-title-static">หน้าเว็บเดิม</span>}</div>
       <div className="builder-top-actions">
         {workspace === "builder" && <><button className="builder-quiet-button" onClick={() => editorActions.undo()} disabled={!useEditorStore().history.length}>↶ Undo</button>
+        <button className="builder-quiet-button" onClick={() => editorActions.redo()} disabled={!useEditorStore().future.length}>↷ Redo</button>
         <button className="builder-quiet-button" onClick={() => fileInput.current?.click()}>Import JSON</button>
         <input ref={fileInput} hidden type="file" accept="application/json,.json" onChange={(e) => void importJson(e.target.files?.[0])} />
         <button className="builder-export-button" onClick={() => setExportOpen(true)}>Export / Save ↗</button></>}
