@@ -41,7 +41,7 @@ function readElementOverrides(): ElementOverrides {
     Object.entries(value).forEach(([id, raw]) => {
       if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !raw || typeof raw !== "object") return
       const item = raw as Record<string, unknown>
-      const safe = (v: unknown) => typeof v === "string" && v.length <= 100 && /^[#(),.%\\w\\s-]*$/.test(v) ? v : undefined
+      const safe = (v: unknown) => typeof v === "string" && v.length <= 100 && /^[#(),.%\w\s-]*$/.test(v) ? v : undefined
       const icon = typeof item.icon === "string" && item.icon.length <= 12 ? item.icon : undefined
       result[id] = { backgroundColor: safe(item.backgroundColor), color: safe(item.color), padding: safe(item.padding), borderRadius: safe(item.borderRadius), icon }
     })
