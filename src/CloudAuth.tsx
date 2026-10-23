@@ -1,13 +1,10 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react"
-import { createClient, type User } from "@supabase/supabase-js"
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
-
-export const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-
-const LOCAL_PREFIX = "lamoon-"
+type AppUser = { id: string; email: string }
 type LocalSnapshot = Record<string, string>
+const TOKEN_KEY = "money102_cloudflare_session"
+const LOCAL_PREFIX = "lamoon-"
+const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || "https://money102-api.s2mtha16.workers.dev").replace(/\/$/, "")
 
 function readLocalSnapshot(): LocalSnapshot {
   const snapshot: LocalSnapshot = {}
@@ -22,17 +19,26 @@ function readLocalSnapshot(): LocalSnapshot {
 }
 
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  // Non-destructive restore: only write keys present in the merged snapshot.
-  // Never remove browser keys during migration; preserve local data if sync is interrupted.
   Object.entries(snapshot || {}).forEach(([key, value]) => {
-    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") {
-      localStorage.setItem(key, value)
-    }
+    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") localStorage.setItem(key, value)
   })
 }
 
+function getToken() { return localStorage.getItem(TOKEN_KEY) || "" }
+
+async function api(path: string, init: RequestInit = {}) {
+  const token = getToken()
+  const headers = new Headers(init.headers)
+  if (token) headers.set("Authorization", `Bearer ${token}`)
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
+  const response = await fetch(`${apiUrl}${path}`, { ...init, headers })
+  const body = await response.json().catch(() => ({})) as { error?: string; [key: string]: unknown }
+  if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`)
+  return body
+}
+
 export default function CloudAuth({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AppUser | null>(null)
   const [checking, setChecking] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -43,158 +49,126 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [cloudError, setCloudError] = useState("")
 
   useEffect(() => {
-    if (!supabase) {
-      setChecking(false)
-      return
-    }
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null)
-      setChecking(false)
-    })
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-    return () => listener.subscription.unsubscribe()
+    let cancelled = false
+    ;(async () => {
+      const token = getToken()
+      if (!token) { if (!cancelled) setChecking(false); return }
+      try {
+        const result = await api("/api/auth/me")
+        if (!cancelled) setUser(result.user as AppUser)
+      } catch {
+        localStorage.removeItem(TOKEN_KEY)
+      } finally {
+        if (!cancelled) setChecking(false)
+      }
+    })()
+    return () => { cancelled = true }
   }, [])
 
-  const apiUrl = (import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined)?.replace(/\/$/, "");
-
   useEffect(() => {
-    if (!user || !supabase) {
-      setCloudReady(false);
-      setCloudError("");
-      return;
-    }
-    if (!apiUrl) {
-      setCloudError("ยังไม่ได้ตั้งค่า VITE_CLOUDFLARE_API_URL สำหรับ Cloudflare Worker");
-      return;
-    }
-    let cancelled = false;
-    setCloudReady(false);
-    setCloudError("");
-    (async () => {
-      const { data: sessionData } = await supabase!.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) {
-        if (!cancelled) setCloudError("ไม่พบ session สำหรับเชื่อมต่อฐานข้อมูล");
-        return;
-      }
-      const response = await fetch(`${apiUrl}/api/state`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) {
-        const body = await response.text();
-        if (!cancelled) setCloudError("อ่าน Cloudflare D1 ไม่สำเร็จ: " + body);
-        return;
-      }
-      const result = await response.json() as { payload: LocalSnapshot | null };
-      if (cancelled) return;
-      // Merge instead of replacing local state: cloud wins on duplicate keys,
-      // while browser-only keys are preserved during the first migration.
-      const localSnapshot = readLocalSnapshot();
-      const cloudSnapshot = result.payload && typeof result.payload === "object" ? result.payload : {};
-      const mergedSnapshot = { ...localSnapshot, ...cloudSnapshot };
-      const migrationResponse = await fetch(`${apiUrl}/api/state`, {
+    if (!user) { setCloudReady(false); setCloudError(""); return }
+    let cancelled = false
+    setCloudReady(false)
+    setCloudError("")
+    ;(async () => {
+      const result = await api("/api/state") as { payload?: LocalSnapshot | null }
+      if (cancelled) return
+      const localSnapshot = readLocalSnapshot()
+      const cloudSnapshot = result.payload && typeof result.payload === "object" ? result.payload : {}
+      const mergedSnapshot = { ...localSnapshot, ...cloudSnapshot }
+      const migrationResponse = await api("/api/state", {
         method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ payload: mergedSnapshot }),
-      });
-      if (!migrationResponse.ok) {
-        const body = await migrationResponse.text();
-        if (!cancelled) setCloudError("ย้ายหรือรวมข้อมูลไป Cloudflare ไม่สำเร็จ: " + body);
-        return;
-      }
-      restoreSnapshot(mergedSnapshot);
-      if (!cancelled) setCloudReady(true);
+      })
+      if (cancelled) return
+      restoreSnapshot(mergedSnapshot)
+      setCloudReady(true)
     })().catch((error: unknown) => {
-      if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)));
-    });
-    return () => { cancelled = true; };
-  }, [user?.id]);
+      if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
+    })
+    return () => { cancelled = true }
+  }, [user?.id])
 
   useEffect(() => {
-    if (!user || !cloudReady || !supabase || !apiUrl) return;
-    const originalSetItem = Storage.prototype.setItem;
-    const originalRemoveItem = Storage.prototype.removeItem;
-    let timer: number | undefined;
-    let stopped = false;
+    if (!user || !cloudReady) return
+    const originalSetItem = Storage.prototype.setItem
+    const originalRemoveItem = Storage.prototype.removeItem
+    let timer: number | undefined
+    let stopped = false
     const sync = async () => {
-      if (stopped) return;
-      const { data } = await supabase!.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) {
-        if (!stopped) setCloudError("session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
-        return;
-      }
-      const response = await fetch(`${apiUrl}/api/state`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: readLocalSnapshot() }),
-      });
-      if (!response.ok && !stopped) setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + await response.text());
-      else if (!stopped) setCloudError("");
-    };
+      if (stopped) return
+      await api("/api/state", { method: "PUT", body: JSON.stringify({ payload: readLocalSnapshot() }) })
+      if (!stopped) setCloudError("")
+    }
     const schedule = () => {
-      if (timer !== undefined) window.clearTimeout(timer);
+      if (timer !== undefined) window.clearTimeout(timer)
       timer = window.setTimeout(() => {
         void sync().catch((error: unknown) => {
-          if (!stopped) setCloudError("บันทึกลง Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)));
-        });
-      }, 500);
-    };
+          if (!stopped) setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
+        })
+      }, 600)
+    }
     Storage.prototype.setItem = function (key: string, value: string) {
-      originalSetItem.call(this, key, value);
-      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule();
-    };
+      originalSetItem.call(this, key, value)
+      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule()
+    }
     Storage.prototype.removeItem = function (key: string) {
-      originalRemoveItem.call(this, key);
-      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule();
-    };
+      originalRemoveItem.call(this, key)
+      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule()
+    }
     return () => {
-      stopped = true;
-      if (timer !== undefined) window.clearTimeout(timer);
-      Storage.prototype.setItem = originalSetItem;
-      Storage.prototype.removeItem = originalRemoveItem;
-    };
-  }, [user?.id, cloudReady]);
+      stopped = true
+      if (timer !== undefined) window.clearTimeout(timer)
+      Storage.prototype.setItem = originalSetItem
+      Storage.prototype.removeItem = originalRemoveItem
+    }
+  }, [user?.id, cloudReady])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
-    if (!supabase) return
     setBusy(true)
     setMessage("")
-    const result = mode === "signin"
-      ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      : await supabase.auth.signUp({ email: email.trim(), password })
-    setBusy(false)
-    if (result.error) setMessage(result.error.message)
-    else if (mode === "signup" && !result.data.session) setMessage("สมัครแล้ว กรุณายืนยันอีเมลก่อนเข้าสู่ระบบ")
-    else setMessage("สำเร็จ")
+    try {
+      const result = await api(mode === "signin" ? "/api/auth/signin" : "/api/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ email: email.trim(), password }),
+      }) as { token: string; user: AppUser }
+      localStorage.setItem(TOKEN_KEY, result.token)
+      setUser(result.user)
+      setPassword("")
+      setMessage(mode === "signup" ? "สร้างบัญชี Cloudflare สำเร็จ" : "เข้าสู่ระบบสำเร็จ")
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error))
+    } finally {
+      setBusy(false)
+    }
   }
 
-  if (!supabase) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5"><section className="max-w-lg rounded-3xl bg-white p-7 shadow-sm"><h1 className="text-xl font-semibold text-[#263329]">ยังไม่ได้ตั้งค่า Supabase</h1><p className="mt-3 text-sm leading-6 text-[#666D64]">ต้องตั้งค่า VITE_SUPABASE_URL และ VITE_SUPABASE_PUBLISHABLE_KEY ใน Render แล้ว Build ใหม่</p></section></main>
+  async function signOut() {
+    try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
+    localStorage.removeItem(TOKEN_KEY)
+    setUser(null)
+    setCloudReady(false)
+    setCloudError("")
+    setMessage("ออกจากระบบแล้ว")
+  }
+
   if (checking) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] text-sm text-[#73796F]">กำลังตรวจสอบบัญชี…</main>
   if (!user) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5">
     <section className="w-full max-w-md rounded-[28px] border border-[#E5E0D3] bg-[#FCFBF7] p-7 shadow-[0_20px_60px_rgba(38,51,41,0.08)] sm:p-9">
       <div className="mb-7 grid h-12 w-12 place-items-center rounded-2xl bg-[#E8EEE5] text-2xl">🐷</div>
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#9B8450]">LAMOON · PRIVATE SPACE</p>
       <h1 className="mt-2 text-2xl font-semibold text-[#263329]">{mode === "signin" ? "ยินดีต้อนรับกลับ" : "สร้างบัญชีของคุณ"}</h1>
-      <p className="mt-2 text-sm leading-6 text-[#777D73]">เข้าสู่ระบบเพื่อเก็บข้อมูลออมเงิน สุขภาพ และโน้ตไว้ในฐานข้อมูลส่วนตัวของคุณ</p>
+      <p className="mt-2 text-sm leading-6 text-[#777D73]">เข้าสู่ระบบเพื่อเก็บข้อมูลออมเงิน สุขภาพ และโน้ตไว้ใน Cloudflare D1</p>
       <form onSubmit={submit} className="mt-6 space-y-4">
         <label className="block text-sm font-medium text-[#414A41]">อีเมล<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
-        <label className="block text-sm font-medium text-[#414A41]">รหัสผ่าน<input type="password" required minLength={6} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
+        <label className="block text-sm font-medium text-[#414A41]">รหัสผ่าน<input type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
         {message && <p role="status" className="text-sm leading-5 text-[#8B5B42]">{message}</p>}
         <button disabled={busy} className="h-12 w-full rounded-full bg-[#263329] text-sm font-medium text-white disabled:opacity-60">{busy ? "กำลังดำเนินการ…" : mode === "signin" ? "เข้าสู่ระบบ" : "สมัครบัญชี"}</button>
       </form>
-      <button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage("") }} className="mt-5 w-full text-sm text-[#55745A]">{mode === "signin" ? "ยังไม่มีบัญชี? สมัครใหม่" : "มีบัญชีแล้ว? เข้าสู่ระบบ"}</button>
+      <button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage("") }} className="mt-5 w-full text-sm text-[#55745A]">{mode === "signin" ? "ยังไม่มีบัญชี Cloudflare? สมัครใหม่" : "มีบัญชีแล้ว? เข้าสู่ระบบ"}</button>
     </section>
   </main>
-  if (!cloudReady) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5"><section className="max-w-xl rounded-3xl bg-white p-7 shadow-sm"><p className="text-sm leading-6 text-[#5F665D]">{cloudError || "กำลังโหลดข้อมูลของคุณจาก Supabase…"}</p><button onClick={() => { void supabase.auth.signOut() }} className="mt-4 rounded-full border px-4 py-2 text-sm">ออกจากระบบ</button></section></main>
-  return <><div className="fixed right-4 top-4 z-[100] flex items-center gap-3 rounded-full border border-[#E5E0D3] bg-[#FCFBF7]/95 px-3 py-2 shadow-sm backdrop-blur"><span className="hidden max-w-[180px] truncate text-xs text-[#697166] sm:block">{user.email}</span><button onClick={() => { void supabase.auth.signOut() }} className="text-xs font-medium text-[#55745A]">ออกจากระบบ</button></div>{cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}{children}</>
+  if (!cloudReady) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5"><section className="max-w-xl rounded-3xl bg-white p-7 shadow-sm"><p className="text-sm leading-6 text-[#5F665D]">{cloudError || "กำลังโหลดข้อมูลของคุณจาก Cloudflare D1…"}</p><button onClick={() => { void signOut() }} className="mt-4 rounded-full border px-4 py-2 text-sm">ออกจากระบบ</button></section></main>
+  return <><div className="fixed right-4 top-4 z-[100] flex items-center gap-3 rounded-full border border-[#E5E0D3] bg-[#FCFBF7]/95 px-3 py-2 shadow-sm backdrop-blur"><span className="hidden max-w-[180px] truncate text-xs text-[#697166] sm:block">{user.email}</span><button onClick={() => { void signOut() }} className="text-xs font-medium text-[#55745A]">ออกจากระบบ</button></div>{cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}{children}</>
 }
