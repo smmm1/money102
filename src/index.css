@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
 @import 'tailwindcss';
 
 @layer base {
@@ -133,3 +133,16 @@ html[data-workspace-editor="on"] [data-workspace-id]:hover {
   outline-offset: 2px;
 }
 .workspace-drag-handle, .workspace-resize-handle { touch-action: none; }
+
+
+/* Fine-grained typography controls */
+html { --workspace-font-family: 'Noto Sans Thai', sans-serif; --workspace-font-size: 15px; --workspace-heading-scale: 1; --workspace-font-weight: 400; --workspace-heading-weight: 600; --workspace-text-color: #263329; --workspace-line-height: 1.6; --workspace-letter-spacing: normal; }
+body { font-family: var(--workspace-font-family); font-size: var(--workspace-font-size); font-weight: var(--workspace-font-weight); line-height: var(--workspace-line-height); letter-spacing: var(--workspace-letter-spacing); color: var(--workspace-text-color); }
+body :where(p, span, label, button, a, li, input, textarea, select, small, strong, em, th, td) { font-family: var(--workspace-font-family); font-weight: var(--workspace-font-weight); letter-spacing: var(--workspace-letter-spacing); }
+body :where(h1, h2, h3, h4, h5, h6) { font-family: var(--workspace-font-family); font-weight: var(--workspace-heading-weight); letter-spacing: var(--workspace-letter-spacing); }
+body h1 { font-size: calc(clamp(2rem, 4vw, 3.75rem) * var(--workspace-heading-scale)); }
+body h2 { font-size: calc(clamp(1.35rem, 2.4vw, 2rem) * var(--workspace-heading-scale)); }
+body h3 { font-size: calc(1.2rem * var(--workspace-heading-scale)); }
+body h4, body h5, body h6 { font-size: calc(1.05rem * var(--workspace-heading-scale)); }
+html[data-workspace-editor="on"] [data-workspace-id] :where(p, span, h1, h2, h3, label, a, button) { cursor: text; }
+html[data-workspace-editor="on"] [data-workspace-id] :where(p, span, h1, h2, h3, label, a, button):hover { text-decoration: underline dotted rgba(82, 120, 91, 0.6); text-underline-offset: 3px; }
