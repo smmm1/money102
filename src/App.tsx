@@ -581,11 +581,18 @@ function HealthDashboard() {
   function removeRecord(id: string) { if (window.confirm("ลบบันทึกนี้ใช่ไหม?")) setData((old) => ({ ...old, records: old.records.filter((r) => r.id !== id) })) }
   const visibleRecords = records.filter((r) => filter === "all" || r.type === filter)
   return (
-    <main className="mx-auto max-w-[1180px] px-5 pb-24 pt-5 md:px-8 md:pt-8">
-      <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
-        <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B96E69]">ดูแลตัวเอง · HEALTH</p><h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">แดชบอร์ดสุขภาพ</h1><p className="mt-1.5 text-sm text-[#858880]">เก็บทุกความคืบหน้าไว้ในที่เดียว ค่อย ๆ ดีขึ้นในแบบของเรา</p></div>
-        <div className="flex flex-wrap items-center gap-2"><select aria-label="เลือกโปรไฟล์" value={profile.id} onChange={(e) => setData((old) => ({ ...old, activeProfileId: e.target.value }))} className="h-11 max-w-[180px] rounded-full border border-[#DEDACF] bg-white/80 px-4 text-sm text-[#263329]">{data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button onClick={() => { setShowAdd(true); setKind("weight") }} className="inline-flex h-11 items-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white hover:bg-[#3B4A3E]"><Icon name="plus" className="h-4 w-4" /> บันทึกข้อมูล</button></div>
-      </div>
+    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B96E69]">ดูแลตัวเอง · HEALTH</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">สุขภาพ</h1>
+          <p className="mt-1.5 text-sm leading-6 text-[#858880]">เก็บทุกความคืบหน้าไว้ในที่เดียว ค่อย ๆ ดีขึ้นในแบบของเรา</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <select aria-label="เลือกโปรไฟล์" value={profile.id} onChange={(e) => setData((old) => ({ ...old, activeProfileId: e.target.value }))} className="h-10 max-w-[180px] rounded-full border border-[#DEDACF] bg-white/80 px-4 text-sm text-[#263329]">{data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+          <button onClick={() => { setShowAdd(true); setKind("weight") }} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white hover:bg-[#3B4A3E]"><Icon name="plus" className="h-4 w-4" /> บันทึกข้อมูล</button>
+        </div>
+      </header>
       <div className="mb-5 flex gap-1 rounded-full border border-[#E1DDCF] bg-white/55 p-1.5 sm:w-fit">{([{id:"overview",label:"ภาพรวม"},{id:"records",label:"ประวัติและปฏิทิน"},{id:"profiles",label:"โปรไฟล์"}] as const).map((t) => <button key={t.id} onClick={() => setTab(t.id)} className={"rounded-full px-4 py-2 text-sm " + (tab === t.id ? "bg-[#263329] text-white" : "text-[#747970] hover:bg-[#F1EEE5]")}>{t.label}</button>)}</div>
       {tab === "overview" && <>
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
