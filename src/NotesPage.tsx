@@ -5,12 +5,12 @@ type Entry = { id: string; title: string; body: string; tags: string[]; mood: Mo
 
 const STORAGE_KEY = "lamoon-commonplace-notes-v1"
 const moods: { id: Mood; label: string; icon: string; tone: string }[] = [
-  { id: "happy", label: "ดีใจ", icon: "☀", tone: "bg-[#F8F0D9] text-[#B68A43]" },
-  { id: "neutral", label: "เฉย ๆ", icon: "—", tone: "bg-[#EEF0E8] text-[#B68A43]" },
+  { id: "happy", label: "ดีใจ", icon: "☀", tone: "bg-[#FBF1C9] text-[#B18B12]" },
+  { id: "neutral", label: "เฉย ๆ", icon: "—", tone: "bg-[#EEF0E8] text-[#B18B12]" },
   { id: "sad", label: "เศร้า", icon: "☁", tone: "bg-[#E9EEF1] text-[#607782]" },
 ]
 const moodLabel = (mood: Mood) => moods.find((m) => m.id === mood) ?? moods[1]
-const inputClass = "mt-1.5 w-full rounded-xl border border-[#E1DDCF] bg-white px-3.5 py-3 text-sm text-[#263329] outline-none placeholder:text-[#A2A49C] focus:border-[#F0DCA9]"
+const inputClass = "mt-1.5 w-full rounded-xl border border-[#E1DDCF] bg-white px-3.5 py-3 text-sm text-[#141513] outline-none placeholder:text-[#A2A49C] focus:border-[#F0DCA9]"
 
 function readEntries(): Entry[] {
   try {
@@ -75,19 +75,19 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
     <main data-workspace-id="notes-page" className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
       <header data-workspace-id="notes-header" className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B68A43]">พื้นที่ความคิด · NOTES</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">สมุดสะสมความคิด</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B18B12]">พื้นที่ความคิด · NOTES</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#141513] md:text-4xl">สมุดสะสมความคิด</h1>
           <p className="mt-1.5 text-sm leading-6 text-[#858880]">เก็บสิ่งที่ชอบ ไอเดีย และความรู้สึกในแต่ละวัน</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={onBack} className="inline-flex h-10 items-center rounded-full border border-[#DEDACF] bg-white/75 px-4 text-sm font-medium text-[#626760] hover:bg-white">หน้าหลัก</button>
-          {!editing && <button onClick={startNew} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition hover:bg-[#3B4A3E]">＋ เขียนโน้ตใหม่</button>}
+          {!editing && <button onClick={startNew} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#141513] px-5 text-sm font-medium text-white transition hover:bg-[#3B4A3E]">＋ เขียนโน้ตใหม่</button>}
         </div>
       </header>
 
       {editing && <><button type="button" aria-label="ปิดหน้าต่างโน้ต" onClick={() => { setEditing(false); setEditingId(null) }} className="fixed inset-0 z-40 cursor-default bg-[#1E2921]/40 backdrop-blur-sm" /><form onSubmit={saveEntry} className="fixed left-1/2 top-1/2 z-50 m-0 max-h-[92dvh] w-[calc(100vw-24px)] max-w-2xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[24px] border border-[#E1DDCF] bg-[#FCFBF7] p-5 shadow-[0_24px_80px_rgba(25,35,27,0.22)] sm:p-7">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <div><p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#8C8D78]">{editingId ? "EDIT ENTRY" : "NEW ENTRY"}</p><h2 className="mt-1 text-xl font-semibold text-[#263329]">{editingId ? "แก้ไขโน้ต" : "เขียนโน้ตใหม่"}</h2></div>
+          <div><p className="text-xs font-semibold uppercase tracking-[0.13em] text-[#8C8D78]">{editingId ? "EDIT ENTRY" : "NEW ENTRY"}</p><h2 className="mt-1 text-xl font-semibold text-[#141513]">{editingId ? "แก้ไขโน้ต" : "เขียนโน้ตใหม่"}</h2></div>
           <button type="button" onClick={() => { setEditing(false); setEditingId(null) }} className="rounded-full px-3 py-2 text-sm text-[#858880] hover:bg-[#F5F3EC]">ยกเลิก</button>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -98,10 +98,10 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
         <fieldset className="mt-5">
           <legend className="text-sm font-medium text-[#4C554D]">วันนี้รู้สึกอย่างไร?</legend>
           <div className="mt-2 flex flex-wrap gap-2">
-            {moods.map((item) => <button key={item.id} type="button" onClick={() => setMood(item.id)} className={"rounded-full border px-4 py-2.5 text-sm transition " + (mood === item.id ? "border-[#AAB4A1] bg-[#F0F1E8] text-[#263329]" : "border-[#E5E1D7] bg-white text-[#72786F] hover:bg-[#F8F7F2]")}>{item.icon} {item.label}</button>)}
+            {moods.map((item) => <button key={item.id} type="button" onClick={() => setMood(item.id)} className={"rounded-full border px-4 py-2.5 text-sm transition " + (mood === item.id ? "border-[#AAB4A1] bg-[#F0F1E8] text-[#141513]" : "border-[#E5E1D7] bg-white text-[#72786F] hover:bg-[#F8F7F2]")}>{item.icon} {item.label}</button>)}
           </div>
         </fieldset>
-        <div className="mt-6 flex justify-end"><button type="submit" className="h-11 w-full rounded-full bg-[#263329] px-7 text-sm font-medium text-white hover:bg-[#3B4A3E] sm:w-auto">บันทึกโน้ต</button></div>
+        <div className="mt-6 flex justify-end"><button type="submit" className="h-11 w-full rounded-full bg-[#141513] px-7 text-sm font-medium text-white hover:bg-[#3B4A3E] sm:w-auto">บันทึกโน้ต</button></div>
       </form></>}
 
       <section>
@@ -109,8 +109,8 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
           <label className="block md:min-w-[250px] md:flex-1"><span className="sr-only">ค้นหาโน้ต</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาหัวข้อ เนื้อหา หรือแท็ก…" className={inputClass + " mt-0"} /></label>
           <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-0">
             <span className="mr-1 text-xs text-[#92958D]">อารมณ์</span>
-            <button onClick={() => setMoodFilter("all")} className={"rounded-full px-3 py-2 text-xs " + (moodFilter === "all" ? "bg-[#263329] text-white" : "bg-[#F3F0E7] text-[#73786F]")}>ทั้งหมด</button>
-            {moods.map((item) => <button key={item.id} onClick={() => setMoodFilter(item.id)} className={"rounded-full px-3 py-2 text-xs " + (moodFilter === item.id ? "bg-[#263329] text-white" : "bg-[#F3F0E7] text-[#73786F]")}>{item.icon} {item.label}</button>)}
+            <button onClick={() => setMoodFilter("all")} className={"rounded-full px-3 py-2 text-xs " + (moodFilter === "all" ? "bg-[#141513] text-white" : "bg-[#F3F0E7] text-[#73786F]")}>ทั้งหมด</button>
+            {moods.map((item) => <button key={item.id} onClick={() => setMoodFilter(item.id)} className={"rounded-full px-3 py-2 text-xs " + (moodFilter === item.id ? "bg-[#141513] text-white" : "bg-[#F3F0E7] text-[#73786F]")}>{item.icon} {item.label}</button>)}
           </div>
         </div>
 
@@ -124,19 +124,19 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
                 <button onClick={() => togglePin(entry.id)} title={entry.pinned ? "เลิกปักหมุด" : "ปักหมุด"} className="rounded-full px-2 py-1 text-xs text-[#858880] hover:bg-[#F3F0E7]">{entry.pinned ? "ปักหมุดแล้ว" : "ปักหมุด"}</button>
               </div>
             </div>
-            <h3 className="mt-4 break-words text-lg font-semibold leading-snug tracking-[-0.025em] text-[#263329]">{entry.title || "ไม่มีชื่อเรื่อง"}</h3>
+            <h3 className="mt-4 break-words text-lg font-semibold leading-snug tracking-[-0.025em] text-[#141513]">{entry.title || "ไม่มีชื่อเรื่อง"}</h3>
             <p className="mt-2 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-[#687168] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:5] overflow-hidden">{entry.body || "ไม่มีเนื้อหา"}</p>
             {!!entry.tags.length && <div className="mt-4 flex flex-wrap gap-1.5">{entry.tags.slice(0, 3).map((tag) => <span key={tag} className="rounded-full bg-[#F4F2EB] px-2.5 py-1 text-[11px] text-[#74796F]">#{tag}</span>)}{entry.tags.length > 3 && <span className="px-1 py-1 text-[11px] text-[#92958D]">+{entry.tags.length - 3}</span>}</div>}
             <div className="mt-5 flex items-center justify-between border-t border-[#F0EEE7] pt-3">
               <span className="text-[11px] text-[#A0A197]">{dateLabel(entry.updatedAt)}</span>
-              <div className="flex gap-3"><button onClick={() => startEdit(entry)} className="text-xs text-[#9A722F] hover:text-[#263329]">แก้ไข</button><button onClick={() => removeEntry(entry.id)} className="text-xs text-[#B68A43] hover:text-[#9A722F]">ลบ</button></div>
+              <div className="flex gap-3"><button onClick={() => startEdit(entry)} className="text-xs text-[#9A722F] hover:text-[#141513]">แก้ไข</button><button onClick={() => removeEntry(entry.id)} className="text-xs text-[#B18B12] hover:text-[#9A722F]">ลบ</button></div>
             </div>
           </article>)}
         </div> : <div className="rounded-[24px] border border-dashed border-[#DAD8CC] bg-white/50 px-5 py-14 text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#F0EEE4] text-xl text-[#B68A43]">✳</span>
-          <h3 className="mt-4 text-lg font-semibold text-[#263329]">{entries.length ? "ไม่พบโน้ตที่ค้นหา" : "สมุดยังว่างอยู่"}</h3>
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#F0EEE4] text-xl text-[#B18B12]">✳</span>
+          <h3 className="mt-4 text-lg font-semibold text-[#141513]">{entries.length ? "ไม่พบโน้ตที่ค้นหา" : "สมุดยังว่างอยู่"}</h3>
           <p className="mt-2 text-sm text-[#858880]">{entries.length ? "ลองเปลี่ยนคำค้นหาหรือตัวกรองอารมณ์" : "เริ่มเก็บความคิดแรกของคุณไว้ที่นี่"}</p>
-          {!entries.length && !editing && <button onClick={startNew} className="mt-5 rounded-full bg-[#263329] px-5 py-2.5 text-sm font-medium text-white">เขียนบันทึกแรก</button>}
+          {!entries.length && !editing && <button onClick={startNew} className="mt-5 rounded-full bg-[#141513] px-5 py-2.5 text-sm font-medium text-white">เขียนบันทึกแรก</button>}
         </div>}
       </section>
       <p className="mt-5 text-xs text-[#9A9C93]">บันทึกเก็บไว้ในเบราว์เซอร์ของอุปกรณ์นี้</p>
