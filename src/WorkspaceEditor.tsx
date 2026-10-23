@@ -63,7 +63,7 @@ function applyElementOverrides(overrides: ElementOverrides) {
     applyStyle("padding", value.padding)
     applyStyle("borderRadius", value.borderRadius)
     const svg = root.querySelector<SVGElement>("svg")
-    let iconNode = root.querySelector<HTMLElement>(":scope > [data-workspace-icon-override]")
+    let iconNode = root.querySelector<HTMLElement>("[data-workspace-icon-override]")
     if (value.icon && svg) {
       if (!svg.hasAttribute("data-workspace-original-display")) svg.setAttribute("data-workspace-original-display", svg.style.display || "")
       svg.style.display = "none"
@@ -72,7 +72,7 @@ function applyElementOverrides(overrides: ElementOverrides) {
         iconNode.dataset.workspaceIconOverride = "true"
         iconNode.dataset.workspaceEditorUi = "true"
         Object.assign(iconNode.style, { display: "inline-grid", placeItems: "center", lineHeight: "1", marginInlineEnd: "0.25em" })
-        root.insertBefore(iconNode, root.firstChild)
+        svg.parentElement?.insertBefore(iconNode, svg)
       }
       if (iconNode.textContent !== value.icon) iconNode.textContent = value.icon
     } else {
