@@ -17,6 +17,7 @@ function ElementView({ node, selectedId }: { node: PageElement; selectedId: stri
   const selected = selectedId === node.id;
   const acceptDrop = (event: React.DragEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     const type = event.dataTransfer.getData("application/x-money102-element") as ElementType;
     if (COMPONENT_LIBRARY.some((item) => item.type === type)) editorActions.drop(type, node.id);
   };
