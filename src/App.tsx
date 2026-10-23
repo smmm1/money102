@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import SavingsPage from "./SavingsPage"
 import NotesPage from "./NotesPage"
 import CloudAuth, { AccountMenu } from "./CloudAuth"
+import WorkspaceEditor from "./WorkspaceEditor"
 
 type Page = "home" | "saving" | "health" | "notes"
 
@@ -593,6 +594,7 @@ function AppContent() {
         <NotesPage onBack={() => navigate("home")} />
       ) : null}
       <QuickSwitcher open={searchOpen} onClose={() => setSearchOpen(false)} onNavigate={navigate} />
+      <WorkspaceEditor />
       <footer data-workspace-id="site-footer" className="mx-auto flex max-w-[1180px] items-center justify-between border-t border-[#DEDACD] px-5 py-7 text-xs text-[#8D9088] md:px-8">
         <span>ละมุน — พื้นที่เล็ก ๆ เพื่อชีวิตที่เป็นระเบียบ</span>
         <button
