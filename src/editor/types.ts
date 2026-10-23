@@ -42,8 +42,48 @@ export const COMPONENT_LIBRARY: { type: ElementType; label: string; icon: string
   { type: "card", label: "Card", icon: "▱", description: "การ์ดเนื้อหา" },
 ];
 
+const ELEMENT_TYPES = new Set<string>(COMPONENT_LIBRARY.map((item) => item.type));
+const STYLE_KEYS = new Set<keyof ElementStyles>(["backgroundColor", "color", "fontSize", "padding", "margin", "borderRadius", "textAlign", "width", "minHeight", "border"]);
+const ID_PATTERN = /^[A-Za-z0-9_-]{1,80}$/;
+const CSS_VALUE_PATTERN = /^[#(),.%\w\s-]+$/;
+
+export function isSafeLink(value: unknown, image = false): value is string {
+  if (typeof value !== "string" || value.length > 2048) return false;
+  if (!value.trim()) return true;
+  if (image) return /^https?:\/\//i.test(value);
+  return /^(https?:\/\/|mailto:|tel:|\/|#)/i.test(value);
+}
+
+export function validateEditorDocument(value: unknown): value is EditorDocument {
+  if (!value || typeof value !== "object") return false;
+  const doc = value as Partial<EditorDocument>;
+  if (doc.version !== 1 || typeof doc.title !== "string" || doc.title.length > 160 ||
+      typeof doc.page !== "string" || doc.page.length > 80 ||
+      typeof doc.updatedAt !== "string" || !doc.root || typeof doc.root !== "object") return false;
+  const ids = new Set<string>();
+  let count = 0;
+  const visit = (node: unknown, depth: number): node is PageElement => {
+    if (!node || typeof node !== "object" || depth > 20 || count++ > 1000) return false;
+    const item = node as Partial<PageElement>;
+    if (typeof item.id !== "string" || !ID_PATTERN.test(item.id) || ids.has(item.id)) return false;
+    ids.add(item.id);
+    if (typeof item.type !== "string" || !ELEMENT_TYPES.has(item.type)) return false;
+    if (item.content !== undefined && (typeof item.content !== "string" || item.content.length > 10000)) return false;
+    if (item.icon !== undefined && (typeof item.icon !== "string" || item.icon.length > 64)) return false;
+    if (item.href !== undefined && !isSafeLink(item.href)) return false;
+    if (item.src !== undefined && !isSafeLink(item.src, true)) return false;
+    if (!item.styles || typeof item.styles !== "object" || Array.isArray(item.styles)) return false;
+    for (const [key, styleValue] of Object.entries(item.styles)) {
+      if (!STYLE_KEYS.has(key as keyof ElementStyles) || typeof styleValue !== "string" || styleValue.length > 120 || !CSS_VALUE_PATTERN.test(styleValue)) return false;
+    }
+    if (!Array.isArray(item.children) || item.children.length > 200) return false;
+    return item.children.every((child) => visit(child, depth + 1));
+  };
+  return visit(doc.root, 0);
+}
+
 export function createElement(type: ElementType): PageElement {
-  const id = `node_${Math.random().toString(36).slice(2, 9)}`;
+  const id = `node_${typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2, 14)}`;
   const defaults: Record<ElementType, Partial<PageElement>> = {
     section: { content: "Section ใหม่", styles: { padding: "28px", backgroundColor: "#f5f3eb", borderRadius: "20px", minHeight: "120px" } },
     container: { content: "Container", styles: { padding: "16px", backgroundColor: "#ffffff", borderRadius: "16px" } },
