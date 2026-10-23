@@ -357,29 +357,29 @@ export default function SavingsPage(_props: { onBack: () => void }) {
 
   return (
     <main data-workspace-id="saving-page" className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header className="mb-4 flex flex-col gap-1.5 sm:mb-4">
+        <div className="flex min-w-0 items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#52785B]">จัดการการเงิน · FINANCE</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">ออมเงิน</h1>
-          <p className="mt-1.5 text-sm leading-6 text-[#858880]">ติดตามรายรับ รายจ่าย และความคืบหน้าสู่เป้าหมาย</p>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setResetConfirmOpen(true)}
+              aria-label="รีเซ็ตยอดทั้งหมด"
+              title="รีเซ็ตยอดทั้งหมด"
+              className="grid h-10 w-10 place-items-center rounded-full border border-[#263329]/20 bg-white/70 text-[#263329] transition hover:rotate-[-35deg] hover:bg-white"
+            >
+              <MoneyIcon name="reset" className="h-[18px] w-[18px]" />
+            </button>
+            <button onClick={() => setHistoryOpen(true)} className="inline-flex h-10 items-center justify-center rounded-full border border-[#263329]/20 bg-white/70 px-4 text-sm font-medium leading-none text-[#263329] transition hover:bg-white">
+              ดูประวัติทั้งหมด
+            </button>
+          </div>
         </div>
+        <h1 className="text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">ออมเงิน</h1>
+        <p className="text-sm leading-6 text-[#858880]">ติดตามรายรับ รายจ่าย และความคืบหน้าสู่เป้าหมาย</p>
       </header>
 
       <section data-workspace-id="saving-summary" className="relative overflow-hidden rounded-[28px] bg-transparent p-0">
-        <div className="relative mb-4 flex flex-wrap items-center justify-end gap-2 sm:mb-5">
-          <button
-            type="button"
-            onClick={() => setResetConfirmOpen(true)}
-            aria-label="รีเซ็ตยอดทั้งหมด"
-            title="รีเซ็ตยอดทั้งหมด"
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#263329]/20 bg-white/70 text-[#263329] transition hover:rotate-[-35deg] hover:bg-white"
-          >
-            <MoneyIcon name="reset" className="h-[18px] w-[18px]" />
-          </button>
-          <button onClick={() => setHistoryOpen(true)} className="inline-flex h-10 items-center justify-center rounded-full border border-[#263329]/20 bg-white/70 px-4 text-sm font-medium leading-none text-[#263329] transition hover:bg-white">
-            ดูประวัติทั้งหมด
-          </button>
-        </div>
         <div className="relative grid w-full min-w-0 grid-cols-2 gap-3 sm:gap-5">
           <div className="flex min-h-[112px] min-w-0 flex-col justify-center rounded-[22px] border border-[#E1DDCF] bg-white p-3 shadow-[0_3px_10px_rgba(0,0,0,0.04)] sm:min-h-[132px] sm:p-5 md:min-h-[145px] md:p-6">
             <p className="text-sm font-semibold text-[#487453] md:text-base">รายรับทั้งหมด</p>
