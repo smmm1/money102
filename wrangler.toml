@@ -2,8 +2,8 @@ name = "money102-api"
 main = "worker/index.ts"
 compatibility_date = "2026-10-23"
 
-# After creating a D1 database, replace the placeholder below with its real ID.
-# Do not deploy until the D1 binding and Worker secrets are configured.
+# Staging D1 database provisioned on 2026-10-23.
+# Production frontend cutover is intentionally blocked until staging checks pass.
 [[d1_databases]]
 binding = "DB"
 database_name = "money102-data"
