@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 type Placement = { x: number; y: number; width?: number }
 type LayoutMap = Record<string, Placement>
@@ -18,6 +18,16 @@ type WorkspaceStyle = { accent: string; scale: string; font: string; size: numbe
 const defaultStyle: WorkspaceStyle = { accent: "sage", scale: "comfortable", font: "noto", size: 15, headingSize: 1, weight: "400", headingWeight: "600", textColor: "#263329", lineHeight: "1.6", letterSpacing: "normal" }
 const TEXT_KEY = "lamoon-workspace-text-v1"
 const TEXT_SIZE_KEY = "lamoon-workspace-text-sizes-v1"
+const POPUP_KEY = "lamoon-workspace-popup-v1"
+type PopupPrefs = { x: number; y: number; width: number; height: number; collapsed: boolean }
+function readPopupPrefs(): PopupPrefs {
+  const fallback = { x: typeof window === "undefined" ? 24 : Math.max(12, window.innerWidth - 780), y: typeof window === "undefined" ? 100 : Math.max(76, window.innerHeight - 760), width: 760, height: 700, collapsed: false }
+  try {
+    const value = JSON.parse(localStorage.getItem(POPUP_KEY) || "null")
+    if (!value || typeof value !== "object") return fallback
+    return { x: Number.isFinite(value.x) ? value.x : fallback.x, y: Number.isFinite(value.y) ? value.y : fallback.y, width: Number.isFinite(value.width) ? Math.max(340, value.width) : fallback.width, height: Number.isFinite(value.height) ? Math.max(60, value.height) : fallback.height, collapsed: Boolean(value.collapsed) }
+  } catch { return fallback }
+}
 type TextOverrides = Record<string, string>
 type TextSizes = Record<string, number>
 function readTextSizes(): TextSizes { try { const value = JSON.parse(localStorage.getItem(TEXT_SIZE_KEY) || "{}"); return value && typeof value === "object" ? value : {} } catch { return {} } }
@@ -101,6 +111,9 @@ function applyTextOverrides(overrides: TextOverrides, sizes: TextSizes = {}) {
 }
 export default function WorkspaceEditor() {
   const [mode, setMode] = useState<Mode>(null)
+  const [popupPrefs, setPopupPrefs] = useState<PopupPrefs>(readPopupPrefs)
+  const popupDragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null)
+  const popupResizeRef = useRef<{ startX: number; startY: number; width: number; height: number } | null>(null)
   const [saved, setSaved] = useState<LayoutStore>(readStore)
   const [draft, setDraft] = useState<LayoutStore>(readStore)
   const [style, setStyle] = useState<WorkspaceStyle>(readStyle)
@@ -117,7 +130,13 @@ export default function WorkspaceEditor() {
   const viewportKey = viewportMobile ? "mobile" : "desktop"
   const activeLayout = draft[viewportKey]
   useEffect(() => {
-    const update = () => setViewportMobile(isMobile())
+    try { localStorage.setItem(POPUP_KEY, JSON.stringify(popupPrefs)) } catch { /* storage may be unavailable */ }
+  }, [popupPrefs])
+  useEffect(() => {
+    const update = () => {
+      setViewportMobile(isMobile())
+      setPopupPrefs((old) => ({ ...old, x: Math.max(8, Math.min(old.x, window.innerWidth - Math.min(old.width, window.innerWidth - 16) - 8)), y: Math.max(8, Math.min(old.y, window.innerHeight - (old.collapsed ? 60 : 100))), width: Math.min(old.width, window.innerWidth - 16), height: Math.min(old.height, window.innerHeight - 16) }))
+    }
     window.addEventListener("resize", update)
     return () => window.removeEventListener("resize", update)
   }, [])
@@ -285,7 +304,22 @@ export default function WorkspaceEditor() {
     {mode === null && <button onClick={open} className="fixed right-5 top-[76px] z-40 inline-flex h-10 items-center gap-2 rounded-full border border-[#DEDACF] bg-[#FCFBF7]/95 px-4 text-sm font-medium text-[#354337] shadow-lg backdrop-blur transition hover:-translate-y-0.5 md:right-8 md:top-[88px]" aria-label="ปรับแต่งหน้าตาและเลย์เอาต์"><span aria-hidden="true">✣</span><span className="hidden sm:inline">จัดหน้าเว็บ</span></button>}
     {mode !== null && <>
       <div className="pointer-events-none fixed inset-0 z-[80] border-2 border-dashed border-[#52785B]/40" aria-hidden="true" />
-      <section className="fixed inset-x-3 bottom-3 z-[120] mx-auto max-h-[72vh] max-w-4xl overflow-y-auto rounded-[24px] border border-[#DEDACF] bg-[#FCFBF7]/97 p-4 shadow-[0_24px_90px_rgba(25,35,27,0.25)] backdrop-blur-xl md:bottom-5 md:p-5" data-workspace-editor-ui="true" aria-label="ตัวแก้ไขพื้นที่ทำงาน">
+      <section className="fixed z-[120] flex flex-col rounded-[24px] border border-[#DEDACF] bg-[#FCFBF7]/97 shadow-[0_24px_90px_rgba(25,35,27,0.25)] backdrop-blur-xl" style={{ left: Math.max(8, Math.min(popupPrefs.x, window.innerWidth - Math.min(popupPrefs.width, window.innerWidth - 16) - 8)), top: Math.max(8, Math.min(popupPrefs.y, window.innerHeight - (popupPrefs.collapsed ? 58 : 100))), width: Math.min(popupPrefs.width, window.innerWidth - 16), height: popupPrefs.collapsed ? 58 : Math.min(popupPrefs.height, window.innerHeight - 16), maxWidth: "calc(100vw - 16px)", maxHeight: "calc(100vh - 16px)" }} data-workspace-editor-ui="true" aria-label="ตัวแก้ไขพื้นที่ทำงาน">
+        <div className="flex shrink-0 cursor-move items-center justify-between gap-3 rounded-t-[24px] border-b border-[#E6E2D8] bg-[#F4F4EC] px-4 py-3" onPointerDown={(event) => {
+          if ((event.target as HTMLElement).closest("button")) return
+          event.preventDefault()
+          popupDragRef.current = { startX: event.clientX, startY: event.clientY, originX: popupPrefs.x, originY: popupPrefs.y }
+          const move = (e: PointerEvent) => { const drag = popupDragRef.current; if (!drag) return; setPopupPrefs((old) => ({ ...old, x: Math.max(8, Math.min(window.innerWidth - 80, drag.originX + e.clientX - drag.startX)), y: Math.max(8, Math.min(window.innerHeight - 58, drag.originY + e.clientY - drag.startY)) })) }
+          const end = () => { popupDragRef.current = null; window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end) }
+          window.addEventListener("pointermove", move); window.addEventListener("pointerup", end)
+        }}>
+          <div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">จัดหน้าเว็บ · ลากแถบนี้เพื่อย้าย</p><p className="truncate text-sm font-semibold text-[#263329]">{popupPrefs.collapsed ? "ตัวแก้ไขพื้นที่ทำงาน (พับอยู่)" : "ตัวแก้ไขพื้นที่ทำงาน"}</p></div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button type="button" onClick={() => setPopupPrefs((old) => ({ ...old, collapsed: !old.collapsed }))} className="grid h-8 w-8 place-items-center rounded-full border border-[#D9D4C6] bg-white text-[#354337]" aria-label={popupPrefs.collapsed ? "ขยายหน้าต่าง" : "พับหน้าต่าง"} title={popupPrefs.collapsed ? "ขยาย" : "พับ"}>{popupPrefs.collapsed ? "▢" : "−"}</button>
+            <button type="button" onClick={() => setPopupPrefs((old) => ({ ...old, x: Math.max(8, window.innerWidth - Math.min(760, window.innerWidth - 16) - 8), y: 76, width: Math.min(760, window.innerWidth - 16), height: Math.min(700, window.innerHeight - 92), collapsed: false }))} className="grid h-8 w-8 place-items-center rounded-full border border-[#D9D4C6] bg-white text-[#354337]" aria-label="จัดหน้าต่างให้อยู่ในหน้าจอ" title="จัดหน้าต่างใหม่">↗</button>
+          </div>
+        </div>
+        {!popupPrefs.collapsed && <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#52785B]">CUSTOM WORKSPACE · {viewportMobile ? "MOBILE" : "DESKTOP"}</p><h2 className="mt-1 text-lg font-semibold text-[#263329]">{mode === "editing" ? "จัดวางองค์ประกอบได้ตามใจ" : "ดูตัวอย่างการจัดหน้า"}</h2><p className="mt-1 text-xs leading-5 text-[#777C73]">เปิดโหมดนี้แล้วกดปากกาข้างหัวข้อเพื่อแก้ข้อความและขนาด · จับ ⠿ เพื่อย้าย · จับ ↘ เพื่อปรับความกว้าง</p></div><span className="rounded-full bg-[#E6F0E7] px-3 py-1.5 text-xs text-[#52785B]">{count} รายการที่ปรับตำแหน่งแล้ว</span></div>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           <label className="flex items-center gap-2 rounded-full border border-[#DEDACF] bg-white px-3 py-2 text-xs text-[#6D716B]">โทนสี<select value={style.accent} onChange={(event) => setStyle((old) => ({ ...old, accent: event.target.value }))} className="bg-transparent text-xs text-[#263329] outline-none"><option value="sage">เขียวละมุน</option><option value="rose">ชมพูอบอุ่น</option><option value="ocean">ฟ้าเย็น</option><option value="mono">ขาวดำ</option></select></label>
@@ -330,6 +364,14 @@ export default function WorkspaceEditor() {
           <button onClick={reset} className="rounded-full border border-[#E6D7C7] bg-white px-4 py-2 text-xs font-medium text-[#9A722F]">คืนค่าตำแหน่ง</button><div className="flex-1" />
           <button onClick={cancel} className="rounded-full border border-[#DEDACF] bg-white px-4 py-2 text-xs font-medium text-[#6D716B]">ยกเลิก</button><button onClick={saveLayout} className="rounded-full bg-[#263329] px-5 py-2 text-xs font-medium text-white hover:bg-[#3B4A3E]">บันทึก</button>
         </div>
+        </div>
+        <button type="button" aria-label="ลากเพื่อปรับขนาดหน้าต่าง" title="ลากเพื่อปรับขนาด" className="absolute bottom-1 right-1 z-10 grid h-7 w-7 cursor-nwse-resize place-items-center rounded-lg border border-[#D9D4C6] bg-white/95 text-sm text-[#354337]" style={{ touchAction: "none" }} onPointerDown={(event) => {
+          event.preventDefault(); event.stopPropagation()
+          popupResizeRef.current = { startX: event.clientX, startY: event.clientY, width: popupPrefs.width, height: popupPrefs.height }
+          const move = (e: PointerEvent) => { const resize = popupResizeRef.current; if (!resize) return; setPopupPrefs((old) => ({ ...old, width: Math.max(340, Math.min(window.innerWidth - old.x - 8, resize.width + e.clientX - resize.startX)), height: Math.max(58, Math.min(window.innerHeight - old.y - 8, resize.height + e.clientY - resize.startY)) })) }
+          const end = () => { popupResizeRef.current = null; window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end) }
+          window.addEventListener("pointermove", move); window.addEventListener("pointerup", end)
+        }}>↘</button>
       </section>
       {mode === "editing" && <div className="fixed right-4 top-4 z-[120] rounded-full bg-[#263329] px-3 py-2 text-xs text-white shadow-lg">กำลังแก้ไข · {activeId || "เลือกจุดจับขององค์ประกอบ"}</div>}
     </>}
