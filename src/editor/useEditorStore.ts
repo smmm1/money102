@@ -1,16 +1,17 @@
 import { useSyncExternalStore } from "react";
-import { createDefaultDocument, createElement, type EditorDocument, type ElementType, type PageElement } from "./types";
+import { createDefaultDocument, createElement, validateEditorDocument, type EditorDocument, type ElementType, type PageElement } from "./types";
 
 const STORAGE_KEY = "money102-visual-builder-draft-v1";
-type EditorState = { document: EditorDocument; selectedId: string; viewport: "desktop" | "tablet" | "mobile"; history: EditorDocument[] };
+type EditorState = { document: EditorDocument; selectedId: string; viewport: "desktop" | "tablet" | "mobile"; history: EditorDocument[]; future: EditorDocument[] };
 function readInitial(): EditorDocument {
   try {
-    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") as EditorDocument | null;
-    if (parsed?.version === 1 && parsed.root?.children) return parsed;
-  } catch { /* local storage may be unavailable */ }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    if (validateEditorDocument(parsed)) return parsed;
+  } catch { /* local storage may be unavailable or contain invalid JSON */ }
   return createDefaultDocument();
 }
-let state: EditorState = { document: readInitial(), selectedId: "root", viewport: "desktop", history: [] };
+let state: EditorState = { document: readInitial(), selectedId: "root", viewport: "desktop", history: [], future: [] };
 const listeners = new Set<() => void>();
 function emit() { listeners.forEach((listener) => listener()); }
 function persist(document: EditorDocument) {
@@ -25,34 +26,42 @@ function findNode(node: PageElement, id: string): PageElement | undefined {
   for (const child of node.children) { const found = findNode(child, id); if (found) return found; }
   return undefined;
 }
+function hasNode(node: PageElement, id: string): boolean { return Boolean(findNode(node, id)); }
 function updateDocument(root: PageElement) {
   const document = { ...state.document, root, updatedAt: new Date().toISOString() };
-  state = { ...state, document, history: [...state.history, state.document].slice(-30) };
+  state = { ...state, document, history: [...state.history, state.document].slice(-50), future: [] };
   persist(document); emit();
 }
 export const editorActions = {
-  select(id: string) { state = { ...state, selectedId: id }; emit(); },
+  select(id: string) { if (hasNode(state.document.root, id)) { state = { ...state, selectedId: id }; emit(); } },
   viewport(viewport: EditorState["viewport"]) { state = { ...state, viewport }; emit(); },
-  setTitle(title: string) { state = { ...state, document: { ...state.document, title } }; persist(state.document); emit(); },
-  update(id: string, patch: Partial<PageElement>) { updateDocument(mapTree(state.document.root, id, (node) => ({ ...node, ...patch, styles: patch.styles ? { ...node.styles, ...patch.styles } : node.styles }))); },
+  setTitle(title: string) {
+    if (title.length > 160) return;
+    const document = { ...state.document, title, updatedAt: new Date().toISOString() };
+    state = { ...state, history: [...state.history, state.document].slice(-50), document, future: [] };
+    persist(document); emit();
+  },
+  update(id: string, patch: Partial<PageElement>) {
+    if (!hasNode(state.document.root, id)) return;
+    updateDocument(mapTree(state.document.root, id, (node) => ({ ...node, ...patch, styles: patch.styles ? { ...node.styles, ...patch.styles } : node.styles })));
+  },
   add(type: ElementType, parentId = "root") {
+    const parent = findNode(state.document.root, parentId);
+    if (!parent || !["section", "container", "card"].includes(parent.type)) return;
     const element = createElement(type);
     updateDocument(mapTree(state.document.root, parentId, (node) => ({ ...node, children: [...node.children, element] })));
     state = { ...state, selectedId: element.id }; emit();
   },
-  addAt(type: ElementType, parentId: string) {
-    const element = createElement(type);
-    updateDocument(mapTree(state.document.root, parentId, (node) => ({ ...node, children: [...node.children, element] })));
-    state = { ...state, selectedId: element.id }; emit();
-  },
+  addAt(type: ElementType, parentId: string) { this.add(type, parentId); },
   remove(id: string) {
-    if (id === "root") return;
+    if (id === "root" || !hasNode(state.document.root, id)) return;
     const prune = (node: PageElement): PageElement => ({ ...node, children: node.children.filter((child) => child.id !== id).map(prune) });
     updateDocument(prune(state.document.root));
-    state = { ...state, selectedId: "root" }; emit();
+    if (!hasNode(state.document.root, state.selectedId)) state = { ...state, selectedId: "root" };
+    emit();
   },
   move(id: string, direction: -1 | 1) {
-    if (id === "root") return;
+    if (id === "root" || !hasNode(state.document.root, id)) return;
     const moveIn = (node: PageElement): PageElement => {
       const children = [...node.children];
       const index = children.findIndex((child) => child.id === id);
@@ -65,16 +74,24 @@ export const editorActions = {
     };
     updateDocument(moveIn(state.document.root));
   },
-  drop(type: ElementType, parentId: string) { this.addAt(type, parentId); },
+  drop(type: ElementType, parentId: string) { this.add(type, parentId); },
   undo() {
     const previous = state.history[state.history.length - 1];
     if (!previous) return;
-    state = { ...state, document: previous, history: state.history.slice(0, -1) };
+    state = { ...state, document: previous, history: state.history.slice(0, -1), future: [state.document, ...state.future].slice(0, 50) };
+    if (!hasNode(previous.root, state.selectedId)) state = { ...state, selectedId: "root" };
     persist(previous); emit();
+  },
+  redo() {
+    const next = state.future[0];
+    if (!next) return;
+    state = { ...state, document: next, history: [...state.history, state.document].slice(-50), future: state.future.slice(1) };
+    if (!hasNode(next.root, state.selectedId)) state = { ...state, selectedId: "root" };
+    persist(next); emit();
   },
   reset() {
     const document = createDefaultDocument();
-    state = { ...state, document, selectedId: "root", history: [] };
+    state = { ...state, document, selectedId: "root", history: [], future: [] };
     persist(document); emit();
   },
 };
