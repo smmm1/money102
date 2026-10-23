@@ -10,16 +10,19 @@ This branch is a staging implementation only. It does not change `main`, Render 
 - Browser localStorage is retained as a local cache/fallback. Do not clear browser storage or delete Supabase resources during migration.
 - This stores the existing app state as one JSON snapshot per user, rather than normalizing each domain into separate SQL tables.
 
-## Create the staging database
+## Provisioned staging resources
 
-1. In Cloudflare Dashboard, create a D1 database named `money102-data`.
-2. Copy its actual database ID into `wrangler.toml` (replace `REPLACE_WITH_D1_DATABASE_ID`).
-3. Apply the schema to the new D1 database: `npx wrangler d1 execute money102-data --remote --file=worker/schema.sql`.
-4. Configure Worker secrets:
-   - `SUPABASE_URL`: the existing Supabase project URL.
-   - `SUPABASE_PUBLISHABLE_KEY`: the existing publishable key (not a service-role/secret key).
-   Use `npx wrangler secret put SUPABASE_URL` and `npx wrangler secret put SUPABASE_PUBLISHABLE_KEY`.
-5. Deploy this Worker only to a staging Worker name/environment first, and set `VITE_CLOUDFLARE_API_URL` in a preview build to that staging URL.
+- D1 database: `money102-data`
+- D1 database ID: `0af52b75-09ca-4fbe-aab7-d406688303c2`
+- D1 schema: applied and verified (`user_app_data` table and `idx_user_app_data_updated_at` index)
+- Worker: `money102-api`
+- Worker URL: `https://money102-api.s2mtha16.workers.dev`
+- Worker is deployed with D1 binding and Supabase Auth validation settings. This does not change the Render frontend or production app configuration.
+- `wrangler.toml` on this branch has the real D1 ID.
+
+## Staging checks required before production
+
+The Worker has been provisioned, but the HTTP/authentication and frontend end-to-end checks below are not yet complete. Do not treat the migration as production-ready until they pass.
 
 ## Staging checks required before production
 
