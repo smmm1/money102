@@ -5,7 +5,7 @@
   :root {
     font-family: 'Noto Sans Thai', sans-serif;
     color: #263329;
-    background: #f8f5eb;
+    background: #FCFBF7;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
   }
@@ -18,9 +18,9 @@
     min-width: 320px;
     min-height: 100vh;
     background:
-      radial-gradient(circle at 8% 3%, rgba(244, 201, 107, 0.16), transparent 25rem),
-      radial-gradient(circle at 92% 5%, rgba(201, 192, 232, 0.19), transparent 24rem),
-      #f8f5eb;
+      radial-gradient(circle at 8% 3%, rgba(182, 138, 67, 0.10), transparent 25rem),
+      radial-gradient(circle at 92% 5%, rgba(82, 120, 91, 0.08), transparent 24rem),
+      #FCFBF7;
   }
 
   button {
@@ -28,7 +28,7 @@
   }
 
   button:focus-visible {
-    outline: 3px solid rgba(226, 115, 75, 0.45);
+    outline: 3px solid rgba(82, 120, 91, 0.4);
     outline-offset: 3px;
   }
 }
