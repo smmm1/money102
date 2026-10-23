@@ -125,7 +125,7 @@ function TransactionModal({
       >
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[#E2734B]">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[#52785B]">
               รายการใหม่
             </p>
             <h2
@@ -158,7 +158,7 @@ function TransactionModal({
                     active
                       ? income
                         ? "border-[#73987B] bg-[#DCEBDF]"
-                        : "border-[#D27B62] bg-[#F8DDD4]"
+                        : "border-[#73987B] bg-[#DCEBDF]"
                       : "border-[#E2DED2] bg-white/60 hover:border-[#C9C5BA]"
                   }`}
                 >
@@ -167,7 +167,7 @@ function TransactionModal({
                       active
                         ? income
                           ? "bg-[#73987B] text-white"
-                          : "bg-[#D27B62] text-white"
+                          : "bg-[#73987B] text-white"
                         : "bg-[#F0EDE5] text-[#747871]"
                     }`}
                   >
@@ -388,7 +388,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
             <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#263329] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(income)}</p>
           </div>
           <div className="flex min-h-[112px] min-w-0 flex-col justify-center rounded-[22px] border border-[#E1DDCF] bg-white p-3 shadow-[0_3px_10px_rgba(0,0,0,0.04)] sm:min-h-[132px] sm:p-5 md:min-h-[145px] md:p-6">
-            <p className="text-sm font-semibold text-[#B4533B] md:text-base">รายจ่ายทั้งหมด</p>
+            <p className="text-sm font-semibold text-[#3F6548] md:text-base">รายจ่ายทั้งหมด</p>
             <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#263329] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(expense)}</p>
           </div>
         </div>
@@ -425,7 +425,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </div>
         <div className="relative h-4 overflow-hidden rounded-full bg-[#EAE6DB]">
           <div
-            className="goal-progress h-full rounded-full bg-gradient-to-r from-[#E4A83A] to-[#7CA082]"
+            className="goal-progress h-full rounded-full bg-gradient-to-r from-[#73987B] to-[#7CA082]"
             style={{ width: `${goalProgress}%` }}
           />
         </div>
@@ -439,7 +439,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         <div className="rounded-[30px] border border-[#E1DDCF] bg-white/60 p-5 md:p-7">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-[#E2734B]">ปฏิทินบันทึก</p>
+              <p className="text-xs font-medium text-[#52785B]">ปฏิทินบันทึก</p>
               <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
                 {new Intl.DateTimeFormat("th-TH", {
                   month: "long",
@@ -491,7 +491,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
                   {hasRecord && (
                     <span
                       className={`absolute bottom-1 h-1 w-1 rounded-full ${
-                        active ? "bg-[#F4C96B]" : "bg-[#E2734B]"
+                        active ? "bg-[#F4C96B]" : "bg-[#52785B]"
                       }`}
                     />
                   )}
@@ -502,7 +502,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
             })}
           </div>
           <div className="mt-5 flex items-center gap-2 border-t border-[#E7E2D7] pt-4 text-xs text-[#858880]">
-            <span className="h-2 w-2 rounded-full bg-[#E2734B]" />
+            <span className="h-2 w-2 rounded-full bg-[#52785B]" />
             วันที่มีการบันทึกรายการ
           </div>
         </div>
@@ -510,7 +510,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         <div className="rounded-[30px] border border-[#E1DDCF] bg-white/60 p-5 md:p-7">
           <div className="mb-6 flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-[#E2734B]">
+              <p className="text-xs font-medium text-[#52785B]">
                 ตรวจสอบย้อนหลัง
               </p>
               <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
@@ -552,7 +552,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
                           className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg font-medium ${
                             transaction.type === "income"
                               ? "bg-[#DCEBDF] text-[#487453]"
-                              : "bg-[#F8DDD4] text-[#B4533B]"
+                              : "bg-[#DCEBDF] text-[#3F6548]"
                           }`}
                         >
                           {transaction.type === "income" ? "+" : "−"}
@@ -569,7 +569,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
                           className={`text-sm font-semibold ${
                             transaction.type === "income"
                               ? "text-[#487453]"
-                              : "text-[#B4533B]"
+                              : "text-[#3F6548]"
                           }`}
                         >
                           {transaction.type === "income" ? "+" : "−"}
@@ -602,12 +602,12 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
       {resetConfirmOpen && (
         <div className="fixed inset-0 z-[60] grid place-items-center bg-[#172019]/50 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && setResetConfirmOpen(false)}>
           <section role="dialog" aria-modal="true" aria-labelledby="reset-all-title" className="w-full max-w-[400px] rounded-[26px] border border-[#E1DDCF] bg-[#FCFAF3] p-6 shadow-2xl">
-            <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[#F8DDD4] text-[#B4533B]"><MoneyIcon name="reset" className="h-5 w-5" /></span>
+            <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[#DCEBDF] text-[#3F6548]"><MoneyIcon name="reset" className="h-5 w-5" /></span>
             <h2 id="reset-all-title" className="text-xl font-semibold text-[#263329]">รีเซ็ตยอดทั้งหมด?</h2>
             <p className="mt-2 text-sm leading-6 text-[#6F736C]">ระบบจะลบรายการรายรับและรายจ่ายทั้งหมด ทำให้ยอดรวมกลับเป็น ฿0 และล้างประวัติการเงิน การกระทำนี้ย้อนกลับไม่ได้</p>
             <div className="mt-6 flex gap-2">
               <button type="button" onClick={() => setResetConfirmOpen(false)} className="h-11 flex-1 rounded-full border border-[#DEDACF] bg-white text-sm text-[#626760]">ยกเลิก</button>
-              <button type="button" onClick={() => { setTransactions([]); localStorage.setItem("lamoon-transactions", "[]"); setGoalStartBalance(0); localStorage.setItem("lamoon-saving-goal-start-balance", "0"); setSelectedDate(null); setQuickDate(null); setResetConfirmOpen(false) }} className="h-11 flex-1 rounded-full bg-[#B4533B] text-sm font-medium text-white hover:bg-[#9D4632]">ยืนยันรีเซ็ต</button>
+              <button type="button" onClick={() => { setTransactions([]); localStorage.setItem("lamoon-transactions", "[]"); setGoalStartBalance(0); localStorage.setItem("lamoon-saving-goal-start-balance", "0"); setSelectedDate(null); setQuickDate(null); setResetConfirmOpen(false) }} className="h-11 flex-1 rounded-full bg-[#3F6548] text-sm font-medium text-white hover:bg-[#3F6548]">ยืนยันรีเซ็ต</button>
             </div>
           </section>
         </div>
@@ -646,7 +646,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
           <section role="dialog" aria-modal="true" aria-labelledby="history-title" className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-[#DEDACF] bg-[#FCFAF3] shadow-2xl">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E2D7] p-5 sm:p-6">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#E2734B]">ออมเงิน</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#52785B]">ออมเงิน</p>
                 <h2 id="history-title" className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#263329]">ประวัติการเงินทั้งหมด</h2>
               </div>
               <button onClick={() => setHistoryOpen(false)} aria-label="ปิดประวัติ" className="grid h-10 w-10 place-items-center rounded-full bg-[#F0ECE1] text-[#70736D] hover:bg-[#E7E1D4]"><MoneyIcon name="close" /></button>
@@ -664,7 +664,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
                   {filteredHistory.map((item) => (
                     <tr key={item.id} className="border-b border-[#E7E2D7] hover:bg-[#F5F2E9]">
                       <td className="whitespace-nowrap px-4 py-3 text-[#6F736C]">{item.date}</td>
-                      <td className={`whitespace-nowrap px-4 py-3 font-medium ${item.type === "income" ? "text-[#487453]" : "text-[#B4533B]"}`}>{item.type === "income" ? "รายรับ" : "รายจ่าย"}</td>
+                      <td className={`whitespace-nowrap px-4 py-3 font-medium ${item.type === "income" ? "text-[#487453]" : "text-[#3F6548]"}`}>{item.type === "income" ? "รายรับ" : "รายจ่าย"}</td>
                       <td className="px-4 py-3 text-[#263329]">{item.detail}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-[#263329]">{item.type === "income" ? "+" : "−"}{formatMoney.format(item.amount)}</td>
                     </tr>
