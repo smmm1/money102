@@ -226,9 +226,54 @@ function readHomeSnapshot(): HomeSnapshot {
   return snapshot
 }
 
+type HomeSectionId = (typeof sections)[number]["id"]
+type HomeLayout = { order: HomeSectionId[]; hidden: HomeSectionId[] }
+const DEFAULT_HOME_LAYOUT: HomeLayout = {
+  order: sections.map((section) => section.id),
+  hidden: [],
+}
+
+function readHomeLayout(): HomeLayout {
+  try {
+    const saved = JSON.parse(localStorage.getItem("lamoon-home-layout-v1") || "null") as Partial<HomeLayout> | null
+    if (saved) {
+      const validIds = sections.map((section) => section.id)
+      const order = Array.isArray(saved.order)
+        ? [...saved.order.filter((id): id is HomeSectionId => validIds.includes(id as HomeSectionId)), ...validIds.filter((id) => !saved.order!.includes(id))]
+        : [...validIds]
+      const hidden = Array.isArray(saved.hidden)
+        ? saved.hidden.filter((id): id is HomeSectionId => validIds.includes(id as HomeSectionId))
+        : []
+      return { order, hidden }
+    }
+  } catch {}
+  return { order: [...DEFAULT_HOME_LAYOUT.order], hidden: [] }
+}
+
 function Home() {
   const [now, setNow] = useState(() => new Date())
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
+  const [layout, setLayout] = useState<HomeLayout>(readHomeLayout)
+  const [customizing, setCustomizing] = useState(false)
+  const visibleSections = layout.order
+    .filter((id) => !layout.hidden.includes(id))
+    .map((id) => sections.find((section) => section.id === id)!)
+  const moveSection = (id: HomeSectionId, direction: -1 | 1) => {
+    setLayout((current) => {
+      const order = [...current.order]
+      const index = order.indexOf(id)
+      const next = index + direction
+      if (index < 0 || next < 0 || next >= order.length) return current
+      ;[order[index], order[next]] = [order[next], order[index]]
+      return { ...current, order }
+    })
+  }
+  const toggleSection = (id: HomeSectionId, checked: boolean) => {
+    setLayout((current) => ({
+      ...current,
+      hidden: checked ? current.hidden.filter((item) => item !== id) : [...current.hidden, id],
+    }))
+  }
   const today = new Intl.DateTimeFormat("th-TH", {
     weekday: "long",
     day: "numeric",
@@ -241,6 +286,10 @@ function Home() {
   const currentBalance = snapshot.income - snapshot.expense
   const goalProgress = Math.max(0, currentBalance - snapshot.goalStartBalance)
   const savingPercent = Math.max(0, Math.min(Math.round((goalProgress / snapshot.goal) * 100), 100))
+
+  useEffect(() => {
+    localStorage.setItem("lamoon-home-layout-v1", JSON.stringify(layout))
+  }, [layout])
 
   useEffect(() => {
     const refresh = () => {
@@ -323,18 +372,83 @@ function Home() {
           </div>
         </div>
 
-        <div className="mb-5 flex items-end justify-between">
+        <div className="mb-5 flex items-end justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-[#52785B]">พื้นที่ของคุณ</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-[-0.035em] text-[#263329] md:text-3xl">
               เลือกสิ่งที่อยากจัดการ
             </h2>
+            <p className="mt-1 text-xs text-[#868980]">เลือกการ์ดที่อยากเห็น และจัดลำดับได้ตามใจ</p>
           </div>
-          <p className="hidden text-sm text-[#868980] md:block">ข้อมูลจากหน้าที่ใช้อยู่จริง</p>
+          <button
+            onClick={() => setCustomizing((open) => !open)}
+            aria-expanded={customizing}
+            className="shrink-0 rounded-full border border-[#DEDACF] bg-white/80 px-4 py-2.5 text-sm font-medium text-[#354337] shadow-sm transition hover:bg-white"
+          >
+            ⚙ ปรับแต่งหน้า
+          </button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          {sections.map((section, index) => (
+        {customizing && (
+          <section aria-label="ปรับแต่งหน้า Home" className="mb-5 rounded-[26px] border border-[#DEDACF] bg-white/85 p-5 shadow-[0_12px_40px_rgba(48,52,43,0.05)] md:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-[#263329]">จัดหน้า Home ของคุณ</h3>
+                <p className="mt-1 text-sm text-[#7D8178]">การตั้งค่านี้บันทึกไว้ในเบราว์เซอร์เครื่องนี้</p>
+              </div>
+              <button
+                onClick={() => setLayout({ order: [...DEFAULT_HOME_LAYOUT.order], hidden: [] })}
+                className="rounded-full border border-[#DEDACF] px-3 py-2 text-xs font-medium text-[#6D716B] hover:bg-[#F5F2E9]"
+              >
+                คืนค่าเริ่มต้น
+              </button>
+            </div>
+            <div className="mt-4 space-y-2">
+              {layout.order.map((id, index) => {
+                const section = sections.find((item) => item.id === id)!
+                const isVisible = !layout.hidden.includes(id)
+                return (
+                  <div key={id} className="flex items-center gap-3 rounded-2xl bg-[#F7F5EE] p-3">
+                    <input
+                      type="checkbox"
+                      checked={isVisible}
+                      onChange={(event) => toggleSection(id, event.target.checked)}
+                      aria-label={`แสดงการ์ด${section.title}`}
+                      className="h-4 w-4 accent-[#52785B]"
+                    />
+                    <span className={`${section.iconBg} grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[#263329]`}>
+                      <Icon name={section.icon} className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-[#263329]">{section.title}</p>
+                      <p className="text-xs text-[#888B83]">{isVisible ? "แสดงบนหน้าหลัก" : "ซ่อนจากหน้าหลัก"}</p>
+                    </div>
+                    <button
+                      onClick={() => moveSection(id, -1)}
+                      disabled={index === 0}
+                      aria-label={`เลื่อน${section.title}ขึ้น`}
+                      className="grid h-9 w-9 place-items-center rounded-full border border-[#DEDACF] bg-white text-[#4B554C] disabled:opacity-30"
+                    >↑</button>
+                    <button
+                      onClick={() => moveSection(id, 1)}
+                      disabled={index === layout.order.length - 1}
+                      aria-label={`เลื่อน${section.title}ลง`}
+                      className="grid h-9 w-9 place-items-center rounded-full border border-[#DEDACF] bg-white text-[#4B554C] disabled:opacity-30"
+                    >↓</button>
+                  </div>
+                )
+              })}
+            </div>
+            {visibleSections.length === 0 && <p className="mt-3 text-sm text-[#A85D58]">ซ่อนการ์ดทั้งหมดอยู่ — เลือกอย่างน้อยหนึ่งการ์ดเพื่อแสดงบนหน้าหลัก</p>}
+            <div className="mt-4 flex justify-end">
+              <button onClick={() => setCustomizing(false)} className="rounded-full bg-[#263329] px-5 py-2.5 text-sm font-medium text-white">เสร็จแล้ว</button>
+            </div>
+          </section>
+        )}
+
+        {visibleSections.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {visibleSections.map((section, index) => (
             <button
               key={section.id}
               onClick={() => navigate(section.id)}
@@ -366,6 +480,13 @@ function Home() {
             </button>
           ))}
         </div>
+        ) : (
+          <div className="rounded-[28px] border border-dashed border-[#D8D3C6] bg-white/45 px-6 py-14 text-center">
+            <p className="font-medium text-[#263329]">หน้าหลักยังว่างอยู่</p>
+            <p className="mt-2 text-sm text-[#858980]">กด “ปรับแต่งหน้า” แล้วเลือกการ์ดที่อยากแสดง</p>
+            <button onClick={() => setCustomizing(true)} className="mt-4 rounded-full bg-[#263329] px-5 py-2.5 text-sm text-white">เลือกการ์ด</button>
+          </div>
+        )}
       </section>
     </main>
   )
