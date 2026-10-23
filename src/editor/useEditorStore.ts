@@ -27,6 +27,23 @@ function findNode(node: PageElement, id: string): PageElement | undefined {
   return undefined;
 }
 function hasNode(node: PageElement, id: string): boolean { return Boolean(findNode(node, id)); }
+function swapSiblings(node: PageElement, firstId: string, secondId: string): { root: PageElement; swapped: boolean } {
+  const children = [...node.children];
+  const first = children.findIndex((child) => child.id === firstId);
+  const second = children.findIndex((child) => child.id === secondId);
+  if (first >= 0 && second >= 0) {
+    [children[first], children[second]] = [children[second], children[first]];
+    return { root: { ...node, children }, swapped: true };
+  }
+  for (let i = 0; i < children.length; i += 1) {
+    const result = swapSiblings(children[i], firstId, secondId);
+    if (result.swapped) {
+      children[i] = result.root;
+      return { root: { ...node, children }, swapped: true };
+    }
+  }
+  return { root: node, swapped: false };
+}
 function updateDocument(root: PageElement) {
   const document = { ...state.document, root, updatedAt: new Date().toISOString() };
   state = { ...state, document, history: [...state.history, state.document].slice(-50), future: [] };
@@ -75,6 +92,11 @@ export const editorActions = {
     updateDocument(moveIn(state.document.root));
   },
   drop(type: ElementType, parentId: string) { this.add(type, parentId); },
+  swapNodes(firstId: string, secondId: string) {
+    if (firstId === "root" || secondId === "root" || firstId === secondId) return;
+    const result = swapSiblings(state.document.root, firstId, secondId);
+    if (result.swapped) updateDocument(result.root);
+  },
   undo() {
     const previous = state.history[state.history.length - 1];
     if (!previous) return;
