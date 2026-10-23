@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { createDefaultDocument, createElement, validateEditorDocument, type EditorDocument, type ElementType, type PageElement } from "./types";
+import { createDefaultDocument, createElement, isSafeLink, isSafeStyleValue, validateEditorDocument, type EditorDocument, type ElementType, type PageElement } from "./types";
 
 const STORAGE_KEY = "money102-visual-builder-draft-v1";
 const PAGES_KEY = "money102-visual-builder-pages-v1";
@@ -124,6 +124,9 @@ export const editorActions = {
   },
   update(id: string, patch: Partial<PageElement>) {
     if (!hasNode(state.document.root, id)) return;
+    if (patch.href !== undefined && !isSafeLink(patch.href)) return;
+    if (patch.src !== undefined && !isSafeLink(patch.src, true)) return;
+    if (patch.styles && Object.entries(patch.styles).some(([key, value]) => !isSafeStyleValue(key, value))) return;
     const root = mapTree(state.document.root, id, (node) => ({ ...node, ...patch, styles: patch.styles ? { ...node.styles, ...patch.styles } : node.styles }));
     commitDocument({ ...state.document, root, updatedAt: new Date().toISOString() });
   },
