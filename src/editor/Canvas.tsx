@@ -18,6 +18,11 @@ function ElementView({ node, selectedId }: { node: PageElement; selectedId: stri
   const acceptDrop = (event: React.DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    const draggedNodeId = event.dataTransfer.getData("application/x-money102-node");
+    if (draggedNodeId) {
+      editorActions.swapNodes(draggedNodeId, node.id);
+      return;
+    }
     const type = event.dataTransfer.getData("application/x-money102-element") as ElementType;
     if (COMPONENT_LIBRARY.some((item) => item.type === type)) editorActions.drop(type, node.id);
   };
@@ -25,6 +30,12 @@ function ElementView({ node, selectedId }: { node: PageElement; selectedId: stri
     className: `builder-canvas-element ${selected ? "is-active" : ""} builder-element-${node.type}`,
     style,
     onClick: (event: React.MouseEvent) => { event.stopPropagation(); editorActions.select(node.id); },
+    draggable: node.id !== "root",
+    onDragStart: (event: React.DragEvent) => {
+      if (node.id === "root") { event.preventDefault(); return; }
+      event.dataTransfer.setData("application/x-money102-node", node.id);
+      event.dataTransfer.effectAllowed = "move";
+    },
     onDragOver: (event: React.DragEvent) => event.preventDefault(),
     onDrop: acceptDrop,
     "data-node-id": node.id,
