@@ -356,7 +356,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
   )
 
   return (
-    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
+    <main data-workspace-id="saving-page" className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
       <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#52785B]">จัดการการเงิน · FINANCE</p>
@@ -369,7 +369,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </button>
       </header>
 
-      <section className="relative overflow-hidden rounded-[28px] bg-transparent p-0">
+      <section data-workspace-id="saving-summary" className="relative overflow-hidden rounded-[28px] bg-transparent p-0">
         <div className="relative mb-4 flex flex-wrap items-center justify-end gap-2 sm:mb-5">
           <button
             type="button"
@@ -396,7 +396,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </div>
       </section>
 
-      <section className="mt-5 rounded-[30px] border border-[#E1DDCF] bg-white/60 p-6 md:p-8">
+      <section data-workspace-id="saving-goal" className="mt-5 rounded-[30px] border border-[#E1DDCF] bg-white/60 p-6 md:p-8">
         <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
           <div className="flex gap-3">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#F4C96B]/40 text-[#71591B]">
@@ -437,7 +437,7 @@ export default function SavingsPage({ onBack }: { onBack: () => void }) {
         </div>
       </section>
 
-      <section className="mt-5 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
+      <section data-workspace-id="saving-activity" className="mt-5 grid gap-5 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="rounded-[30px] border border-[#E1DDCF] bg-white/60 p-5 md:p-7">
           <div className="mb-6 flex items-center justify-between">
             <div>

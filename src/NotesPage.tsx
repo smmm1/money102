@@ -72,8 +72,8 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <main data-workspace-id="notes-page" className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
+      <header data-workspace-id="notes-header" className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B68A43]">พื้นที่ความคิด · NOTES</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">สมุดสะสมความคิด</h1>
@@ -105,7 +105,7 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
       </form></>}
 
       <section>
-        <div className="mb-5 rounded-[20px] border border-[#E1DDCF] bg-white/70 p-4 md:flex md:items-center md:justify-between md:gap-5">
+        <div data-workspace-id="notes-filters" className="mb-5 rounded-[20px] border border-[#E1DDCF] bg-white/70 p-4 md:flex md:items-center md:justify-between md:gap-5">
           <label className="block md:min-w-[250px] md:flex-1"><span className="sr-only">ค้นหาโน้ต</span><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="ค้นหาหัวข้อ เนื้อหา หรือแท็ก…" className={inputClass + " mt-0"} /></label>
           <div className="mt-3 flex flex-wrap items-center gap-2 md:mt-0">
             <span className="mr-1 text-xs text-[#92958D]">อารมณ์</span>
@@ -116,7 +116,7 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
 
         <div className="mb-3 flex items-center justify-between px-1"><h2 className="text-sm font-semibold text-[#354036]">บันทึกของคุณ</h2><span className="text-xs text-[#92958D]">{filtered.length} รายการ</span></div>
         {filtered.length > 0 ? <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((entry) => <article key={entry.id} className="group flex min-h-[220px] flex-col rounded-[22px] border border-[#E5E1D7] bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#F0DCA9] hover:shadow-[0_8px_24px_rgba(38,51,41,0.06)]">
+          {filtered.map((entry) => <article key={entry.id} data-workspace-id={`note-${entry.id}`} className="group flex min-h-[220px] flex-col rounded-[22px] border border-[#E5E1D7] bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[#F0DCA9] hover:shadow-[0_8px_24px_rgba(38,51,41,0.06)]">
             <div className="flex items-center justify-between gap-2">
               <span className={"inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] " + moodLabel(entry.mood).tone}>{moodLabel(entry.mood).icon} {moodLabel(entry.mood).label}</span>
               <div className="flex items-center gap-2">
