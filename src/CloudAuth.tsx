@@ -59,84 +59,110 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     return () => listener.subscription.unsubscribe()
   }, [])
 
-  useEffect(() => {
-    if (!user || !supabase) {
-      setCloudReady(false)
-      setCloudError("")
-      return
-    }
-    let cancelled = false
-    setCloudReady(false)
-    setCloudError("")
-    ;(async () => {
-      const { data, error } = await supabase
-        .from("user_app_data")
-        .select("payload")
-        .eq("user_id", user.id)
-        .eq("bucket", "app_state")
-        .maybeSingle()
-      if (cancelled) return
-      if (error) {
-        setCloudError("อ่านฐานข้อมูลไม่ได้: " + error.message + " — ตรวจว่ารัน SQL สำหรับ user_app_data แล้ว")
-        return
-      }
-      if (data?.payload && typeof data.payload === "object") {
-        restoreSnapshot(data.payload as LocalSnapshot)
-      } else {
-        // First sign-in: migrate this browser's existing app data into the user's account.
-        const { error: insertError } = await supabase.from("user_app_data").upsert({
-          user_id: user.id,
-          bucket: "app_state",
-          payload: readLocalSnapshot(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: "user_id,bucket" })
-        if (cancelled) return
-        if (insertError) {
-          setCloudError("ย้ายข้อมูลจากเบราว์เซอร์ไม่สำเร็จ: " + insertError.message)
-          return
-        }
-      }
-      if (!cancelled) setCloudReady(true)
-    })()
-    return () => { cancelled = true }
-  }, [user?.id])
+  const apiUrl = (import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined)?.replace(/\/$/, "");
 
   useEffect(() => {
-    if (!user || !cloudReady || !supabase) return
-    const originalSetItem = Storage.prototype.setItem
-    const originalRemoveItem = Storage.prototype.removeItem
-    let timer: number | undefined
-    let stopped = false
+    if (!user || !supabase) {
+      setCloudReady(false);
+      setCloudError("");
+      return;
+    }
+    if (!apiUrl) {
+      setCloudError("ยังไม่ได้ตั้งค่า VITE_CLOUDFLARE_API_URL สำหรับ Cloudflare Worker");
+      return;
+    }
+    let cancelled = false;
+    setCloudReady(false);
+    setCloudError("");
+    (async () => {
+      const { data: sessionData } = await supabase!.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        if (!cancelled) setCloudError("ไม่พบ session สำหรับเชื่อมต่อฐานข้อมูล");
+        return;
+      }
+      const response = await fetch(`${apiUrl}/api/state`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        if (!cancelled) setCloudError("อ่าน Cloudflare D1 ไม่สำเร็จ: " + body);
+        return;
+      }
+      const result = await response.json() as { payload: LocalSnapshot | null };
+      if (cancelled) return;
+      if (result.payload && typeof result.payload === "object") {
+        restoreSnapshot(result.payload);
+      } else {
+        const migrationResponse = await fetch(`${apiUrl}/api/state`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ payload: readLocalSnapshot() }),
+        });
+        if (!migrationResponse.ok) {
+          const body = await migrationResponse.text();
+          if (!cancelled) setCloudError("ย้ายข้อมูลจากเบราว์เซอร์ไป Cloudflare ไม่สำเร็จ: " + body);
+          return;
+        }
+      }
+      if (!cancelled) setCloudReady(true);
+    })().catch((error: unknown) => {
+      if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)));
+    });
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user || !cloudReady || !supabase || !apiUrl) return;
+    const originalSetItem = Storage.prototype.setItem;
+    const originalRemoveItem = Storage.prototype.removeItem;
+    let timer: number | undefined;
+    let stopped = false;
     const sync = async () => {
-      if (stopped) return
-      const { error } = await supabase!.from("user_app_data").upsert({
-        user_id: user.id,
-        bucket: "app_state",
-        payload: readLocalSnapshot(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id,bucket" })
-      if (error && !stopped) setCloudError("บันทึกลงฐานข้อมูลไม่สำเร็จ: " + error.message)
-      else if (!stopped) setCloudError("")
-    }
+      if (stopped) return;
+      const { data } = await supabase!.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        if (!stopped) setCloudError("session หมดอายุ กรุณาเข้าสู่ระบบใหม่");
+        return;
+      }
+      const response = await fetch(`${apiUrl}/api/state`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: readLocalSnapshot() }),
+      });
+      if (!response.ok && !stopped) setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + await response.text());
+      else if (!stopped) setCloudError("");
+    };
     const schedule = () => {
-      if (timer !== undefined) window.clearTimeout(timer)
-      timer = window.setTimeout(() => { void sync() }, 350)
-    }
+      if (timer !== undefined) window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        void sync().catch((error: unknown) => {
+          if (!stopped) setCloudError("บันทึกลง Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)));
+        });
+      }, 500);
+    };
     Storage.prototype.setItem = function (key: string, value: string) {
-      originalSetItem.call(this, key, value)
-      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule()
-    }
+      originalSetItem.call(this, key, value);
+      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule();
+    };
     Storage.prototype.removeItem = function (key: string) {
-      originalRemoveItem.call(this, key)
-      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule()
-    }
+      originalRemoveItem.call(this, key);
+      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule();
+    };
     return () => {
-      stopped = true
-      if (timer !== undefined) window.clearTimeout(timer)
-      Storage.prototype.setItem = originalSetItem
-      Storage.prototype.removeItem = originalRemoveItem
-    }
-  }, [user?.id, cloudReady])
+      stopped = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+      Storage.prototype.setItem = originalSetItem;
+      Storage.prototype.removeItem = originalRemoveItem;
+    };
+  }, [user?.id, cloudReady]);
 
   async function submit(event: FormEvent) {
     event.preventDefault()
