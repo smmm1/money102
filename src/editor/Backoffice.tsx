@@ -51,7 +51,7 @@ export default function Backoffice() {
       </div>
     </header>
     <div className="builder-workbench">
-      <Sidebar root={document.root} selectedId={selectedId} />
+      <Sidebar root={document.root} selectedId={selectedId} selectedType={selected.type} />
       <div className="builder-center-column">
         <div className="builder-device-switch" role="group" aria-label="ขนาดหน้าจอ">
           <span>Preview</span><div className="builder-device-options">
