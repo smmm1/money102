@@ -91,23 +91,25 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       }
       const result = await response.json() as { payload: LocalSnapshot | null };
       if (cancelled) return;
-      if (result.payload && typeof result.payload === "object") {
-        restoreSnapshot(result.payload);
-      } else {
-        const migrationResponse = await fetch(`${apiUrl}/api/state`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ payload: readLocalSnapshot() }),
-        });
-        if (!migrationResponse.ok) {
-          const body = await migrationResponse.text();
-          if (!cancelled) setCloudError("ย้ายข้อมูลจากเบราว์เซอร์ไป Cloudflare ไม่สำเร็จ: " + body);
-          return;
-        }
+      // Merge instead of replacing local state: cloud wins on duplicate keys,
+      // while browser-only keys are preserved during the first migration.
+      const localSnapshot = readLocalSnapshot();
+      const cloudSnapshot = result.payload && typeof result.payload === "object" ? result.payload : {};
+      const mergedSnapshot = { ...localSnapshot, ...cloudSnapshot };
+      const migrationResponse = await fetch(`${apiUrl}/api/state`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: mergedSnapshot }),
+      });
+      if (!migrationResponse.ok) {
+        const body = await migrationResponse.text();
+        if (!cancelled) setCloudError("ย้ายหรือรวมข้อมูลไป Cloudflare ไม่สำเร็จ: " + body);
+        return;
       }
+      restoreSnapshot(mergedSnapshot);
       if (!cancelled) setCloudReady(true);
     })().catch((error: unknown) => {
       if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)));
