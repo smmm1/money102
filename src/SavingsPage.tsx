@@ -249,7 +249,7 @@ function TransactionModal({
   )
 }
 
-export default function SavingsPage({ onBack }: { onBack: () => void }) {
+export default function SavingsPage(_props: { onBack: () => void }) {
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     try {
       return JSON.parse(localStorage.getItem("lamoon-transactions") || "[]")
