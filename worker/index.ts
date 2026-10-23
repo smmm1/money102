@@ -14,7 +14,7 @@ type Snapshot = Record<string, string>;
 type UserRow = { id: string; email: string };
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
-const PASSWORD_ITERATIONS = 310_000;
+const PASSWORD_ITERATIONS = 100_000;
 
 function corsHeaders(request: Request, env: Env): HeadersInit {
   const origin = request.headers.get("Origin") || "";
@@ -229,8 +229,9 @@ export default {
       await env.DB.prepare("INSERT INTO user_app_data (user_id, bucket, payload, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(user_id, bucket) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at")
         .bind(user.id, "app_state", serialized, updatedAt).run();
       return json(request, env, { ok: true, updated_at: updatedAt });
-    } catch {
-      return json(request, env, { error: "Cloudflare D1 request failed; check Worker logs" }, 500);
+    } catch (error) {
+      console.error("money102-api-staging request failed", error);
+      return json(request, env, { error: "Cloudflare D1 request failed" }, 500);
     }
   },
 };
