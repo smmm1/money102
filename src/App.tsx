@@ -192,88 +192,56 @@ function Home() {
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
   const money = (amount: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(amount)
   const balance = snapshot.income - snapshot.expense
-
   useEffect(() => {
     const refresh = () => setSnapshot(readHomeSnapshot())
     const onStorage = (event: StorageEvent) => { if (!event.key || event.key.startsWith("lamoon-")) refresh() }
     window.addEventListener("storage", onStorage)
     window.addEventListener("focus", refresh)
     document.addEventListener("visibilitychange", refresh)
+    refresh()
     return () => {
       window.removeEventListener("storage", onStorage)
       window.removeEventListener("focus", refresh)
       document.removeEventListener("visibilitychange", refresh)
     }
   }, [])
-
   const spaces = [
-    { id: "saving" as Page, number: "01", title: "การเงิน", description: "รายรับ รายจ่าย และเป้าหมาย", detail: "เปิดพื้นที่", symbol: "↗" },
-    { id: "health" as Page, number: "02", title: "สุขภาพ", description: "น้ำหนักและกิจกรรมประจำวัน", detail: "เปิดพื้นที่", symbol: "↗" },
-    { id: "notes" as Page, number: "03", title: "โน้ต", description: "ไอเดียและเรื่องที่อยากเก็บไว้", detail: "เปิดพื้นที่", symbol: "↗" },
+    { number: "01", title: "การเงิน", description: "รายรับ รายจ่าย และเป้าหมายการออม", detail: "ยอดสุทธิที่บันทึกไว้", value: money(balance), color: "finance", page: "saving" as Page },
+    { number: "02", title: "สุขภาพ", description: "ติดตามน้ำหนักและกิจกรรมในแต่ละวัน", detail: "น้ำหนักล่าสุด", value: snapshot.healthWeight === null ? "ยังไม่มีข้อมูล" : snapshot.healthWeight + " กก.", color: "wellbeing", page: "health" as Page },
+    { number: "03", title: "โน้ต", description: "เก็บไอเดียและเรื่องที่อยากจำ", detail: "โน้ตที่บันทึกไว้", value: String(snapshot.notesCount) + " รายการ", color: "notes", page: "notes" as Page },
   ]
-
-  return (
-    <main className="mll-home mll-minimal-home">
-      <header className="minimal-nav">
-        <button className="minimal-wordmark" onClick={() => navigate("home")} aria-label="Mll หน้าหลัก"><span>m</span> Mll</button>
-        <nav aria-label="พื้นที่หลัก">
-          {spaces.map((space) => <button key={space.id} onClick={() => navigate(space.id)}>{space.title}</button>)}
-        </nav>
-        <div className="minimal-nav-actions"><span>พื้นที่ส่วนตัว</span><AccountMenu /></div>
-      </header>
-
-      <section className="minimal-hero">
-        <p className="minimal-eyebrow"><span /> YOUR PERSONAL SPACE</p>
-        <h1>ชีวิตที่ชัดขึ้น<br /><em>เริ่มจากเรื่องเล็ก ๆ</em></h1>
-        <p className="minimal-intro">พื้นที่เรียบง่ายสำหรับดูแลเงิน สุขภาพ และความคิด<br className="minimal-desktop-break" /> ในแบบของคุณเอง ทีละวัน</p>
-        <button className="minimal-primary" onClick={() => navigate("saving")}>เริ่มต้นใช้งาน <span>↗</span></button>
-        <p className="minimal-free-note">ใช้ฟรี · ไม่มีค่าสมาชิก · สำหรับคุณเท่านั้น</p>
-      </section>
-
-      <section className="minimal-overview" aria-label="ภาพรวมของคุณ">
-        <div><span>ยอดสุทธิที่บันทึกไว้</span><strong>{money(balance)}</strong></div>
-        <div><span>น้ำหนักล่าสุด</span><strong>{snapshot.healthWeight === null ? "—" : `${snapshot.healthWeight} กก.`}</strong></div>
-        <div><span>โน้ตที่เก็บไว้</span><strong>{snapshot.notesCount}</strong></div>
-      </section>
-
-      <section className="minimal-spaces" aria-label="เลือกพื้นที่">
-        <div className="minimal-section-heading"><p className="minimal-eyebrow">YOUR SPACES</p><span>เลือกสิ่งที่อยากดูแล</span></div>
-        <div className="minimal-space-list">
-          {spaces.map((space) => (
-            <button key={space.id} className={`minimal-space minimal-space-${space.id}`} onClick={() => navigate(space.id)}>
-              <span className="minimal-space-number">{space.number}</span>
-              <span className="minimal-space-copy"><strong>{space.title}</strong><small>{space.description}</small></span>
-              <span className="minimal-space-action">{space.detail} <b>{space.symbol}</b></span>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <footer className="minimal-footer"><span className="minimal-footer-mark">m</span><span>พื้นที่ของคุณ ในจังหวะของคุณ</span><span>© Mll</span></footer>
-    </main>
-  )
-}
-
-function ProgressRing({ value, label }: { value: number; label: string }) {
-  return (
-    <div
-      className="grid h-36 w-36 place-items-center rounded-full"
-      style={{
-        background: `conic-gradient(#141513 ${value * 3.6}deg, rgba(38,51,41,.12) 0deg)`,
-      }}
-    >
-      <div className="grid h-[116px] w-[116px] place-items-center rounded-full bg-[#FCFBF7] text-center">
-        <div>
-          <p className="text-3xl font-semibold tracking-[-0.05em] text-[#141513]">
-            {value}%
-          </p>
-          <p className="text-xs text-[#85887F]">{label}</p>
-        </div>
+  return <main className="mll-first-home">
+    <header className="mll-first-nav">
+      <button className="mll-first-brand" onClick={() => navigate("home")} aria-label="Mll หน้าหลัก"><span className="mll-first-mark">m</span><span>Mll</span></button>
+      <nav aria-label="เมนูหลัก">
+        <button onClick={() => navigate("saving")}>การเงิน</button>
+        <button onClick={() => navigate("health")}>สุขภาพ</button>
+        <button onClick={() => navigate("notes")}>โน้ต</button>
+      </nav>
+      <AccountMenu />
+    </header>
+    <section className="mll-first-hero">
+      <p className="mll-first-kicker"><span /> YOUR PERSONAL SPACE</p>
+      <h1>พื้นที่สำหรับ<br /><em>สิ่งสำคัญในชีวิต</em></h1>
+      <p className="mll-first-intro">จัดการเรื่องเงิน ดูแลตัวเอง และเก็บความคิดไว้ในที่เดียว<br className="mll-first-desktop-break" /> เริ่มจากสิ่งเล็ก ๆ ในแบบที่เหมาะกับคุณ</p>
+      <div className="mll-first-actions">
+        <button className="mll-first-primary" onClick={() => navigate("saving")}>เริ่มต้นใช้งาน <span>↗</span></button>
+        <button className="mll-first-secondary" onClick={() => document.getElementById("mll-first-spaces")?.scrollIntoView({ behavior: "smooth" })}>สำรวจเครื่องมือ</button>
       </div>
-    </div>
-  )
+      <div className="mll-first-note"><span className="mll-first-note-line" /> ใช้ส่วนตัว · ฟรี · ไม่มีค่าสมาชิก</div>
+    </section>
+    <section id="mll-first-spaces" className="mll-first-spaces">
+      <div className="mll-first-section-heading"><div><p className="mll-first-kicker">MADE FOR YOUR EVERYDAY</p><h2>พื้นที่ของคุณ</h2></div><p>เลือกเรื่องที่อยากเริ่มดูแล</p></div>
+      <div className="mll-first-grid">{spaces.map((space) => <button key={space.number} className={"mll-first-card " + space.color} onClick={() => navigate(space.page)}>
+        <span className="mll-first-card-top"><span>{space.number}</span><span className="mll-first-card-arrow">↗</span></span>
+        <span className="mll-first-card-title">{space.title}</span>
+        <span className="mll-first-card-description">{space.description}</span>
+        <span className="mll-first-card-bottom"><span>{space.detail}</span><strong>{space.value}</strong></span>
+      </button>)}</div>
+    </section>
+    <footer className="mll-first-footer"><span><span className="mll-first-mark small">m</span> Mll</span><span>พื้นที่ส่วนตัวของคุณ</span><span>© Mll</span></footer>
+  </main>
 }
-
 
 function HealthDashboard() {
   type Profile = { id: string; name: string; height: number; age: number }
