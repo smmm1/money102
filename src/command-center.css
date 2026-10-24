@@ -525,7 +525,7 @@ body {
 .memory-counts b { color:#4c425b; font-size:15px; }
 .memory-counts span { font-size:9px; }
 .memory-caption { margin:14px 0 0; }
-.home-lower > .trend-widget { min-width:0; }
+.home-lower > .trend-widget { min-width:0; grid-column:1 / -1; }
 .home-lower > .trend-widget .trend-surface { margin-top:0; height:100%; }
 .home-lower > [draggable="true"] { cursor:grab; }
 .home-lower > [draggable="true"]:active { cursor:grabbing; }
