@@ -184,9 +184,9 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   if (!user) return <main className="mll-auth-screen">
     <section className="mll-auth-layout">
       <div className="mll-auth-story">
-        <button type="button" className="mll-auth-wordmark" aria-label="Mll">
+        <div className="mll-auth-wordmark" aria-label="Mll">
           <span className="mll-auth-mark">m</span><span>Mll</span><small>YOUR PRIVATE SPACE</small>
-        </button>
+        </div>
         <p className="mll-auth-eyebrow"><span /> A QUIETER WAY TO KEEP THINGS TOGETHER</p>
         <h1>พื้นที่ของคุณ<br />ในจังหวะ<br /><em>ที่เป็นคุณ</em></h1>
         <p className="mll-auth-story-copy">การเงิน สุขภาพ และความคิดเล็ก ๆ ในแต่ละวัน อยู่ในพื้นที่ส่วนตัวเดียวกัน พร้อมให้คุณกลับมาดูได้เสมอ</p>
