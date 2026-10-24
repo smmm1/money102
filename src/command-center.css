@@ -1031,3 +1031,60 @@ body { background:#faf8f5; color:#302b38; }
   .cc-auth-form-content, .cc-auth-status-content { animation: none !important; }
   .cc-auth-form input, .cc-auth-submit { transition: none !important; }
 }
+
+
+/* Quiet Luxury 2.1 — smoother page entrances and tactile micro-interactions */
+.page-content {
+  animation: moneyeep-page-enter .42s cubic-bezier(.22,.72,.22,1) both;
+  will-change: opacity, transform;
+}
+.page-content > * {
+  animation: moneyeep-item-enter .42s cubic-bezier(.22,.72,.22,1) both;
+}
+.page-content > *:nth-child(2) { animation-delay: .035s; }
+.page-content > *:nth-child(3) { animation-delay: .07s; }
+.page-content > *:nth-child(4) { animation-delay: .105s; }
+.surface,.health-stat,.money-summary > div,.profile-bar,.goal-settings,.ledger-surface,.memory-galaxy,.dashboard-playground {
+  transition: transform .26s cubic-bezier(.2,.7,.2,1), border-color .26s ease, box-shadow .26s ease;
+}
+.surface:hover,.health-stat:hover,.money-summary > div:hover,.profile-bar:hover {
+  border-color: #e2d8eb;
+  box-shadow: 0 8px 24px #4937570b;
+}
+.button,.icon-button,.text-button,.filter-tab,.top-nav-link,.nav-link,.mobile-nav-link,.theme-trigger,.theme-swatch,.sound-switch,.motion-option {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .18s cubic-bezier(.2,.7,.2,1), background-color .22s ease, color .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.button:active:not(:disabled),.icon-button:active:not(:disabled),.filter-tab:active,.top-nav-link:active,.nav-link:active,.mobile-nav-link:active,.theme-swatch:active {
+  transform: scale(.975);
+}
+.icon-button:hover:not(:disabled) {
+  background: #f1edf6;
+  color: #65527f;
+}
+.text-button:hover { color: #65527f; }
+.top-nav-link:hover,.nav-link:hover,.mobile-nav-link:hover { transform: translateY(-1px); }
+.cc-account-trigger { transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease; }
+.cc-account-trigger:hover { transform: translateY(-1px); box-shadow: 0 4px 12px #49375712; }
+.modal-backdrop { animation: moneyeep-overlay-enter .18s ease both; }
+.modal-card { animation: moneyeep-modal-enter .24s cubic-bezier(.2,.75,.25,1) both; }
+@keyframes moneyeep-page-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes moneyeep-item-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes moneyeep-overlay-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes moneyeep-modal-enter { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (hover: hover) and (pointer: fine) {
+  .surface:hover { transform: translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-content,.page-content > *,.modal-backdrop,.modal-card { animation: none !important; transform: none !important; }
+  .surface,.health-stat,.money-summary > div,.profile-bar,.goal-settings,.ledger-surface,.memory-galaxy,.dashboard-playground,
+  .button,.icon-button,.text-button,.filter-tab,.top-nav-link,.nav-link,.mobile-nav-link,.theme-trigger,.theme-swatch,.sound-switch,.motion-option,.cc-account-trigger {
+    transition: none !important;
+  }
+}
