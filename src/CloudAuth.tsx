@@ -17,7 +17,10 @@ type LocalSnapshot = Record<string, string>
 const TOKEN_KEY = "money102_cloudflare_session"
 const OWNER_KEY = "money102_cloudflare_owner"
 const LOCAL_PREFIX = "lamoon-"
-const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || "https://money102-api.s2mtha16.workers.dev").replace(/\/$/, "")
+const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
+  ? "https://money102-api-staging.s2mtha16.workers.dev"
+  : "https://money102-api.s2mtha16.workers.dev"
+const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
 
 function readLocalSnapshot(): LocalSnapshot {
   const snapshot: LocalSnapshot = {}
