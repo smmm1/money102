@@ -261,3 +261,61 @@ main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-entry-
  main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div{padding:18px!important}
  main[data-workspace-id="notes-page"] article{min-height:190px;padding:18px}
 }
+
+/* FULL REFERENCE PALETTE — explicit semantic tokens */
+:root{
+ --mll-cream:#F3F0E7;
+ --mll-paper:#FCFBF7;
+ --mll-ink:#141513;
+ --mll-muted:#777A71;
+ --mll-line:#D8D3C5;
+ --mll-coral:#F87562;
+ --mll-coral-soft:#FCE4DE;
+ --mll-mint:#7BC596;
+ --mll-mint-soft:#E4F2E7;
+ --mll-yellow:#F5C51B;
+ --mll-yellow-soft:#FBF1C9;
+ --mll-olive:#55745B;
+ --mll-danger:#B94E3D;
+ --mll-radius:3px;
+ --mll-space:clamp(18px,4vw,64px);
+ color-scheme:light;
+}
+html,body,#root{background:var(--mll-cream);color:var(--mll-ink)}
+body{font-family:'IBM Plex Sans Thai','Noto Sans Thai',system-ui,sans-serif}
+::selection{background:var(--mll-yellow);color:var(--mll-ink)}
+:focus-visible{outline:2px solid var(--mll-coral)!important;outline-offset:3px}
+button,a,[role=button]{-webkit-tap-highlight-color:transparent}
+.mll-home{background:var(--mll-cream)!important;color:var(--mll-ink)}
+.mll-home .mll-editorial-card{border:1px solid var(--mll-ink);border-radius:var(--mll-radius);background:var(--mll-paper)}
+.mll-home .mll-accent-coral{background:var(--mll-coral)}
+.mll-home .mll-accent-mint{background:var(--mll-mint)}
+.mll-home .mll-accent-yellow{background:var(--mll-yellow)}
+.mll-home [data-workspace-id^="workspace-card"]{border:1px solid var(--mll-ink);background:var(--mll-paper)}
+.mll-home [data-workspace-id^="workspace-card"]:nth-child(1) .mll-card-cap{background:var(--mll-mint-soft)}
+.mll-home [data-workspace-id^="workspace-card"]:nth-child(2) .mll-card-cap{background:var(--mll-coral-soft)}
+.mll-home [data-workspace-id^="workspace-card"]:nth-child(3) .mll-card-cap{background:var(--mll-yellow-soft)}
+.mll-home [data-workspace-id^="workspace-card"] .mll-card-index{color:var(--mll-muted)}
+.mll-global-header{background:var(--mll-cream)!important}
+.mll-announcement{background:var(--mll-coral)!important;color:var(--mll-ink)!important}
+.mll-nav-shell{background:var(--mll-cream)!important;border-color:var(--mll-ink)!important}
+.mll-editorial-nav button.is-active>span{color:var(--mll-coral)!important}
+.mll-search-trigger,.mll-builder-trigger{border-color:var(--mll-line)!important;color:var(--mll-ink)!important}
+.mll-search-trigger:hover,.mll-builder-trigger:hover{background:var(--mll-yellow-soft)!important;border-color:var(--mll-ink)!important}
+main[data-workspace-id="saving-page"],main[data-workspace-id="notes-page"],main:has([data-workspace-id="health-metrics"]){background:var(--mll-cream)!important;color:var(--mll-ink)}
+main[data-workspace-id="saving-page"]>header,main[data-workspace-id="notes-page"]>header,main:has([data-workspace-id="health-metrics"])>header{background:var(--mll-paper)!important;border-color:var(--mll-ink)!important}
+main[data-workspace-id="saving-page"]>header:before,main[data-workspace-id="notes-page"]>header:before,main:has([data-workspace-id="health-metrics"])>header:before{border-color:var(--mll-line)!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"],main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div,main[data-workspace-id="notes-page"] [data-workspace-id="notes-filters"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-entry-panels"],main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-history"]{background:var(--mll-paper)!important;border-color:var(--mll-line)!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div:first-child{border-top-color:var(--mll-mint)!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div:last-child{border-top-color:var(--mll-coral)!important}
+main[data-workspace-id="notes-page"] article:nth-child(3n+1){background:var(--mll-paper)!important}
+main[data-workspace-id="notes-page"] article:nth-child(3n+2){background:var(--mll-yellow-soft)!important}
+main[data-workspace-id="notes-page"] article:nth-child(3n){background:var(--mll-mint-soft)!important}
+main[data-workspace-id="notes-page"] article:hover{border-color:var(--mll-coral)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]{border-top-color:var(--mll-coral)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-entry-panels"]{border-top-color:var(--mll-mint)!important}
+main input:focus,main textarea:focus,main select:focus{border-color:var(--mll-coral)!important;box-shadow:0 0 0 3px #F875621c!important}
+main button[class*="bg-[#141513]"],main button[class*="bg-black"]{background:var(--mll-ink)!important;color:var(--mll-cream)!important}
+main button[class*="bg-[#7BC596]"]{background:var(--mll-mint)!important;color:var(--mll-ink)!important}
+main button[class*="bg-[#F87562]"]{background:var(--mll-coral)!important;color:var(--mll-ink)!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
