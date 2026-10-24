@@ -73,15 +73,17 @@ export default function NotesPage({ onBack }: { onBack: () => void }) {
 
   return (
     <main data-workspace-id="notes-page" className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
-      <header data-workspace-id="notes-header" className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B18B12]">พื้นที่ความคิด · NOTES</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#141513] md:text-4xl">สมุดสะสมความคิด</h1>
-          <p className="mt-1.5 text-sm leading-6 text-[#858880]">เก็บสิ่งที่ชอบ ไอเดีย และความรู้สึกในแต่ละวัน</p>
+      <header data-workspace-id="notes-header" className="relative mb-7 grid min-h-[250px] overflow-hidden border border-[#141513] bg-[#FCFBF7] p-6 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-end lg:p-12">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-60 w-60 rounded-full border border-[#D8D3C5] sm:right-10 sm:top-[-70px] sm:h-80 sm:w-80" />
+        <div className="pointer-events-none absolute right-8 top-0 h-36 w-36 rounded-full border border-[#D8D3C5] sm:right-24 sm:top-[-5px] sm:h-56 sm:w-56" />
+        <div className="relative z-10 max-w-2xl">
+          <p className="mb-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.22em] text-[#92730B]"><span className="h-2 w-2 bg-[#F5C51B]" /> MLL / THOUGHTS / 03</p>
+          <h1 className="max-w-xl text-[clamp(2.6rem,6.8vw,5.2rem)] font-medium leading-[.96] tracking-[-.075em] text-[#141513]">พื้นที่เก็บ<br /><span className="font-light italic text-[#92730B]">สิ่งที่สำคัญ</span></h1>
+          <p className="mt-5 max-w-md text-sm leading-7 text-[#777A71]">ไอเดีย เรื่องราว และความรู้สึกที่อยากเก็บไว้ กลับมาอ่านเมื่อไรก็ได้</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={onBack} className="inline-flex h-10 items-center rounded-full border border-[#DEDACF] bg-white/75 px-4 text-sm font-medium text-[#626760] hover:bg-white">หน้าหลัก</button>
-          {!editing && <button onClick={startNew} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#141513] px-5 text-sm font-medium text-white transition hover:bg-[#3B4A3E]">＋ เขียนโน้ตใหม่</button>}
+        <div className="relative z-10 mt-7 flex flex-wrap gap-2 lg:mt-0 lg:justify-end">
+          <button onClick={onBack} className="inline-flex h-11 items-center border border-[#D8D3C5] bg-[#F3F0E7] px-4 text-sm font-medium text-[#141513] hover:bg-[#FBF1C9]">หน้าหลัก</button>
+          {!editing && <button onClick={startNew} className="inline-flex h-11 items-center gap-2 border border-[#141513] bg-[#141513] px-5 text-sm font-medium text-[#F3F0E7] transition hover:bg-[#55745B]">＋ เขียนโน้ตใหม่</button>}
         </div>
       </header>
 
