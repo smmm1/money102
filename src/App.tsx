@@ -218,12 +218,11 @@ function readHomeSnapshot(): HomeSnapshot {
 }
 
 function Home() {
-  const [now, setNow] = useState(() => new Date())
+  const [, setNow] = useState(() => new Date())
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
   const [audience, setAudience] = useState<"today" | "future">("today")
   const [prompt, setPrompt] = useState("")
   const [demoMode, setDemoMode] = useState<"money" | "life">("money")
-  const today = new Intl.DateTimeFormat("th-TH", { weekday: "long", day: "numeric", month: "long" }).format(now)
   const money = (amount: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(amount)
   const balance = snapshot.income - snapshot.expense
   const progress = Math.max(0, Math.min(Math.round((Math.max(0, balance - snapshot.goalStartBalance) / snapshot.goal) * 100), 100))
