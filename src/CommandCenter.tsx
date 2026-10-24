@@ -125,7 +125,7 @@ export default function CommandCenter() {
     const saved = read<string>("money102-theme-v1", "lavender")
     return (["lavender", "matcha", "cream", "midnight"] as string[]).includes(saved) ? saved as "lavender" | "matcha" | "cream" | "midnight" : "lavender"
   })
-  const [motionLevel, setMotionLevel] = useState<"bold" | "soft">(() => read("money102-motion-v1", "bold"))
+  const [motionLevel, setMotionLevel] = useState<"bold" | "soft">(() => { const saved = read<string>("money102-motion-v1", "bold"); return saved === "soft" ? "soft" : "bold" })
 
   useEffect(() => { localStorage.setItem(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { try { localStorage.setItem("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) } catch {} }, [hiddenWidgets])
