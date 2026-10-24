@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import SavingsPage from "./SavingsPage"
 import NotesPage from "./NotesPage"
 import CloudAuth, { AccountMenu } from "./CloudAuth"
@@ -501,7 +501,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
-      <Header current={page} onOpenSearch={openSearch} />
+      {page !== "home" && <Header current={page} onOpenSearch={openSearch} />}
       <nav data-workspace-id="mobile-nav" aria-label="เมนูมือถือ" className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-4 rounded-[22px] border border-[#E2DED1] bg-[#FCFBF7]/95 p-1.5 shadow-[0_12px_38px_rgba(38,51,41,0.14)] backdrop-blur-xl md:hidden">
         {(["home", "saving", "health", "notes"] as Page[]).map((item) => (
           <button key={item} data-workspace-id={`mobile-nav-${item}`} onClick={() => navigate(item)} aria-current={page === item ? "page" : undefined} className={"flex min-w-0 flex-col items-center gap-1 rounded-[16px] px-1 py-2 text-[10px] font-medium transition " + (page === item ? "bg-[#141513] text-white shadow-sm" : "text-[#72786F] hover:bg-white")}>
