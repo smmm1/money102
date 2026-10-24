@@ -706,3 +706,78 @@ body:has(.theme-midnight) { background:#211e2b; color:#f2edf8; }
 @media (prefers-reduced-motion:reduce) {
   .brand-symbol,.brand-symbol::after,.brand-loop,.brand-spark { animation:none!important; transition:none!important; }
 }
+
+
+/* Quiet Luxury refinement — consistent ivory, lavender and sage across every page. */
+.app-shell {
+  --ink:#302b38;
+  --muted:#817b89;
+  --line:#e9e3ed;
+  --paper:#fffdfb;
+  --green:#6d5b91;
+  --green-dark:#594875;
+  --green-soft:#f0ebf7;
+  --theme-accent:#78669c;
+  --theme-accent-soft:#f0ebf7;
+  color:var(--ink);
+}
+body { background:#faf8f5; color:#302b38; }
+.side-rail { background:rgba(255,253,251,.96); border-right-color:#ece6ef; }
+.brand-symbol { border-radius:13px; box-shadow:0 3px 10px #7663a91c,inset 0 1px 0 #ffffff80; }
+.brand:hover .brand-symbol,.brand:focus-visible .brand-symbol { transform:translateY(-1px); box-shadow:0 5px 13px #7663a928,inset 0 1px 0 #ffffff90; }
+.topbar { background:rgba(255,253,251,.9); border-bottom-color:#ece6ef; }
+.breadcrumb strong { color:#43394f; }
+.nav-link { border-radius:11px; transition:background .24s ease,color .24s ease; }
+.nav-link:hover { background:#f7f3fa; color:#514264; }
+.nav-link.active { background:#f0ebf7; color:#65517f; }
+.top-nav-link { transition:background .24s ease,color .24s ease,border-color .24s ease,transform .24s ease; }
+.top-nav-link:hover { background:#f7f3fa; color:#5d4b76; }
+.top-nav-link.active { border-color:#e8dfef; background:#f0ebf7; color:#65517f; }
+.page-content { animation:quiet-page-in .38s cubic-bezier(.2,.7,.2,1) both; }
+.page-content > * { animation:quiet-item-in .38s cubic-bezier(.2,.7,.2,1) both; }
+.page-content > *:nth-child(2) { animation-delay:.025s; }
+.page-content > *:nth-child(3) { animation-delay:.05s; }
+.page-content > *:nth-child(4) { animation-delay:.075s; }
+.surface,.tool-card,.note-card,.money-summary>div,.health-stat,.goal-settings,.ledger-surface,.memory-galaxy,.dashboard-playground,.profile-bar {
+  border-color:#ece6ef;
+  box-shadow:0 2px 8px #33244204,0 10px 28px #33244205;
+  backdrop-filter:blur(14px) saturate(1.04);
+}
+.surface,.health-stat,.money-summary,.profile-bar,.goal-settings,.ledger-surface,.tool-card,.note-card { border-radius:17px; }
+.tool-card { transition:transform .24s cubic-bezier(.2,.7,.2,1),border-color .24s ease,box-shadow .24s ease; }
+.tool-card:hover { transform:translateY(-2px); border-color:#ded2eb; box-shadow:0 8px 22px #4937570d; }
+.surface { transition:border-color .24s ease,box-shadow .24s ease; }
+.note-card { background:#fffdfb; border-color:#eee6d7; transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease; }
+.note-card:hover { transform:translateY(-2px); box-shadow:0 8px 22px #4937570d; border-color:#dfd3e9; }
+.button,.icon-button,.text-button,.filter-tab,.theme-trigger,.theme-swatch,.sound-switch,.motion-option {
+  transition:transform .2s ease,background .24s ease,color .24s ease,border-color .24s ease,box-shadow .24s ease;
+}
+.button-primary { background:#756391; box-shadow:0 2px 5px #75639112; }
+.button-primary:hover { background:#65527f; box-shadow:0 5px 14px #75639124; transform:translateY(-1px); }
+.button-secondary { border-color:#e6deec; background:#fffdfb; color:#66557d; }
+.balance-card { background:linear-gradient(112deg,#66577f 0%,#796b94 57%,#8da18e 125%); box-shadow:0 12px 30px #66577f15; }
+.balance-copy>strong,.date-card strong { letter-spacing:-.035em; }
+.date-card { background:#fffdfb; border-color:#ece6ef; }
+.memory-galaxy { background:linear-gradient(135deg,#fffdfb 0%,#f8f4fb 64%,#f1f6f0 100%); }
+.memory-day { transition:background .24s ease,border-color .24s ease,transform .24s ease; }
+.memory-day:hover { transform:translateY(-1px); }
+.mobile-nav { background:rgba(255,253,251,.94); border-top-color:#ece6ef; }
+.mobile-nav-link.active { background:#f0ebf7; color:#65517f; }
+.theme-studio,.command-palette,.modal-card,.quick-add-menu { border-color:#e8e0ef; box-shadow:0 18px 52px #30223e16; }
+.theme-studio { background:rgba(255,253,251,.97); }
+.theme-swatch.selected,.motion-option.selected { border-color:#cfc0e2; background:#f0ebf7; color:#65517f; }
+.theme-lavender { --theme-wash:#f0ebf7; --theme-wash-two:#edf4ec; --theme-accent:#78669c; --theme-accent-soft:#f0ebf7; }
+.theme-matcha { --theme-wash:#edf4ec; --theme-wash-two:#f0ebf7; --theme-accent:#68866c; --theme-accent-soft:#edf4ec; }
+.theme-cream { --theme-wash:#f7f0e7; --theme-wash-two:#f0ebf7; --theme-accent:#85749a; --theme-accent-soft:#f4eff8; }
+.motion-soft .page-content,.motion-soft .page-content > * { animation:quiet-page-in .38s cubic-bezier(.2,.7,.2,1) both!important; }
+.motion-soft .page-content > *:nth-child(2) { animation-delay:.025s!important; }
+.motion-soft .page-content > *:nth-child(3) { animation-delay:.05s!important; }
+.motion-soft .page-content > *:nth-child(4) { animation-delay:.075s!important; }
+.motion-soft .app-shell::before,.motion-soft .art-ring { animation:none!important; }
+.motion-soft .button:hover,.motion-soft .tool-card:hover,.motion-soft .note-card:hover,.motion-soft .top-nav-link:hover { transform:translateY(-1px); }
+@keyframes quiet-page-in { from { opacity:0; } to { opacity:1; } }
+@keyframes quiet-item-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion:reduce) {
+  .page-content,.page-content > *,.motion-soft .page-content,.motion-soft .page-content > * { animation:none!important; }
+  .tool-card,.surface,.note-card,.button,.icon-button,.text-button,.filter-tab,.top-nav-link,.theme-trigger,.theme-swatch { transition:none!important; }
+}
