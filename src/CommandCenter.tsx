@@ -12,8 +12,16 @@ type DashboardWidget = "recent" | "goal" | "trend"
 
 const KEYS = { money: "lamoon-transactions", goal: "lamoon-saving-goal", goalTitle: "lamoon-saving-goal-title", notes: "lamoon-commonplace-notes-v1", health: "lamoon-health-dashboard-v1" }
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") }
-const uid = () => crypto.randomUUID()
-const read = <T,>(key: string, fallback: T): T => { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback } catch { return fallback } }
+const uid = () => {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID()
+  } catch {}
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+const safeGet = (key: string): string | null => { try { return localStorage.getItem(key) } catch { return null } }
+const safeSet = (key: string, value: string) => { try { localStorage.setItem(key, value); return true } catch { return false } }
+const safeRemove = (key: string) => { try { localStorage.removeItem(key) } catch {} }
+const read = <T,>(key: string, fallback: T): T => { try { const raw = safeGet(key); return raw ? JSON.parse(raw) as T : fallback } catch { return fallback } }
 const cash = (n: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(n)
 const dateLabel = (s: string) => { try { return new Date(s + "T12:00:00").toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) } catch { return s } }
 
@@ -75,8 +83,8 @@ function MoneyTrend({ transactions }: { transactions: Transaction[] }) {
 export default function CommandCenter() {
   const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health"].includes(hash) ? hash as Page : "home") })
   const [transactions, setTransactions] = useState<Transaction[]>(() => read(KEYS.money, []))
-  const [goal, setGoal] = useState(() => Number(localStorage.getItem(KEYS.goal)) || 20000)
-  const [goalTitle, setGoalTitle] = useState(() => localStorage.getItem(KEYS.goalTitle) || "เงินสำรองของฉัน")
+  const [goal, setGoal] = useState(() => Number(safeGet(KEYS.goal)) || 20000)
+  const [goalTitle, setGoalTitle] = useState(() => safeGet(KEYS.goalTitle) || "เงินสำรองของฉัน")
   const [notes, setNotes] = useState<Note[]>(() => read(KEYS.notes, []))
   const [health, setHealth] = useState<HealthData>(() => read(KEYS.health, { profiles: [{ id: "profile-default", name: "ฉัน", height: 163, age: 26 }], activeProfileId: "profile-default", records: [] }))
   const [search, setSearch] = useState("")
@@ -128,12 +136,12 @@ export default function CommandCenter() {
   const [motionLevel, setMotionLevel] = useState<"bold" | "soft">(() => { const saved = read<string>("money102-motion-v1", "soft"); return saved === "bold" ? "bold" : "soft" })
   const [soundsEnabled, setSoundsEnabled] = useState<boolean>(() => read("money102-sounds-enabled-v1", true))
 
-  useEffect(() => { localStorage.setItem(KEYS.money, JSON.stringify(transactions)) }, [transactions])
-  useEffect(() => { try { localStorage.setItem("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) } catch {} }, [hiddenWidgets])
-  useEffect(() => { try { localStorage.setItem("money102-dashboard-order-v1", JSON.stringify(dashboardOrder)) } catch {} }, [dashboardOrder])
-  useEffect(() => { try { localStorage.setItem("money102-theme-v1", JSON.stringify(theme)) } catch {} }, [theme])
-  useEffect(() => { try { localStorage.setItem("money102-motion-v1", JSON.stringify(motionLevel)) } catch {} }, [motionLevel])
-  useEffect(() => { try { localStorage.setItem("money102-sounds-enabled-v1", JSON.stringify(soundsEnabled)) } catch {} }, [soundsEnabled])
+  useEffect(() => { safeSet(KEYS.money, JSON.stringify(transactions)) }, [transactions])
+  useEffect(() => { safeSet("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) }, [hiddenWidgets])
+  useEffect(() => { safeSet("money102-dashboard-order-v1", JSON.stringify(dashboardOrder)) }, [dashboardOrder])
+  useEffect(() => { safeSet("money102-theme-v1", JSON.stringify(theme)) }, [theme])
+  useEffect(() => { safeSet("money102-motion-v1", JSON.stringify(motionLevel)) }, [motionLevel])
+  useEffect(() => { safeSet("money102-sounds-enabled-v1", JSON.stringify(soundsEnabled)) }, [soundsEnabled])
   useEffect(() => {
     if (!soundsEnabled) return
     let audio: AudioContext | null = null
@@ -226,15 +234,15 @@ export default function CommandCenter() {
     setDraftStatus("saving")
     const timer = window.setTimeout(() => {
       try {
-        localStorage.setItem("lamoon-note-draft-v1", JSON.stringify({ title: noteTitle, body: noteBody, updatedAt: new Date().toISOString() }))
+        safeSet("lamoon-note-draft-v1", JSON.stringify({ title: noteTitle, body: noteBody, updatedAt: new Date().toISOString() }))
         setDraftStatus("saved")
       } catch { setDraftStatus("idle") }
     }, 450)
     return () => window.clearTimeout(timer)
   }, [showNote, noteTitle, noteBody])
-  useEffect(() => { localStorage.setItem(KEYS.notes, JSON.stringify(notes)) }, [notes])
-  useEffect(() => { localStorage.setItem(KEYS.health, JSON.stringify(health)) }, [health])
-  useEffect(() => { localStorage.setItem(KEYS.goal, String(goal)); localStorage.setItem(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
+  useEffect(() => { safeSet(KEYS.notes, JSON.stringify(notes)) }, [notes])
+  useEffect(() => { safeSet(KEYS.health, JSON.stringify(health)) }, [health])
+  useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
   useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
@@ -289,7 +297,7 @@ export default function CommandCenter() {
     const now = new Date().toISOString()
     if (editingNoteId) setNotes(old => old.map(n => n.id === editingNoteId ? { ...n, title: noteTitle.trim() || "ไม่มีชื่อ", body: noteBody.trim(), updatedAt: now } : n))
     else setNotes(old => [{ id: uid(), title: noteTitle.trim() || "ไม่มีชื่อ", body: noteBody.trim(), tags: [], mood: "neutral", pinned: false, createdAt: now, updatedAt: now }, ...old])
-    localStorage.removeItem("lamoon-note-draft-v1")
+    safeRemove("lamoon-note-draft-v1")
     setDelightActive(true)
     setToast({ message: editingNoteId ? "อัปเดตโน้ตแล้ว" : "บันทึกโน้ตแล้ว" })
     setNoteTitle(""); setNoteBody(""); setEditingNoteId(null); setShowNote(false); setQuickAddOpen(false)
@@ -361,7 +369,7 @@ export default function CommandCenter() {
       </section>}
 
       {page === "notes" && <section className="page-content">
-        <div className="page-heading-row"><div><span className="eyebrow">ความคิดของคุณ · NOTES</span><h1>โน้ตของฉัน</h1><p>จดไว้ก่อน แล้วค่อยกลับมาจัดการทีหลัง</p></div><button className="button button-primary" onClick={() => { setEditingNoteId(null); try { const draft = JSON.parse(localStorage.getItem("lamoon-note-draft-v1") || "null"); setNoteTitle(typeof draft?.title === "string" ? draft.title : ""); setNoteBody(typeof draft?.body === "string" ? draft.body : "") } catch { setNoteTitle(""); setNoteBody("") } setShowNote(true) }}><Icon name="plus"/>เขียนโน้ต</button></div>
+        <div className="page-heading-row"><div><span className="eyebrow">ความคิดของคุณ · NOTES</span><h1>โน้ตของฉัน</h1><p>จดไว้ก่อน แล้วค่อยกลับมาจัดการทีหลัง</p></div><button className="button button-primary" onClick={() => { setEditingNoteId(null); try { const draft = JSON.parse(safeGet("lamoon-note-draft-v1") || "null"); setNoteTitle(typeof draft?.title === "string" ? draft.title : ""); setNoteBody(typeof draft?.body === "string" ? draft.body : "") } catch { setNoteTitle(""); setNoteBody("") } setShowNote(true) }}><Icon name="plus"/>เขียนโน้ต</button></div>
         <div className="notes-tools"><div className="notes-count"><strong>{notes.length}</strong> โน้ต <span>·</span> ปักหมุด {pinned.length}</div><label className="search-field"><Icon name="search"/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาโน้ต..." aria-label="ค้นหาโน้ต"/>{search && <button type="button" onClick={() => setSearch("")} aria-label="ล้างการค้นหา"><Icon name="close"/></button>}</label></div>
         {filteredNotes.length ? <div className="notes-grid">{filteredNotes.map(n => <article className="note-card" key={n.id}><div className="note-card-top"><span className="note-date">{dateLabel(n.updatedAt.slice(0, 10))}</span><button className={n.pinned ? "icon-button pin-button pinned" : "icon-button pin-button"} aria-label={n.pinned ? "เลิกปักหมุด" : "ปักหมุด"} onClick={() => setNotes(old => old.map(x => x.id === n.id ? { ...x, pinned: !x.pinned, updatedAt: new Date().toISOString() } : x))}><Icon name="pin"/></button></div><h3>{n.title || "ไม่มีชื่อ"}</h3><p>{n.body || "ไม่มีเนื้อหา"}</p><div className="note-card-actions"><button className="text-button" onClick={() => { setEditingNoteId(n.id); setNoteTitle(n.title); setNoteBody(n.body); setShowNote(true) }}>แก้ไข</button><button className="icon-button delete-button" aria-label="ลบโน้ต" onClick={() => { if (confirm("ลบโน้ตนี้หรือไม่?")) { const removed = n; setNotes(old => old.filter(x => x.id !== n.id)); setToast({ message: "ลบโน้ตแล้ว", undo: () => setNotes(old => [removed, ...old]) }) } }}><Icon name="trash"/></button></div></article>)}</div> : <Empty title={search ? "ไม่พบโน้ตที่ค้นหา" : "พื้นที่สำหรับความคิดใหม่"} body={search ? "ลองใช้คำค้นหาอื่น หรือกดล้างการค้นหา" : "เขียนสิ่งที่อยากจำ ไอเดีย หรือเรื่องเล็ก ๆ ที่ไม่อยากให้หายไป"} action={search ? "ล้างการค้นหา" : "เขียนโน้ตแรก"} onClick={() => search ? setSearch("") : setShowNote(true)} />}
       </section>}
