@@ -8,6 +8,7 @@ type Note = { id: string; title: string; body: string; tags?: string[]; mood?: s
 type Profile = { id: string; name: string; height: number; age: number }
 type HealthRecord = { id: string; profileId: string; date: string; type: "weight" | "exercise" | "wellness"; weight?: number; distance?: number; duration?: number; reps?: number; sets?: number; exercise?: string; water?: number; sleep?: number; note?: string }
 type HealthData = { profiles: Profile[]; activeProfileId: string; records: HealthRecord[] }
+type DashboardWidget = "recent" | "goal" | "trend"
 
 const KEYS = { money: "lamoon-transactions", goal: "lamoon-saving-goal", goalTitle: "lamoon-saving-goal-title", notes: "lamoon-commonplace-notes-v1", health: "lamoon-health-dashboard-v1" }
 const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") }
@@ -110,8 +111,24 @@ export default function CommandCenter() {
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved">("idle")
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState("")
+  const [layoutOpen, setLayoutOpen] = useState(false)
+  const [hiddenWidgets, setHiddenWidgets] = useState<string[]>(() => read("money102-hidden-widgets-v1", []))
+  const [dashboardOrder, setDashboardOrder] = useState<DashboardWidget[]>(() => {
+    const saved = read<DashboardWidget[]>("money102-dashboard-order-v1", ["recent", "goal", "trend"])
+    return ["recent", "goal", "trend"].every(item => saved.includes(item)) ? saved : ["recent", "goal", "trend"]
+  })
+  const [draggedWidget, setDraggedWidget] = useState<DashboardWidget | null>(null)
+  const [memorySelectedDate, setMemorySelectedDate] = useState(today())
+  const [delightActive, setDelightActive] = useState(false)
 
   useEffect(() => { localStorage.setItem(KEYS.money, JSON.stringify(transactions)) }, [transactions])
+  useEffect(() => { try { localStorage.setItem("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) } catch {} }, [hiddenWidgets])
+  useEffect(() => { try { localStorage.setItem("money102-dashboard-order-v1", JSON.stringify(dashboardOrder)) } catch {} }, [dashboardOrder])
+  useEffect(() => {
+    if (!delightActive) return
+    const timer = window.setTimeout(() => setDelightActive(false), 1100)
+    return () => window.clearTimeout(timer)
+  }, [delightActive])
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -162,6 +179,27 @@ export default function CommandCenter() {
   const filteredNotes = useMemo(() => notes.filter(n => (n.title + " " + n.body).toLowerCase().includes(search.toLowerCase().trim())).sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.updatedAt.localeCompare(a.updatedAt)), [notes, search])
   const sortedTransactions = useMemo(() => transactions.slice().sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt), [transactions])
   const visibleTransactions = sortedTransactions.filter(t => moneyFilter === "all" || t.type === moneyFilter)
+  const memoryDays = useMemo(() => Array.from({ length: 28 }, (_, index) => {
+    const date = new Date()
+    date.setHours(12, 0, 0, 0)
+    date.setDate(date.getDate() - (27 - index))
+    const key = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0")
+    const noteCount = notes.filter(note => (note.updatedAt || note.createdAt).slice(0, 10) === key).length
+    const moneyCount = transactions.filter(item => item.date === key).length
+    const healthCount = health.records.filter(record => record.date === key).length
+    return { key, day: date.toLocaleDateString("th-TH", { day: "numeric" }), label: date.toLocaleDateString("th-TH", { day: "numeric", month: "short" }), noteCount, moneyCount, healthCount, count: noteCount + moneyCount + healthCount }
+  }), [notes, transactions, health.records])
+  const selectedMemoryDay = memoryDays.find(day => day.key === memorySelectedDate) || memoryDays[memoryDays.length - 1]
+  const moveWidget = (from: DashboardWidget | null, to: DashboardWidget) => {
+    if (!from || from === to) return
+    setDashboardOrder(old => {
+      const next = old.filter(item => item !== from)
+      next.splice(next.indexOf(to), 0, from)
+      return next
+    })
+    setDraggedWidget(null)
+  }
+  const greeting = new Date().getHours() < 12 ? "อรุณสวัสดิ์" : new Date().getHours() < 18 ? "สวัสดีตอนบ่าย" : "สวัสดีตอนเย็น"
 
   function saveMoney(e: FormEvent) {
     e.preventDefault()
@@ -169,6 +207,7 @@ export default function CommandCenter() {
     if (!value || value <= 0 || !detail.trim()) return
     const transaction: Transaction = { id: uid(), type: entryType, amount: value, detail: detail.trim(), date: entryDate, createdAt: Date.now() }
     setTransactions(old => [transaction, ...old])
+    setDelightActive(true)
     setToast({ message: "บันทึกรายการแล้ว", undo: () => setTransactions(old => old.filter(item => item.id !== transaction.id)) })
     setAmount(""); setDetail(""); setEntryDate(today()); setShowEntry(false); setQuickAddOpen(false)
   }
@@ -179,6 +218,7 @@ export default function CommandCenter() {
     if (editingNoteId) setNotes(old => old.map(n => n.id === editingNoteId ? { ...n, title: noteTitle.trim() || "ไม่มีชื่อ", body: noteBody.trim(), updatedAt: now } : n))
     else setNotes(old => [{ id: uid(), title: noteTitle.trim() || "ไม่มีชื่อ", body: noteBody.trim(), tags: [], mood: "neutral", pinned: false, createdAt: now, updatedAt: now }, ...old])
     localStorage.removeItem("lamoon-note-draft-v1")
+    setDelightActive(true)
     setToast({ message: editingNoteId ? "อัปเดตโน้ตแล้ว" : "บันทึกโน้ตแล้ว" })
     setNoteTitle(""); setNoteBody(""); setEditingNoteId(null); setShowNote(false); setQuickAddOpen(false)
   }
@@ -189,6 +229,7 @@ export default function CommandCenter() {
     if (healthType === "exercise") { record.exercise = exercise; record.distance = Number(distance) || 0; record.duration = Number(duration) || 0; record.reps = Number(reps) || 0; record.sets = Number(sets) || 0 }
     if (healthType === "wellness") { record.water = Number(water) || 0; record.sleep = Number(sleep) || 0 }
     setHealth(old => ({ ...old, records: [...old.records, record] }))
+    setDelightActive(true)
     setWeight(""); setDistance(""); setDuration(""); setReps(""); setSets("3"); setShowHealth(false)
   }
   function saveProfile(e: FormEvent) {
@@ -218,16 +259,25 @@ export default function CommandCenter() {
       </header>
 
       {page === "home" && <section className="page-content">
-        <div className="welcome-row"><div><span className="eyebrow">ยินดีต้อนรับกลับมา</span><h1>ค่อย ๆ จัดการ<br/><em>ทีละเรื่องก็พอ</em></h1><p className="intro-copy">พื้นที่เล็ก ๆ สำหรับดูแลเงิน ความคิด และตัวเอง โดยไม่ต้องทำให้ทุกอย่างยุ่งยาก</p></div><div className="date-card"><span>วันนี้</span><strong>{new Date().toLocaleDateString("th-TH", { day: "numeric" })}</strong><small>{new Date().toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</small></div></div>
+        <div className="welcome-row"><div><span className="eyebrow">{greeting} · ยินดีต้อนรับกลับมา</span><h1>ค่อย ๆ จัดการ<br/><em>ทีละเรื่องก็พอ</em></h1><p className="intro-copy">พื้นที่เล็ก ๆ สำหรับดูแลเงิน ความคิด และตัวเอง โดยไม่ต้องทำให้ทุกอย่างยุ่งยาก</p></div><div className="date-card"><span>วันนี้</span><strong>{new Date().toLocaleDateString("th-TH", { day: "numeric" })}</strong><small>{new Date().toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</small></div></div>
         <section className="balance-card"><div className="balance-copy"><span className="eyebrow light">ภาพรวมการเงิน</span><p>ยอดคงเหลือทั้งหมด</p><strong><AnimatedMoney value={balance} /></strong><div className="balance-detail"><span><i className="legend-dot income-dot" />รับเข้า {cash(income)}</span><span><i className="legend-dot expense-dot" />จ่ายออก {cash(expense)}</span></div></div><div className="balance-art" aria-hidden="true"><span className="art-ring ring-one"/><span className="art-ring ring-two"/><span className="art-core">฿</span></div><button className="balance-link" onClick={() => go("money")}>ดูรายละเอียด <Icon name="arrow"/></button></section>
+        <div className="dashboard-playground">
+          <div><span className="eyebrow">จัดพื้นที่ของคุณ</span><strong>Dashboard Playground</strong><small>ซ่อนการ์ดที่ไม่ใช้ หรือจับลากเพื่อเปลี่ยนลำดับ</small></div>
+          <button className={layoutOpen ? "button button-secondary layout-toggle active" : "button button-secondary layout-toggle"} onClick={() => setLayoutOpen(open => !open)} aria-expanded={layoutOpen}>{layoutOpen ? "เสร็จแล้ว" : "ปรับหน้า"} <Icon name={layoutOpen ? "check" : "arrow"}/></button>
+        </div>
+        {layoutOpen && <div className="layout-controls" aria-label="ปรับแต่งแดชบอร์ด">
+          {([{id:"recent",label:"รายการล่าสุด"},{id:"goal",label:"เป้าหมาย"},{id:"trend",label:"กราฟ 7 วัน"}] as const).map(widget => <label key={widget.id} className="layout-check"><input type="checkbox" checked={!hiddenWidgets.includes(widget.id)} onChange={event => setHiddenWidgets(old => event.target.checked ? old.filter(item => item !== widget.id) : [...old, widget.id])}/><span>{widget.label}</span></label>)}
+          <button className="text-button" onClick={() => { setDashboardOrder(["recent","goal","trend"]); setHiddenWidgets([]) }}>คืนค่าเริ่มต้น</button>
+        </div>}
         <div className="section-heading"><div><span className="eyebrow">เริ่มจากตรงนี้</span><h2>พื้นที่ของคุณ</h2></div><span className="section-note">3 เครื่องมือ · ใช้ได้ตามจังหวะของคุณ</span></div>
         <div className="tool-grid">
           <button className="tool-card tool-money" onClick={() => go("money")}><span className="tool-icon"><Icon name="wallet"/></span><span className="tool-meta">การเงิน</span><strong>บันทึกเงินเข้าออก</strong><p>รู้ว่าเงินมาจากไหน และไปอยู่ตรงไหน</p><span className="tool-bottom"><b>{monthItems.length} รายการเดือนนี้</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-notes" onClick={() => go("notes")}><span className="tool-icon"><Icon name="notes"/></span><span className="tool-meta">ความคิด</span><strong>เก็บโน้ตไว้ที่เดียว</strong><p>จดไอเดีย เรื่องที่ต้องจำ หรือสิ่งที่อยากกลับมาอ่าน</p><span className="tool-bottom"><b>{notes.length} โน้ต · ปักหมุด {pinned.length}</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-health" onClick={() => go("health")}><span className="tool-icon"><Icon name="health"/></span><span className="tool-meta">สุขภาพ</span><strong>ดูแลตัวเองทีละนิด</strong><p>บันทึกน้ำหนัก การเคลื่อนไหว และการพักผ่อน</p><span className="tool-bottom"><b>{latestWeight ? "น้ำหนัก " + latestWeight + " กก." : "เริ่มบันทึกสุขภาพ"}</b><i><Icon name="arrow"/></i></span></button>
         </div>
-        <div className="home-lower"><section className="surface recent-surface"><div className="surface-heading"><div><span className="eyebrow">รายการล่าสุด</span><h3>เงินเข้าออก</h3></div><button className="text-button" onClick={() => go("money")}>ดูทั้งหมด <Icon name="arrow"/></button></div>{sortedTransactions.slice(0, 4).length ? <div className="activity-list">{sortedTransactions.slice(0, 4).map(t => <div className="activity-row" key={t.id}><span className={t.type === "income" ? "activity-symbol is-income" : "activity-symbol is-expense"}>{t.type === "income" ? "+" : "−"}</span><span className="activity-info"><strong>{t.detail}</strong><small>{dateLabel(t.date)}</small></span><b className={t.type === "income" ? "positive" : "negative"}>{t.type === "income" ? "+" : "−"}{cash(t.amount)}</b></div>)}</div> : <div className="compact-empty"><p>ยังไม่มีรายการเงินเข้าออก</p><button className="text-button" onClick={() => { setEntryType("expense"); setShowEntry(true) }}>เพิ่มรายการแรก <Icon name="arrow"/></button></div>}</section>
-          <section className="surface focus-surface"><div className="surface-heading"><div><span className="eyebrow">เป้าหมายเล็ก ๆ</span><h3>{goalTitle || "เงินสำรองของฉัน"}</h3></div><span className="goal-icon"><Icon name="check"/></span></div><p className="goal-amount">{cash(Math.max(0, balance))}<span> / {cash(goal)}</span></p><div className="progress-track"><span style={{ width: Math.min(100, Math.max(0, balance / Math.max(1, goal) * 100)) + "%" }} /></div><div className="goal-foot"><span>{Math.max(0, Math.min(100, Math.round(balance / Math.max(1, goal) * 100)))}% ของเป้าหมาย</span><button className="text-button" onClick={() => go("money")}>ปรับเป้าหมาย <Icon name="arrow"/></button></div></section><MoneyTrend transactions={transactions} /></div>
+        <section className="memory-galaxy surface"><div className="surface-heading"><div><span className="eyebrow">MEMORY GALAXY · จากข้อมูลจริง</span><h3>ร่องรอยของ 28 วัน</h3></div><span className="history-count">{memoryDays.reduce((sum, day) => sum + day.count, 0)} กิจกรรม</span></div><div className="memory-calendar" aria-label="ปฏิทินกิจกรรม 28 วัน">{memoryDays.map(day => <button type="button" key={day.key} title={day.label + " · " + day.count + " กิจกรรม"} aria-label={day.label + " · " + day.count + " กิจกรรม"} aria-pressed={memorySelectedDate === day.key} onClick={() => setMemorySelectedDate(day.key)} className={"memory-day level-" + Math.min(4, day.count) + (memorySelectedDate === day.key ? " selected" : "")}><span>{day.day}</span>{day.count > 0 && <i/>}</button>)}</div><div className="memory-detail"><div><strong>{selectedMemoryDay.label}</strong><small>{selectedMemoryDay.count ? "มีบันทึกในวันนี้" : "ยังไม่มีบันทึกในวันที่เลือก"}</small></div><div className="memory-counts"><button onClick={() => { setSearch(""); go("notes") }}><b>{selectedMemoryDay.noteCount}</b><span>โน้ต</span></button><button onClick={() => go("money")}><b>{selectedMemoryDay.moneyCount}</b><span>การเงิน</span></button><button onClick={() => go("health")}><b>{selectedMemoryDay.healthCount}</b><span>สุขภาพ</span></button></div></div><p className="memory-caption">แตะวันที่เพื่อดูจำนวนรายการที่บันทึกไว้ · ไม่มีการสร้างข้อมูลตัวอย่าง</p></section>
+        <div className="home-lower"><section className="surface recent-surface" draggable={layoutOpen} onDragStart={() => setDraggedWidget("recent")} onDragOver={event => { if (layoutOpen) event.preventDefault() }} onDrop={() => moveWidget(draggedWidget, "recent")} style={{ order: dashboardOrder.indexOf("recent"), display: hiddenWidgets.includes("recent") ? "none" : undefined }}><div className="surface-heading"><div><span className="eyebrow">รายการล่าสุด</span><h3>เงินเข้าออก</h3></div><button className="text-button" onClick={() => go("money")}>ดูทั้งหมด <Icon name="arrow"/></button></div>{sortedTransactions.slice(0, 4).length ? <div className="activity-list">{sortedTransactions.slice(0, 4).map(t => <div className="activity-row" key={t.id}><span className={t.type === "income" ? "activity-symbol is-income" : "activity-symbol is-expense"}>{t.type === "income" ? "+" : "−"}</span><span className="activity-info"><strong>{t.detail}</strong><small>{dateLabel(t.date)}</small></span><b className={t.type === "income" ? "positive" : "negative"}>{t.type === "income" ? "+" : "−"}{cash(t.amount)}</b></div>)}</div> : <div className="compact-empty"><p>ยังไม่มีรายการเงินเข้าออก</p><button className="text-button" onClick={() => { setEntryType("expense"); setShowEntry(true) }}>เพิ่มรายการแรก <Icon name="arrow"/></button></div>}</section>
+          <section className="surface focus-surface" draggable={layoutOpen} onDragStart={() => setDraggedWidget("goal")} onDragOver={event => { if (layoutOpen) event.preventDefault() }} onDrop={() => moveWidget(draggedWidget, "goal")} style={{ order: dashboardOrder.indexOf("goal"), display: hiddenWidgets.includes("goal") ? "none" : undefined }}><div className="surface-heading"><div><span className="eyebrow">เป้าหมายเล็ก ๆ</span><h3>{goalTitle || "เงินสำรองของฉัน"}</h3></div><span className="goal-icon"><Icon name="check"/></span></div><p className="goal-amount">{cash(Math.max(0, balance))}<span> / {cash(goal)}</span></p><div className="progress-track"><span style={{ width: Math.min(100, Math.max(0, balance / Math.max(1, goal) * 100)) + "%" }} /></div><div className="goal-foot"><span>{Math.max(0, Math.min(100, Math.round(balance / Math.max(1, goal) * 100)))}% ของเป้าหมาย</span><button className="text-button" onClick={() => go("money")}>ปรับเป้าหมาย <Icon name="arrow"/></button></div></section>{!hiddenWidgets.includes("trend") && <div className="trend-widget" draggable={layoutOpen} onDragStart={() => setDraggedWidget("trend")} onDragOver={event => { if (layoutOpen) event.preventDefault() }} onDrop={() => moveWidget(draggedWidget, "trend")} style={{ order: dashboardOrder.indexOf("trend") }}><MoneyTrend transactions={transactions} /></div>}</div>
       </section>}
 
       {page === "money" && <section className="page-content">
@@ -285,7 +335,7 @@ export default function CommandCenter() {
       </section>
     </div>}
     {quickAddOpen && <div className="quick-add-menu" role="menu" aria-label="เพิ่มข้อมูลด่วน"><button role="menuitem" onClick={() => { setEntryType("expense"); setShowEntry(true); setQuickAddOpen(false) }}><span className="quick-add-icon">−</span><span><strong>รายจ่าย</strong><small>บันทึกเงินออก</small></span></button><button role="menuitem" onClick={() => { setEntryType("income"); setShowEntry(true); setQuickAddOpen(false) }}><span className="quick-add-icon">＋</span><span><strong>รายรับ</strong><small>บันทึกเงินเข้า</small></span></button><button role="menuitem" onClick={() => { setEditingNoteId(null); try { const draft = JSON.parse(localStorage.getItem("lamoon-note-draft-v1") || "null"); setNoteTitle(typeof draft?.title === "string" ? draft.title : ""); setNoteBody(typeof draft?.body === "string" ? draft.body : "") } catch { setNoteTitle(""); setNoteBody("") } setShowNote(true); setQuickAddOpen(false) }}><span className="quick-add-icon">✎</span><span><strong>โน้ตใหม่</strong><small>จดสิ่งที่ต้องจำ</small></span></button><button role="menuitem" onClick={() => { setShowHealth(true); setQuickAddOpen(false) }}><span className="quick-add-icon">♡</span><span><strong>สุขภาพ</strong><small>เพิ่มบันทึกสุขภาพ</small></span></button></div>}
-    {toast && <div className="app-toast" role="status"><span className="toast-check"><Icon name="check" /></span><span className="toast-message">{toast.message}</span>{toast.undo && <button onClick={() => { toast.undo?.(); setToast(null) }}>Undo</button>}<button className="toast-dismiss" aria-label="ปิดการแจ้งเตือน" onClick={() => setToast(null)}><Icon name="close" /></button></div>}
+    {toast && <div className={delightActive ? "app-toast delight-pop" : "app-toast"} role="status"><span className="toast-check"><Icon name="check" /></span><span className="toast-message">{toast.message}</span>{toast.undo && <button onClick={() => { toast.undo?.(); setToast(null) }}>Undo</button>}<button className="toast-dismiss" aria-label="ปิดการแจ้งเตือน" onClick={() => setToast(null)}><Icon name="close" /></button></div>}
     <button className={quickAddOpen ? "quick-add-button open" : "quick-add-button"} onClick={() => setQuickAddOpen(old => !old)} aria-label={quickAddOpen ? "ปิดเมนูเพิ่มข้อมูล" : "เพิ่มข้อมูลด่วน"} aria-expanded={quickAddOpen}><Icon name={quickAddOpen ? "close" : "plus"} /></button>
     {showProfile && <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setShowProfile(false) }}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile-title"><div className="modal-heading"><div><span className="eyebrow">โปรไฟล์สุขภาพ</span><h2 id="profile-title">เพิ่มโปรไฟล์</h2></div><button className="icon-button" onClick={() => setShowProfile(false)} aria-label="ปิด"><Icon name="close"/></button></div><form onSubmit={saveProfile} className="form-stack"><label>ชื่อโปรไฟล์<input required value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="เช่น ฉัน"/></label><div className="form-two-col"><label>ส่วนสูง (ซม.)<input type="number" min="1" required value={profileHeight} onChange={e => setProfileHeight(e.target.value)}/></label><label>อายุ (ปี)<input type="number" min="1" required value={profileAge} onChange={e => setProfileAge(e.target.value)}/></label></div><label>น้ำหนักเริ่มต้น (กก.) <span className="optional-label">ไม่จำเป็น</span><input type="number" min="1" step="0.1" value={profileInitialWeight} onChange={e => setProfileInitialWeight(e.target.value)} placeholder="เช่น 70"/></label><button className="button button-primary button-full" type="submit">สร้างโปรไฟล์</button></form></section></div>}
   </div>
