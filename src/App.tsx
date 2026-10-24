@@ -77,17 +77,10 @@ function Icon({
 
 function Logo() {
   return (
-    <button
-      className="group flex items-center gap-3"
-      onClick={() => navigate("home")}
-      aria-label="กลับหน้าหลัก"
-    >
-      <span className="grid h-10 w-10 place-items-center rounded-[14px] bg-[#141513] text-[#F9F7EF] transition-transform group-hover:-rotate-3">
-        <Icon name="sparkle" className="h-5 w-5" />
-      </span>
-      <span className="text-[22px] font-semibold tracking-[-0.04em] text-[#141513]">
-        Mll
-      </span>
+    <button className="mll-inner-wordmark" onClick={() => navigate("home")} aria-label="กลับหน้าหลัก">
+      <span className="mll-inner-mark">m</span>
+      <span>Mll</span>
+      <small>PRIVATE SPACE</small>
     </button>
   )
 }
