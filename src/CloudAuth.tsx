@@ -181,19 +181,41 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }
 
   if (checking) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] text-sm text-[#73796F]">กำลังตรวจสอบบัญชี…</main>
-  if (!user) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5">
-    <section className="w-full max-w-md rounded-[28px] border border-[#E5E0D3] bg-[#FCFBF7] p-7 shadow-[0_20px_60px_rgba(38,51,41,0.08)] sm:p-9">
-      <div className="mb-7 grid h-12 w-12 place-items-center rounded-2xl bg-[#E8EEE5] text-2xl">🐷</div>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#9B8450]">MLL · YOUR PRIVATE SPACE</p>
-      <h1 className="mt-2 text-2xl font-semibold text-[#141513]">{mode === "signin" ? "ยินดีต้อนรับกลับ" : "สร้างบัญชีของคุณ"}</h1>
-      <p className="mt-2 text-sm leading-6 text-[#777D73]">เข้าสู่ระบบเพื่อเก็บข้อมูลออมเงิน สุขภาพ และโน้ตไว้ใน Cloudflare D1</p>
-      <form onSubmit={submit} className="mt-6 space-y-4">
-        <label className="block text-sm font-medium text-[#414A41]">อีเมล<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
-        <label className="block text-sm font-medium text-[#414A41]">รหัสผ่าน<input type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} className="mt-1.5 h-12 w-full rounded-xl border border-[#DEDACF] bg-white px-4 outline-none focus:border-[#8A9C83]" /></label>
-        {message && <p role="status" className="text-sm leading-5 text-[#8B5B42]">{message}</p>}
-        <button disabled={busy} className="h-12 w-full rounded-full bg-[#141513] text-sm font-medium text-white disabled:opacity-60">{busy ? "กำลังดำเนินการ…" : mode === "signin" ? "เข้าสู่ระบบ" : "สมัครบัญชี"}</button>
-      </form>
-      <button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage("") }} className="mt-5 w-full text-sm text-[#55745A]">{mode === "signin" ? "ยังไม่มีบัญชี Cloudflare? สมัครใหม่" : "มีบัญชีแล้ว? เข้าสู่ระบบ"}</button>
+  if (!user) return <main className="mll-auth-screen">
+    <section className="mll-auth-layout">
+      <div className="mll-auth-story">
+        <button type="button" className="mll-auth-wordmark" aria-label="Mll">
+          <span className="mll-auth-mark">m</span><span>Mll</span><small>YOUR PRIVATE SPACE</small>
+        </button>
+        <p className="mll-auth-eyebrow"><span /> A QUIETER WAY TO KEEP THINGS TOGETHER</p>
+        <h1>พื้นที่ของคุณ<br />ในจังหวะ<br /><em>ที่เป็นคุณ</em></h1>
+        <p className="mll-auth-story-copy">การเงิน สุขภาพ และความคิดเล็ก ๆ ในแต่ละวัน อยู่ในพื้นที่ส่วนตัวเดียวกัน พร้อมให้คุณกลับมาดูได้เสมอ</p>
+        <div className="mll-auth-preview">
+          <div className="mll-auth-preview-head"><span>YOUR SPACE / TODAY</span><span className="mll-auth-online-dot" /></div>
+          <div className="mll-auth-preview-items">
+            <div className="mll-auth-preview-item"><span className="mll-auth-preview-icon violet">↗</span><span><b>การเงิน</b><small>เห็นภาพรวมอย่างชัดเจน</small></span><i>01</i></div>
+            <div className="mll-auth-preview-item"><span className="mll-auth-preview-icon pink">♡</span><span><b>สุขภาพ</b><small>เก็บความคืบหน้าทีละวัน</small></span><i>02</i></div>
+            <div className="mll-auth-preview-item"><span className="mll-auth-preview-icon orange">✳</span><span><b>โน้ต</b><small>พื้นที่สำหรับสิ่งที่อยากจำ</small></span><i>03</i></div>
+          </div>
+          <div className="mll-auth-preview-foot"><span>PRIVATE BY DESIGN</span><span>ใช้ฟรี · ไม่มีค่าสมาชิก</span></div>
+        </div>
+      </div>
+      <div className="mll-auth-form-wrap">
+        <div className="mll-auth-form-card">
+          <p className="mll-auth-eyebrow"><span /> PRIVATE ACCESS</p>
+          <h2>{mode === "signin" ? "กลับมาหาพื้นที่ของคุณ" : "เริ่มพื้นที่ส่วนตัว"}</h2>
+          <p className="mll-auth-form-intro">{mode === "signin" ? "เข้าสู่ระบบเพื่อดูข้อมูลและบันทึกต่อจากครั้งก่อน" : "สร้างบัญชีเพื่อเก็บข้อมูลของคุณอย่างเป็นระเบียบ"}</p>
+          <form onSubmit={submit} className="mll-auth-form">
+            <label>อีเมล<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>
+            <label>รหัสผ่าน<input type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" /></label>
+            {message && <p role="status" className="mll-auth-message">{message}</p>}
+            <button disabled={busy} className="mll-auth-submit">{busy ? "กำลังดำเนินการ…" : mode === "signin" ? "เข้าสู่ระบบ" : "สร้างบัญชี"}<span>↗</span></button>
+          </form>
+          <div className="mll-auth-switch"><span>{mode === "signin" ? "ยังไม่มีบัญชี?" : "มีบัญชีอยู่แล้ว?"}</span><button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage("") }}>{mode === "signin" ? "สมัครบัญชี" : "เข้าสู่ระบบ"}</button></div>
+          <div className="mll-auth-security"><span>✓</span> ซิงก์ข้อมูลกับ Cloudflare D1 ของบัญชีคุณ</div>
+        </div>
+        <p className="mll-auth-legal">ข้อมูลส่วนตัวของคุณ · ใช้ฟรี · ไม่มีแพ็กเกจชำระเงิน</p>
+      </div>
     </section>
   </main>
   if (!cloudReady) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5"><section className="max-w-xl rounded-3xl bg-white p-7 shadow-sm"><p className="text-sm leading-6 text-[#5F665D]">{cloudError || "กำลังโหลดข้อมูลของคุณจาก Cloudflare D1…"}</p><button onClick={() => { void signOut() }} className="mt-4 rounded-full border px-4 py-2 text-sm">ออกจากระบบ</button></section></main>
