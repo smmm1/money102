@@ -616,3 +616,15 @@ body:has(.theme-midnight) { background:#211e2b; color:#f2edf8; }
   .motion-bold .page-content,.motion-bold .page-content > *,.theme-studio { animation:none!important; }
   .tool-card,.surface,.note-card,.theme-trigger,.theme-swatch { transition:none!important; }
 }
+
+.sound-choice { display:flex; align-items:center; gap:12px; margin-top:14px; padding:12px 0 0; border-top:1px solid #eee8f2; }
+.sound-choice>span { display:grid; gap:3px; margin-right:auto; }
+.sound-choice strong { color:#554a62; font-size:11px; font-weight:600; }
+.sound-choice small { color:#9b91a4; font-size:9px; }
+.sound-switch { position:relative; width:39px; height:23px; padding:3px; border:1px solid #e2d9e9; border-radius:99px; background:#e7e1eb; transition:background .2s,border-color .2s; }
+.sound-switch i { display:block; width:15px; height:15px; border-radius:50%; background:#fff; box-shadow:0 1px 4px #2c203b25; transition:transform .2s cubic-bezier(.16,1,.3,1); }
+.sound-switch.enabled { border-color:var(--theme-accent); background:var(--theme-accent); }
+.sound-switch.enabled i { transform:translateX(15px); }
+.theme-midnight .sound-choice strong { color:#f2edf8; }
+.theme-midnight .sound-choice small { color:#b9b0c7; }
+.theme-midnight .sound-choice { border-top-color:#4b435b; }
