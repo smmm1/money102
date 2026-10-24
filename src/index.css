@@ -551,3 +551,7 @@ body:has(.mll-global-header) main:not(.pancake-home) select { border-color:var(-
 .mll-editorial-nav button span { color:#AA98A8!important; font-size:9px!important; }
 .mll-nav-actions { gap:8px!important; }
 @media(max-width:680px) { .mll-nav-shell { min-height:74px; padding:14px 16px!important; }.mll-inner-wordmark small { display:none; }.mll-inner-wordmark { font-size:23px; }.mll-inner-mark { width:30px;height:30px; } }
+
+.pancake-navright > div { display:flex; align-items:center; }
+.pancake-navright > div > button { width:38px!important; height:38px!important; border-color:#E9DCCB!important; background:#FFFDF9!important; box-shadow:none!important; }
+.pancake-navright > div > button > span { background:linear-gradient(135deg,#F6E2D4,#E8DDFE)!important; color:var(--mll-plum)!important; }
