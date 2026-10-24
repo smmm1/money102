@@ -190,6 +190,8 @@ function readHomeSnapshot(): HomeSnapshot {
 
 function Home() {
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
+  const [query, setQuery] = useState("")
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const money = (amount: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(amount)
   const balance = snapshot.income - snapshot.expense
   useEffect(() => {
@@ -206,40 +208,38 @@ function Home() {
     }
   }, [])
   const spaces = [
-    { number: "01", title: "การเงิน", description: "รายรับ รายจ่าย และเป้าหมายการออม", detail: "ยอดสุทธิที่บันทึกไว้", value: money(balance), color: "finance", page: "saving" as Page },
-    { number: "02", title: "สุขภาพ", description: "ติดตามน้ำหนักและกิจกรรมในแต่ละวัน", detail: "น้ำหนักล่าสุด", value: snapshot.healthWeight === null ? "ยังไม่มีข้อมูล" : snapshot.healthWeight + " กก.", color: "wellbeing", page: "health" as Page },
-    { number: "03", title: "โน้ต", description: "เก็บไอเดียและเรื่องที่อยากจำ", detail: "โน้ตที่บันทึกไว้", value: String(snapshot.notesCount) + " รายการ", color: "notes", page: "notes" as Page },
-  ]
-  return <main className="mll-first-home">
-    <header className="mll-first-nav">
-      <button className="mll-first-brand" onClick={() => navigate("home")} aria-label="Mll หน้าหลัก"><span className="mll-first-mark">m</span><span>Mll</span></button>
-      <nav aria-label="เมนูหลัก">
-        <button onClick={() => navigate("saving")}>การเงิน</button>
-        <button onClick={() => navigate("health")}>สุขภาพ</button>
-        <button onClick={() => navigate("notes")}>โน้ต</button>
-      </nav>
-      <AccountMenu />
-    </header>
-    <section className="mll-first-hero">
-      <p className="mll-first-kicker"><span /> YOUR PERSONAL SPACE</p>
-      <h1>พื้นที่สำหรับ<br /><em>สิ่งสำคัญในชีวิต</em></h1>
-      <p className="mll-first-intro">จัดการเรื่องเงิน ดูแลตัวเอง และเก็บความคิดไว้ในที่เดียว<br className="mll-first-desktop-break" /> เริ่มจากสิ่งเล็ก ๆ ในแบบที่เหมาะกับคุณ</p>
-      <div className="mll-first-actions">
-        <button className="mll-first-primary" onClick={() => navigate("saving")}>เริ่มต้นใช้งาน <span>↗</span></button>
-        <button className="mll-first-secondary" onClick={() => document.getElementById("mll-first-spaces")?.scrollIntoView({ behavior: "smooth" })}>สำรวจเครื่องมือ</button>
+    { key: "finance", title: "ออมเงิน", label: "การเงิน", description: "ดูแลเงินออม รายรับรายจ่าย และเป้าหมายทางการเงิน", action: "เปิดพื้นที่การเงิน", icon: <Icon name="bank" className="h-6 w-6" />, value: money(balance), color: "finance", page: "saving" as Page },
+    { key: "notes", title: "โน้ตของฉัน", label: "บันทึก", description: "รวบรวมความคิด สิ่งที่ต้องจำ และบันทึกส่วนตัว", action: "เปิดสมุดบันทึก", icon: <Icon name="note" className="h-6 w-6" />, value: String(snapshot.notesCount) + " รายการ", color: "notes", page: "notes" as Page },
+    { key: "health", title: "สุขภาพและออกกำลังกาย", label: "สุขภาพ", description: "ติดตามโปรไฟล์สุขภาพและบันทึกกิจกรรมของคุณ", action: "เปิดพื้นที่สุขภาพ", icon: <Icon name="heart" className="h-6 w-6" />, value: snapshot.healthWeight === null ? "ยังไม่มีข้อมูลน้ำหนัก" : snapshot.healthWeight + " กก.", color: "health", page: "health" as Page },
+  ].filter((space) => (space.title + " " + space.label + " " + space.description).toLowerCase().includes(query.trim().toLowerCase()))
+  return <main className="mll-original-home">
+    <header className="mll-original-nav">
+      <button className="mll-original-brand" onClick={() => navigate("home")} aria-label="Moneyeep หน้าหลัก">
+        <span className="mll-original-pig">🐷</span><span><strong>Moneyeep</strong><small>PERSONAL DASHBOARD</small></span>
+      </button>
+      <label className="mll-original-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาพื้นที่ของคุณ..." aria-label="ค้นหาพื้นที่" />{query && <button type="button" onClick={() => setQuery("")} aria-label="ล้างการค้นหา">×</button>}</label>
+      <div className="mll-original-controls">
+        <div className="mll-original-settings-wrap">
+          <button className="mll-original-icon-button" type="button" onClick={() => setSettingsOpen((open) => !open)} aria-expanded={settingsOpen} aria-label="ตั้งค่า">☷</button>
+          {settingsOpen && <div className="mll-original-settings"><strong>การตั้งค่า</strong><p>บัญชีและข้อมูลของคุณยังใช้ระบบเดิม</p><button type="button" onClick={() => setSettingsOpen(false)}>ปิด</button></div>}
+        </div>
+        <AccountMenu />
       </div>
-      <div className="mll-first-note"><span className="mll-first-note-line" /> ใช้ส่วนตัว · ฟรี · ไม่มีค่าสมาชิก</div>
+    </header>
+    <section className="mll-original-hero">
+      <p className="mll-original-eyebrow">YOUR PERSONAL SPACE</p>
+      <h1>จัดการทุกเรื่องสำคัญ<br /><span>ในพื้นที่เดียว</span></h1>
+      <p className="mll-original-intro">พื้นที่ส่วนตัวที่ออกแบบให้การเงิน บันทึก และสุขภาพของคุณเป็นระเบียบ ใช้งานง่าย และเข้าถึงได้ทันที</p>
     </section>
-    <section id="mll-first-spaces" className="mll-first-spaces">
-      <div className="mll-first-section-heading"><div><p className="mll-first-kicker">MADE FOR YOUR EVERYDAY</p><h2>พื้นที่ของคุณ</h2></div><p>เลือกเรื่องที่อยากเริ่มดูแล</p></div>
-      <div className="mll-first-grid">{spaces.map((space) => <button key={space.number} className={"mll-first-card " + space.color} onClick={() => navigate(space.page)}>
-        <span className="mll-first-card-top"><span>{space.number}</span><span className="mll-first-card-arrow">↗</span></span>
-        <span className="mll-first-card-title">{space.title}</span>
-        <span className="mll-first-card-description">{space.description}</span>
-        <span className="mll-first-card-bottom"><span>{space.detail}</span><strong>{space.value}</strong></span>
-      </button>)}</div>
+    <section className="mll-original-workspace">
+      <div className="mll-original-section-title"><div><h2>พื้นที่ทำงานของฉัน</h2><p>เลือกหน้าที่ต้องการใช้งาน</p></div><span>{spaces.length} พื้นที่</span></div>
+      {spaces.length ? <div className="mll-original-grid">{spaces.map((space) => <button key={space.key} className={"mll-original-card " + space.color} onClick={() => navigate(space.page)}>
+        <span className="mll-original-card-head"><span className="mll-original-card-icon">{space.icon}</span><span className="mll-original-arrow"><Icon name="arrow" className="h-5 w-5" /></span></span>
+        <span className="mll-original-card-label">{space.label}</span><strong className="mll-original-card-title">{space.title}</strong><span className="mll-original-card-description">{space.description}</span>
+        <span className="mll-original-card-foot"><span>{space.action}</span><strong>{space.value}</strong></span>
+      </button>)}</div> : <p className="mll-original-empty">ไม่พบพื้นที่ที่ตรงกับ “{query}”</p>}
     </section>
-    <footer className="mll-first-footer"><span><span className="mll-first-mark small">m</span> Mll</span><span>พื้นที่ส่วนตัวของคุณ</span><span>© Mll</span></footer>
+    <footer className="mll-original-footer"><span>พื้นที่ส่วนตัวของคุณ · เรียบง่าย เป็นระบบ</span><span>PERSONAL WORKSPACE</span></footer>
   </main>
 }
 
