@@ -26,7 +26,7 @@ function Icon({ name }: { name: string }) {
     plus: "M12 5v14M5 12h14", arrow: "M5 12h14M13 6l6 6-6 6", search: "m20 20-4.5-4.5M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z",
     close: "M6 6l12 12M18 6 6 18", trash: "M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3",
     pin: "M16 3 21 8l-4 1-4 4-1 5-2-2-5 5 4-7-2-2 5-1 4-4z", wallet: "M4 6h15a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M16 12h5",
-    check: "m5 12 4 4L19 6", calendar: "M4 5h16v16H4zM8 3v4M16 3v4M4 10h16"
+    check: "m5 12 4 4L19 6", calendar: "M4 5h16v16H4zM8 3v4M16 3v4M4 10h16", sparkles: "m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"
   }
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name] || paths.arrow} /></svg>
 }
@@ -120,10 +120,18 @@ export default function CommandCenter() {
   const [draggedWidget, setDraggedWidget] = useState<DashboardWidget | null>(null)
   const [memorySelectedDate, setMemorySelectedDate] = useState(today())
   const [delightActive, setDelightActive] = useState(false)
+  const [themeStudioOpen, setThemeStudioOpen] = useState(false)
+  const [theme, setTheme] = useState<"lavender" | "matcha" | "cream" | "midnight">(() => {
+    const saved = read<string>("money102-theme-v1", "lavender")
+    return (["lavender", "matcha", "cream", "midnight"] as string[]).includes(saved) ? saved as "lavender" | "matcha" | "cream" | "midnight" : "lavender"
+  })
+  const [motionLevel, setMotionLevel] = useState<"bold" | "soft">(() => read("money102-motion-v1", "bold"))
 
   useEffect(() => { localStorage.setItem(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { try { localStorage.setItem("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) } catch {} }, [hiddenWidgets])
   useEffect(() => { try { localStorage.setItem("money102-dashboard-order-v1", JSON.stringify(dashboardOrder)) } catch {} }, [dashboardOrder])
+  useEffect(() => { try { localStorage.setItem("money102-theme-v1", JSON.stringify(theme)) } catch {} }, [theme])
+  useEffect(() => { try { localStorage.setItem("money102-motion-v1", JSON.stringify(motionLevel)) } catch {} }, [motionLevel])
   useEffect(() => {
     if (!delightActive) return
     const timer = window.setTimeout(() => setDelightActive(false), 1100)
@@ -250,12 +258,12 @@ export default function CommandCenter() {
   ]
   const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ" }
 
-  return <div className="app-shell">
+  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
     <main className="main-area">
       <header className="topbar">
         <button className="brand" onClick={() => go("home")} aria-label="กลับหน้าภาพรวม"><span className="brand-symbol">m</span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
         <nav className="top-nav" aria-label="เมนูหลัก">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "top-nav-link active" : "top-nav-link"} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{item.label}</span></button>)}</nav>
-        <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="topbar-account"><AccountMenu /></div></div>
+        <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="theme-studio-wrap"><button className={themeStudioOpen ? "theme-trigger active" : "theme-trigger"} onClick={() => setThemeStudioOpen(open => !open)} aria-label="ปรับธีมและการเคลื่อนไหว" aria-expanded={themeStudioOpen}><Icon name="sparkles"/><span>ธีม</span></button>{themeStudioOpen && <div className="theme-studio" role="dialog" aria-label="Theme Studio"><div className="theme-studio-heading"><div><strong>Theme Studio</strong><small>ปรับอารมณ์พื้นที่ส่วนตัว</small></div><button className="theme-close" onClick={() => setThemeStudioOpen(false)} aria-label="ปิด">×</button></div><div className="theme-swatches">{([{id:"lavender",label:"Lavender",color:"#e8ddf8"},{id:"matcha",label:"Matcha",color:"#dcebd7"},{id:"cream",label:"Cream",color:"#f6e8cf"},{id:"midnight",label:"Midnight",color:"#343047"}] as const).map(option => <button key={option.id} className={theme === option.id ? "theme-swatch selected" : "theme-swatch"} onClick={() => setTheme(option.id)} aria-pressed={theme === option.id}><i style={{background:option.color}}/><span>{option.label}</span></button>)}</div><div className="motion-choice"><span>Motion</span><button className={motionLevel === "bold" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("bold")} aria-pressed={motionLevel === "bold"}>Bold</button><button className={motionLevel === "soft" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("soft")} aria-pressed={motionLevel === "soft"}>Soft</button></div><p>บันทึกการตั้งค่าไว้ในเครื่องนี้เท่านั้น</p></div>}</div><div className="topbar-account"><AccountMenu /></div></div>
       </header>
 
       {page === "home" && <section className="page-content">
