@@ -18,7 +18,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(rootDir, "index.html"),
-        back: path.resolve(rootDir, "back.html"),
       },
     },
   },
