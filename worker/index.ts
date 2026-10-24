@@ -21,6 +21,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
   const allowed = new Set([
     env.APP_ORIGIN,
     "https://money102-staging.onrender.com",
+    "https://money102-command-center-preview.onrender.com",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
   ].filter(Boolean));
