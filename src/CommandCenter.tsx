@@ -126,12 +126,76 @@ export default function CommandCenter() {
     return (["lavender", "matcha", "cream", "midnight"] as string[]).includes(saved) ? saved as "lavender" | "matcha" | "cream" | "midnight" : "lavender"
   })
   const [motionLevel, setMotionLevel] = useState<"bold" | "soft">(() => { const saved = read<string>("money102-motion-v1", "bold"); return saved === "soft" ? "soft" : "bold" })
+  const [soundsEnabled, setSoundsEnabled] = useState<boolean>(() => read("money102-sounds-enabled-v1", true))
 
   useEffect(() => { localStorage.setItem(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { try { localStorage.setItem("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) } catch {} }, [hiddenWidgets])
   useEffect(() => { try { localStorage.setItem("money102-dashboard-order-v1", JSON.stringify(dashboardOrder)) } catch {} }, [dashboardOrder])
   useEffect(() => { try { localStorage.setItem("money102-theme-v1", JSON.stringify(theme)) } catch {} }, [theme])
   useEffect(() => { try { localStorage.setItem("money102-motion-v1", JSON.stringify(motionLevel)) } catch {} }, [motionLevel])
+  useEffect(() => { try { localStorage.setItem("money102-sounds-enabled-v1", JSON.stringify(soundsEnabled)) } catch {} }, [soundsEnabled])
+  useEffect(() => {
+    if (!soundsEnabled) return
+    let audio: AudioContext | null = null
+    const play = (kind: string) => {
+      try {
+        audio ||= new AudioContext()
+        if (audio.state === "suspended") void audio.resume()
+        const ctx = audio
+        const themeBase: Record<string, number> = { lavender: 0, matcha: -3, cream: 4, midnight: -7 }
+        const base = themeBase[theme] ?? 0
+        const sounds: Record<string, { notes: number[]; wave: OscillatorType; duration: number; volume: number }> = {
+          nav: { notes: [523, 659], wave: "sine", duration: .11, volume: .035 },
+          money: { notes: [392, 587, 784], wave: "triangle", duration: .16, volume: .04 },
+          notes: { notes: [659, 784], wave: "sine", duration: .13, volume: .03 },
+          health: { notes: [440, 554, 659], wave: "sine", duration: .2, volume: .03 },
+          save: { notes: [587, 740, 880], wave: "triangle", duration: .18, volume: .04 },
+          delete: { notes: [440, 349], wave: "triangle", duration: .16, volume: .025 },
+          toggle: { notes: [740], wave: "sine", duration: .08, volume: .025 },
+          date: { notes: [523, 392], wave: "sine", duration: .1, volume: .022 },
+          quick: { notes: [440, 554, 659], wave: "triangle", duration: .14, volume: .03 },
+          theme: { notes: [523, 659, 784], wave: "sine", duration: .2, volume: .03 },
+          default: { notes: [587], wave: "sine", duration: .075, volume: .018 }
+        }
+        const sound = sounds[kind] || sounds.default
+        sound.notes.forEach((note, index) => {
+          const oscillator = ctx.createOscillator()
+          const gain = ctx.createGain()
+          const start = ctx.currentTime + index * (kind === "delete" ? .075 : .045)
+          oscillator.type = sound.wave
+          oscillator.frequency.setValueAtTime(note * Math.pow(2, base / 12), start)
+          gain.gain.setValueAtTime(.0001, start)
+          gain.gain.exponentialRampToValueAtTime(sound.volume, start + .012)
+          gain.gain.exponentialRampToValueAtTime(.0001, start + sound.duration)
+          oscillator.connect(gain); gain.connect(ctx.destination)
+          oscillator.start(start); oscillator.stop(start + sound.duration + .01)
+        })
+      } catch { /* Audio is optional; UI actions must work even when sound is unavailable. */ }
+    }
+    const onClick = (event: MouseEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      const button = target.closest("button")
+      if (!button || button.disabled || button.getAttribute("aria-label") === "ปิดเสียง") return
+      if (button.closest(".theme-studio")) { play(button.classList.contains("theme-swatch") ? "theme" : "toggle"); return }
+      if (button.classList.contains("top-nav-link")) {
+        const label = button.textContent || ""
+        play(label.includes("การเงิน") ? "money" : label.includes("โน้ต") ? "notes" : label.includes("สุขภาพ") ? "health" : "nav"); return
+      }
+      if (button.classList.contains("tool-card")) {
+        play(button.classList.contains("tool-money") ? "money" : button.classList.contains("tool-notes") ? "notes" : button.classList.contains("tool-health") ? "health" : "nav"); return
+      }
+      if (button.classList.contains("delete-button") || button.querySelector('[data-icon="trash"]')) { play("delete"); return }
+      if (button.classList.contains("memory-day") || button.classList.contains("filter-tab") || button.classList.contains("layout-check")) { play("date"); return }
+      if (button.classList.contains("theme-trigger")) { play("theme"); return }
+      if (button.classList.contains("quick-add-button") || button.closest(".quick-add-menu")) { play("quick"); return }
+      if (button.classList.contains("button-primary") || button.closest(".modal-card") && (button.type === "submit" || /บันทึก|สร้าง/.test(button.textContent || ""))) { play("save"); return }
+      if (button.classList.contains("button") || button.classList.contains("text-button") || button.classList.contains("icon-button") || button.classList.contains("command-item")) { play("toggle"); return }
+      play("default")
+    }
+    document.addEventListener("click", onClick)
+    return () => { document.removeEventListener("click", onClick); if (audio) void audio.close() }
+  }, [soundsEnabled, theme])
   useEffect(() => {
     if (!delightActive) return
     const timer = window.setTimeout(() => setDelightActive(false), 1100)
@@ -263,7 +327,7 @@ export default function CommandCenter() {
       <header className="topbar">
         <button className="brand" onClick={() => go("home")} aria-label="กลับหน้าภาพรวม"><span className="brand-symbol">m</span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
         <nav className="top-nav" aria-label="เมนูหลัก">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "top-nav-link active" : "top-nav-link"} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{item.label}</span></button>)}</nav>
-        <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="theme-studio-wrap"><button className={themeStudioOpen ? "theme-trigger active" : "theme-trigger"} onClick={() => setThemeStudioOpen(open => !open)} aria-label="ปรับธีมและการเคลื่อนไหว" aria-expanded={themeStudioOpen}><Icon name="sparkles"/><span>ธีม</span></button>{themeStudioOpen && <div className="theme-studio" role="dialog" aria-label="Theme Studio"><div className="theme-studio-heading"><div><strong>Theme Studio</strong><small>ปรับอารมณ์พื้นที่ส่วนตัว</small></div><button className="theme-close" onClick={() => setThemeStudioOpen(false)} aria-label="ปิด">×</button></div><div className="theme-swatches">{([{id:"lavender",label:"Lavender",color:"#e8ddf8"},{id:"matcha",label:"Matcha",color:"#dcebd7"},{id:"cream",label:"Cream",color:"#f6e8cf"},{id:"midnight",label:"Midnight",color:"#343047"}] as const).map(option => <button key={option.id} className={theme === option.id ? "theme-swatch selected" : "theme-swatch"} onClick={() => setTheme(option.id)} aria-pressed={theme === option.id}><i style={{background:option.color}}/><span>{option.label}</span></button>)}</div><div className="motion-choice"><span>Motion</span><button className={motionLevel === "bold" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("bold")} aria-pressed={motionLevel === "bold"}>Bold</button><button className={motionLevel === "soft" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("soft")} aria-pressed={motionLevel === "soft"}>Soft</button></div><p>บันทึกการตั้งค่าไว้ในเครื่องนี้เท่านั้น</p></div>}</div><div className="topbar-account"><AccountMenu /></div></div>
+        <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="theme-studio-wrap"><button className={themeStudioOpen ? "theme-trigger active" : "theme-trigger"} onClick={() => setThemeStudioOpen(open => !open)} aria-label="ปรับธีมและการเคลื่อนไหว" aria-expanded={themeStudioOpen}><Icon name="sparkles"/><span>ธีม</span></button>{themeStudioOpen && <div className="theme-studio" role="dialog" aria-label="Theme Studio"><div className="theme-studio-heading"><div><strong>Theme Studio</strong><small>ปรับอารมณ์พื้นที่ส่วนตัว</small></div><button className="theme-close" onClick={() => setThemeStudioOpen(false)} aria-label="ปิด">×</button></div><div className="theme-swatches">{([{id:"lavender",label:"Lavender",color:"#e8ddf8"},{id:"matcha",label:"Matcha",color:"#dcebd7"},{id:"cream",label:"Cream",color:"#f6e8cf"},{id:"midnight",label:"Midnight",color:"#343047"}] as const).map(option => <button key={option.id} className={theme === option.id ? "theme-swatch selected" : "theme-swatch"} onClick={() => setTheme(option.id)} aria-pressed={theme === option.id}><i style={{background:option.color}}/><span>{option.label}</span></button>)}</div><div className="sound-choice"><span><strong>เสียง UI</strong><small>เสียงต่างกันตามปุ่มและธีม</small></span><button className={soundsEnabled ? "sound-switch enabled" : "sound-switch"} onClick={() => setSoundsEnabled(enabled => !enabled)} aria-label={soundsEnabled ? "ปิดเสียง" : "เปิดเสียง"} aria-pressed={soundsEnabled}><i/></button></div><div className="motion-choice"><span>Motion</span><button className={motionLevel === "bold" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("bold")} aria-pressed={motionLevel === "bold"}>Bold</button><button className={motionLevel === "soft" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("soft")} aria-pressed={motionLevel === "soft"}>Soft</button></div><p>บันทึกการตั้งค่าไว้ในเครื่องนี้เท่านั้น</p></div>}</div><div className="topbar-account"><AccountMenu /></div></div>
       </header>
 
       {page === "home" && <section className="page-content">
