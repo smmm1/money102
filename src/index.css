@@ -581,3 +581,11 @@ main:not(.pancake-home) [class*="bg-[#F5C51B]"] { background:#F5A63B!important; 
 main:not(.pancake-home) button[class*="border-[#F87562]"] { border-color:var(--mll-pink)!important; }
 main:not(.pancake-home) [class*="text-[#B94E3D]"] { color:#A65C7A!important; }
 main:not(.pancake-home) [class*="bg-[#F87562]"] { background:#F06CA8!important; }
+
+/* Final layout polish: one landing footer only, consistent inner navigation */
+.mll-mobile-nav { border-color:var(--mll-line)!important; background:rgba(255,253,249,.96)!important; box-shadow:0 8px 28px rgba(46,10,46,.08)!important; backdrop-filter:blur(18px); }
+.mll-mobile-nav button[aria-current="page"] { background:var(--mll-plum)!important; color:#fff!important; box-shadow:none!important; }
+.mll-mobile-nav button:not([aria-current="page"]) { color:#8A7888!important; }
+.mll-inner-footer { border-color:var(--mll-line)!important; color:#8A7888!important; }
+.mll-inner-footer button { color:var(--mll-plum)!important; }
+@media(min-width:681px) { .pancake-home { padding-bottom:0!important; } }
