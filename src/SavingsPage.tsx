@@ -125,12 +125,12 @@ function TransactionModal({
       >
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[#52785B]">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.15em] text-[#3E6B4B]">
               รายการใหม่
             </p>
             <h2
               id="transaction-title"
-              className="text-2xl font-semibold tracking-[-0.04em] text-[#263329]"
+              className="text-2xl font-semibold tracking-[-0.04em] text-[#141513]"
             >
               บันทึกเงิน
             </h2>
@@ -173,7 +173,7 @@ function TransactionModal({
                   >
                     {income ? "+" : "−"}
                   </span>
-                  <span className="block font-semibold text-[#263329]">
+                  <span className="block font-semibold text-[#141513]">
                     {income ? "รายรับ" : "รายจ่าย"}
                   </span>
                   <span className="mt-0.5 block text-xs text-[#858880]">
@@ -239,7 +239,7 @@ function TransactionModal({
 
           <button
             type="submit"
-            className="h-14 w-full rounded-full bg-[#263329] font-medium text-white transition-transform hover:-translate-y-0.5"
+            className="h-14 w-full rounded-full bg-[#141513] font-medium text-white transition-transform hover:-translate-y-0.5"
           >
             บันทึกรายการ
           </button>
@@ -357,37 +357,31 @@ export default function SavingsPage(_props: { onBack: () => void }) {
 
   return (
     <main data-workspace-id="saving-page" className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
-      <header className="mb-4 flex flex-col gap-1.5 sm:mb-4">
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#52785B]">จัดการการเงิน · FINANCE</p>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setResetConfirmOpen(true)}
-              aria-label="รีเซ็ตยอดทั้งหมด"
-              title="รีเซ็ตยอดทั้งหมด"
-              className="grid h-10 w-10 place-items-center rounded-full border border-[#263329]/20 bg-white/70 text-[#263329] transition hover:rotate-[-35deg] hover:bg-white"
-            >
-              <MoneyIcon name="reset" className="h-[18px] w-[18px]" />
-            </button>
-            <button onClick={() => setHistoryOpen(true)} className="inline-flex h-10 items-center justify-center rounded-full border border-[#263329]/20 bg-white/70 px-4 text-sm font-medium leading-none text-[#263329] transition hover:bg-white">
-              ดูประวัติทั้งหมด
-            </button>
-          </div>
+      <header data-workspace-id="saving-header" className="relative mb-7 grid min-h-[260px] overflow-hidden border border-[#141513] bg-[#FCFBF7] p-6 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-end lg:p-12">
+        <div className="pointer-events-none absolute -right-12 -top-20 h-64 w-64 rounded-full border border-[#D8D3C5] sm:right-12 sm:top-[-70px] sm:h-80 sm:w-80" />
+        <div className="pointer-events-none absolute -right-2 top-[-30px] h-44 w-44 rounded-full border border-[#D8D3C5] sm:right-24 sm:top-[-20px] sm:h-56 sm:w-56" />
+        <div className="relative z-10 max-w-2xl">
+          <p className="mb-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.22em] text-[#55745B]"><span className="h-2 w-2 bg-[#7BC596]" /> MLL / YOUR MONEY / 01</p>
+          <h1 className="max-w-xl text-[clamp(2.8rem,7vw,5.6rem)] font-medium leading-[.94] tracking-[-.075em] text-[#141513]">เงินของคุณ.<br /><span className="font-light italic text-[#55745B]">แผนของคุณ</span></h1>
+          <p className="mt-5 max-w-md text-sm leading-7 text-[#777A71]">เห็นภาพรวมการเงิน วางเป้าหมาย และค่อย ๆ สร้างความมั่นคงในแบบที่เหมาะกับชีวิต</p>
         </div>
-        <h1 className="text-3xl font-semibold tracking-[-0.05em] text-[#263329] md:text-4xl">ออมเงิน</h1>
-        <p className="text-sm leading-6 text-[#858880]">ติดตามรายรับ รายจ่าย และความคืบหน้าสู่เป้าหมาย</p>
+        <div className="relative z-10 mt-8 flex flex-wrap gap-2 lg:mt-0 lg:justify-end">
+          <button type="button" onClick={() => setResetConfirmOpen(true)} aria-label="รีเซ็ตยอดทั้งหมด" title="รีเซ็ตยอดทั้งหมด" className="grid h-11 w-11 place-items-center border border-[#D8D3C5] bg-[#F3F0E7] text-[#141513] transition hover:bg-[#FBF1C9]">
+            <MoneyIcon name="reset" className="h-[18px] w-[18px]" />
+          </button>
+          <button onClick={() => setHistoryOpen(true)} className="inline-flex h-11 items-center justify-center border border-[#141513] bg-[#141513] px-5 text-sm font-medium text-[#F3F0E7] transition hover:bg-[#55745B]">ดูประวัติทั้งหมด ↗</button>
+        </div>
       </header>
 
       <section data-workspace-id="saving-summary" className="relative overflow-hidden rounded-[28px] bg-transparent p-0">
         <div className="relative grid w-full min-w-0 grid-cols-2 gap-3 sm:gap-5">
           <div className="flex min-h-[112px] min-w-0 flex-col justify-center rounded-[22px] border border-[#E1DDCF] bg-white p-3 shadow-[0_3px_10px_rgba(0,0,0,0.04)] sm:min-h-[132px] sm:p-5 md:min-h-[145px] md:p-6">
             <p className="text-sm font-semibold text-[#487453] md:text-base">รายรับทั้งหมด</p>
-            <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#263329] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(income)}</p>
+            <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#141513] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(income)}</p>
           </div>
           <div className="flex min-h-[112px] min-w-0 flex-col justify-center rounded-[22px] border border-[#E1DDCF] bg-white p-3 shadow-[0_3px_10px_rgba(0,0,0,0.04)] sm:min-h-[132px] sm:p-5 md:min-h-[145px] md:p-6">
             <p className="text-sm font-semibold text-[#3F6548] md:text-base">รายจ่ายทั้งหมด</p>
-            <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#263329] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(expense)}</p>
+            <p className="mt-2 break-words text-lg font-bold tracking-[-0.04em] text-[#141513] min-[380px]:text-xl sm:text-2xl md:text-3xl">{formatMoney.format(expense)}</p>
           </div>
         </div>
       </section>
@@ -400,7 +394,7 @@ export default function SavingsPage(_props: { onBack: () => void }) {
             </span>
             <div>
               <p className="text-sm text-[#858880]">{goalTitle}</p>
-              <p className="mt-0.5 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
+              <p className="mt-0.5 text-xl font-semibold tracking-[-0.03em] text-[#141513]">
                 {formatMoney.format(goal)}
               </p>
             </div>
@@ -437,8 +431,8 @@ export default function SavingsPage(_props: { onBack: () => void }) {
         <div className="rounded-[30px] border border-[#E1DDCF] bg-white/60 p-5 md:p-7">
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-[#52785B]">ปฏิทินบันทึก</p>
-              <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
+              <p className="text-xs font-medium text-[#3E6B4B]">ปฏิทินบันทึก</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#141513]">
                 {new Intl.DateTimeFormat("th-TH", {
                   month: "long",
                   year: "numeric",
@@ -481,7 +475,7 @@ export default function SavingsPage(_props: { onBack: () => void }) {
                   onClick={() => { setSelectedDate(fullDate); setQuickDate(fullDate) }}
                   className={`relative mx-auto my-1 grid h-9 w-9 place-items-center rounded-full text-sm ${
                     active
-                      ? "bg-[#263329] text-white"
+                      ? "bg-[#141513] text-white"
                       : "text-[#485048] hover:bg-[#F1EEE5]"
                   }`}
                 >
@@ -489,7 +483,7 @@ export default function SavingsPage(_props: { onBack: () => void }) {
                   {hasRecord && (
                     <span
                       className={`absolute bottom-1 h-1 w-1 rounded-full ${
-                        active ? "bg-[#F4C96B]" : "bg-[#52785B]"
+                        active ? "bg-[#F4C96B]" : "bg-[#3E6B4B]"
                       }`}
                     />
                   )}
@@ -500,7 +494,7 @@ export default function SavingsPage(_props: { onBack: () => void }) {
             })}
           </div>
           <div className="mt-5 flex items-center gap-2 border-t border-[#E7E2D7] pt-4 text-xs text-[#858880]">
-            <span className="h-2 w-2 rounded-full bg-[#52785B]" />
+            <span className="h-2 w-2 rounded-full bg-[#3E6B4B]" />
             วันที่มีการบันทึกรายการ
           </div>
         </div>
@@ -508,10 +502,10 @@ export default function SavingsPage(_props: { onBack: () => void }) {
         <div className="rounded-[30px] border border-[#E1DDCF] bg-white/60 p-5 md:p-7">
           <div className="mb-6 flex items-start justify-between">
             <div>
-              <p className="text-xs font-medium text-[#52785B]">
+              <p className="text-xs font-medium text-[#3E6B4B]">
                 ตรวจสอบย้อนหลัง
               </p>
-              <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#263329]">
+              <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-[#141513]">
                 {selectedDate ? "รายการในวันที่เลือก" : "ประวัติทั้งหมด"}
               </h2>
             </div>
@@ -601,7 +595,7 @@ export default function SavingsPage(_props: { onBack: () => void }) {
         <div className="fixed inset-0 z-[60] grid place-items-center bg-[#172019]/50 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && setResetConfirmOpen(false)}>
           <section role="dialog" aria-modal="true" aria-labelledby="reset-all-title" className="w-full max-w-[400px] rounded-[26px] border border-[#E1DDCF] bg-[#FCFAF3] p-6 shadow-2xl">
             <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[#DCEBDF] text-[#3F6548]"><MoneyIcon name="reset" className="h-5 w-5" /></span>
-            <h2 id="reset-all-title" className="text-xl font-semibold text-[#263329]">รีเซ็ตยอดทั้งหมด?</h2>
+            <h2 id="reset-all-title" className="text-xl font-semibold text-[#141513]">รีเซ็ตยอดทั้งหมด?</h2>
             <p className="mt-2 text-sm leading-6 text-[#6F736C]">ระบบจะลบรายการรายรับและรายจ่ายทั้งหมด ทำให้ยอดรวมกลับเป็น ฿0 และล้างประวัติการเงิน การกระทำนี้ย้อนกลับไม่ได้</p>
             <div className="mt-6 flex gap-2">
               <button type="button" onClick={() => setResetConfirmOpen(false)} className="h-11 flex-1 rounded-full border border-[#DEDACF] bg-white text-sm text-[#626760]">ยกเลิก</button>
@@ -614,13 +608,13 @@ export default function SavingsPage(_props: { onBack: () => void }) {
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#172019]/45 p-4 backdrop-blur-sm" onMouseDown={(event) => event.target === event.currentTarget && setEditingGoal(false)}>
           <section role="dialog" aria-modal="true" aria-labelledby="goal-edit-title" className="w-full max-w-[390px] rounded-[26px] border border-[#E1DDCF] bg-[#FCFAF3] p-5 shadow-2xl sm:p-6">
             <div className="mb-5 flex items-start justify-between gap-3">
-              <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B18A2E]">เป้าหมายการออม</p><h2 id="goal-edit-title" className="mt-1 text-xl font-semibold text-[#263329]">แก้ไขเป้าหมาย</h2></div>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B18A2E]">เป้าหมายการออม</p><h2 id="goal-edit-title" className="mt-1 text-xl font-semibold text-[#141513]">แก้ไขเป้าหมาย</h2></div>
               <button type="button" onClick={() => setEditingGoal(false)} aria-label="ปิด" className="grid h-9 w-9 place-items-center rounded-full bg-[#F0ECE1] text-[#70736D]"><MoneyIcon name="close" className="h-4 w-4" /></button>
             </div>
             <form onSubmit={saveGoal} className="space-y-4">
               <label className="block"><span className="mb-1.5 block text-sm font-medium text-[#4C554D]">ชื่อเป้าหมาย</span><input autoFocus required maxLength={60} value={goalTitleDraft} onChange={(event) => setGoalTitleDraft(event.target.value)} className="h-12 w-full rounded-2xl border border-[#DEDACF] bg-white px-4 text-sm outline-none focus:border-[#B79A50] focus:ring-4 focus:ring-[#F4C96B]/20" /></label>
               <label className="block"><span className="mb-1.5 block text-sm font-medium text-[#4C554D]">ยอดเงินที่ต้องการ</span><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-[#858880]">฿</span><input required type="number" min="1" step="1" value={goalDraft} onChange={(event) => setGoalDraft(event.target.value)} className="h-12 w-full rounded-2xl border border-[#DEDACF] bg-white pl-9 pr-4 text-base font-semibold outline-none focus:border-[#B79A50] focus:ring-4 focus:ring-[#F4C96B]/20" /></div></label>
-              <div className="flex gap-2 pt-1"><button type="button" onClick={() => setEditingGoal(false)} className="h-11 flex-1 rounded-full border border-[#DEDACF] bg-white text-sm text-[#626760]">ยกเลิก</button><button type="submit" className="h-11 flex-1 rounded-full bg-[#263329] text-sm font-medium text-white hover:bg-[#334437]">บันทึกเป้าหมาย</button></div>
+              <div className="flex gap-2 pt-1"><button type="button" onClick={() => setEditingGoal(false)} className="h-11 flex-1 rounded-full border border-[#DEDACF] bg-white text-sm text-[#626760]">ยกเลิก</button><button type="submit" className="h-11 flex-1 rounded-full bg-[#141513] text-sm font-medium text-white hover:bg-[#334437]">บันทึกเป้าหมาย</button></div>
             </form>
           </section>
         </div>
@@ -644,14 +638,14 @@ export default function SavingsPage(_props: { onBack: () => void }) {
           <section role="dialog" aria-modal="true" aria-labelledby="history-title" className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-[#DEDACF] bg-[#FCFAF3] shadow-2xl">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7E2D7] p-5 sm:p-6">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#52785B]">ออมเงิน</p>
-                <h2 id="history-title" className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#263329]">ประวัติการเงินทั้งหมด</h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#3E6B4B]">ออมเงิน</p>
+                <h2 id="history-title" className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#141513]">ประวัติการเงินทั้งหมด</h2>
               </div>
               <button onClick={() => setHistoryOpen(false)} aria-label="ปิดประวัติ" className="grid h-10 w-10 place-items-center rounded-full bg-[#F0ECE1] text-[#70736D] hover:bg-[#E7E1D4]"><MoneyIcon name="close" /></button>
             </div>
             <div className="flex flex-wrap items-center gap-3 p-5 sm:px-6">
               <input value={historySearch} onChange={(event) => setHistorySearch(event.target.value)} placeholder="ค้นหาวันที่ รายละเอียด ประเภท หรือจำนวนเงิน..." className="h-11 min-w-[220px] flex-1 rounded-full border border-[#DEDACF] bg-white px-4 text-sm outline-none focus:border-[#829685]" />
-              <button onClick={exportCsv} className="h-11 rounded-full bg-[#263329] px-5 text-sm font-medium text-white transition hover:bg-[#334437]">ดาวน์โหลด CSV</button>
+              <button onClick={exportCsv} className="h-11 rounded-full bg-[#141513] px-5 text-sm font-medium text-white transition hover:bg-[#334437]">ดาวน์โหลด CSV</button>
             </div>
             <div className="min-h-0 flex-1 overflow-auto px-5 pb-5 sm:px-6">
               <table className="w-full min-w-[640px] border-collapse text-left text-sm">
@@ -663,13 +657,13 @@ export default function SavingsPage(_props: { onBack: () => void }) {
                     <tr key={item.id} className="border-b border-[#E7E2D7] hover:bg-[#F5F2E9]">
                       <td className="whitespace-nowrap px-4 py-3 text-[#6F736C]">{item.date}</td>
                       <td className={`whitespace-nowrap px-4 py-3 font-medium ${item.type === "income" ? "text-[#487453]" : "text-[#3F6548]"}`}>{item.type === "income" ? "รายรับ" : "รายจ่าย"}</td>
-                      <td className="px-4 py-3 text-[#263329]">{item.detail}</td>
-                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-[#263329]">{item.type === "income" ? "+" : "−"}{formatMoney.format(item.amount)}</td>
+                      <td className="px-4 py-3 text-[#141513]">{item.detail}</td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right font-semibold text-[#141513]">{item.type === "income" ? "+" : "−"}{formatMoney.format(item.amount)}</td>
                     </tr>
                   ))}
                   {!filteredHistory.length && <tr><td colSpan={4} className="px-4 py-12 text-center text-[#858880]">ไม่พบรายการที่ตรงกับคำค้น</td></tr>}
                 </tbody>
-                <tfoot className="sticky bottom-0 bg-[#F0ECE1]"><tr><td colSpan={3} className="px-4 py-3 text-sm font-semibold text-[#263329]">รวม {filteredHistory.length} รายการ</td><td className="px-4 py-3 text-right text-xs text-[#6F736C]">รายรับ {formatMoney.format(filteredHistory.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0))} · รายจ่าย {formatMoney.format(filteredHistory.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0))}</td></tr></tfoot>
+                <tfoot className="sticky bottom-0 bg-[#F0ECE1]"><tr><td colSpan={3} className="px-4 py-3 text-sm font-semibold text-[#141513]">รวม {filteredHistory.length} รายการ</td><td className="px-4 py-3 text-right text-xs text-[#6F736C]">รายรับ {formatMoney.format(filteredHistory.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0))} · รายจ่าย {formatMoney.format(filteredHistory.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0))}</td></tr></tfoot>
               </table>
             </div>
           </section>
@@ -679,7 +673,7 @@ export default function SavingsPage(_props: { onBack: () => void }) {
         onClick={() => setModalOpen(true)}
         aria-label="บันทึกเงิน"
         title="บันทึกเงิน"
-        className="fixed bottom-24 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#263329] text-white shadow-[0_14px_35px_rgba(38,51,41,0.3)] transition-all hover:-translate-y-1 hover:scale-105 hover:bg-[#334437] md:bottom-9 md:right-9 md:h-[72px] md:w-[72px]"
+        className="fixed bottom-24 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#141513] text-white shadow-[0_14px_35px_rgba(38,51,41,0.3)] transition-all hover:-translate-y-1 hover:scale-105 hover:bg-[#334437] md:bottom-9 md:right-9 md:h-[72px] md:w-[72px]"
       >
         <MoneyIcon name="plus" className="h-6 w-6 md:h-8 md:w-8" />
       </button>

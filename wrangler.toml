@@ -1,0 +1,13 @@
+name = "money102-api"
+main = "worker/index.ts"
+compatibility_date = "2026-10-23"
+
+# Staging D1 database provisioned on 2026-10-23.
+# Production frontend cutover is intentionally blocked until staging checks pass.
+[[d1_databases]]
+binding = "DB"
+database_name = "money102-data"
+database_id = "0af52b75-09ca-4fbe-aab7-d406688303c2"
+
+[vars]
+APP_ORIGIN = "https://money102-web.onrender.com"
