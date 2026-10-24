@@ -108,8 +108,25 @@ export default function CommandCenter() {
   const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null)
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved">("idle")
+  const [commandOpen, setCommandOpen] = useState(false)
+  const [commandQuery, setCommandQuery] = useState("")
 
   useEffect(() => { localStorage.setItem(KEYS.money, JSON.stringify(transactions)) }, [transactions])
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        setCommandOpen(open => !open)
+        setCommandQuery("")
+        setQuickAddOpen(false)
+      } else if (event.key === "Escape") {
+        setCommandOpen(false)
+        setQuickAddOpen(false)
+      }
+    }
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [])
   useEffect(() => {
     if (!toast) return
     const timer = window.setTimeout(() => setToast(null), 5500)
@@ -245,6 +262,28 @@ export default function CommandCenter() {
 
     {showHealth && <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setShowHealth(false) }}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="health-title"><div className="modal-heading"><div><span className="eyebrow">ดูแลตัวเอง</span><h2 id="health-title">บันทึกสุขภาพ</h2></div><button className="icon-button" onClick={() => setShowHealth(false)} aria-label="ปิด"><Icon name="close"/></button></div><form onSubmit={saveHealth} className="form-stack"><label>ประเภทบันทึก<select value={healthType} onChange={e => setHealthType(e.target.value as typeof healthType)}><option value="weight">น้ำหนัก</option><option value="exercise">ออกกำลังกาย</option><option value="wellness">น้ำดื่มและการนอน</option></select></label>{healthType === "weight" && <label>น้ำหนัก (กก.)<input autoFocus type="number" min="1" step="0.1" required value={weight} onChange={e => setWeight(e.target.value)} placeholder="เช่น 75.5"/></label>}{healthType === "exercise" && <><label>กิจกรรม<select value={exercise} onChange={e => setExercise(e.target.value)}><option>เดิน</option><option>วิ่ง</option><option>เวทเทรนนิ่ง</option><option>วิดพื้น</option><option>สควอต</option><option>ปั่นจักรยาน</option><option>อื่น ๆ</option></select></label><div className="form-two-col"><label>เวลา (นาที)<input type="number" min="0" value={duration} onChange={e => setDuration(e.target.value)} placeholder="0"/></label><label>ระยะทาง (กม.)<input type="number" min="0" step="0.1" value={distance} onChange={e => setDistance(e.target.value)} placeholder="0"/></label></div><div className="form-two-col"><label>จำนวนครั้ง<input type="number" min="0" value={reps} onChange={e => setReps(e.target.value)} placeholder="ถ้ามี"/></label><label>จำนวนเซต<input type="number" min="0" value={sets} onChange={e => setSets(e.target.value)}/></label></div></>}{healthType === "wellness" && <div className="form-two-col"><label>น้ำดื่ม (แก้ว)<input type="number" min="0" value={water} onChange={e => setWater(e.target.value)}/></label><label>นอน (ชั่วโมง)<input type="number" min="0" max="24" step="0.5" value={sleep} onChange={e => setSleep(e.target.value)}/></label></div>}<label>วันที่<input type="date" required value={healthDate} onChange={e => setHealthDate(e.target.value)}/></label><button className="button button-primary button-full" type="submit">บันทึกสุขภาพ</button></form></section></div>}
 
+    {commandOpen && <div className="command-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setCommandOpen(false) }}>
+      <section className="command-palette" role="dialog" aria-modal="true" aria-labelledby="command-title">
+        <div className="command-search-row"><Icon name="search" /><input autoFocus value={commandQuery} onChange={e => setCommandQuery(e.target.value)} placeholder="ค้นหาหน้า โน้ต หรือเริ่มทำอะไรสักอย่าง…" aria-label="ค้นหาและคำสั่ง" /><kbd>ESC</kbd></div>
+        <div className="command-results">
+          <span className="command-section-label" id="command-title">{commandQuery.trim() ? "ผลลัพธ์ที่ตรงกัน" : "ไปยังหน้า"}</span>
+          {([
+            { id: "home", label: "ภาพรวม", detail: "กลับไปหน้าแรก", icon: "home", run: () => go("home") },
+            { id: "money", label: "การเงิน", detail: "ดูบันทึกเงินเข้าออก", icon: "money", run: () => go("money") },
+            { id: "notes", label: "โน้ต", detail: "ค้นหาและจัดการโน้ต", icon: "notes", run: () => go("notes") },
+            { id: "health", label: "สุขภาพ", detail: "เปิดบันทึกสุขภาพ", icon: "health", run: () => go("health") }
+          ] as const).filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className={"command-item-icon command-icon-" + item.id}><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
+          {[
+            { id: "new-note", label: "เขียนโน้ตใหม่", detail: "จดไอเดียหรือสิ่งที่ต้องจำ", icon: "plus", run: () => { setEditingNoteId(null); setNoteTitle(""); setNoteBody(""); setShowNote(true) } },
+            { id: "new-money", label: "เพิ่มรายการเงิน", detail: "บันทึกรายรับหรือรายจ่าย", icon: "plus", run: () => { setEntryType("expense"); setShowEntry(true) } },
+            { id: "new-health", label: "บันทึกสุขภาพ", detail: "เพิ่มกิจกรรมหรือข้อมูลสุขภาพ", icon: "plus", run: () => setShowHealth(true) }
+          ].filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className="command-item-icon command-icon-action"><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
+          {commandQuery.trim() && filteredNotes.filter(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase())).slice(0, 5).map(note => <button className="command-item" key={note.id} onClick={() => { setEditingNoteId(note.id); setNoteTitle(note.title); setNoteBody(note.body); setShowNote(true); setCommandOpen(false) }}><span className="command-item-icon command-icon-notes"><Icon name="notes"/></span><span className="command-item-copy"><strong>{note.title}</strong><small>{note.body || "ไม่มีเนื้อหา"}</small></span><kbd>↵</kbd></button>)}
+          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
+        </div>
+        <footer className="command-footer"><span><kbd>↑↓</kbd> เลือกด้วยเมาส์</span><span><kbd>Ctrl</kbd> + <kbd>K</kbd> เปิด/ปิด</span><span>ค้นหาจากโน้ตที่บันทึกไว้</span></footer>
+      </section>
+    </div>}
     {quickAddOpen && <div className="quick-add-menu" role="menu" aria-label="เพิ่มข้อมูลด่วน"><button role="menuitem" onClick={() => { setEntryType("expense"); setShowEntry(true); setQuickAddOpen(false) }}><span className="quick-add-icon">−</span><span><strong>รายจ่าย</strong><small>บันทึกเงินออก</small></span></button><button role="menuitem" onClick={() => { setEntryType("income"); setShowEntry(true); setQuickAddOpen(false) }}><span className="quick-add-icon">＋</span><span><strong>รายรับ</strong><small>บันทึกเงินเข้า</small></span></button><button role="menuitem" onClick={() => { setEditingNoteId(null); try { const draft = JSON.parse(localStorage.getItem("lamoon-note-draft-v1") || "null"); setNoteTitle(typeof draft?.title === "string" ? draft.title : ""); setNoteBody(typeof draft?.body === "string" ? draft.body : "") } catch { setNoteTitle(""); setNoteBody("") } setShowNote(true); setQuickAddOpen(false) }}><span className="quick-add-icon">✎</span><span><strong>โน้ตใหม่</strong><small>จดสิ่งที่ต้องจำ</small></span></button><button role="menuitem" onClick={() => { setShowHealth(true); setQuickAddOpen(false) }}><span className="quick-add-icon">♡</span><span><strong>สุขภาพ</strong><small>เพิ่มบันทึกสุขภาพ</small></span></button></div>}
     {toast && <div className="app-toast" role="status"><span className="toast-check"><Icon name="check" /></span><span className="toast-message">{toast.message}</span>{toast.undo && <button onClick={() => { toast.undo?.(); setToast(null) }}>Undo</button>}<button className="toast-dismiss" aria-label="ปิดการแจ้งเตือน" onClick={() => setToast(null)}><Icon name="close" /></button></div>}
     <button className={quickAddOpen ? "quick-add-button open" : "quick-add-button"} onClick={() => setQuickAddOpen(old => !old)} aria-label={quickAddOpen ? "ปิดเมนูเพิ่มข้อมูล" : "เพิ่มข้อมูลด่วน"} aria-expanded={quickAddOpen}><Icon name={quickAddOpen ? "close" : "plus"} /></button>
