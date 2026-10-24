@@ -589,3 +589,41 @@ main:not(.pancake-home) [class*="bg-[#F87562]"] { background:#F06CA8!important; 
 .mll-inner-footer { border-color:var(--mll-line)!important; color:#8A7888!important; }
 .mll-inner-footer button { color:var(--mll-plum)!important; }
 @media(min-width:681px) { .pancake-home { padding-bottom:0!important; } }
+
+
+/* Mll private access — designed as part of the same product, not the old pig login */
+.mll-auth-screen { min-height:100vh; display:grid; place-items:center; padding:clamp(20px,4vw,56px); background:var(--mll-cream); color:var(--mll-plum); }
+.mll-auth-layout { display:grid; grid-template-columns:1.05fr .8fr; align-items:center; gap:clamp(45px,8vw,120px); width:100%; max-width:1180px; }
+.mll-auth-wordmark { display:flex; align-items:center; gap:10px; padding:0; border:0; background:transparent; color:var(--mll-plum); font-family:'Manrope','Noto Sans Thai',sans-serif; font-size:29px; font-weight:800; letter-spacing:-.09em; }
+.mll-auth-mark { display:grid; place-items:center; width:38px; height:38px; border-radius:50%; background:var(--mll-plum); color:#fff; font-size:24px; }
+.mll-auth-wordmark small { margin-left:5px; color:#8A7587; font-family:'DM Sans',sans-serif; font-size:8px; font-weight:700; letter-spacing:.14em; }
+.mll-auth-eyebrow { display:flex; align-items:center; gap:9px; margin:0; color:#8B7588; font-size:10px; font-weight:700; letter-spacing:.15em; line-height:1.7; }
+.mll-auth-eyebrow > span { width:7px; height:7px; flex:0 0 7px; border-radius:50%; background:var(--mll-green); }
+.mll-auth-story > .mll-auth-eyebrow { margin-top:clamp(50px,7vw,85px); }
+.mll-auth-story h1 { margin:22px 0 0; font-family:'Manrope','Noto Sans Thai',sans-serif; font-size:clamp(48px,6.4vw,80px); font-weight:700; line-height:1.15; letter-spacing:-.07em; }
+.mll-auth-story h1 em { color:#9C6A9C; font-style:normal; }
+.mll-auth-story-copy { max-width:450px; margin:22px 0 30px; color:var(--mll-muted); font-size:14px; line-height:2; }
+.mll-auth-preview { max-width:450px; padding:20px 22px 15px; border:1px solid var(--mll-line); border-radius:20px; background:rgba(255,255,255,.65); }
+.mll-auth-preview-head,.mll-auth-preview-foot { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#9A8998; font-size:9px; letter-spacing:.09em; }
+.mll-auth-online-dot { width:7px; height:7px; border-radius:50%; background:var(--mll-green); }
+.mll-auth-preview-items { display:grid; gap:4px; margin:15px 0; }
+.mll-auth-preview-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #F1E8DE; }.mll-auth-preview-item:last-child { border-bottom:0; }
+.mll-auth-preview-icon { display:grid; place-items:center; width:36px; height:36px; border-radius:11px; font-size:16px; }.mll-auth-preview-icon.violet { background:#EEE8FE; color:#7556BD; }.mll-auth-preview-icon.pink { background:#FBE5EF; color:#B64E83; }.mll-auth-preview-icon.orange { background:#FBEBD8; color:#A76B20; }
+.mll-auth-preview-item > span:nth-child(2) { display:flex; flex:1; flex-direction:column; gap:3px; }.mll-auth-preview-item b { color:var(--mll-plum); font-size:12px; font-weight:600; }.mll-auth-preview-item small { color:#9A8998; font-size:10px; }.mll-auth-preview-item i { color:#B7A5B4; font-size:10px; font-style:normal; }
+.mll-auth-preview-foot { padding-top:13px; border-top:1px solid #F0E7DD; font-size:9px; letter-spacing:0; }
+.mll-auth-form-wrap { width:100%; max-width:470px; justify-self:end; }
+.mll-auth-form-card { padding:clamp(25px,4vw,42px); border:1px solid var(--mll-line); border-radius:26px; background:#FFFDF9; }
+.mll-auth-form-card h2 { margin:20px 0 0; font-size:clamp(26px,3vw,35px); font-weight:700; line-height:1.4; letter-spacing:-.055em; }
+.mll-auth-form-intro { margin:10px 0 25px; color:var(--mll-muted); font-size:12px; line-height:1.9; }
+.mll-auth-form { display:grid; gap:17px; }
+.mll-auth-form label { display:grid; gap:8px; color:#68566A; font-size:11px; font-weight:600; }
+.mll-auth-form input { width:100%; height:50px; padding:0 15px; border:1px solid #E9DCCB; border-radius:12px; outline:none; background:white; color:var(--mll-plum); font-size:13px; transition:border-color .18s ease,box-shadow .18s ease; }
+.mll-auth-form input::placeholder { color:#B4A6B3; }.mll-auth-form input:focus { border-color:#B59AD8; box-shadow:0 0 0 3px rgba(167,139,250,.12); }
+.mll-auth-submit { display:flex; align-items:center; justify-content:space-between; min-height:50px; margin-top:4px; padding:0 18px 0 20px; border:0; border-radius:999px; background:var(--mll-plum); color:white; font-size:12px; font-weight:600; transition:background .18s ease,transform .18s ease; }.mll-auth-submit:hover { transform:translateY(-1px); background:#4A1948; }.mll-auth-submit:disabled { opacity:.6; transform:none; }
+.mll-auth-submit span { font-size:18px; }
+.mll-auth-message { margin:0; padding:11px 12px; border:1px solid #F0D3C6; border-radius:10px; background:#FFF3ED; color:#9C5148; font-size:11px; line-height:1.7; }
+.mll-auth-switch { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:21px; color:#8F7E8E; font-size:11px; }.mll-auth-switch button { padding:0; border:0; background:transparent; color:#80527D; font-weight:700; }
+.mll-auth-security { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:27px; padding-top:18px; border-top:1px solid #F0E7DD; color:#9A8998; font-size:10px; }.mll-auth-security span { display:grid; place-items:center; width:17px; height:17px; border-radius:50%; background:#DDF7EA; color:#2FA96B; font-size:10px; font-weight:700; }
+.mll-auth-legal { margin:17px 0 0; color:#A392A1; font-size:10px; line-height:1.8; text-align:center; }
+@media(max-width:850px) { .mll-auth-layout { grid-template-columns:1fr; max-width:570px; gap:32px; }.mll-auth-story > .mll-auth-eyebrow { margin-top:42px; }.mll-auth-story h1 { font-size:clamp(46px,10vw,66px); }.mll-auth-story-copy { margin-bottom:20px; }.mll-auth-preview { max-width:none; }.mll-auth-form-wrap { max-width:none; }.mll-auth-legal { margin-bottom:20px; } }
+@media(max-width:480px) { .mll-auth-screen { padding:18px 14px; }.mll-auth-wordmark { font-size:25px; }.mll-auth-wordmark small { display:none; }.mll-auth-story > .mll-auth-eyebrow { margin-top:34px; font-size:9px; }.mll-auth-story h1 { font-size:45px; }.mll-auth-story-copy { font-size:12px; }.mll-auth-preview { padding:16px; }.mll-auth-form-card { padding:24px 19px; border-radius:20px; }.mll-auth-form-card h2 { font-size:25px; } }
