@@ -540,3 +540,14 @@ body:has(.mll-global-header) main:not(.pancake-home) [class*="rounded-[28px]"] {
 body:has(.mll-global-header) main:not(.pancake-home) input,
 body:has(.mll-global-header) main:not(.pancake-home) textarea,
 body:has(.mll-global-header) main:not(.pancake-home) select { border-color:var(--mll-line); border-radius:12px; }
+
+.mll-announcement { display:none!important; }
+.mll-nav-shell { min-height:92px; display:flex; align-items:center; justify-content:space-between; gap:22px; }
+.mll-inner-wordmark { display:flex; align-items:center; gap:9px; border:0; background:transparent; color:var(--mll-plum); font-family:'Manrope',sans-serif; font-size:25px; font-weight:800; letter-spacing:-.09em; white-space:nowrap; }
+.mll-inner-mark { display:grid; place-items:center; width:33px; height:33px; border-radius:50%; background:var(--mll-plum); color:white; font-size:22px; font-weight:600; }
+.mll-inner-wordmark small { margin-left:4px; color:#8A7587; font-family:'DM Sans',sans-serif; font-size:8px; font-weight:700; letter-spacing:.12em; }
+.mll-editorial-nav { gap:clamp(10px,2vw,25px)!important; }
+.mll-editorial-nav button { display:inline-flex!important; align-items:center; gap:7px; border-bottom:1px solid transparent!important; padding:10px 0!important; font-size:12px!important; }
+.mll-editorial-nav button span { color:#AA98A8!important; font-size:9px!important; }
+.mll-nav-actions { gap:8px!important; }
+@media(max-width:680px) { .mll-nav-shell { min-height:74px; padding:14px 16px!important; }.mll-inner-wordmark small { display:none; }.mll-inner-wordmark { font-size:23px; }.mll-inner-mark { width:30px;height:30px; } }
