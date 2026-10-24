@@ -358,18 +358,20 @@ function HealthDashboard() {
   const visibleRecords = records.filter((r) => filter === "all" || r.type === filter)
   return (
     <main className="mx-auto max-w-[1180px] px-5 pb-20 pt-5 md:px-8 md:pt-8">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B96E69]">ดูแลตัวเอง · HEALTH</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-[-0.05em] text-[#141513] md:text-4xl">สุขภาพ</h1>
-          <p className="mt-1.5 text-sm leading-6 text-[#858880]">เก็บทุกความคืบหน้าไว้ในที่เดียว ค่อย ๆ ดีขึ้นในแบบของเรา</p>
+      <header data-workspace-id="health-header" className="relative mb-7 grid min-h-[250px] overflow-hidden border border-[#141513] bg-[#FCFBF7] p-6 sm:p-9 lg:grid-cols-[1fr_auto] lg:items-end lg:p-12">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-60 w-60 rounded-full border border-[#D8D3C5] sm:right-10 sm:top-[-70px] sm:h-80 sm:w-80" />
+        <div className="pointer-events-none absolute right-8 top-0 h-36 w-36 rounded-full border border-[#D8D3C5] sm:right-24 sm:top-[-5px] sm:h-56 sm:w-56" />
+        <div className="relative z-10 max-w-2xl">
+          <p className="mb-5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.22em] text-[#B94E3D]"><span className="h-2 w-2 bg-[#F87562]" /> MLL / WELLBEING / 02</p>
+          <h1 className="max-w-xl text-[clamp(2.6rem,6.8vw,5.2rem)] font-medium leading-[.96] tracking-[-.075em] text-[#141513]">ดูแลตัวเอง.<br /><span className="font-light italic text-[#B94E3D]">ทีละวัน</span></h1>
+          <p className="mt-5 max-w-md text-sm leading-7 text-[#777A71]">ติดตามน้ำหนัก การเคลื่อนไหว และกิจวัตรที่ช่วยให้คุณรู้สึกดีขึ้นอย่างต่อเนื่อง</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select aria-label="เลือกโปรไฟล์" value={profile.id} onChange={(e) => setData((old) => ({ ...old, activeProfileId: e.target.value }))} className="h-10 max-w-[180px] rounded-full border border-[#DEDACF] bg-white/80 px-4 text-sm text-[#141513]">{data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-          <button onClick={() => { setShowAdd(true); setKind("weight") }} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#141513] px-5 text-sm font-medium text-white hover:bg-[#3B4A3E]"><Icon name="plus" className="h-4 w-4" /> บันทึกข้อมูล</button>
+        <div className="relative z-10 mt-7 flex flex-wrap gap-2 lg:mt-0 lg:justify-end">
+          <select aria-label="เลือกโปรไฟล์" value={profile.id} onChange={(e) => setData((old) => ({ ...old, activeProfileId: e.target.value }))} className="h-11 max-w-[180px] border border-[#D8D3C5] bg-[#F3F0E7] px-4 text-sm text-[#141513]">{data.profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+          <button onClick={() => { setShowAdd(true); setKind("weight") }} className="inline-flex h-11 items-center gap-2 border border-[#141513] bg-[#141513] px-5 text-sm font-medium text-[#F3F0E7] hover:bg-[#55745B]"><Icon name="plus" className="h-4 w-4" /> บันทึกข้อมูล</button>
         </div>
       </header>
-      <div className="mb-5 flex gap-1 rounded-full border border-[#E1DDCF] bg-white/55 p-1.5 sm:w-fit">{([{id:"overview",label:"ภาพรวม"},{id:"records",label:"ประวัติและปฏิทิน"},{id:"profiles",label:"โปรไฟล์"}] as const).map((t) => <button key={t.id} onClick={() => setTab(t.id)} className={"rounded-full px-4 py-2 text-sm " + (tab === t.id ? "bg-[#141513] text-white" : "text-[#747970] hover:bg-[#F1EEE5]")}>{t.label}</button>)}</div>
+      <div className="mb-5 flex flex-wrap gap-1 border-b border-[#141513] bg-transparent pb-0">{([{id:"overview",label:"ภาพรวม"},{id:"records",label:"ประวัติและปฏิทิน"},{id:"profiles",label:"โปรไฟล์"}] as const).map((t) => <button key={t.id} onClick={() => setTab(t.id)} className={"border-b-2 px-4 py-3 text-sm transition " + (tab === t.id ? "border-[#F87562] font-semibold text-[#141513]" : "border-transparent text-[#747970] hover:text-[#141513]")}>{t.label}</button>)}</div>
       {tab === "overview" && <>
         <section data-workspace-id="health-metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[{label:"น้ำหนักล่าสุด",value:latest == null ? "—" : fmt(latest),unit:"กก.",hint:weights.length ? "อัปเดต " + weights[weights.length-1].date : "เริ่มบันทึกน้ำหนักครั้งแรก",tone:"bg-[#FCE4DE] text-[#A85D58]"},{label:"ดัชนีมวลกาย (BMI)",value:bmi == null ? "—" : fmt(bmi),unit:"",hint:bmi == null ? "ต้องมีส่วนสูงและน้ำหนัก" : bmi < 18.5 ? "ต่ำกว่าเกณฑ์ทั่วไป" : bmi < 25 ? "อยู่ในช่วงเกณฑ์ทั่วไป" : "สูงกว่าเกณฑ์ทั่วไป",tone:"bg-[#F6E7BE] text-[#8A6A20]"},{label:"ระยะทางที่บันทึก",value:fmt(km),unit:"กม.",hint:"รวมจากประวัติการออกกำลังกาย",tone:"bg-[#DCEBDF] text-[#487453]"},{label:"เวลาออกกำลังกาย",value:fmt(minutes),unit:"นาที",hint:"รวมทุกครั้งที่บันทึก",tone:"bg-[#E4DFF3] text-[#655A91]"}].map((s) => <div key={s.label} className="rounded-[26px] border border-[#E1DDCF] bg-white/65 p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7E837B]">{s.label}</span><span className={"grid h-9 w-9 place-items-center rounded-xl text-xs font-semibold " + s.tone}>{s.unit || "↗"}</span></div><p className="mt-4 text-3xl font-semibold tracking-tight text-[#141513]">{s.value} <span className="text-sm font-normal text-[#8A8D85]">{s.unit && s.label === "น้ำหนักล่าสุด" ? s.unit : ""}</span></p><p className="mt-1 text-xs text-[#93968F]">{s.hint}</p></div>)}
