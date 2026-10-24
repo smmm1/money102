@@ -54,12 +54,23 @@ async function api(path: string, init: RequestInit = {}) {
   return body
 }
 
+function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | "error"; title: string; detail: string; onRetry?: () => void }) {
+  return <main className="cc-auth-screen cc-auth-screen-status"><section className="cc-auth-frame cc-auth-frame-status">
+    <div className="cc-auth-brand-panel"><div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M11 27.5C5 19 13 8 23 12c9 4 12 12 6 20-5 6-14 8-19 2-4-5 0-13 7-13 5 0 8 4 11 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><path d="M34 10v8M30 14h8" stroke="#8DAF91" strokeWidth="2.4" strokeLinecap="round"/></svg></span><strong>YOUR SPACE<br/>YOUR PACE</strong></div>
+      <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
+      <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div><div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
+    </div>
+    <div className="cc-auth-form-side cc-auth-status-side"><div className="cc-auth-form-top"><span className="cc-overline">PRIVATE ACCESS</span><span className="cc-auth-lock"><i/> SECURE SESSION</span></div>
+      <div className="cc-auth-status-content"><div className={state === "error" ? "cc-auth-status-icon is-error" : "cc-auth-status-icon"}>{state === "error" ? "!" : <span className="cc-auth-loader"/>}</div><span className="cc-overline">{state === "error" ? "CONNECTION STATUS" : "PLEASE WAIT A MOMENT"}</span><h2>{title}</h2><p>{detail}</p>{state === "loading" && <div className="cc-auth-progress"><span/></div>}{onRetry && <button type="button" onClick={onRetry} className="cc-auth-submit">กลับไปหน้าเข้าสู่ระบบ <span>↗</span></button>}</div>
+      <div className="cc-auth-foot"><span><i/> YOUR DATA STAYS YOURS</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
+    </div>
+  </section></main>
+}
 export default function CloudAuth({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [checking, setChecking] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [mode, setMode] = useState<"signin" | "signup">("signin")
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [cloudReady, setCloudReady] = useState(false)
@@ -155,14 +166,14 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     setBusy(true)
     setMessage("")
     try {
-      const result = await api(mode === "signin" ? "/api/auth/signin" : "/api/auth/signup", {
+      const result = await api("/api/auth/signin", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       }) as { token: string; user: AppUser }
       localStorage.setItem(TOKEN_KEY, result.token)
       setUser(result.user)
       setPassword("")
-      setMessage(mode === "signup" ? "สร้างบัญชี Cloudflare สำเร็จ" : "เข้าสู่ระบบสำเร็จ")
+      setMessage("เข้าสู่ระบบสำเร็จ")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -179,31 +190,31 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     setMessage("ออกจากระบบแล้ว")
   }
 
-  if (checking) return <main className="cc-auth-screen"><div className="cc-auth-mark">m.</div><section className="cc-auth-loading"><span className="cc-auth-loader" /><p>กำลังตรวจสอบพื้นที่ส่วนตัว</p><small>AUTH / SECURE SESSION</small></section></main>
+  if (checking) return <AuthExperience state="loading" title="กำลังตรวจสอบพื้นที่ของคุณ" detail="กำลังตรวจสอบเซสชันอย่างปลอดภัย" />
   if (!user) return <main className="cc-auth-screen">
     <section className="cc-auth-frame">
       <div className="cc-auth-brand-panel">
-        <div className="cc-auth-brand"><span>m.</span><strong>PERSONAL<br/>COMMAND CENTER</strong></div>
-        <div className="cc-auth-editorial"><span className="cc-overline">A SPACE TO THINK CLEARLY</span><h1>Less noise.<br/><em>More meaning.</em></h1><p>การเงิน สุขภาพ และความคิดของคุณ ไม่จำเป็นต้องกระจัดกระจายอยู่คนละที่</p></div>
-        <div className="cc-auth-index"><span><b>01</b> MONEY</span><span><b>02</b> NOTES</span><span><b>03</b> BODY</span></div>
-        <div className="cc-auth-grid-art"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div>
+        <div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M11 27.5C5 19 13 8 23 12c9 4 12 12 6 20-5 6-14 8-19 2-4-5 0-13 7-13 5 0 8 4 11 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><path d="M34 10v8M30 14h8" stroke="#8DAF91" strokeWidth="2.4" strokeLinecap="round"/></svg></span><strong>YOUR SPACE<br/>YOUR PACE</strong></div>
+        <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
+        <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div>
+        <div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
       </div>
       <div className="cc-auth-form-side">
-        <div className="cc-auth-form-top"><span className="cc-overline">PRIVATE ACCESS / 01</span><span className="cc-auth-lock">⌁ SECURE</span></div>
-        <h2>{mode === "signin" ? "กลับเข้าสู่พื้นที่ของคุณ" : "สร้างพื้นที่ของคุณ"}</h2>
-        <p className="cc-auth-intro">{mode === "signin" ? "เข้าสู่ระบบเพื่อดำเนินต่อจากจุดที่คุณหยุดไว้" : "สร้างบัญชีเพื่อเริ่มจัดระเบียบเรื่องสำคัญของคุณ"}</p>
-        <form onSubmit={submit} className="cc-auth-form">
-          <label>อีเมล<input type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" /></label>
-          <label>รหัสผ่าน<input type="password" required minLength={8} autoComplete={mode === "signin" ? "current-password" : "new-password"} value={password} onChange={e => setPassword(e.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" /></label>
-          {message && <p role="status" className="cc-auth-message">{message}</p>}
-          <button disabled={busy} className="cc-auth-submit">{busy ? "กำลังดำเนินการ…" : mode === "signin" ? "เข้าสู่ระบบ" : "สร้างบัญชี"}<span>↗</span></button>
-        </form>
-        <div className="cc-auth-switch"><span>{mode === "signin" ? "ยังไม่มีบัญชี?" : "มีบัญชีแล้ว?"}</span><button type="button" onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setMessage("") }}>{mode === "signin" ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}</button></div>
-        <div className="cc-auth-foot"><span>ENCRYPTED SESSION</span><span>ข้อมูลส่วนตัวของคุณ</span></div>
+        <div className="cc-auth-form-top"><span className="cc-overline">WELCOME BACK</span><span className="cc-auth-lock"><i/> PRIVATE ACCESS</span></div>
+        <div className="cc-auth-form-content"><div className="cc-auth-mini-mark" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M11 27.5C5 19 13 8 23 12c9 4 12 12 6 20-5 6-14 8-19 2-4-5 0-13 7-13 5 0 8 4 11 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/><path d="M34 10v8M30 14h8" stroke="#8DAF91" strokeWidth="2.4" strokeLinecap="round"/></svg></div>
+          <h2>ยินดีที่ได้พบกันอีกครั้ง</h2><p className="cc-auth-intro">เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ</p>
+          <form onSubmit={submit} className="cc-auth-form">
+            <label>อีเมล<input type="email" required autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="อีเมลของคุณ" /></label>
+            <label>รหัสผ่าน<input type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="กรอกรหัสผ่าน" /></label>
+            {message && <p role="status" className="cc-auth-message">{message}</p>}
+            <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>เข้าสู่ระบบ<span aria-hidden="true">↗</span></>}</button>
+          </form>
+        </div>
+        <div className="cc-auth-foot"><span><i/> SECURE SESSION</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
       </div>
     </section>
   </main>
-  if (!cloudReady) return <main className="cc-auth-screen"><div className="cc-auth-mark">m.</div><section className="cc-auth-loading"><span className="cc-auth-loader" /><p>{cloudError ? "เชื่อมต่อข้อมูลไม่สำเร็จ" : "กำลังเตรียมพื้นที่ของคุณ"}</p><small>{cloudError || "กำลังซิงก์ข้อมูลกับ Cloudflare D1"}</small>{cloudError && <button onClick={() => { void signOut() }} className="cc-auth-submit">กลับไปหน้าเข้าสู่ระบบ <span>↗</span></button>}</section></main>
+  if (!cloudReady) return <AuthExperience state={cloudError ? "error" : "loading"} title={cloudError ? "ยังเชื่อมต่อไม่สำเร็จ" : "กำลังเตรียมพื้นที่ของคุณ"} detail={cloudError || "กำลังเชื่อมต่อพื้นที่จัดเก็บข้อมูลอย่างปลอดภัย"} onRetry={cloudError ? () => { void signOut() } : undefined} />
   return <AuthAccountContext.Provider value={{ user, signOut }}>
     {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}
     {children}
