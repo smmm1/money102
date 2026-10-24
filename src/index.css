@@ -563,7 +563,7 @@ main:not(.pancake-home) > header[data-workspace-id$="-header"] {
   background:#FFFDF9!important;
   box-shadow:none!important;
 }
-main:not(.pancake-home) > header[data-workspace-id$="-header"] > .pointer-events-none { opacity:.22; }
+main:not(.pancake-home) > header[data-workspace-id$="-header"] > .pointer-events-none { display:none!important; }
 main:not(.pancake-home) > header[data-workspace-id$="-header"] h1 { color:var(--mll-plum)!important; letter-spacing:-.065em!important; }
 main:not(.pancake-home) > header[data-workspace-id$="-header"] h1 span { color:#A16F9B!important; }
 main:not(.pancake-home) > header[data-workspace-id$="-header"] p { color:#887788!important; }
@@ -577,3 +577,7 @@ main:not(.pancake-home) [class*="text-[#55745B]"],
 main:not(.pancake-home) [class*="text-[#477653]"] { color:#8B6393!important; }
 main:not(.pancake-home) [class*="bg-[#7BC596]"] { background:#35C98E!important; }
 main:not(.pancake-home) [class*="bg-[#F5C51B]"] { background:#F5A63B!important; }
+
+main:not(.pancake-home) button[class*="border-[#F87562]"] { border-color:var(--mll-pink)!important; }
+main:not(.pancake-home) [class*="text-[#B94E3D]"] { color:#A65C7A!important; }
+main:not(.pancake-home) [class*="bg-[#F87562]"] { background:#F06CA8!important; }
