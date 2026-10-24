@@ -180,7 +180,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     setMessage("ออกจากระบบแล้ว")
   }
 
-  if (checking) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] text-sm text-[#73796F]">กำลังตรวจสอบบัญชี…</main>
+  if (checking) return <main className="mll-auth-screen"><section className="mll-auth-loading"><span className="mll-auth-mark">m</span><span className="mll-auth-spinner" /><p>กำลังตรวจสอบบัญชีของคุณ</p><small>กำลังเตรียมพื้นที่ส่วนตัว</small></section></main>
   if (!user) return <main className="mll-auth-screen">
     <section className="mll-auth-layout">
       <div className="mll-auth-story">
@@ -218,7 +218,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       </div>
     </section>
   </main>
-  if (!cloudReady) return <main className="grid min-h-screen place-items-center bg-[#F7F5EE] p-5"><section className="max-w-xl rounded-3xl bg-white p-7 shadow-sm"><p className="text-sm leading-6 text-[#5F665D]">{cloudError || "กำลังโหลดข้อมูลของคุณจาก Cloudflare D1…"}</p><button onClick={() => { void signOut() }} className="mt-4 rounded-full border px-4 py-2 text-sm">ออกจากระบบ</button></section></main>
+  if (!cloudReady) return <main className="mll-auth-screen"><section className="mll-auth-cloud-state"><span className="mll-auth-mark">m</span><p className="mll-auth-eyebrow"><span /> PRIVATE SPACE</p><h1>{cloudError ? "เชื่อมต่อข้อมูลไม่สำเร็จ" : "กำลังเตรียมพื้นที่ของคุณ"}</h1><p className="mll-auth-cloud-message">{cloudError || "กำลังโหลดข้อมูลของคุณจาก Cloudflare D1…"}</p>{cloudError && <button onClick={() => { void signOut() }} className="mll-auth-submit">กลับไปหน้าเข้าสู่ระบบ <span>↗</span></button>}</section></main>
   return <AuthAccountContext.Provider value={{ user, signOut }}>
     {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}
     {children}
