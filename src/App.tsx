@@ -111,35 +111,6 @@ function Header({ current, onOpenSearch }: { current: Page; onOpenSearch: () => 
     </div>
   )
 }
-const sections = [
-  {
-    id: "saving" as const,
-    eyebrow: "เป้าหมายการเงิน",
-    title: "ออมเงิน",
-    description: "วางแผนเล็ก ๆ เพื่อเป้าหมายที่ใหญ่ขึ้น",
-    icon: "bank" as const,
-    color: "bg-[#E2F2E7]",
-    iconBg: "bg-[#CDE8D5]",
-  },
-  {
-    id: "health" as const,
-    eyebrow: "ดูแลตัวเอง",
-    title: "สุขภาพ",
-    description: "ติดตามน้ำหนักและการเคลื่อนไหวของคุณ",
-    icon: "heart" as const,
-    color: "bg-[#FCE4DE]",
-    iconBg: "bg-[#F8CEC4]",
-  },
-  {
-    id: "notes" as const,
-    eyebrow: "พื้นที่ความคิด",
-    title: "โน้ต",
-    description: "เก็บไอเดีย ความทรงจำ และเรื่องสำคัญ",
-    icon: "note" as const,
-    color: "bg-[#FBF1C9]",
-    iconBg: "bg-[#F5E39D]",
-  },
-]
 
 type HomeSnapshot = {
   income: number
@@ -218,85 +189,69 @@ function readHomeSnapshot(): HomeSnapshot {
 }
 
 function Home() {
-  const [, setNow] = useState(() => new Date())
   const [snapshot, setSnapshot] = useState<HomeSnapshot>(readHomeSnapshot)
-  const [audience, setAudience] = useState<"today" | "future">("today")
-  const [prompt, setPrompt] = useState("")
-  const [demoMode, setDemoMode] = useState<"money" | "life">("money")
   const money = (amount: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", maximumFractionDigits: 0 }).format(amount)
   const balance = snapshot.income - snapshot.expense
-  const progress = Math.max(0, Math.min(Math.round((Math.max(0, balance - snapshot.goalStartBalance) / snapshot.goal) * 100), 100))
+
   useEffect(() => {
-    const refresh = () => { setSnapshot(readHomeSnapshot()); setNow(new Date()) }
+    const refresh = () => setSnapshot(readHomeSnapshot())
     const onStorage = (event: StorageEvent) => { if (!event.key || event.key.startsWith("lamoon-")) refresh() }
-    window.addEventListener("storage", onStorage); window.addEventListener("focus", refresh); document.addEventListener("visibilitychange", refresh)
-    const clock = window.setInterval(() => setNow(new Date()), 60000); refresh()
-    return () => { window.removeEventListener("storage", onStorage); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); window.clearInterval(clock) }
+    window.addEventListener("storage", onStorage)
+    window.addEventListener("focus", refresh)
+    document.addEventListener("visibilitychange", refresh)
+    return () => {
+      window.removeEventListener("storage", onStorage)
+      window.removeEventListener("focus", refresh)
+      document.removeEventListener("visibilitychange", refresh)
+    }
   }, [])
-  const cards = demoMode === "money" ? [
-    { tag: "MONEY", color: "lavender", title: "ฉันใช้เงินไปกับอะไรเยอะที่สุด?", text: "มองหารูปแบบการใช้เงินของตัวเอง", page: "saving" as Page },
-    { tag: "GOALS", color: "peach", title: "วางแผนเงินเก็บก้อนแรก", text: "เปลี่ยนเป้าหมายให้เป็นแผนที่ทำได้", page: "saving" as Page },
-    { tag: "CLARITY", color: "mint", title: "เริ่มบันทึกวันนี้", text: "เริ่มจากหนึ่งรายการก็เพียงพอ", page: "saving" as Page },
-  ] : [
-    { tag: "WELLBEING", color: "peach", title: "วันนี้ฉันดูแลตัวเองหรือยัง?", text: "บันทึกการขยับร่างกายและการพักผ่อน", page: "health" as Page },
-    { tag: "THOUGHTS", color: "lavender", title: "มีเรื่องไหนที่อยากเก็บไว้ไหม?", text: "จดความคิดสั้น ๆ ก่อนจะลืม", page: "notes" as Page },
-    { tag: "DAILY", color: "mint", title: "ทำวันธรรมดาให้ดีขึ้น", text: "เลือกสิ่งเล็ก ๆ ที่อยากทำให้ตัวเอง", page: "health" as Page },
+
+  const spaces = [
+    { id: "saving" as Page, number: "01", title: "การเงิน", description: "รายรับ รายจ่าย และเป้าหมาย", detail: "เปิดพื้นที่", symbol: "↗" },
+    { id: "health" as Page, number: "02", title: "สุขภาพ", description: "น้ำหนักและกิจกรรมประจำวัน", detail: "เปิดพื้นที่", symbol: "↗" },
+    { id: "notes" as Page, number: "03", title: "โน้ต", description: "ไอเดียและเรื่องที่อยากเก็บไว้", detail: "เปิดพื้นที่", symbol: "↗" },
   ]
-  const modules = [
-    { id: "saving" as const, no: "01", color: "violet", tag: "MONEY, MADE CLEAR", heading: "คุณตั้งเป้าหมายไว้\nMll ช่วยให้มองเห็นทาง", body: "จดรายรับรายจ่าย เห็นยอดคงเหลือ และติดตามเป้าหมายการออม โดยไม่ต้องเปิดหลายแอป", page: "saving" as Page, action: "เปิดพื้นที่การเงิน" },
-    { id: "health" as const, no: "02", color: "pink", tag: "CARE, AT YOUR PACE", heading: "คุณค่อย ๆ ลงมือ\nMll ช่วยเก็บความคืบหน้า", body: "บันทึกน้ำหนัก การออกกำลังกาย และกิจวัตรสุขภาพ เพื่อเห็นความเปลี่ยนแปลงในระยะยาว", page: "health" as Page, action: "เปิดพื้นที่สุขภาพ" },
-    { id: "notes" as const, no: "03", color: "orange", tag: "THOUGHTS, KEPT", heading: "ความคิดดี ๆ ไม่ต้องหายไป\nMll ช่วยเก็บมันไว้", body: "รวมไอเดีย บันทึกสั้น ๆ และเรื่องที่อยากกลับมาอ่านไว้ในพื้นที่เดียว", page: "notes" as Page, action: "เปิดพื้นที่โน้ต" },
-  ]
-  const submitPrompt = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const value = prompt.trim().toLowerCase()
-    if (/สุขภาพ|น้ำหนัก|ออกกำลัง|เดิน|นอน/.test(value)) navigate("health")
-    else if (/โน้ต|จด|ความคิด|บันทึกเรื่อง/.test(value)) navigate("notes")
-    else navigate("saving")
-  }
-  return <main className="mll-home pancake-home">
-    <section className="pancake-hero-wrap">
-      <svg className="pancake-ribbon pancake-ribbon-hero" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M-80 10 C220 0 220 245 500 180 S840 -45 1100 80 S1320 240 1520 90"/><path d="M-80 30 C220 20 235 265 510 200 S850 -25 1110 100 S1330 260 1520 110"/><path d="M-80 50 C220 40 250 285 520 220 S860 -5 1120 120 S1340 280 1520 130"/><path d="M-80 70 C220 60 265 305 530 240 S870 15 1130 140 S1350 300 1520 150"/><path d="M-80 90 C220 80 280 325 540 260 S880 35 1140 160 S1360 320 1520 170"/>
-      </svg>
-      <div className="pancake-navline">
-        <button className="pancake-wordmark" onClick={() => navigate("home")}><span className="pancake-mark">m</span><span>Mll</span><sup>PRIVATE SPACE</sup></button>
-        <nav className="pancake-navlinks" aria-label="พื้นที่หลัก"><button onClick={() => navigate("saving")}>การเงิน <span>↘</span></button><button onClick={() => navigate("health")}>สุขภาพ <span>↘</span></button><button onClick={() => navigate("notes")}>โน้ต</button><a href="#how-it-works">วิธีใช้งาน</a><a href="#pricing">ราคา</a></nav>
-        <div className="pancake-navright"><span className="pancake-private-label">พื้นที่ส่วนตัว</span><button className="pancake-dark-pill" onClick={() => navigate("saving")}>เริ่มใช้งาน <span>↗</span></button><AccountMenu /></div>
-      </div>
-      <div className="pancake-hero-content">
-        <div className="pancake-hero-copy"><p className="pancake-eyebrow"><span /> YOUR LIFE, IN ONE PLACE</p><h1>จัดระเบียบชีวิต<br />ให้เป็น <em>แบบของคุณ</em></h1></div>
-        <div className="pancake-hero-side"><div className="pancake-toggle" role="group" aria-label="เลือกมุมมอง"><button className={audience === "today" ? "active" : ""} onClick={() => setAudience("today")}>สำหรับวันนี้</button><button className={audience === "future" ? "active" : ""} onClick={() => setAudience("future")}>เพื่อวันข้างหน้า</button></div>
-          <p>{audience === "today" ? "ดูแลเรื่องเล็ก ๆ ในแต่ละวัน ตั้งแต่เงินที่ใช้ไปจนถึงความคิดที่อยากเก็บไว้" : "ค่อย ๆ สร้างนิสัยที่ดี ด้วยภาพรวมที่ช่วยให้เห็นว่าคุณกำลังไปทางไหน"}</p>
-          <div className="pancake-hero-buttons"><button className="pancake-dark-pill" onClick={() => navigate("saving")}>เปิดพื้นที่ของฉัน <span>↗</span></button><button className="pancake-peach-pill" onClick={() => document.getElementById("product-demo")?.scrollIntoView({ behavior: "smooth" })}>ดูว่าเริ่มยังไง</button></div>
-          <div className="pancake-trustline"><span>⌑</span> พื้นที่ส่วนตัวของคุณ <i />ใช้ฟรี · ไม่มีค่าสมาชิก</div>
+
+  return (
+    <main className="mll-home mll-minimal-home">
+      <header className="minimal-nav">
+        <button className="minimal-wordmark" onClick={() => navigate("home")} aria-label="Mll หน้าหลัก"><span>m</span> Mll</button>
+        <nav aria-label="พื้นที่หลัก">
+          {spaces.map((space) => <button key={space.id} onClick={() => navigate(space.id)}>{space.title}</button>)}
+        </nav>
+        <div className="minimal-nav-actions"><span>พื้นที่ส่วนตัว</span><AccountMenu /></div>
+      </header>
+
+      <section className="minimal-hero">
+        <p className="minimal-eyebrow"><span /> YOUR PERSONAL SPACE</p>
+        <h1>ชีวิตที่ชัดขึ้น<br /><em>เริ่มจากเรื่องเล็ก ๆ</em></h1>
+        <p className="minimal-intro">พื้นที่เรียบง่ายสำหรับดูแลเงิน สุขภาพ และความคิด<br className="minimal-desktop-break" /> ในแบบของคุณเอง ทีละวัน</p>
+        <button className="minimal-primary" onClick={() => navigate("saving")}>เริ่มต้นใช้งาน <span>↗</span></button>
+        <p className="minimal-free-note">ใช้ฟรี · ไม่มีค่าสมาชิก · สำหรับคุณเท่านั้น</p>
+      </section>
+
+      <section className="minimal-overview" aria-label="ภาพรวมของคุณ">
+        <div><span>ยอดสุทธิที่บันทึกไว้</span><strong>{money(balance)}</strong></div>
+        <div><span>น้ำหนักล่าสุด</span><strong>{snapshot.healthWeight === null ? "—" : `${snapshot.healthWeight} กก.`}</strong></div>
+        <div><span>โน้ตที่เก็บไว้</span><strong>{snapshot.notesCount}</strong></div>
+      </section>
+
+      <section className="minimal-spaces" aria-label="เลือกพื้นที่">
+        <div className="minimal-section-heading"><p className="minimal-eyebrow">YOUR SPACES</p><span>เลือกสิ่งที่อยากดูแล</span></div>
+        <div className="minimal-space-list">
+          {spaces.map((space) => (
+            <button key={space.id} className={`minimal-space minimal-space-${space.id}`} onClick={() => navigate(space.id)}>
+              <span className="minimal-space-number">{space.number}</span>
+              <span className="minimal-space-copy"><strong>{space.title}</strong><small>{space.description}</small></span>
+              <span className="minimal-space-action">{space.detail} <b>{space.symbol}</b></span>
+            </button>
+          ))}
         </div>
-      </div>
-    </section>
-    <section id="product-demo" className="pancake-demo-section"><div className="pancake-demo-card">
-      <div className="pancake-demo-top"><span className="pancake-mini-label">A LITTLE MORE CLARITY</span><span className="pancake-demo-counter">MLL / 01</span></div>
-      <h2>วันนี้อยากเริ่มจากเรื่องไหน?</h2><p className="pancake-demo-subtitle">เลือกพื้นที่ที่ต้องการ หรือพิมพ์สิ่งที่อยากจัดการ แล้วไปต่อได้เลย</p>
-      <form className="pancake-prompt" onSubmit={submitPrompt}><span className="pancake-prompt-symbol">✳</span><input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="เช่น อยากจัดการรายจ่าย หรือบันทึกการออกกำลัง…" aria-label="บอกสิ่งที่อยากจัดการ" /><button type="submit" aria-label="ไปยังพื้นที่ที่เกี่ยวข้อง">↗</button></form>
-      <div className="pancake-suggestions">{cards.map((item) => <button key={item.title} className="pancake-suggestion" onClick={() => navigate(item.page)}><span className={"pancake-tag " + item.color}>{item.tag}</span><strong>{item.title}</strong><small>{item.text}</small><span className="pancake-suggestion-arrow">↗</span></button>)}</div>
-      <div className="pancake-demo-foot"><span>ไม่ต้องทำทุกอย่างในวันเดียว</span><span>เลือกทีละเรื่อง <b>→</b></span></div>
-    </div><div className="pancake-demo-switch"><span>เลือกมุมมอง</span><div className="pancake-toggle compact" role="group" aria-label="เปลี่ยนตัวอย่าง"><button className={demoMode === "money" ? "active" : ""} onClick={() => setDemoMode("money")}>เงินและเป้าหมาย</button><button className={demoMode === "life" ? "active" : ""} onClick={() => setDemoMode("life")}>ชีวิตประจำวัน</button></div></div></section>
-    <section className="pancake-proof"><p className="pancake-mini-label">YOUR PERSONAL SPACE, AT A GLANCE</p><div className="pancake-proof-words"><span>เงิน <i>✳</i></span><span>สุขภาพ</span><span>ความคิด <i>✳</i></span><span>เป้าหมาย</span><span>กิจวัตร</span><span>ความทรงจำ</span></div><p className="pancake-proof-note">สามพื้นที่ที่ทำงานร่วมกัน เพื่อให้ทุกวันของคุณชัดเจนขึ้น</p></section>
-    <section id="how-it-works" className="pancake-statement"><p className="pancake-eyebrow"><span /> SMALL STEPS, YOUR OWN PACE</p><h2>ในขณะที่คุณใช้ชีวิต<br /><em>Mll ช่วยให้เรื่องสำคัญไม่หลุดมือ</em></h2><p>ไม่ใช่การทำให้ทุกอย่างสมบูรณ์แบบ แต่เป็นพื้นที่ให้คุณกลับมาดูแลสิ่งที่มีความหมายได้เสมอ</p></section>
-    <section className="pancake-feature-list">{modules.map((item, index) => <article key={item.id} className={"pancake-feature-panel feature-" + item.color}>
-      <div className="pancake-feature-copy"><span className={"pancake-feature-number " + item.color}>{item.no}</span><p className="pancake-mini-label">{item.tag}</p><h3>{item.heading.split("\n").map((line) => <span key={line}>{line}<br /></span>)}</h3><p className="pancake-feature-body">{item.body}</p><button className="pancake-text-link" onClick={() => navigate(item.page)}>{item.action} <span>↗</span></button></div>
-      <div className={"pancake-product-visual visual-" + item.color}>
-        {index === 0 ? <div className="pancake-visual-ledger"><div className="pancake-visual-heading"><span>ภาพรวมการเงิน</span><span className="pancake-status-dot" /></div><small>ยอดสุทธิที่บันทึกไว้</small><strong>{money(balance)}</strong><div className="pancake-ledger-bars"><span style={{ height: "36%" }} /><span style={{ height: "58%" }} /><span style={{ height: "42%" }} /><span style={{ height: "76%" }} /><span style={{ height: "52%" }} /><span style={{ height: "88%" }} /><span style={{ height: "66%" }} /></div><div className="pancake-ledger-row"><span>รายรับทั้งหมด</span><b>{money(snapshot.income)}</b></div><div className="pancake-ledger-row"><span>รายจ่ายทั้งหมด</span><b>{money(snapshot.expense)}</b></div><div className="pancake-visual-foot"><span>เป้าหมายการออม</span><b>{progress}%</b></div><div className="pancake-progress-track"><span style={{ width: progress + "%" }} /></div></div>
-        : index === 1 ? <><div className="pancake-float-card health-float-back"><span>สม่ำเสมอสำคัญกว่าสมบูรณ์แบบ</span><b>วันนี้ก็นับนะ ✳</b></div><div className="pancake-visual-health"><div className="pancake-visual-heading"><span>บันทึกสุขภาพ</span><span>↗</span></div><div className="pancake-health-ring"><div><strong>{snapshot.healthWeight === null ? "—" : snapshot.healthWeight}</strong><small>กิโลกรัม</small></div></div><div className="pancake-health-bottom"><span>กิจกรรมวันนี้</span><b>{snapshot.todayExerciseCount} รายการ</b></div><div className="pancake-health-chip">✳ {snapshot.todayWellness ? "บันทึกการดูแลตัวเองแล้ว" : "ทุกก้าวมีความหมาย"}</div></div></>
-        : <div className="pancake-visual-notes"><div className="pancake-note-window"><div className="pancake-note-window-top"><span /><span /><span /><small>พื้นที่ความคิด</small></div><div className="pancake-note-paper"><span>บันทึกที่อยากเก็บไว้</span><strong>{snapshot.lastNoteTitle || "ไอเดียเล็ก ๆ ของวันนี้"}</strong><p>บางเรื่องไม่ต้องรีบหาคำตอบ แค่เก็บไว้ให้กลับมาอ่านอีกครั้งก็พอ</p><div className="pancake-note-paper-foot"><span>MY NOTES</span><b>✳</b></div></div><div className="pancake-note-count"><strong>{snapshot.notesCount}</strong><span>โน้ตที่เก็บไว้</span></div></div></div>}
-      </div>
-    </article>)}</section>
-    <section className="pancake-breathing-band" aria-label="พื้นที่พักสายต"><div className="pancake-band-orbit" /><span>PAUSE. BREATHE. BEGIN AGAIN.</span></section>
-    <section className="pancake-cta-wrap"><svg className="pancake-cta-ribbon left" viewBox="0 0 120 360" preserveAspectRatio="none" aria-hidden="true"><path d="M-20 0 C100 60 -10 120 70 180 S20 300 120 360"/><path d="M-20 0 C100 60 0 120 80 180 S30 300 120 360"/><path d="M-20 0 C100 60 10 120 90 180 S40 300 120 360"/><path d="M-20 0 C100 60 20 120 100 180 S50 300 120 360"/><path d="M-20 0 C100 60 30 120 110 180 S60 300 120 360"/></svg>
-      <div className="pancake-cta-inner"><p className="pancake-eyebrow"><span /> YOUR SPACE IS READY</p><h2>เริ่มจากเรื่องเล็ก ๆ<br /><em>ที่สำคัญกับคุณ</em></h2><p>ทุกเครื่องมืออยู่ในพื้นที่เดียว ใช้ได้ฟรีและค่อย ๆ ปรับให้เข้ากับชีวิตของคุณ</p><div className="pancake-hero-buttons"><button className="pancake-dark-pill" onClick={() => navigate("saving")}>เริ่มใช้งาน Mll <span>↗</span></button><button className="pancake-peach-pill" onClick={() => navigate("notes")}>จดความคิดแรก</button></div></div>
-      <svg className="pancake-cta-ribbon right" viewBox="0 0 120 360" preserveAspectRatio="none" aria-hidden="true"><path d="M140 0 C20 60 130 120 50 180 S100 300 0 360"/><path d="M140 0 C20 60 120 120 40 180 S90 300 0 360"/><path d="M140 0 C20 60 110 120 30 180 S80 300 0 360"/><path d="M140 0 C20 60 100 120 20 180 S70 300 0 360"/><path d="M140 0 C20 60 90 120 10 180 S60 300 0 360"/></svg></section>
-    <section id="pricing" className="pancake-pricing"><div className="pancake-pricing-left"><p className="pancake-eyebrow"><span /> SIMPLE BY DESIGN</p><h2>พื้นที่ของคุณ<br />ไม่ควรมีราคา</h2><p className="pancake-price"><span>เริ่มต้นที่</span><strong>฿0<small>/ ตลอดไป</small></strong></p></div><div className="pancake-pricing-right"><p className="pancake-mini-label">EVERYDAY TOOLS, INCLUDED</p><ul><li><span>✓</span> บันทึกรายรับ รายจ่าย และเป้าหมาย</li><li><span>✓</span> ติดตามสุขภาพและกิจกรรมประจำวัน</li><li><span>✓</span> เก็บโน้ตและความคิดสำคัญ</li><li><span>✓</span> ดูข้อมูลสรุปในพื้นที่เดียว</li><li><span>✓</span> ใช้งานได้ทั้งมือถือและคอมพิวเตอร์</li><li><span>✓</span> ไม่มีค่าสมาชิกแอบแฝง</li></ul><button className="pancake-dark-pill" onClick={() => navigate("saving")}>ไปยังพื้นที่ส่วนตัว <span>↗</span></button><p className="pancake-pricing-note">ใช้ฟรี · ไม่มีระบบเรียกเก็บเงิน</p></div></section>
-    <footer className="pancake-footer"><svg className="pancake-ribbon pancake-ribbon-footer" viewBox="0 0 1440 230" preserveAspectRatio="none" aria-hidden="true"><path d="M-20 20 C240 180 330 0 560 100 S900 260 1120 90 S1360 10 1480 130"/><path d="M-20 40 C240 200 330 20 560 120 S900 280 1120 110 S1360 30 1480 150"/><path d="M-20 60 C240 220 330 40 560 140 S900 300 1120 130 S1360 50 1480 170"/><path d="M-20 80 C240 240 330 60 560 160 S900 320 1120 150 S1360 70 1480 190"/><path d="M-20 100 C240 260 330 80 560 180 S900 340 1120 170 S1360 90 1480 210"/></svg><div className="pancake-footer-main"><div className="pancake-footer-brand"><button className="pancake-footer-wordmark" onClick={() => navigate("home")}>Mll<span>✳</span></button><p>พื้นที่เล็ก ๆ สำหรับสิ่งสำคัญ<br />ในชีวิตของคุณ</p></div><div className="pancake-footer-column"><b>พื้นที่ของฉัน</b><button onClick={() => navigate("saving")}>การเงิน</button><button onClick={() => navigate("health")}>สุขภาพ</button><button onClick={() => navigate("notes")}>โน้ต</button></div><div className="pancake-footer-column"><b>เริ่มต้นใช้งาน</b><a href="#how-it-works">วิธีใช้งาน</a><a href="#pricing">ราคา</a><button onClick={() => navigate("saving")}>เปิดพื้นที่ส่วนตัว</button></div><div className="pancake-footer-column"><b>เกี่ยวกับ Mll</b><span>พื้นที่ส่วนตัว</span><span>ใช้ฟรี</span><span>ออกแบบเพื่อทุกวัน</span></div></div><div className="pancake-footer-bottom"><span>© Mll · YOUR PERSONAL SPACE</span><span>Made for your everyday, with care.</span><div><a href="#privacy" onClick={(e) => e.preventDefault()}>ความเป็นส่วนตัว</a><a href="#terms" onClick={(e) => e.preventDefault()}>เงื่อนไขการใช้งาน</a></div></div></footer>
-  </main>
+      </section>
+
+      <footer className="minimal-footer"><span className="minimal-footer-mark">m</span><span>พื้นที่ของคุณ ในจังหวะของคุณ</span><span>© Mll</span></footer>
+    </main>
+  )
 }
 
 function ProgressRing({ value, label }: { value: number; label: string }) {
