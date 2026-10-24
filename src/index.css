@@ -627,3 +627,11 @@ main:not(.pancake-home) [class*="bg-[#F87562]"] { background:#F06CA8!important; 
 .mll-auth-legal { margin:17px 0 0; color:#A392A1; font-size:10px; line-height:1.8; text-align:center; }
 @media(max-width:850px) { .mll-auth-layout { grid-template-columns:1fr; max-width:570px; gap:32px; }.mll-auth-story > .mll-auth-eyebrow { margin-top:42px; }.mll-auth-story h1 { font-size:clamp(46px,10vw,66px); }.mll-auth-story-copy { margin-bottom:20px; }.mll-auth-preview { max-width:none; }.mll-auth-form-wrap { max-width:none; }.mll-auth-legal { margin-bottom:20px; } }
 @media(max-width:480px) { .mll-auth-screen { padding:18px 14px; }.mll-auth-wordmark { font-size:25px; }.mll-auth-wordmark small { display:none; }.mll-auth-story > .mll-auth-eyebrow { margin-top:34px; font-size:9px; }.mll-auth-story h1 { font-size:45px; }.mll-auth-story-copy { font-size:12px; }.mll-auth-preview { padding:16px; }.mll-auth-form-card { padding:24px 19px; border-radius:20px; }.mll-auth-form-card h2 { font-size:25px; } }
+
+.mll-auth-loading,.mll-auth-cloud-state { display:flex; flex-direction:column; align-items:center; width:min(100%,560px); padding:clamp(28px,5vw,52px); border:1px solid var(--mll-line); border-radius:26px; background:#FFFDF9; text-align:center; }
+.mll-auth-loading .mll-auth-mark,.mll-auth-cloud-state .mll-auth-mark { width:42px; height:42px; font-size:26px; }
+.mll-auth-spinner { width:25px; height:25px; margin-top:28px; border:2px solid #E8DDF0; border-top-color:#9C6A9C; border-radius:50%; animation:mll-spin .8s linear infinite; }
+.mll-auth-loading p { margin:17px 0 0; color:var(--mll-plum); font-size:14px; font-weight:600; }.mll-auth-loading small { margin-top:7px; color:var(--mll-muted); font-size:11px; }
+.mll-auth-cloud-state .mll-auth-eyebrow { margin-top:22px; }.mll-auth-cloud-state h1 { margin:18px 0 0; font-size:clamp(24px,4vw,34px); letter-spacing:-.05em; }.mll-auth-cloud-message { margin:12px 0 22px; color:var(--mll-muted); font-size:12px; line-height:1.9; overflow-wrap:anywhere; }.mll-auth-cloud-state .mll-auth-submit { width:100%; }
+@keyframes mll-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .mll-auth-spinner { animation:none; border-top-color:#9C6A9C; } }
