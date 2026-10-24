@@ -262,7 +262,7 @@ function Home() {
       <div className="pancake-navline">
         <button className="pancake-wordmark" onClick={() => navigate("home")}><span className="pancake-mark">m</span><span>Mll</span><sup>PRIVATE SPACE</sup></button>
         <nav className="pancake-navlinks" aria-label="พื้นที่หลัก"><button onClick={() => navigate("saving")}>การเงิน <span>↘</span></button><button onClick={() => navigate("health")}>สุขภาพ <span>↘</span></button><button onClick={() => navigate("notes")}>โน้ต</button><a href="#how-it-works">วิธีใช้งาน</a><a href="#pricing">ราคา</a></nav>
-        <div className="pancake-navright"><span className="pancake-private-label">พื้นที่ส่วนตัว</span><button className="pancake-dark-pill" onClick={() => navigate("saving")}>เริ่มใช้งาน <span>↗</span></button></div>
+        <div className="pancake-navright"><span className="pancake-private-label">พื้นที่ส่วนตัว</span><button className="pancake-dark-pill" onClick={() => navigate("saving")}>เริ่มใช้งาน <span>↗</span></button><AccountMenu /></div>
       </div>
       <div className="pancake-hero-content">
         <div className="pancake-hero-copy"><p className="pancake-eyebrow"><span /> YOUR LIFE, IN ONE PLACE</p><h1>จัดระเบียบชีวิต<br />ให้เป็น <em>แบบของคุณ</em></h1></div>
