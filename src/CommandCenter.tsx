@@ -90,7 +90,7 @@ export default function CommandCenter() {
   }
   function saveHealth(e: FormEvent) {
     e.preventDefault()
-    const record: HealthRecord = { id: uid(), profileId: profile.id, date: healthDate, type: healthType }
+    const record: HealthRecord = { id: uid(), profileId: profile?.id || "profile-default", date: healthDate, type: healthType }
     if (healthType === "weight") { if (!(Number(weight) > 0)) return; record.weight = Number(weight) }
     if (healthType === "exercise") { record.exercise = exercise; record.distance = Number(distance)||0; record.duration = Number(duration)||0 }
     if (healthType === "wellness") { record.water = Number(water)||0; record.sleep = Number(sleep)||0 }
