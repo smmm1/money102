@@ -133,15 +133,12 @@ export default function CommandCenter() {
   const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ" }
 
   return <div className="app-shell">
-    <aside className="side-rail">
-      <button className="brand" onClick={() => go("home")} aria-label="กลับหน้าภาพรวม"><span className="brand-symbol">m</span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
-      <div className="rail-label">พื้นที่ของฉัน</div>
-      <nav className="main-nav" aria-label="เมนูหลัก">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "nav-link active" : "nav-link"} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{item.label}</span>{page === item.id && <i />}</button>)}</nav>
-      <div className="rail-bottom"><div className="privacy-note"><span className="privacy-dot" /><div><strong>พื้นที่ของคุณ</strong><small>บันทึกอย่างเป็นส่วนตัว</small></div></div><div className="rail-account"><AccountMenu /><span>บัญชีของฉัน</span></div></div>
-    </aside>
-
     <main className="main-area">
-      <header className="topbar"><div className="breadcrumb"><span>พื้นที่ส่วนตัว</span><b>/</b><strong>{pageTitle[page]}</strong></div><div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><button className="mobile-account" aria-label="เมนูบัญชี"><AccountMenu /></button></div></header>
+      <header className="topbar">
+        <button className="brand" onClick={() => go("home")} aria-label="กลับหน้าภาพรวม"><span className="brand-symbol">m</span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
+        <nav className="top-nav" aria-label="เมนูหลัก">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "top-nav-link active" : "top-nav-link"} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{item.label}</span></button>)}</nav>
+        <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="topbar-account"><AccountMenu /></div></div>
+      </header>
 
       {page === "home" && <section className="page-content">
         <div className="welcome-row"><div><span className="eyebrow">ยินดีต้อนรับกลับมา</span><h1>ค่อย ๆ จัดการ<br/><em>ทีละเรื่องก็พอ</em></h1><p className="intro-copy">พื้นที่เล็ก ๆ สำหรับดูแลเงิน ความคิด และตัวเอง โดยไม่ต้องทำให้ทุกอย่างยุ่งยาก</p></div><div className="date-card"><span>วันนี้</span><strong>{new Date().toLocaleDateString("th-TH", { day: "numeric" })}</strong><small>{new Date().toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</small></div></div>
@@ -180,7 +177,7 @@ export default function CommandCenter() {
       </section>}
     </main>
 
-    <nav className="mobile-nav" aria-label="เมนูหลักสำหรับมือถือ">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "mobile-nav-link active" : "mobile-nav-link"}><Icon name={item.icon}/><span>{item.label}</span></button>)}</nav>
+
 
     {showEntry && <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setShowEntry(false) }}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="entry-title"><div className="modal-heading"><div><span className="eyebrow">การเงิน</span><h2 id="entry-title">เพิ่มรายการ</h2></div><button className="icon-button" onClick={() => setShowEntry(false)} aria-label="ปิด"><Icon name="close"/></button></div><form onSubmit={saveMoney} className="form-stack"><div className="segmented"><button type="button" className={entryType === "expense" ? "selected expense-selected" : ""} onClick={() => setEntryType("expense")}>รายจ่าย</button><button type="button" className={entryType === "income" ? "selected income-selected" : ""} onClick={() => setEntryType("income")}>รายรับ</button></div><label>จำนวนเงิน (บาท)<input autoFocus type="number" min="1" step="0.01" required value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></label><label>รายการ<input required value={detail} onChange={e => setDetail(e.target.value)} placeholder="เช่น ค่าอาหาร เงินเดือน"/></label><label>วันที่<input type="date" required value={entryDate} onChange={e => setEntryDate(e.target.value)}/></label><button className="button button-primary button-full" type="submit">บันทึกรายการ</button></form></section></div>}
 
