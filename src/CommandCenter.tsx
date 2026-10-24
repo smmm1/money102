@@ -30,7 +30,7 @@ function Glyph({ name }: { name: string }) {
 }
 
 export default function CommandCenter() {
-  const [page, setPage] = useState<Page>(() => (["money","notes","health"].includes(location.hash.slice(1)) ? location.hash.slice(1) as Page : "home"))
+  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money","notes","health"].includes(hash) ? hash as Page : "home") })
   const [transactions, setTransactions] = useState<Transaction[]>(() => read(KEYS.money, []))
   const [goal, setGoal] = useState(() => Number(localStorage.getItem(KEYS.goal)) || 20000)
   const [goalTitle, setGoalTitle] = useState(() => localStorage.getItem(KEYS.goalTitle) || "เงินสำรองของฉัน")
@@ -67,7 +67,7 @@ export default function CommandCenter() {
   useEffect(() => { localStorage.setItem(KEYS.notes, JSON.stringify(notes)) }, [notes])
   useEffect(() => { localStorage.setItem(KEYS.health, JSON.stringify(health)) }, [health])
   useEffect(() => { localStorage.setItem(KEYS.goal, String(goal)); localStorage.setItem(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
-  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (["money","notes","health"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
+  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money","notes","health"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
 
   const income = transactions.filter(t => t.type === "income").reduce((s,t)=>s+t.amount,0)
