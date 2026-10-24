@@ -319,3 +319,45 @@ main button[class*="bg-[#141513]"],main button[class*="bg-black"]{background:var
 main button[class*="bg-[#7BC596]"]{background:var(--mll-mint)!important;color:var(--mll-ink)!important}
 main button[class*="bg-[#F87562]"]{background:var(--mll-coral)!important;color:var(--mll-ink)!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Per-page editorial composition — cards, controls and responsive rhythm */
+.mll-home [data-workspace-id^="home-card-"]{border-radius:3px!important;border-color:var(--mll-ink)!important;box-shadow:none!important}
+.mll-home [data-workspace-id^="home-card-"]>div:first-child{min-height:164px!important;padding:clamp(20px,3vw,30px)!important}
+.mll-home [data-workspace-id^="home-card-"]>div:first-child>span:nth-child(2){width:48px;height:48px;border-radius:3px!important}
+.mll-home [data-workspace-id^="home-card-"]>div:last-child{padding:clamp(20px,3vw,30px)!important}
+.mll-home [data-workspace-id^="home-card-"]>div:last-child>div>span{border-radius:3px!important}
+.mll-home [data-workspace-id^="home-card-"]:hover{border-color:var(--mll-coral)!important;box-shadow:8px 8px 0 var(--mll-yellow-soft)!important;transform:translate(-2px,-2px)!important}
+.mll-home [data-workspace-id="home-snapshot"]{border-radius:3px!important}
+.mll-home [data-workspace-id="home-snapshot"]>div:nth-child(2){border-radius:3px!important;background:var(--mll-mint-soft)!important}
+.mll-home [data-workspace-id="home-snapshot"]>div:nth-child(3)>div{border-radius:3px!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div{border-radius:3px!important;box-shadow:none!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div:first-child{background:var(--mll-mint-soft)!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div:last-child{background:var(--mll-coral-soft)!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"]{border-radius:3px!important;background:var(--mll-paper)!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-goal"]>div:first-child>div>p:first-child{letter-spacing:.04em}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"]>div{border-radius:3px!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"] button{border-radius:3px!important}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"] button[aria-label]{background:var(--mll-paper)}
+main[data-workspace-id="saving-page"] [data-workspace-id="saving-activity"] button[aria-label]:hover{background:var(--mll-yellow-soft)}
+main[data-workspace-id="notes-page"] [data-workspace-id="notes-filters"]{border-radius:3px!important;background:var(--mll-paper)!important}
+main[data-workspace-id="notes-page"] article{border-radius:3px!important;border-color:var(--mll-line)!important;box-shadow:none!important}
+main[data-workspace-id="notes-page"] article button{border-radius:3px!important}
+main[data-workspace-id="notes-page"] article>div:first-child>span{border-radius:3px!important}
+main[data-workspace-id="notes-page"] article>div:last-child{border-color:#D8D3C5!important}
+main[data-workspace-id="notes-page"] form{border-radius:3px!important;box-shadow:10px 10px 0 #D8D3C5!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-header"]{border-radius:3px!important;background:var(--mll-paper)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]>div{border-radius:3px!important;box-shadow:none!important;background:var(--mll-paper)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]>div:nth-child(1){border-top:4px solid var(--mll-coral)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]>div:nth-child(2){border-top:4px solid var(--mll-yellow)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]>div:nth-child(3){border-top:4px solid var(--mll-mint)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-metrics"]>div:nth-child(4){border-top:4px solid var(--mll-ink)!important}
+main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-entry-panels"]>div,main:has([data-workspace-id="health-metrics"]) [data-workspace-id="health-history"]{border-radius:3px!important;box-shadow:none!important}
+main:has([data-workspace-id="health-metrics"]) button,main:has([data-workspace-id="health-metrics"]) select{border-radius:3px!important}
+@media(max-width:767px){
+ .mll-home [data-workspace-id^="home-card-"]>div:first-child{min-height:125px!important}
+ .mll-home [data-workspace-id="home-welcome"]>section:first-child{padding:24px!important}
+ main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div{gap:8px!important}
+ main[data-workspace-id="saving-page"] [data-workspace-id="saving-summary"]>div>div{padding:14px!important}
+ main[data-workspace-id="notes-page"] [data-workspace-id="notes-filters"]{padding:14px!important}
+}
