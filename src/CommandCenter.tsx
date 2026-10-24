@@ -115,7 +115,7 @@ export default function CommandCenter() {
   const [hiddenWidgets, setHiddenWidgets] = useState<string[]>(() => read("money102-hidden-widgets-v1", []))
   const [dashboardOrder, setDashboardOrder] = useState<DashboardWidget[]>(() => {
     const saved = read<DashboardWidget[]>("money102-dashboard-order-v1", ["recent", "goal", "trend"])
-    return ["recent", "goal", "trend"].every(item => saved.includes(item)) ? saved : ["recent", "goal", "trend"]
+    return (["recent", "goal", "trend"] as DashboardWidget[]).every(item => saved.includes(item)) ? saved : ["recent", "goal", "trend"]
   })
   const [draggedWidget, setDraggedWidget] = useState<DashboardWidget | null>(null)
   const [memorySelectedDate, setMemorySelectedDate] = useState(today())
