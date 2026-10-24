@@ -14,8 +14,9 @@ export function AccountMenu() {
   </div>
 }
 type LocalSnapshot = Record<string, string>
-const TOKEN_KEY = "money102_cloudflare_session"
-const OWNER_KEY = "money102_cloudflare_owner"
+const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
+const TOKEN_KEY = isCommandCenterPreview ? "money102_cloudflare_session_preview" : "money102_cloudflare_session"
+const OWNER_KEY = isCommandCenterPreview ? "money102_cloudflare_owner_preview" : "money102_cloudflare_owner"
 const LOCAL_PREFIX = "lamoon-"
 const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
   ? "https://money102-api-staging.s2mtha16.workers.dev"
