@@ -292,7 +292,7 @@ input,textarea,select { width:100%; min-width:0; border:1px solid #e1e5dc; borde
 
 /* Modern Tech interactions: visible, quick, and respectful of reduced motion. */
 .balance-copy > strong, .money-total > strong { font-variant-numeric: tabular-nums; }
-.trend-surface { margin-top: 18px; min-width: 0; animation: surface-enter .45s ease both; }
+.trend-surface { grid-column:1 / -1; margin-top: 18px; min-width: 0; animation: surface-enter .45s ease both; }
 .trend-live { display:flex; align-items:center; gap:7px; color:#7a8578; font:600 9px "DM Sans",sans-serif; letter-spacing:.12em; }
 .trend-live i { width:7px; height:7px; border-radius:50%; background:#5c9b70; box-shadow:0 0 0 4px #5c9b7018; }
 .trend-legend { display:flex; gap:17px; margin:17px 0 0; color:#737b70; font-size:11px; }
