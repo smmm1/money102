@@ -555,3 +555,25 @@ body:has(.mll-global-header) main:not(.pancake-home) select { border-color:var(-
 .pancake-navright > div { display:flex; align-items:center; }
 .pancake-navright > div > button { width:38px!important; height:38px!important; border-color:#E9DCCB!important; background:#FFFDF9!important; box-shadow:none!important; }
 .pancake-navright > div > button > span { background:linear-gradient(135deg,#F6E2D4,#E8DDFE)!important; color:var(--mll-plum)!important; }
+
+/* Page headers become soft, contained product panels rather than the old square editorial blocks */
+main:not(.pancake-home) > header[data-workspace-id$="-header"] {
+  border:1px solid var(--mll-line)!important;
+  border-radius:26px!important;
+  background:#FFFDF9!important;
+  box-shadow:none!important;
+}
+main:not(.pancake-home) > header[data-workspace-id$="-header"] > .pointer-events-none { opacity:.22; }
+main:not(.pancake-home) > header[data-workspace-id$="-header"] h1 { color:var(--mll-plum)!important; letter-spacing:-.065em!important; }
+main:not(.pancake-home) > header[data-workspace-id$="-header"] h1 span { color:#A16F9B!important; }
+main:not(.pancake-home) > header[data-workspace-id$="-header"] p { color:#887788!important; }
+main:not(.pancake-home) > header[data-workspace-id$="-header"] button { border-radius:999px!important; }
+main:not(.pancake-home) > header[data-workspace-id$="-header"] button[class*="bg-[#141513]"] { background:var(--mll-plum)!important; color:#fff!important; border-color:var(--mll-plum)!important; }
+main:not(.pancake-home) section[data-workspace-id] { border-color:var(--mll-line); }
+main:not(.pancake-home) [class*="bg-[#E4F2E7]"] { background:#DDF7EA!important; }
+main:not(.pancake-home) [class*="bg-[#FCE4DE]"] { background:#FBE4ED!important; }
+main:not(.pancake-home) [class*="bg-[#FBF1C9]"] { background:#FFF3C9!important; }
+main:not(.pancake-home) [class*="text-[#55745B]"],
+main:not(.pancake-home) [class*="text-[#477653]"] { color:#8B6393!important; }
+main:not(.pancake-home) [class*="bg-[#7BC596]"] { background:#35C98E!important; }
+main:not(.pancake-home) [class*="bg-[#F5C51B]"] { background:#F5A63B!important; }
