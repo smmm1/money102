@@ -53,3 +53,15 @@
 .sim-needs-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.sim-needs-title strong{font-size:11px;color:#4e5d4b}.sim-needs-title span{font-size:10px;color:#b16e57}
 .sim-need{display:grid;grid-template-columns:78px minmax(0,1fr) 32px;gap:8px;align-items:center;margin:8px 0}.sim-need>span{font-size:10px;color:#737e6d}.sim-need>small{font-size:9px;color:#858e7e;text-align:right}
 .sim-need-track{height:7px;border-radius:2px;background:#e9eadf;overflow:hidden}.sim-need-track i{display:block;height:100%;background:#8eaf7d;border-right:2px solid #577d56;transition:width .3s steps(6)}
+
+
+/* Resident progression — compact, readable skill tracks */
+.sim-skills{padding:12px;border:1px solid #e7e9de;border-radius:10px;background:#fffefa;margin:0 0 12px}
+.sim-skills-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.sim-skills-head strong{font-size:11px;color:#4e5d4b}
+.sim-skills-head span{font-size:9px;color:#929b8c}
+.sim-skill{display:grid;grid-template-columns:78px minmax(0,1fr) 35px;gap:8px;align-items:center;margin:9px 0}
+.sim-skill>span{font-size:10px;color:#737e6d}
+.sim-skill>small{font-size:9px;color:#858e7e;text-align:right}
+.sim-skill-track{height:6px;border-radius:2px;background:#e9eadf;overflow:hidden}
+.sim-skill-track i{display:block;height:100%;background:#d1a76e;border-right:2px solid #9b7547;transition:width .3s steps(5)}
