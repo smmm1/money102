@@ -15,6 +15,12 @@ const state = engine.starterSimulatorState()
 assert.equal(state.version, 1)
 assert.equal(state.residents.length, 6)
 assert.ok(state.residents.some((resident) => resident.id === "ploy"))
+const wakeWorld = engine.starterSimulatorState()
+wakeWorld.minute = 350
+wakeWorld.hour = 5
+engine.advanceLifeWorld(wakeWorld, 10)
+assert.equal(wakeWorld.hour, 6)
+assert.equal(wakeWorld.residents.find((resident) => resident.id === "fah").activity, "wake", "morning routine should transition residents into wake-up")
 assert.ok(state.residents.some((resident) => resident.id === "may" && resident.shift.start > resident.shift.end))
 assert.ok(state.residents.every((resident) => resident.needs && typeof resident.money === "number"))
 
