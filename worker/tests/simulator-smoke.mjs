@@ -15,7 +15,7 @@ const engine = new Function(executable + "; return { starterSimulatorState, adva
 const worker = new Function(source.replace("export default {", "return {"))()
 assert.equal(typeof worker.scheduled, "function", "Worker must export a scheduled handler")
 const scheduledState = engine.starterSimulatorState()
-const staleTimestamp = Date.now() - 60 * 60 * 1000
+const staleTimestamp = Date.now() - 65 * 60 * 1000
 scheduledState.last_simulated_at = staleTimestamp
 const storedRow = {
   user_id: "smoke-user",
@@ -42,7 +42,7 @@ const fakeDb = {
 await worker.scheduled({ scheduledTime: staleTimestamp }, { DB: fakeDb })
 assert.ok(savedScheduledState, "scheduled tick should persist the simulated world")
 assert.equal(savedScheduledState.minute, 480, "one hour of offline time should advance the in-game clock")
-assert.ok(savedScheduledState.last_simulated_at > staleTimestamp, "scheduled tick should update the simulation timestamp")
+assert.equal(savedScheduledState.last_simulated_at, staleTimestamp + 60 * 60 * 1000, "scheduled tick should preserve the unprocessed five-minute remainder")
 
 // Corrupt legacy saves must be archived before the recovery state overwrites the active row.
 let archivedPayload = null
