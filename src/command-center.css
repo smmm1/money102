@@ -1347,3 +1347,34 @@ body { background:#faf8f5; color:#302b38; }
   .split-simple-name-list { grid-template-columns:1fr; gap:8px; }
   .split-simple-counter { gap:10px; }
 }
+
+
+/* Receipt scanner: real OCR review flow, compact and mobile-first */
+.receipt-simple-page { max-width: 1060px; }
+.receipt-simple-layout { display:grid; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); align-items:start; gap:15px; }
+.receipt-simple-layout .receipt-upload-panel,.receipt-simple-layout .receipt-review-panel { padding:20px; }
+.receipt-simple-layout .receipt-dropzone { min-height:250px; }
+.receipt-read-button { margin-top:14px; min-height:46px; }
+.receipt-status-ready { color:#47764c!important; background:#eff7ed!important; }
+.receipt-items-review { margin-top:18px; padding-top:15px; border-top:1px solid #edf0e9; }
+.receipt-items-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:9px; color:#465443; font-size:12px; }
+.receipt-items-heading small { color:#92998e; font-size:10px; }
+.receipt-item-row { display:grid; grid-template-columns:minmax(0,1fr) 92px 30px; gap:7px; margin-top:7px; align-items:center; }
+.receipt-item-row input { width:100%; min-width:0; min-height:38px; padding:8px 9px; font-size:11px; }
+.receipt-review-success { display:flex; align-items:center; gap:7px; margin:14px 0; color:#47764c; font-size:11px; }
+.receipt-review-success svg { width:15px; height:15px; }
+.receipt-raw-text { margin-top:14px; color:#778071; font-size:11px; }
+.receipt-raw-text summary { cursor:pointer; }
+.receipt-raw-text pre { max-height:180px; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; padding:10px; border-radius:9px; background:#f6f7f3; color:#596253; font:11px/1.6 ui-monospace,monospace; }
+.receipt-save-button { margin-top:18px; min-height:47px; }
+.receipt-save-button:disabled { opacity:.4; cursor:not-allowed; }
+.receipt-save-hint { display:block; margin-top:9px; color:#92998e; font-size:10px; line-height:1.6; }
+@media (max-width: 900px) { .receipt-simple-layout { grid-template-columns:1fr; } }
+@media (max-width: 600px) {
+  .receipt-simple-page { padding-left:0; padding-right:0; }
+  .receipt-simple-layout { gap:12px; }
+  .receipt-simple-layout .receipt-upload-panel,.receipt-simple-layout .receipt-review-panel { padding:16px; }
+  .receipt-simple-layout .receipt-dropzone { min-height:220px; }
+  .receipt-item-row { grid-template-columns:minmax(0,1fr) 82px 28px; gap:5px; }
+  .receipt-item-row input { font-size:11px; padding:8px 7px; }
+}
