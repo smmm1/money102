@@ -167,26 +167,42 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   private animateAlongPath(group: Phaser.GameObjects.Container, path: Array<{ x: number; y: number }>, index = 0) {
     if (!group.active) return
     const legs = group.getData("legs") as Phaser.GameObjects.Rectangle | undefined
-    if (index === 0 && legs) {
-      const previous = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
-      previous?.stop()
-      const walkTween = this.tweens.add({ targets: legs, angle: { from: -10, to: 10 }, duration: 105, yoyo: true, repeat: -1, ease: "Linear" })
-      group.setData("walkTween", walkTween)
+    if (index === 0) {
+      const previousMove = group.getData("moveTween") as Phaser.Tweens.Tween | undefined
+      previousMove?.stop()
+      const idleTween = group.getData("idleTween") as Phaser.Tweens.Tween | undefined
+      idleTween?.stop()
+      group.setData("idleTween", undefined)
+      group.setData("isWalking", true)
+      const previousWalk = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+      previousWalk?.stop()
+      if (legs) {
+        const walkTween = this.tweens.add({ targets: legs, angle: { from: -10, to: 10 }, duration: 105, yoyo: true, repeat: -1, ease: "Linear" })
+        group.setData("walkTween", walkTween)
+      }
     }
     if (index >= path.length) {
       const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
       walkTween?.stop()
       group.setData("walkTween", undefined)
+      group.setData("moveTween", undefined)
+      group.setData("isWalking", false)
+      group.setData("moveTargetX", undefined)
+      group.setData("moveTargetY", undefined)
       if (legs) legs.setAngle(0)
       const idleTween = this.tweens.add({ targets: group, y: group.y - 2, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" })
       group.setData("idleTween", idleTween)
       return
     }
     const point = path[index]
-    this.tweens.add({
+    const moveTween = this.tweens.add({
       targets: group, x: point.x, y: point.y, duration: 90, ease: "Linear",
-      onComplete: () => this.animateAlongPath(group, path, index + 1),
+      onComplete: () => {
+        if (group.getData("moveTween") === moveTween) group.setData("moveTween", undefined)
+        this.animateAlongPath(group, path, index + 1)
+      },
     })
+    group.setData("moveTween", moveTween)
   }
 
   private drawGround() {
@@ -537,15 +553,36 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       }
       const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
       const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
-      const idleTween = group.getData("idleTween") as Phaser.Tweens.Tween | undefined
-      idleTween?.stop()
-      this.tweens.killTweensOf(group)
-      if (Phaser.Math.Distance.Between(group.x, group.y, x, y) > 24) {
-        const path = this.findWalkPath(group.x, group.y, x, y)
-        if (path.length > 0) this.animateAlongPath(group, path)
-        else {
-          // Never cut through a building when the navigation grid has no route.
-          group.setData("navigationBlocked", true)
+      const distanceToTarget = Phaser.Math.Distance.Between(group.x, group.y, x, y)
+      if (distanceToTarget > 24) {
+        const targetX = group.getData("moveTargetX") as number | undefined
+        const targetY = group.getData("moveTargetY") as number | undefined
+        const isWalking = Boolean(group.getData("isWalking"))
+        const targetUnchanged = targetX !== undefined && targetY !== undefined &&
+          Phaser.Math.Distance.Between(targetX, targetY, x, y) < 8
+        // Polling refreshes must not cancel an in-progress walk toward the same destination.
+        if (!isWalking || !targetUnchanged) {
+          const moveTween = group.getData("moveTween") as Phaser.Tweens.Tween | undefined
+          moveTween?.stop()
+          const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+          walkTween?.stop()
+          group.setData("isWalking", false)
+          group.setData("moveTargetX", x)
+          group.setData("moveTargetY", y)
+          const path = this.findWalkPath(group.x, group.y, x, y)
+          if (path.length > 0) {
+            this.animateAlongPath(group, path)
+            group.setData("navigationBlocked", false)
+          } else {
+            // Never cut through a building when the navigation grid has no route.
+            group.setData("navigationBlocked", true)
+          }
+        }
+      } else if (!group.getData("isWalking")) {
+        const idleTween = group.getData("idleTween") as Phaser.Tweens.Tween | undefined
+        if (!idleTween?.isPlaying()) {
+          const nextIdleTween = this.tweens.add({ targets: group, y: group.y - 2, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+          group.setData("idleTween", nextIdleTween)
         }
       }
       group.setDepth(y + 50)
