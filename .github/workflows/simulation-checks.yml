@@ -1,0 +1,24 @@
+name: Money102 simulation checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, feature/thai-life-simulation-foundation]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build frontend
+        run: npm run build
+      - name: Run deterministic Worker smoke tests
+        run: node worker/tests/simulator-smoke.mjs
