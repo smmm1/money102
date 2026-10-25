@@ -39,6 +39,19 @@ const moneyBeforeWork = wageResident.money
 engine.applyResidentActivity(wageResident, "work", wageWorld.minute)
 assert.equal(wageResident.money, moneyBeforeWork, "starting a work shift must not grant instant wages")
 
+// Skills persist on the resident and level up deterministically from activities.
+engine.applyResidentActivity(wageResident, "study", wageWorld.minute)
+assert.equal(wageResident.skills.learning.xp, 10)
+for (let i = 0; i < 9; i++) engine.applyResidentActivity(wageResident, "study", wageWorld.minute)
+assert.equal(wageResident.skills.learning.xp, 100)
+assert.equal(wageResident.skills.learning.level, 2, "100 skill XP should unlock level 2")
+const cashBeforeShop = wageResident.money
+engine.applyResidentActivity(wageResident, "shop", wageWorld.minute)
+assert.equal(wageResident.money, Math.max(0, cashBeforeShop - Math.min(35, cashBeforeShop)), "shopping should spend simulated money")
+const healthBeforeExercise = wageResident.health
+engine.applyResidentActivity(wageResident, "exercise", wageWorld.minute)
+assert.equal(wageResident.health, Math.min(100, healthBeforeExercise + 2), "exercise should improve simulated health")
+
 // A manual order should override the routine for one in-game hour, then let the schedule resume.
 const commandWorld = engine.starterSimulatorState()
 const commanded = commandWorld.residents.find((resident) => resident.id === "ploy")
