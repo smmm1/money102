@@ -100,6 +100,8 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [cloudError, setCloudError] = useState("")
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
+  useEffect(() => { installStorageShim() }, [])
+
   useEffect(() => {
     if (!user) { setCloudReady(false); setCloudError(""); return }
     let cancelled = false
