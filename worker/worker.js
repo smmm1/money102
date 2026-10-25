@@ -97,18 +97,18 @@ function applyResidentActivity(p,activity,minute) {
  return true;
 }
 function moveResidentForActivity(p,activity) {
- const homes={ploy:[31,27],non:[12,63],fah:[39,27],somchai:[12,36],may:[57,36],jay:[66,27]};
- const jobs={ploy:[31,36],non:[82,43],fah:[39,63],somchai:[12,36],may:[59,18],jay:[66,18]};
+ const homes={ploy:[31,27],non:[12,69],fah:[39,27],somchai:[12,42],may:[57,44],jay:[66,27]};
+ const jobs={ploy:[36,44],non:[82,43],fah:[39,63],somchai:[12,28],may:[59,28],jay:[66,27]};
  const ids=["ploy","non","fah","somchai","may","jay"];
  const home=homes[p.id]||[50,50],job=jobs[p.id]||[50,50];
  let destination=home;
  if(activity==="work")destination=job;
- else if(activity==="eat"||activity==="shop")destination=p.id==="somchai"?[12,20]:[82,43];
+ else if(activity==="eat"||activity==="shop")destination=p.id==="somchai"?[12,28]:[82,43];
  else if(activity==="socialize")destination=[59,63];
  else if(activity==="exercise")destination=[78,83];
  else if(activity==="study")destination=p.id==="fah"?[39,63]:home;
  else if(activity==="commute"||activity==="travel")destination=[45,49];
- else if(activity==="cook")destination=p.id==="somchai"?[12,20]:home;
+ else if(activity==="cook")destination=p.id==="somchai"?[12,28]:home;
  else if(activity==="relax"||activity==="sleep"||activity==="bathe"||activity==="clean"||activity==="use_phone"||activity==="use_toilet")destination=home;
  // Small deterministic offsets keep residents from occupying the exact same pixel.
  const offset=ids.indexOf(p.id);
