@@ -13,6 +13,7 @@ type PixelCityProps = {
   residents: PixelResident[]
   selectedId: string
   onSelect: (id: string) => void
+  onAction: (action: string, target: { x: number; y: number }) => void
   hour: number
 }
 
@@ -38,6 +39,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   private residents: PixelResident[] = []
   private selectedId = ""
   private selectResident: (id: string) => void = () => {}
+  private issueAction: (action: string, target: { x: number; y: number }) => void = () => {}
   private residentSprites = new Map<string, Phaser.GameObjects.Container>()
   private interiorLayer?: Phaser.GameObjects.Container
   private ambientOverlay?: Phaser.GameObjects.Rectangle
@@ -47,10 +49,11 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     super("thai-neighbourhood")
   }
 
-  init(data: { residents: PixelResident[]; selectedId: string; onSelect: (id: string) => void; hour: number }) {
+  init(data: { residents: PixelResident[]; selectedId: string; onSelect: (id: string) => void; onAction: (action: string, target: { x: number; y: number }) => void; hour: number }) {
     this.residents = data.residents
     this.selectedId = data.selectedId
     this.selectResident = data.onSelect
+    this.issueAction = data.onAction
     this.worldHour = data.hour ?? 7
   }
 
@@ -374,13 +377,13 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     for (const place of places) {
       this.add.zone(place.x, place.y, place.w, place.h).setOrigin(0.5, 0.5)
         .setInteractive({ useHandCursor: true })
-        .on("pointerdown", () => this.showInterior(place.name, place.kind))
+        .on("pointerdown", () => this.showInterior(place.name, place.kind, place.x, place.y))
         .on("pointerover", () => this.game.canvas.style.cursor = "pointer")
         .on("pointerout", () => this.game.canvas.style.cursor = "default")
     }
   }
 
-  private showInterior(name: string, kind: string) {
+  private showInterior(name: string, kind: string, worldX: number, worldY: number) {
     this.interiorLayer?.destroy(true)
     const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(10000)
     this.interiorLayer = layer
@@ -424,6 +427,38 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       furniture(x + panelW - 112, y + 194, 104, 50, 0x9a8b68)
       add(this.add.text(x + panelW / 2, y + panelH - 73, "พื้นที่ใช้งาน · อุปกรณ์ · จุดพัก", { fontFamily: "Tahoma", fontSize: "11px", color: "#53634d" }).setOrigin(0.5).setScrollFactor(0))
     }
+    const actionsByKind: Record<string, Array<[string, string]>> = {
+      home: [["sleep", "นอนพัก"], ["bathe", "อาบน้ำ"], ["cook", "ทำอาหาร"]],
+      shop: [["shop", "ซื้อของ"], ["eat", "กินข้าว"], ["socialize", "พูดคุย"]],
+      cafe: [["eat", "กินข้าว"], ["shop", "ซื้อของ"], ["socialize", "พูดคุย"]],
+      market: [["shop", "ซื้อของ"], ["eat", "กินข้าว"], ["socialize", "พูดคุย"]],
+      office: [["work", "ทำงาน"], ["relax", "พักผ่อน"], ["use_phone", "ใช้โทรศัพท์"]],
+      study: [["study", "อ่านหนังสือ"], ["relax", "พักผ่อน"], ["use_phone", "ใช้โทรศัพท์"]],
+      clinic: [["relax", "พักผ่อน"], ["exercise", "ออกกำลัง"], ["socialize", "พบปะ"]],
+      community: [["socialize", "พบปะ"], ["relax", "พักผ่อน"], ["use_phone", "ใช้โทรศัพท์"]],
+      transit: [["travel", "เดินทาง"], ["commute", "ไปทำงาน"], ["relax", "พักผ่อน"]],
+      park: [["exercise", "ออกกำลัง"], ["relax", "พักผ่อน"], ["socialize", "พบปะ"]],
+      temple: [["relax", "พักใจ"], ["socialize", "พบปะ"], ["study", "อ่านหนังสือ"]],
+    }
+    const actions = actionsByKind[kind] ?? actionsByKind.community
+    const gap = 7
+    const buttonWidth = (panelW - 52 - gap * (actions.length - 1)) / actions.length
+    const buttonY = y + panelH - 51
+    actions.forEach(([action, label], index) => {
+      const buttonX = floorX + buttonWidth / 2 + index * (buttonWidth + gap)
+      const button = this.add.rectangle(buttonX, buttonY, buttonWidth, 25, 0x527553)
+        .setStrokeStyle(1, 0x3c6544).setScrollFactor(0).setInteractive({ useHandCursor: true })
+      add(button)
+      add(this.add.text(buttonX, buttonY, label, {
+        fontFamily: "Tahoma, sans-serif", fontSize: "10px", color: "#fff6d9",
+        fontStyle: "bold", align: "center",
+      }).setOrigin(0.5).setScrollFactor(0))
+      button.on("pointerdown", () => {
+        this.issueAction(action, { x: Number(((worldX / WORLD_W) * 100).toFixed(2)), y: Number(((worldY / WORLD_H) * 100).toFixed(2)) })
+        this.interiorLayer?.destroy(true)
+        this.interiorLayer = undefined
+      })
+    })
     add(this.add.text(x + 22, y + panelH - 32, "ห้องจำลอง · แตะปุ่มปิดเพื่อกลับสู่เมือง", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
     const closeButton = this.add.text(x + panelW - 18, y + 17, "× ปิด", {
       fontFamily: "Tahoma, sans-serif", fontSize: "14px", fontStyle: "bold", color: "#fff3d2",
@@ -526,7 +561,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   }
 }
 
-export default function PixelCity({ residents, selectedId, onSelect, hour }: PixelCityProps) {
+export default function PixelCity({ residents, selectedId, onSelect, onAction, hour }: PixelCityProps) {
   const host = useRef<HTMLDivElement>(null)
   const game = useRef<Phaser.Game | null>(null)
   const sceneRef = useRef<ThaiNeighbourhoodScene | null>(null)
@@ -534,10 +569,12 @@ export default function PixelCity({ residents, selectedId, onSelect, hour }: Pix
   const selectedRef = useRef(selectedId)
   const hourPropRef = useRef(hour)
   const onSelectRef = useRef(onSelect)
+  const onActionRef = useRef(onAction)
   residentsRef.current = residents
   hourPropRef.current = hour
   selectedRef.current = selectedId
   onSelectRef.current = onSelect
+  onActionRef.current = onAction
 
   useEffect(() => {
     if (!host.current || game.current) return
@@ -548,6 +585,7 @@ export default function PixelCity({ residents, selectedId, onSelect, hour }: Pix
           residents: residentsRef.current,
           selectedId: selectedRef.current,
           onSelect: (id) => onSelectRef.current(id),
+          onAction: (action, target) => onActionRef.current(action, target),
           hour: hourPropRef.current,
         })
       }
