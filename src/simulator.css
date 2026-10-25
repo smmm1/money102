@@ -7,7 +7,7 @@
 .sim-market{left:43%;top:12%;width:66px;height:60px;background:#d4b87c;border-color:#fff4d9}
 .sim-bbq{right:8%;bottom:37%;width:68px;height:60px;background:#d98c78;border-color:#fff0d7}
 .sim-offline-hint{display:block;margin-top:5px;color:#7f9a77!important;letter-spacing:0!important;font-size:9px!important}
-.sim-portal-zone{margin-top:16px;background:#fff;border:1px solid #e5e7dd;border-radius:15px;padding:18px;min-width:0}
+.sim-portal-zone{grid-column:1/-1;margin-top:16px;background:#fff;border:1px solid #e5e7dd;border-radius:15px;padding:18px;min-width:0}
 .sim-portal-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
 .sim-portal-heading h3{margin:5px 0 0;font-size:17px;font-weight:600}
 .sim-portal-live{font-size:9px;color:#8a9883}
@@ -20,7 +20,7 @@
 .sim-portal-copy strong{font-size:12px;font-weight:650}
 .sim-portal-copy small{font-size:9px;line-height:1.55;color:#849080}
 .sim-portal-arrow{font-size:15px;color:#9aa593}
-.sim-live-data{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:13px}
+.sim-live-data{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:13px}
 .sim-live-data>div{display:grid;gap:5px;min-width:0;padding:11px;border-radius:9px;background:#f7f8f3}
 .sim-live-data small{font-size:9px;color:#899482}
 .sim-live-data strong{font-size:16px;font-weight:650;color:#405b43;overflow-wrap:anywhere}
