@@ -7,7 +7,7 @@ assert.doesNotThrow(() => new Function(source.replace("export default {", "retur
 const executable = source
   .slice(0, source.indexOf("export default {"))
   .replaceAll("crypto.randomUUID()", '"smoke-id"')
-const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity };")()
+const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity };")()
 const state = engine.starterSimulatorState()
 
 assert.equal(state.version, 1)
@@ -61,4 +61,15 @@ urgentResident.playerCommandUntil = (urgentWorld.day - 1) * 1440 + urgentWorld.m
 engine.advanceLifeWorld(urgentWorld, 10)
 assert.equal(urgentResident.activity, "use_toilet", "urgent bladder need should override the player order")
 
-console.log("Worker syntax, 30-day life simulation, command duration, priority, and wage smoke checks passed.")
+// An action selected inside a building should route the resident to that entrance.
+// Untrusted/out-of-range target coordinates must fall back to a safe activity destination.
+const destinationWorld = engine.starterSimulatorState()
+const visitor = destinationWorld.residents.find((resident) => resident.id === "ploy")
+engine.moveResidentForActivity(visitor, "work", { x: 12.3, y: 20.2 })
+assert.equal(visitor.x, 12.3)
+assert.equal(visitor.y, 20.2)
+engine.moveResidentForActivity(visitor, "work", { x: 120, y: -5 })
+assert.ok(visitor.x >= 4 && visitor.x <= 96)
+assert.ok(visitor.y >= 5 && visitor.y <= 94)
+
+console.log("Worker syntax, 30-day life simulation, command duration, priority, wages, and interior routing smoke checks passed.")
