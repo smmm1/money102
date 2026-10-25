@@ -1,5 +1,6 @@
+import CloudAuth from "./CloudAuth"
 import CommandCenter from "./CommandCenter"
 
 export default function App() {
-  return <CommandCenter />
+  return <CloudAuth><CommandCenter /></CloudAuth>
 }
