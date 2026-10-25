@@ -54,8 +54,8 @@ export default function Simulator({ onExit }: { onExit: () => void }) {
       if (data.state) setWorld({ ...initialState, ...data.state })
       else await load()
       setStatus("connected")
-    } catch {
-      setError("การกระทำยังใช้ไม่ได้จนกว่าจะติดตั้ง API และตาราง Simulator ใน Cloudflare D1")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "บันทึกการกระทำไม่สำเร็จ")
     } finally { setBusy(false) }
   }
   async function talk(event: FormEvent) {
@@ -68,8 +68,8 @@ export default function Simulator({ onExit }: { onExit: () => void }) {
       if (typeof data.reply === "string") setReply(data.reply)
       setMessage("")
       setStatus("connected")
-    } catch {
-      setError("ยังไม่ได้เชื่อม Gemini API ฝั่งเซิร์ฟเวอร์ จึงยังส่งข้อความหรือบันทึกความทรงจำจริงไม่ได้")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ส่งข้อความถึง Gemini ไม่สำเร็จ")
     } finally { setBusy(false) }
   }
   const resident = world.residents.find(item => item.id === selected) || world.residents[0]
