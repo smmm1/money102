@@ -85,7 +85,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     <div className="sim-layout">
       <section className="sim-world-panel">
         <div className="sim-panel-heading"><div><span className="sim-eyebrow">THE NEIGHBORHOOD</span><h2>Little Pixel Town</h2></div><span className="sim-resident-count">● {world.residents.length} residents</span></div>
-        <PixelCity residents={world.residents} selectedId={selected} onSelect={setSelected} />
+        <PixelCity residents={world.residents} selectedId={selected} onSelect={setSelected} hour={world.hour} />
         <div className="sim-world-actions"><button disabled={busy} onClick={() => void act("wander")}>↗ สำรวจเมือง</button><button disabled={busy} onClick={() => void act("socialize")}>♡ พบปะกัน</button><button disabled={busy} onClick={() => void act("advance_time")}>◷ เดินเวลา</button></div>
       </section>
       <aside className="sim-side">
