@@ -57,6 +57,7 @@ function scheduleCloudSave() {
   saveTimer = window.setTimeout(() => {
     const payload = readLocalSnapshot()
     saveChain = saveChain.then(() => api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) }))
+      .then(() => window.dispatchEvent(new CustomEvent("d1-persist-success")))
       .catch((error: unknown) => window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) })))
   }, 250)
 }
