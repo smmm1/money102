@@ -6,7 +6,9 @@ import { SIMULATOR_PORTALS, formatPortalCurrency, formatWorldClock, worldPhase, 
 type Resident = { id: string; name: string; role: string; mood: string; activity?: string; x: number; y: number; color: string; bio: string; money?: number; health?: number; needs?: Record<string, number>; moodScore?: number; skills?: Record<string, { xp: number; level: number }> }
 type EventItem = { id: string; text: string; time: string }
 type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; minute?: number; memoriesCount: number; last_simulated_at?: number; lastSimulatedAt?: string }
-const API = window.location.hostname === "money102-command-center-preview.onrender.com" || window.location.hostname === "money102-staging.onrender.com" ? "https://money102-api-staging.s2mtha16.workers.dev" : "https://money102-api.s2mtha16.workers.dev"
+// Unknown hosts (including Vercel preview deployments and localhost) must use staging.
+const PRODUCTION_HOSTS = new Set(["money102.vercel.app", "money102.onrender.com", "money102-web.onrender.com", "money102-new-live.onrender.com"])
+const API = PRODUCTION_HOSTS.has(window.location.hostname.toLowerCase()) ? "https://money102-api.s2mtha16.workers.dev" : "https://money102-api-staging.s2mtha16.workers.dev"
 const initialResidents: Resident[] = [
   { id: "ploy", name: "พลอย", role: "พนักงานบัญชี · 27 ปี", mood: "เตรียมตัวไปทำงาน", activity: "เตรียมอาหารเช้า", x: 24, y: 28, color: "coral", bio: "พนักงานบัญชีที่เช่าห้องใกล้ตลาด ชอบวางแผนค่าใช้จ่ายและโทรหาแม่หลังเลิกงาน" },
   { id: "non", name: "นนท์", role: "ไรเดอร์ส่งอาหาร · 30 ปี", mood: "พักก่อนเริ่มกะ", activity: "เช็กงานส่งอาหาร", x: 53, y: 55, color: "mint", bio: "ไรเดอร์ที่ทำงานตามช่วงเวลาคนสั่งเยอะและแบ่งเงินส่งกลับบ้านต่างจังหวัด" },
