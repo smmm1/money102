@@ -38,6 +38,7 @@ async function readSimulatorState(db,userId) {
   if(v.residents.some(p=>["mira","nori","kai"].includes(p.id)) || v.version!==1) {
    await db.prepare("INSERT INTO simulator_world_archive(id,user_id,state_json,archived_at) VALUES(?,?,?,?)").bind(crypto.randomUUID(),userId,row.state_json,new Date().toISOString()).run();
    const fresh=starterSimulatorState();
+   await db.prepare("DELETE FROM simulator_memories WHERE user_id=?").bind(userId).run();
    await saveSimulatorState(db,userId,fresh);
    return fresh;
   }
@@ -85,7 +86,7 @@ function applyResidentActivity(p,activity,minute) {
 function advanceLifeWorld(state,elapsedMinutes) {
  const steps=Math.max(0,Math.min(10080,Math.floor(elapsedMinutes/10)));
  for(let i=0;i<steps;i++){
-  state.minute=(Number(state.minute)||Number(state.hour||7)*60)+10;
+  state.minute=(state.minute==null?Number(state.hour||7)*60:Number(state.minute))+10;
   if(state.minute>=1440){state.minute-=1440;state.day=(state.day||1)+1;}
   state.hour=Math.floor(state.minute/60);
   for(const p of state.residents){
