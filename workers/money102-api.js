@@ -114,7 +114,8 @@ export default { async fetch(request,env) {
    }
    return json(request,env,{error:"Not found"},404);
   }
-\n  if(url.pathname!=="/api/state"||!["GET","PUT"].includes(request.method))return json(request,env,{error:"Not found"},404);
+
+  if(url.pathname!=="/api/state"||!["GET","PUT"].includes(request.method))return json(request,env,{error:"Not found"},404);
   const user=await getAuthenticatedUser(request,env.DB); if(!user)return json(request,env,{error:"Unauthorized"},401);
   if(request.method==="GET") { const row=await env.DB.prepare("SELECT payload,updated_at FROM user_app_data WHERE user_id=? AND bucket=?").bind(user.id,"app_state").first(); if(!row)return json(request,env,{payload:null,updated_at:null}); try{return json(request,env,{payload:JSON.parse(row.payload),updated_at:row.updated_at});}catch{return json(request,env,{error:"Stored data is invalid JSON"},500);} }
   const body=await parseBody(request); if(!body||!isSnapshot(body.payload))return json(request,env,{error:"payload ต้องเป็น object ที่มีเฉพาะค่า string ของคีย์ lamoon-* (ไม่เกิน 500 รายการ)"},400);
