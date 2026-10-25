@@ -10,6 +10,40 @@ const executable = source
   .slice(0, source.indexOf("export default {"))
   .replaceAll("crypto.randomUUID()", '"smoke-id"')
 const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity };")()
+
+// The scheduled handler must advance and persist a world even when no player is online.
+const worker = new Function(source.replace("export default {", "return {"))()
+assert.equal(typeof worker.scheduled, "function", "Worker must export a scheduled handler")
+const scheduledState = engine.starterSimulatorState()
+const staleTimestamp = Date.now() - 60 * 60 * 1000
+scheduledState.last_simulated_at = staleTimestamp
+const storedRow = {
+  user_id: "smoke-user",
+  state_json: JSON.stringify(scheduledState),
+  updated_at: new Date(staleTimestamp).toISOString(),
+}
+let savedScheduledState = null
+const fakeDb = {
+  prepare(sql) {
+    const statement = {
+      sql,
+      params: [],
+      bind(...params) { this.params = params; return this },
+      async run() {
+        if (this.sql.startsWith("INSERT INTO simulator_worlds")) savedScheduledState = JSON.parse(this.params[1])
+        return { success: true }
+      },
+      async all() { return { results: [storedRow] } },
+      async first() { return null },
+    }
+    return statement
+  },
+}
+await worker.scheduled({ scheduledTime: staleTimestamp }, { DB: fakeDb })
+assert.ok(savedScheduledState, "scheduled tick should persist the simulated world")
+assert.equal(savedScheduledState.minute, 480, "one hour of offline time should advance the in-game clock")
+assert.ok(savedScheduledState.last_simulated_at > staleTimestamp, "scheduled tick should update the simulation timestamp")
+
 const state = engine.starterSimulatorState()
 
 assert.equal(state.version, 1)
@@ -93,5 +127,5 @@ engine.moveResidentForActivity(visitor, "work", { x: 120, y: -5 })
 assert.ok(visitor.x >= 4 && visitor.x <= 96)
 assert.ok(visitor.y >= 5 && visitor.y <= 94)
 
-console.log("Worker syntax, 30-day life simulation, command duration, priority, wages, and interior routing smoke checks passed:", workerUrl.pathname)
+console.log("Worker syntax, scheduled offline progression, 30-day life simulation, command duration, priority, wages, and interior routing smoke checks passed:", workerUrl.pathname)
 }
