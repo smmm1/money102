@@ -21,24 +21,48 @@ const defaultApiUrl = window.location.hostname === "money102-command-center-prev
   : "https://money102-api.s2mtha16.workers.dev"
 const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
 
-function readLocalSnapshot(): LocalSnapshot {
-  const snapshot: LocalSnapshot = {}
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i)
-    if (key?.startsWith(LOCAL_PREFIX)) {
-      const value = localStorage.getItem(key)
-      if (value !== null) snapshot[key] = value
-    }
+let memorySnapshot: LocalSnapshot = {}
+let storageShimInstalled = false
+function installStorageShim() {
+  if (storageShimInstalled) return
+  storageShimInstalled = true
+  const proto = Storage.prototype
+  const nativeGet = proto.getItem
+  const nativeSet = proto.setItem
+  const nativeRemove = proto.removeItem
+  proto.getItem = function(key: string) {
+    if (this === window.localStorage) return memorySnapshot[String(key)] ?? null
+    return nativeGet.call(this, key)
   }
-  return snapshot
+  proto.setItem = function(key: string, value: string) {
+    if (this !== window.localStorage) return nativeSet.call(this, key, value)
+    const k = String(key), v = String(value)
+    memorySnapshot[k] = v
+    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
+  }
+  proto.removeItem = function(key: string) {
+    if (this !== window.localStorage) return nativeRemove.call(this, key)
+    const k = String(key)
+    delete memorySnapshot[k]
+    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
+  }
 }
-
+function readLocalSnapshot(): LocalSnapshot {
+  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key]) => key.startsWith(LOCAL_PREFIX)))
+}
+let saveTimer: number | undefined
+let saveChain: Promise<unknown> = Promise.resolve()
+function scheduleCloudSave() {
+  if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+  saveTimer = window.setTimeout(() => {
+    const payload = readLocalSnapshot()
+    saveChain = saveChain.then(() => api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) }))
+      .catch((error: unknown) => window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) })))
+  }, 250)
+}
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  Object.entries(snapshot || {}).forEach(([key, value]) => {
-    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") localStorage.setItem(key, value)
-  })
+  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
 }
-
 let sessionToken = ""
 function getToken() { return sessionToken }
 
