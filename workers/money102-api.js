@@ -2,7 +2,7 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30;
 const PASSWORD_ITERATIONS = 100000;
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const allowed = new Set([env.APP_ORIGIN, "https://money102.onrender.com","https://money102-web.onrender.com","https://money102-staging.onrender.com","https://money102-command-center-preview.onrender.com", "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean));
+  const allowed = new Set([env.APP_ORIGIN, "https://money102.onrender.com","https://money102-web.onrender.com","https://money102-new-live.onrender.com","https://money102-staging.onrender.com","https://money102-command-center-preview.onrender.com", "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean));
   const headers = {"Access-Control-Allow-Methods":"GET, POST, PUT, OPTIONS","Access-Control-Allow-Headers":"Authorization, Content-Type","Access-Control-Max-Age":"86400","Vary":"Origin"};
   if (allowed.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
