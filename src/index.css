@@ -1,10 +1,5 @@
 @import 'tailwindcss';
 
 @layer base {
-  :root { font-family: "IBM Plex Sans Thai", "DM Sans", sans-serif; color:#242920; background:#f7f8f5; font-synthesis:none; text-rendering:optimizeLegibility; }
-  html { scroll-behavior:smooth; }
-  body { min-width:320px; min-height:100vh; background:#f7f8f5; }
-  button { cursor:pointer; }
-  button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible { outline:3px solid #9cb8a1; outline-offset:2px; }
   ::selection { background:#dce9d8; color:#243c29; }
 }
