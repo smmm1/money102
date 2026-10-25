@@ -17,6 +17,16 @@ const initialResidents: Resident[] = [
 ]
 const initialState: WorldState = { residents: initialResidents, events: [{ id: "welcome", text: "เริ่มชีวิตใหม่ในชุมชนไทย — ตัวละครชุดใหม่พร้อมแล้ว", time: "07:00" }], day: 1, hour: 7, memoriesCount: 1 }
 function token() { try { return sessionStorage.getItem("money102_auth_token") || "" } catch { return "" } }
+function presentWorld(data: any): WorldState {
+  const residents = Array.isArray(data?.residents)
+    ? data.residents.map((person: Resident & { activityLabel?: string }) => ({
+        ...person,
+        activity: person.activityLabel || person.activity,
+        mood: typeof person.mood === "string" ? person.mood : "กำลังใช้ชีวิต",
+      }))
+    : initialResidents
+  return { ...initialState, ...data, residents }
+}
 async function request(path: string, init?: RequestInit) {
   const headers = new Headers(init?.headers)
   const auth = token()
@@ -37,7 +47,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     try {
       const data = await request("/api/simulator/state")
       if (data && Array.isArray(data.residents) && Array.isArray(data.events)) {
-        setWorld({ ...initialState, ...data })
+        setWorld(presentWorld(data))
         setStatus("connected")
         setError("")
       } else {
@@ -54,7 +64,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     setBusy(true); setError("")
     try {
       const data = await request("/api/simulator/action", { method: "POST", body: JSON.stringify({ action, residentId: selected }) })
-      if (data.state) setWorld({ ...initialState, ...data.state })
+      if (data.state) setWorld(presentWorld(data.state))
       else await load()
       setStatus("connected")
     } catch (err) {
