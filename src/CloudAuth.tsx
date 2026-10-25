@@ -63,8 +63,14 @@ function scheduleCloudSave() {
 function restoreSnapshot(snapshot: LocalSnapshot) {
   memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.length > 0 && typeof value === "string"))
 }
-let sessionToken = ""
+const AUTH_TOKEN_KEY = "money102_auth_token"
+let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
 function getToken() { return sessionToken }
+function setSessionToken(token: string) {
+  sessionToken = token
+  if (token) window.sessionStorage.setItem(AUTH_TOKEN_KEY, token)
+  else window.sessionStorage.removeItem(AUTH_TOKEN_KEY)
+}
 
 async function api(path: string, init: RequestInit = {}) {
   const token = getToken()
@@ -100,7 +106,21 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [cloudError, setCloudError] = useState("")
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
-  useEffect(() => { installStorageShim() }, [])
+  useEffect(() => {
+    installStorageShim()
+    if (!sessionToken) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const result = await api("/api/auth/me") as { user: AppUser }
+        if (!cancelled) setUser(result.user)
+      } catch {
+        setSessionToken("")
+        if (!cancelled) setUser(null)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     if (!user) { setCloudReady(false); setCloudError(""); return }
@@ -132,7 +152,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       }) as { token: string; user: AppUser }
-      sessionToken = result.token
+      setSessionToken(result.token)
       setUser(result.user)
       setPassword("")
       setMessage("เข้าสู่ระบบสำเร็จ")
@@ -145,7 +165,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
 
   async function signOut() {
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
-    sessionToken = ""
+    setSessionToken("")
     setUser(null)
     setCloudReady(false)
     setCloudError("")
