@@ -289,25 +289,6 @@ export default function PixelCity({ residents, selectedId, onSelect }: PixelCity
       antialias: false,
       roundPixels: true,
       scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
-      scene: {
-        key: "thai-neighbourhood",
-        create: function (this: Phaser.Scene) {
-          // Scene is created as a real Phaser scene; delegate rendering to our scene class.
-        },
-      },
-    })
-    // Replace the placeholder scene with the full neighbourhood scene once boot completes.
-    game.current.destroy(true)
-    game.current = new Phaser.Game({
-      type: Phaser.AUTO,
-      parent: host.current,
-      width: host.current.clientWidth || 900,
-      height: host.current.clientHeight || 500,
-      backgroundColor: "#9fbd86",
-      pixelArt: true,
-      antialias: false,
-      roundPixels: true,
-      scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
       scene: [class extends ThaiNeighbourhoodScene {
         constructor() { super() }
         init() {
