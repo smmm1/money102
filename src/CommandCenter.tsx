@@ -405,7 +405,7 @@ export default function CommandCenter() {
   ]
   const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", pork: "ประวัติหมูกระทะ", simulator: "AI Simulator" }
 
-  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
+  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold") + (page === "simulator" ? " game-mode" : "")}>
     <main className="main-area">
       <header className="topbar">
         <button className="brand" onClick={event => { if (event.detail >= 2) go("simulator"); else go("home") }} aria-label="กลับหน้าภาพรวม · ดับเบิลคลิกเพื่อเปิด AI Simulator" title="ดับเบิลคลิกเพื่อเปิด AI Simulator"><span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path className="brand-loop" d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" /><circle className="brand-spark" cx="30" cy="10" r="2.2" /></svg></span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
