@@ -44,3 +44,12 @@
 .pixel-city canvas{display:block;width:100%!important;height:100%!important;image-rendering:pixelated;image-rendering:crisp-edges;outline:0}
 .sim-world-panel{min-width:0}
 @media(max-width:680px){.pixel-city{height:430px;border-width:3px}}
+
+
+/* Resident life panel */
+.sim-wallet{display:grid;grid-template-columns:1fr auto;gap:5px 12px;align-items:center;margin:14px 0 10px;padding:12px;border-radius:10px;background:#f6f3e7;border:1px solid #e7e0cb}
+.sim-wallet span{font-size:11px;color:#687565}.sim-wallet strong{font-size:19px;color:#42694a;font-weight:700}.sim-wallet small{grid-column:1/-1;font-size:9px;color:#93998b}
+.sim-needs{padding:12px;border:1px solid #e7e9de;border-radius:10px;background:#fffefa;margin-bottom:12px}
+.sim-needs-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}.sim-needs-title strong{font-size:11px;color:#4e5d4b}.sim-needs-title span{font-size:10px;color:#b16e57}
+.sim-need{display:grid;grid-template-columns:78px minmax(0,1fr) 32px;gap:8px;align-items:center;margin:8px 0}.sim-need>span{font-size:10px;color:#737e6d}.sim-need>small{font-size:9px;color:#858e7e;text-align:right}
+.sim-need-track{height:7px;border-radius:2px;background:#e9eadf;overflow:hidden}.sim-need-track i{display:block;height:100%;background:#8eaf7d;border-right:2px solid #577d56;transition:width .3s steps(6)}
