@@ -353,18 +353,18 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
 
   private drawInteriorEntrances() {
     const places = [
-      { x: 236, y: 258, w: 110, h: 62, name: "ร้านข้าวแกง", kind: "shop" },
+      { x: 236, y: 258, w: 110, h: 62, name: "ร้านข้าวแกง", kind: "food" },
       { x: 382, y: 262, w: 104, h: 58, name: "ร้านชำชุมชน", kind: "shop" },
       { x: 600, y: 246, w: 120, h: 62, name: "ห้องเช่าของพลอย", kind: "home" },
       { x: 750, y: 246, w: 120, h: 62, name: "หอพักนักศึกษา", kind: "home" },
       { x: 1150, y: 250, w: 120, h: 62, name: "คลินิกชุมชน", kind: "clinic" },
-      { x: 1320, y: 252, w: 120, h: 62, name: "ร้านซ่อมมือถือ", kind: "shop" },
+      { x: 1320, y: 252, w: 120, h: 62, name: "ร้านซ่อมมือถือ", kind: "workshop" },
       { x: 1590, y: 260, w: 120, h: 60, name: "ร้านกาแฟ", kind: "cafe" },
       { x: 240, y: 468, w: 125, h: 62, name: "บ้านลุงสมชาย", kind: "home" },
-      { x: 410, y: 472, w: 110, h: 58, name: "ร้านซักผ้า", kind: "shop" },
+      { x: 410, y: 472, w: 110, h: 58, name: "ร้านซักผ้า", kind: "laundry" },
       { x: 600, y: 472, w: 125, h: 62, name: "สำนักงานบัญชี", kind: "office" },
       { x: 1140, y: 466, w: 120, h: 62, name: "บ้านเมย์", kind: "home" },
-      { x: 1320, y: 470, w: 120, h: 58, name: "ร้านอาหารตามสั่ง", kind: "shop" },
+      { x: 1320, y: 470, w: 120, h: 58, name: "ร้านอาหารตามสั่ง", kind: "food" },
       { x: 1580, y: 468, w: 125, h: 62, name: "ตลาดสด", kind: "market" },
       { x: 240, y: 808, w: 115, h: 60, name: "ห้องเช่าของนนท์", kind: "home" },
       { x: 405, y: 810, w: 105, h: 58, name: "ร้านยา", kind: "clinic" },
@@ -372,7 +372,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       { x: 1145, y: 808, w: 125, h: 60, name: "ศาลาชุมชน", kind: "community" },
       { x: 1328, y: 812, w: 112, h: 58, name: "สถานีรถ", kind: "transit" },
       { x: 1582, y: 812, w: 125, h: 60, name: "สวนสาธารณะ", kind: "park" },
-      { x: 752, y: 1055, w: 125, h: 60, name: "ร้านหมูกระทะ", kind: "shop" },
+      { x: 752, y: 1055, w: 125, h: 60, name: "ร้านหมูกระทะ", kind: "food" },
       { x: 945, y: 1055, w: 125, h: 60, name: "สถานีรถสองแถว", kind: "transit" },
       { x: 1150, y: 1055, w: 125, h: 60, name: "วัดร่มเย็น", kind: "temple" },
     ]
@@ -419,7 +419,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       furniture(x + panelW - 100, y + 200, 84, 92, 0x7b9c83)
       add(this.add.rectangle(x + panelW / 2, y + panelH - 82, 76, 38, 0x6b8f9b).setStrokeStyle(3, 0x536e72).setScrollFactor(0))
       add(this.add.text(x + panelW / 2, y + panelH - 90, "เตียง / พักผ่อน", { fontFamily: "Tahoma", fontSize: "11px", color: "#fff8df" }).setOrigin(0.5).setScrollFactor(0))
-    } else if (kind === "market" || kind === "shop" || kind === "cafe") {
+    } else if (kind === "market" || kind === "shop" || kind === "cafe" || kind === "food") {
       furniture(x + 105, y + 190, 140, 42, 0xa86648)
       furniture(x + panelW - 112, y + 190, 100, 62, 0x759a6a)
       for (let i = 0; i < 5; i++) add(this.add.rectangle(x + 68 + i * 25, y + 178, 12, 12, [0xd36c52,0xe4b44f,0x78a66e][i % 3]).setScrollFactor(0))
@@ -431,6 +431,9 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     }
     const actionsByKind: Record<string, Array<[string, string]>> = {
       home: [["sleep", "นอนพัก"], ["bathe", "อาบน้ำ"], ["cook", "ทำอาหาร"]],
+      food: [["eat", "กินข้าว"], ["cook", "ทำอาหาร"], ["socialize", "พูดคุย"]],
+      workshop: [["work", "ซ่อม/ทำงาน"], ["clean", "จัดร้าน"], ["use_phone", "ใช้โทรศัพท์"]],
+      laundry: [["clean", "ซักผ้า/ทำความสะอาด"], ["relax", "พัก"], ["socialize", "พูดคุย"]],
       shop: [["shop", "ซื้อของ"], ["eat", "กินข้าว"], ["socialize", "พูดคุย"]],
       cafe: [["eat", "กินข้าว"], ["shop", "ซื้อของ"], ["socialize", "พูดคุย"]],
       market: [["shop", "ซื้อของ"], ["eat", "กินข้าว"], ["socialize", "พูดคุย"]],
