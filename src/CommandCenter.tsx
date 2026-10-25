@@ -140,6 +140,44 @@ export default function CommandCenter() {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const [receiptFileName, setReceiptFileName] = useState("")
 
+  type SplitBill = { id: string; title: string; total: number; tip: number; people: string[]; shares: number[]; mode: "equal" | "custom"; createdAt: string }
+  const [splitTitle, setSplitTitle] = useState("")
+  const [splitTotal, setSplitTotal] = useState("")
+  const [splitTip, setSplitTip] = useState("0")
+  const [splitPeople, setSplitPeople] = useState<string[]>(["", ""])
+  const [splitMode, setSplitMode] = useState<"equal" | "custom">("equal")
+  const [splitShares, setSplitShares] = useState<string[]>(["", ""])
+  const [splitHistory, setSplitHistory] = useState<SplitBill[]>(() => read("money102-split-bill-history-v1", []))
+  const [showSplitHistory, setShowSplitHistory] = useState(false)
+  const [splitNotice, setSplitNotice] = useState("")
+  const splitBase = Math.max(0, Number(splitTotal) || 0)
+  const splitExtra = Math.max(0, Number(splitTip) || 0)
+  const splitGrandTotal = Math.round((splitBase + splitExtra) * 100) / 100
+  const splitNames = splitPeople.map((name, index) => name.trim() || `คนที่ ${index + 1}`)
+  const splitEqualShares = (() => {
+    const cents = Math.round(splitGrandTotal * 100)
+    const each = Math.floor(cents / Math.max(1, splitPeople.length))
+    const remainder = cents - each * Math.max(1, splitPeople.length)
+    return splitPeople.map((_, index) => (each + (index < remainder ? 1 : 0)) / 100)
+  })()
+  const splitCustomShares = splitShares.map(value => Math.round((Number(value) || 0) * 100) / 100)
+  const splitCalculatedShares = splitMode === "equal" ? splitEqualShares : splitCustomShares
+  const splitShareSum = Math.round(splitCalculatedShares.reduce((sum, value) => sum + value, 0) * 100) / 100
+  const splitValid = splitBase > 0 && splitPeople.length > 0 && (splitMode === "equal" || (splitShares.length === splitPeople.length && Math.abs(splitShareSum - splitGrandTotal) < 0.011))
+  const splitMoney = (value: number) => new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
+  const updateSplitPeople = (next: string[]) => { setSplitPeople(next); setSplitShares(old => next.map((_, index) => old[index] || "")) }
+  const saveSplitBill = () => {
+    if (!splitValid) { setSplitNotice(splitMode === "custom" ? "ยอดรายคนต้องรวมกันเท่ากับยอดบิลรวม" : "ใส่ยอดบิลและจำนวนคนก่อนบันทึก"); return }
+    const bill: SplitBill = { id: uid(), title: splitTitle.trim() || "บิลไม่มีชื่อ", total: splitBase, tip: splitExtra, people: [...splitNames], shares: [...splitCalculatedShares], mode: splitMode, createdAt: new Date().toISOString() }
+    setSplitHistory(old => [bill, ...old])
+    setSplitNotice("บันทึกบิลไว้ในประวัติแล้ว")
+    setSplitTitle(""); setSplitTotal(""); setSplitTip("0")
+    setSplitPeople(["", ""]); setSplitShares(["", ""])
+    setSplitMode("equal")
+    setShowSplitHistory(false)
+  }
+  useEffect(() => { safeSet("money102-split-bill-history-v1", JSON.stringify(splitHistory)) }, [splitHistory])
+
   useEffect(() => { safeSet(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { safeSet("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) }, [hiddenWidgets])
   useEffect(() => { safeSet("money102-dashboard-order-v1", JSON.stringify(dashboardOrder)) }, [dashboardOrder])
@@ -404,11 +442,37 @@ export default function CommandCenter() {
 
 
 
-      {page === "split" && <section className="page-content">
-        <div className="page-heading-row"><div><span className="eyebrow">SHARED EXPENSES · กลุ่มและเพื่อน</span><h1>หารค่าใช้จ่าย</h1><p>เที่ยวด้วยกัน กินด้วยกัน แล้วรู้ชัดว่าใครจ่ายไปเท่าไร</p></div><button className="button button-primary" onClick={() => setToast({ message: "หน้าแสดงตัวอย่างอยู่ — ระบบสร้างกลุ่มจะทำแยกในขั้นถัดไป" })}><Icon name="plus"/>สร้างกลุ่ม</button></div>
-        <section className="split-hero"><div className="split-hero-copy"><span className="split-kicker"><Icon name="split"/> SHARE FAIRLY</span><h2>จ่ายแทนกันได้<br/><em>ไม่ต้องจำว่าใครติดใคร</em></h2><p>รวมค่าอาหาร ทริป และค่าใช้จ่ายร่วมกันไว้ในที่เดียว พร้อมสรุปยอดคืนเงินให้อ่านง่าย</p><button className="button split-light-button" onClick={() => setToast({ message: "เราจะออกแบบขั้นตอนเพิ่มค่าใช้จ่ายด้วยกันในรอบถัดไป" })}>เพิ่มค่าใช้จ่าย <Icon name="arrow"/></button></div><div className="split-hero-art" aria-hidden="true"><span className="split-orbit orbit-a"/><span className="split-orbit orbit-b"/><span className="split-avatar avatar-a">ม</span><span className="split-avatar avatar-b">ก</span><span className="split-avatar avatar-c">พ</span><span className="split-coin">฿</span></div></section>
-        <div className="split-stats"><article className="surface split-stat"><span>กลุ่มของคุณ</span><strong>—</strong><small>ยังไม่ได้สร้างกลุ่ม</small></article><article className="surface split-stat"><span>ยอดที่คนอื่นติดคุณ</span><strong>฿ —</strong><small>จะแสดงเมื่อมีรายการจริง</small></article><article className="surface split-stat"><span>ยอดที่คุณต้องคืน</span><strong>฿ —</strong><small>จะแสดงเมื่อมีรายการจริง</small></article></div>
-        <section className="surface split-workspace"><div className="surface-heading"><div><span className="eyebrow">พื้นที่กลุ่ม</span><h3>ค่าใช้จ่ายร่วมกัน</h3></div><span className="draft-pill">เตรียมระบบ</span></div><div className="split-empty"><span className="split-empty-icon"><Icon name="split"/></span><h3>เริ่มจากกลุ่มแรกของคุณ</h3><p>สร้างกลุ่มสำหรับทริป เพื่อนร่วมห้อง หรือมื้ออาหาร จากนั้นค่อยเพิ่มสมาชิกและรายการที่จ่ายแทนกัน</p><button className="button button-secondary" onClick={() => setToast({ message: "ยังไม่ได้บันทึกกลุ่มหรือข้อมูลใด ๆ — หน้านี้เป็นโครง UI ก่อน" })}>ดูขั้นตอนการใช้งาน <Icon name="arrow"/></button></div><div className="split-feature-row"><div><span className="split-feature-icon"><Icon name="wallet"/></span><span><strong>แบ่งได้หลายแบบ</strong><small>หารเท่ากันหรือกำหนดยอดเอง</small></span></div><div><span className="split-feature-icon"><Icon name="check"/></span><span><strong>สรุปยอดคืนเงิน</strong><small>ลดความสับสนว่าใครติดใคร</small></span></div><div><span className="split-feature-icon"><Icon name="calendar"/></span><span><strong>ดูประวัติย้อนหลัง</strong><small>ตรวจรายการในแต่ละกลุ่ม</small></span></div></div></section>
+      {page === "split" && <section className="page-content split-page-content">
+        <div className="page-heading-row"><div><span className="eyebrow">SPLIT BILL · QUICK CALCULATOR</span><h1>หารบิล</h1><p>ใส่ยอดเต็ม เพิ่มจำนวนคน แล้วดูยอดต่อคนได้ทันที</p></div><button className="button button-secondary" onClick={() => setShowSplitHistory(open => !open)}><Icon name="calendar"/>{showSplitHistory ? "กลับไปหน้าหารบิล" : `ประวัติย้อนหลัง (${splitHistory.length})`}</button></div>
+        <div className="split-live-layout">
+          <section className="surface split-form-surface">
+            <div className="surface-heading"><div><span className="eyebrow">เริ่มต้นบิลใหม่</span><h3>รายละเอียดค่าใช้จ่าย</h3></div><span className="split-live-pill"><i/>คำนวณสด</span></div>
+            <div className="split-input-grid">
+              <label>ชื่อบิล <span className="split-optional">ไม่บังคับ</span><input value={splitTitle} onChange={e => setSplitTitle(e.target.value)} placeholder="เช่น มื้อเย็น / ทริปเชียงใหม่" maxLength={100}/></label>
+              <label>ยอดบิลเต็ม (บาท)<input type="number" min="0.01" step="0.01" inputMode="decimal" value={splitTotal} onChange={e => {setSplitTotal(e.target.value); setSplitNotice("")}} placeholder="0.00"/></label>
+              <label>ทิป / ค่าใช้จ่ายเพิ่ม (บาท)<input type="number" min="0" step="0.01" inputMode="decimal" value={splitTip} onChange={e => {setSplitTip(e.target.value); setSplitNotice("")}} placeholder="0.00"/></label>
+            </div>
+            <div className="split-people-heading"><div><span className="eyebrow">ใครร่วมจ่ายบ้าง</span><h3>สมาชิกบิล <small>{splitPeople.length} คน</small></h3></div><button className="button button-secondary split-add-person" onClick={() => updateSplitPeople([...splitPeople, ""])} disabled={splitPeople.length >= 30}><Icon name="plus"/>เพิ่มคน</button></div>
+            <div className="split-people-list">{splitPeople.map((person, index) => <div className="split-person-row" key={index}><span className="split-person-number">{String(index + 1).padStart(2, "0")}</span><input aria-label={`ชื่อคนที่ ${index + 1}`} value={person} onChange={e => updateSplitPeople(splitPeople.map((name, i) => i === index ? e.target.value : name))} placeholder={`ชื่อคนที่ ${index + 1}`} maxLength={60}/>{splitPeople.length > 1 && <button className="icon-button" aria-label={`ลบคนที่ ${index + 1}`} onClick={() => {updateSplitPeople(splitPeople.filter((_, i) => i !== index)); setSplitNotice("")}}><Icon name="close"/></button>}</div>)}</div>
+            <div className="split-mode-heading"><span>วิธีแบ่งยอด</span><div className="filter-tabs"><button className={splitMode === "equal" ? "filter-tab active" : "filter-tab"} onClick={() => {setSplitMode("equal");setSplitNotice("")}}>หารเท่ากัน</button><button className={splitMode === "custom" ? "filter-tab active" : "filter-tab"} onClick={() => {setSplitMode("custom");setSplitNotice("")}}>กำหนดยอดเอง</button></div></div>
+            {splitMode === "custom" && <div className="split-custom-shares">{splitPeople.map((person, index) => <label key={index}>{splitNames[index]}<div className="split-share-input"><span>฿</span><input type="number" min="0" step="0.01" inputMode="decimal" value={splitShares[index] || ""} onChange={e => {setSplitShares(old => splitPeople.map((_, i) => i === index ? e.target.value : old[i] || ""));setSplitNotice("")}} placeholder="0.00"/></div></label>)}</div>}
+            {splitMode === "custom" && <div className={Math.abs(splitShareSum - splitGrandTotal) < .011 ? "split-validation valid" : "split-validation"}>รวมยอดรายคน {splitMoney(splitShareSum)} จากยอดบิล {splitMoney(splitGrandTotal)}{Math.abs(splitShareSum - splitGrandTotal) >= .011 ? " · ยอดยังไม่ตรงกัน" : " · ยอดตรงกันแล้ว"}</div>}
+            {splitNotice && <p className={splitNotice.includes("บันทึก") ? "split-notice success" : "split-notice"} role="status">{splitNotice}</p>}
+            <button className="button button-primary button-full split-save-button" disabled={!splitValid} onClick={saveSplitBill}><Icon name="check"/>เสร็จแล้ว · บันทึกบิล</button>
+            <p className="split-save-hint">บิลจะถูกเก็บไว้ในประวัติของบัญชีนี้ และไม่แสดงบนหน้าหลักจนกว่าจะกดดูประวัติ</p>
+          </section>
+          <aside className="split-live-summary">
+            <section className="split-total-card"><span className="split-summary-label">ยอดรวมทั้งหมด</span><strong>{splitMoney(splitGrandTotal)}</strong><div><span>ยอดบิล</span><b>{splitMoney(splitBase)}</b></div><div><span>ทิป / เพิ่มเติม</span><b>{splitMoney(splitExtra)}</b></div><div className="split-total-divider"><span>จำนวนคน</span><b>{splitPeople.length} คน</b></div></section>
+            <section className="surface split-result-surface"><div className="surface-heading"><div><span className="eyebrow">LIVE BREAKDOWN</span><h3>แต่ละคนจ่าย</h3></div><span className="split-live-pill"><i/>สด</span></div>
+              {splitPeople.map((person, index) => <div className="split-result-row" key={index}><span className="split-result-avatar">{(splitNames[index] || "ค").slice(0,1)}</span><span className="split-result-name"><strong>{splitNames[index]}</strong><small>{splitMode === "equal" ? "แบ่งเท่ากัน" : "กำหนดยอดเอง"}</small></span><strong className="split-result-amount">{splitMoney(splitCalculatedShares[index] || 0)}</strong></div>)}
+              {splitMode === "equal" && splitPeople.length > 1 && <p className="split-rounding-note">ระบบกระจายเศษสตางค์ให้ยอดรวมตรงกับบิล</p>}
+              {splitMode === "custom" && <p className="split-rounding-note">กรอกยอดของแต่ละคนให้รวมเท่ากับยอดบิลรวมก่อนบันทึก</p>}
+            </section>
+          </aside>
+        </div>
+        {showSplitHistory && <section className="surface split-history-surface"><div className="surface-heading"><div><span className="eyebrow">SAVED BILLS</span><h3>ประวัติบิลย้อนหลัง</h3></div><span className="history-count">{splitHistory.length} บิล</span></div>
+          {splitHistory.length ? <div className="split-history-list">{splitHistory.map(bill => <article className="split-history-item" key={bill.id}><div className="split-history-main"><span className="split-history-icon"><Icon name="receipt"/></span><div><strong>{bill.title}</strong><small>{new Date(bill.createdAt).toLocaleString("th-TH", {dateStyle:"medium",timeStyle:"short"})} · {bill.people.length} คน · {bill.mode === "equal" ? "หารเท่ากัน" : "กำหนดยอดเอง"}</small><div className="split-history-people">{bill.people.map((name, index) => <span key={index}>{name}: {splitMoney(bill.shares[index] || 0)}</span>)}</div></div></div><div className="split-history-total"><strong>{splitMoney(bill.total + bill.tip)}</strong><button className="icon-button delete-button" aria-label={`ลบบิล ${bill.title}`} onClick={() => {if (confirm("ลบบิลนี้ออกจากประวัติหรือไม่?")) setSplitHistory(old => old.filter(item => item.id !== bill.id))}}><Icon name="trash"/></button></div></article>)}</div> : <Empty title="ยังไม่มีประวัติบิล" body="เมื่อหารบิลเสร็จและกดบันทึก บิลจะถูกเก็บไว้ตรงนี้" action="กลับไปสร้างบิล" onClick={() => setShowSplitHistory(false)}/>}
+        </section>}
       </section>}
 
       {page === "receipt" && <section className="page-content">
