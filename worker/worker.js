@@ -75,7 +75,7 @@ const SIM_ACTIVITIES = {
  work:{label:"ไปทำงาน",need:"fun",delta:-3}, commute:{label:"เดินทาง",need:"energy",delta:-4}, shop:{label:"ซื้อของ",need:"fun",delta:5},
  cook:{label:"ทำอาหาร",need:"hunger",delta:15}, clean:{label:"ทำความสะอาด",need:"hygiene",delta:2}, socialize:{label:"พบปะพูดคุย",need:"social",delta:20},
  relax:{label:"พักผ่อน",need:"energy",delta:7}, exercise:{label:"ออกกำลังกาย",need:"health",delta:2}, study:{label:"เรียน/อ่านหนังสือ",need:"fun",delta:-2},
- use_phone:{label:"ใช้โทรศัพท์",need:"fun",delta:8}, use_toilet:{label:"เข้าห้องน้ำ",need:"bladder",delta:45}, travel:{label:"เดินทาง",need:"energy",delta:-3}, idle:{label:"พักระหว่างกิจกรรม",need:"energy",delta:1}
+ use_phone:{label:"ใช้โทรศัพท์",need:"fun",delta:8}, use_toilet:{label:"เข้าห้องน้ำ",need:"bladder",delta:42}, travel:{label:"เดินทาง",need:"energy",delta:-3}, idle:{label:"พักระหว่างกิจกรรม",need:"energy",delta:1}
 };
 function clampNeed(n){return Math.max(0,Math.min(100,n));}
 function applyResidentActivity(p,activity,minute) {
@@ -86,9 +86,8 @@ function applyResidentActivity(p,activity,minute) {
  if(activity==="eat"){const cost=p.money>=70?55:25;p.money=Math.max(0,p.money-cost);p.lastMealAt=minute;}
  if(activity==="cook"){p.money=Math.max(0,p.money-18);p.lastMealAt=minute;}
  if(activity==="work")p.money=(p.money||0)+(p.occupation?.includes("ไรเดอร์")?55:p.occupation?.includes("ร้าน")?80:120);
- if(activity==="use_toilet")p.needs.bladder=clampNeed(p.needs.bladder+30);
  if(activity==="socialize")p.lastSocialAt=minute;
- p.mood=clampNeed(Object.values(p.needs).reduce((sum,n)=>sum+n,0)/Object.values(p.needs).length*.7+(p.health||80)*.3);
+ const moodScore=clampNeed(Object.values(p.needs).reduce((sum,n)=>sum+n,0)/Object.values(p.needs).length*.7+(p.health||80)*.3);p.moodScore=moodScore;p.mood=moodScore>=75?"สบายใจ":moodScore>=55?"ค่อนข้างดี":moodScore>=35?"เหนื่อยล้า":"เครียดและต้องพัก";p.activityLabel=a.label;
  return true;
 }
 function advanceLifeWorld(state,elapsedMinutes) {
@@ -102,11 +101,14 @@ function advanceLifeWorld(state,elapsedMinutes) {
    p.needs.hunger=clampNeed(p.needs.hunger-.42);p.needs.energy=clampNeed(p.needs.energy+(p.activity==="sleep"?.35:-.28));
    p.needs.hygiene=clampNeed(p.needs.hygiene-.08);p.needs.social=clampNeed(p.needs.social-.07);p.needs.fun=clampNeed(p.needs.fun-.04);p.needs.bladder=clampNeed(p.needs.bladder-.23);
    const h=state.hour;let next=p.routine?.[h];
-   if(p.needs.bladder<15)next="use_toilet";else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";else if(p.needs.hygiene<18)next="bathe";else if(p.shift&&h>=p.shift.start&&h<p.shift.end)next="work";else if(!next&& (h>=23||h<5))next="sleep";else if(!next&&h>=6&&h<9)next="eat";else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";else if(!next&&h>=17&&h<20)next="shop";else if(!next)next="relax";
-   if(next && (next!==p.activity || state.minute-(p.activityStartedAt||0)>=30)){
+   if(p.needs.bladder<15)next="use_toilet";else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";else if(p.needs.hygiene<18)next="bathe";else if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";else if(!next&& (h>=23||h<5))next="sleep";else if(!next&&h>=6&&h<9)next="eat";else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";else if(!next&&h>=17&&h<20)next="shop";else if(!next)next="relax";
+   if(next && next!=="wake" && (next!==p.activity || state.minute-(p.activityStartedAt||0)>=30)){
+    const changed=next!==p.activity;
     applyResidentActivity(p,next,state.minute);
-    const action=SIM_ACTIVITIES[next]?.label||next;
-    state.events.unshift({id:crypto.randomUUID(),text:p.name+" "+action,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(state.minute%60).padStart(2,"0")});
+    if(changed){
+     const action=SIM_ACTIVITIES[next]?.label||next;
+     state.events.unshift({id:crypto.randomUUID(),text:p.name+" "+action,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(state.minute%60).padStart(2,"0")});
+    }
    }
   }
  }
