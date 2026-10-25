@@ -40,21 +40,28 @@ function starterSimulatorState() {
 async function readSimulatorState(db,userId) {
  const row=await db.prepare("SELECT state_json,updated_at FROM simulator_worlds WHERE user_id=?").bind(userId).first();
  if(!row){const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh;}
- try {
-  const v=JSON.parse(row.state_json);
-  if(!v||!Array.isArray(v.residents)||!Array.isArray(v.events)){const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh;}
-  if(v.residents.some(p=>["mira","nori","kai"].includes(p.id)) || v.version!==1) {
-   await db.prepare("INSERT INTO simulator_world_archive(id,user_id,state_json,archived_at) VALUES(?,?,?,?)").bind(crypto.randomUUID(),userId,row.state_json,new Date().toISOString()).run();
-   const fresh=starterSimulatorState();
-   await db.prepare("DELETE FROM simulator_memories WHERE user_id=?").bind(userId).run();
-   await saveSimulatorState(db,userId,fresh);
-   return fresh;
-  }
-  const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
-  const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000)));
-  if(elapsed>=10){advanceLifeWorld(v,elapsed);await saveSimulatorState(db,userId,v);}
-  return v;
- } catch { const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh; }
+ let v;
+ try { v=JSON.parse(row.state_json); }
+ catch {
+  // Preserve malformed legacy data before recovering, rather than silently overwriting it.
+  await db.prepare("INSERT INTO simulator_world_archive(id,user_id,state_json,archived_at) VALUES(?,?,?,?)").bind(crypto.randomUUID(),userId,row.state_json,new Date().toISOString()).run();
+  const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh;
+ }
+ if(!v||!Array.isArray(v.residents)||!Array.isArray(v.events)) {
+  await db.prepare("INSERT INTO simulator_world_archive(id,user_id,state_json,archived_at) VALUES(?,?,?,?)").bind(crypto.randomUUID(),userId,row.state_json,new Date().toISOString()).run();
+  const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh;
+ }
+ if(v.residents.some(p=>["mira","nori","kai"].includes(p.id)) || v.version!==1) {
+  await db.prepare("INSERT INTO simulator_world_archive(id,user_id,state_json,archived_at) VALUES(?,?,?,?)").bind(crypto.randomUUID(),userId,row.state_json,new Date().toISOString()).run();
+  const fresh=starterSimulatorState();
+  await db.prepare("DELETE FROM simulator_memories WHERE user_id=?").bind(userId).run();
+  await saveSimulatorState(db,userId,fresh);
+  return fresh;
+ }
+ const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
+ const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000)));
+ if(elapsed>=10){advanceLifeWorld(v,elapsed);await saveSimulatorState(db,userId,v);}
+ return v;
 }
 async function saveSimulatorState(db,userId,state) {
  state.events=state.events.slice(0,30); const now=new Date().toISOString();
