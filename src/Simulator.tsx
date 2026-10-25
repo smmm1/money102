@@ -16,12 +16,13 @@ const initialResidents: Resident[] = [
   { id: "jay", name: "เจ", role: "ช่างซ่อมมือถือ · 25 ปี", mood: "กำลังเปิดร้าน", activity: "จัดอุปกรณ์ช่าง", x: 45, y: 20, color: "blue", bio: "ช่างซ่อมมือถือที่ทำงานในร้านเล็ก ๆ และเล่นเกมกับเพื่อนหลังปิดร้าน" },
 ]
 const initialState: WorldState = { residents: initialResidents, events: [{ id: "welcome", text: "เริ่มชีวิตใหม่ในชุมชนไทย — ตัวละครชุดใหม่พร้อมแล้ว", time: "07:00" }], day: 1, hour: 7, memoriesCount: 1 }
+const activityNames: Record<string, string> = { sleep: "นอนหลับ", eat: "กินข้าว", bathe: "อาบน้ำ", work: "ทำงาน", commute: "เดินทาง", shop: "ซื้อของ", cook: "ทำอาหาร", clean: "ทำความสะอาด", socialize: "พบปะพูดคุย", relax: "พักผ่อน", exercise: "ออกกำลังกาย", study: "เรียน/อ่านหนังสือ", use_phone: "ใช้โทรศัพท์", use_toilet: "เข้าห้องน้ำ", travel: "เดินทาง", idle: "พักระหว่างกิจกรรม" }
 function token() { try { return sessionStorage.getItem("money102_auth_token") || "" } catch { return "" } }
 function presentWorld(data: any): WorldState {
   const residents = Array.isArray(data?.residents)
     ? data.residents.map((person: Resident & { activityLabel?: string }) => ({
         ...person,
-        activity: person.activityLabel || person.activity,
+        activity: person.activityLabel || activityNames[person.activity || ""] || person.activity,
         mood: typeof person.mood === "string" ? person.mood : "กำลังใช้ชีวิต",
       }))
     : initialResidents
