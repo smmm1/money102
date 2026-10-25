@@ -55,11 +55,11 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
         setError("")
       } else {
         setStatus("offline")
-        setError("API สำหรับ Simulator ยังไม่ได้ติดตั้ง — โลกนี้ยังไม่บันทึกลง D1")
+        setError("API ของโลกจำลองตอบกลับไม่ครบ — โลกนี้ยังไม่ยืนยันว่าบันทึกลง D1 แล้ว")
       }
     } catch {
       setStatus("offline")
-      setError("ยังเชื่อมระบบความทรงจำไม่ได้ โลกที่เห็นเป็นเพียงตัวอย่าง และยังไม่มีการบันทึกลง D1")
+      setError("เชื่อม API ของโลกจำลองไม่ได้ โลกที่เห็นเป็นเพียงตัวอย่าง และยังไม่มีการบันทึกลง D1")
     }
   }, [])
   useEffect(() => { void load() }, [load])
@@ -72,9 +72,13 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     setBusy(true); setError("")
     try {
       const data = await request("/api/simulator/action", { method: "POST", body: JSON.stringify({ action, residentId: selected, ...(target ? { target } : {}) }) })
-      if (data.state) setWorld(presentWorld(data.state))
-      else await load()
-      setStatus("connected")
+      if (data.state) {
+        setWorld(presentWorld(data.state))
+        setStatus("connected")
+      } else {
+        // Keep the status reported by load(); never claim persistence succeeded if refresh failed.
+        await load()
+      }
     } catch (err) {
       setStatus("offline")
       setError(err instanceof Error ? err.message : "บันทึกการกระทำไม่สำเร็จ")
