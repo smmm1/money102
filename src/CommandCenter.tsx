@@ -240,7 +240,7 @@ export default function CommandCenter() {
   }, [])
   useEffect(() => {
     if (!toast) return
-    const timer = window.setTimeout(() => setToast(null), 5500)
+    const timer = window.setTimeout(() => setToast(null), 1200)
     return () => window.clearTimeout(timer)
   }, [toast])
   useEffect(() => {
