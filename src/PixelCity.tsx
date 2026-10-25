@@ -156,7 +156,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
         queue[tail++] = next
       }
     }
-    if (parent[goalIndex] === -2) return [{ x: targetX, y: targetY }]
+    if (parent[goalIndex] === -2) return []
     const path: Array<{ x: number; y: number }> = []
     for (let at = goalIndex; at !== -1; at = parent[at]) path.push({ x: (at % cols) * TILE + TILE / 2, y: Math.floor(at / cols) * TILE + TILE / 2 })
     path.reverse()
@@ -178,6 +178,8 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       walkTween?.stop()
       group.setData("walkTween", undefined)
       if (legs) legs.setAngle(0)
+      const idleTween = this.tweens.add({ targets: group, y: group.y - 2, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+      group.setData("idleTween", idleTween)
       return
     }
     const point = path[index]
@@ -454,12 +456,18 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
         fontStyle: "bold", align: "center",
       }).setOrigin(0.5).setScrollFactor(0))
       button.on("pointerdown", () => {
-        this.issueAction(action, { x: Number(((worldX / WORLD_W) * 100).toFixed(2)), y: Number(((worldY / WORLD_H) * 100).toFixed(2)) })
+        // Building zones sit over the roof/body for easy tapping. Route the resident
+        // to the front doorstep, just beyond the building collision rectangle.
+        const entranceY = Phaser.Math.Clamp(worldY + 58, 4, WORLD_H - 4)
+        this.issueAction(action, {
+          x: Number(((worldX / WORLD_W) * 100).toFixed(2)),
+          y: Number(((entranceY / WORLD_H) * 100).toFixed(2)),
+        })
         this.interiorLayer?.destroy(true)
         this.interiorLayer = undefined
       })
     })
-    add(this.add.text(x + 22, y + panelH - 32, "ห้องจำลอง · แตะปุ่มปิดเพื่อกลับสู่เมือง", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
+    add(this.add.text(x + 22, y + panelH - 32, "เลือกกิจกรรมเพื่อส่งตัวละครไปยังทางเข้าอาคาร", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
     const closeButton = this.add.text(x + panelW - 18, y + 17, "× ปิด", {
       fontFamily: "Tahoma, sans-serif", fontSize: "14px", fontStyle: "bold", color: "#fff3d2",
       backgroundColor: "#9b5848", padding: { x: 9, y: 5 },
@@ -526,10 +534,16 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       }
       const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
       const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
+      const idleTween = group.getData("idleTween") as Phaser.Tweens.Tween | undefined
+      idleTween?.stop()
       this.tweens.killTweensOf(group)
       if (Phaser.Math.Distance.Between(group.x, group.y, x, y) > 24) {
         const path = this.findWalkPath(group.x, group.y, x, y)
-        this.animateAlongPath(group, path)
+        if (path.length > 0) this.animateAlongPath(group, path)
+        else {
+          // Never cut through a building when the navigation grid has no route.
+          group.setData("navigationBlocked", true)
+        }
       }
       group.setDepth(y + 50)
       const activity = group.getData("activityLabel") as Phaser.GameObjects.Text | undefined
