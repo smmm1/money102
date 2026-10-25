@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { AccountMenu } from "./CloudAuth"
 import "./command-center.css"
 
-type Page = "home" | "money" | "notes" | "health"
+type Page = "home" | "money" | "notes" | "health" | "split" | "receipt"
 type Transaction = { id: string; type: "income" | "expense"; amount: number; detail: string; date: string; createdAt: number }
 type Note = { id: string; title: string; body: string; tags?: string[]; mood?: string; pinned?: boolean; createdAt: string; updatedAt: string }
 type Profile = { id: string; name: string; height: number; age: number }
@@ -31,6 +31,8 @@ function Icon({ name }: { name: string }) {
     money: "M3 6.5h18v13H3zM7 6.5V4h10v2.5M7 11h5",
     notes: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h4",
     health: "M20.8 8.8c0 5.2-8.8 10-8.8 10S3.2 14 3.2 8.8A4.6 4.6 0 0 1 12 6.4a4.6 4.6 0 0 1 8.8 2.4Z",
+    split: "M16 3h5v5M21 3l-7 7M8 21H3v-5M3 21l7-7M8 7H5a2 2 0 0 0-2 2v1M16 17h3a2 2 0 0 0 2-2v-1",
+    receipt: "M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h3",
     plus: "M12 5v14M5 12h14", arrow: "M5 12h14M13 6l6 6-6 6", search: "m20 20-4.5-4.5M18 10.5a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z",
     close: "M6 6l12 12M18 6 6 18", trash: "M4 7h16M10 11v6M14 11v6M6 7l1 14h10l1-14M9 7V4h6v3",
     pin: "M16 3 21 8l-4 1-4 4-1 5-2-2-5 5 4-7-2-2 5-1 4-4z", wallet: "M4 6h15a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14M16 12h5",
@@ -81,7 +83,7 @@ function MoneyTrend({ transactions }: { transactions: Transaction[] }) {
 }
 
 export default function CommandCenter() {
-  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health"].includes(hash) ? hash as Page : "home") })
+  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split", "receipt"].includes(hash) ? hash as Page : "home") })
   const [transactions, setTransactions] = useState<Transaction[]>(() => read(KEYS.money, []))
   const [goal, setGoal] = useState(() => Number(safeGet(KEYS.goal)) || 20000)
   const [goalTitle, setGoalTitle] = useState(() => safeGet(KEYS.goalTitle) || "เงินสำรองของฉัน")
@@ -135,6 +137,8 @@ export default function CommandCenter() {
   })
   const [motionLevel, setMotionLevel] = useState<"bold" | "soft">(() => { const saved = read<string>("money102-motion-v1", "soft"); return saved === "bold" ? "bold" : "soft" })
   const [soundsEnabled, setSoundsEnabled] = useState<boolean>(() => read("money102-sounds-enabled-v1", true))
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
+  const [receiptFileName, setReceiptFileName] = useState("")
 
   useEffect(() => { safeSet(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { safeSet("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) }, [hiddenWidgets])
@@ -257,7 +261,7 @@ export default function CommandCenter() {
   useEffect(() => { safeSet(KEYS.notes, JSON.stringify(notes)) }, [notes])
   useEffect(() => { safeSet(KEYS.health, JSON.stringify(health)) }, [health])
   useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
-  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
+  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "receipt"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
   const income = transactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
@@ -341,9 +345,11 @@ export default function CommandCenter() {
     { id: "home", label: "ภาพรวม", icon: "home" },
     { id: "money", label: "การเงิน", icon: "money" },
     { id: "notes", label: "โน้ต", icon: "notes" },
-    { id: "health", label: "สุขภาพ", icon: "health" }
+    { id: "health", label: "สุขภาพ", icon: "health" },
+    { id: "split", label: "หารค่าใช้จ่าย", icon: "split" },
+    { id: "receipt", label: "สแกนใบเสร็จ", icon: "receipt" }
   ]
-  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ" }
+  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", receipt: "สแกนใบเสร็จ" }
 
   return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
     <main className="main-area">
@@ -369,6 +375,8 @@ export default function CommandCenter() {
           <button className="tool-card tool-money" onClick={() => go("money")}><span className="tool-icon"><Icon name="wallet"/></span><span className="tool-meta">การเงิน</span><strong>บันทึกเงินเข้าออก</strong><p>รู้ว่าเงินมาจากไหน และไปอยู่ตรงไหน</p><span className="tool-bottom"><b>{monthItems.length} รายการเดือนนี้</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-notes" onClick={() => go("notes")}><span className="tool-icon"><Icon name="notes"/></span><span className="tool-meta">ความคิด</span><strong>เก็บโน้ตไว้ที่เดียว</strong><p>จดไอเดีย เรื่องที่ต้องจำ หรือสิ่งที่อยากกลับมาอ่าน</p><span className="tool-bottom"><b>{notes.length} โน้ต · ปักหมุด {pinned.length}</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-health" onClick={() => go("health")}><span className="tool-icon"><Icon name="health"/></span><span className="tool-meta">สุขภาพ</span><strong>ดูแลตัวเองทีละนิด</strong><p>บันทึกน้ำหนัก การเคลื่อนไหว และการพักผ่อน</p><span className="tool-bottom"><b>{latestWeight ? "น้ำหนัก " + latestWeight + " กก." : "เริ่มบันทึกสุขภาพ"}</b><i><Icon name="arrow"/></i></span></button>
+          <button className="tool-card tool-split" onClick={() => go("split")}><span className="tool-icon"><Icon name="split"/></span><span className="tool-meta">ใช้ร่วมกับคนอื่น</span><strong>หารค่าใช้จ่าย</strong><p>จัดการค่าอาหาร ค่าเที่ยว และยอดที่เพื่อนต้องคืนกัน</p><span className="tool-bottom"><b>หน้าใหม่ · เตรียมระบบ</b><i><Icon name="arrow"/></i></span></button>
+          <button className="tool-card tool-receipt" onClick={() => go("receipt")}><span className="tool-icon"><Icon name="receipt"/></span><span className="tool-meta">บันทึกให้ง่ายขึ้น</span><strong>สแกนใบเสร็จ</strong><p>นำรูปใบเสร็จเข้ามาเตรียมตรวจข้อมูลก่อนบันทึก</p><span className="tool-bottom"><b>หน้าใหม่ · เตรียมระบบ</b><i><Icon name="arrow"/></i></span></button>
         </div>
         <section className="memory-galaxy surface"><div className="surface-heading"><div><span className="eyebrow">MEMORY GALAXY · จากข้อมูลจริง</span><h3>ร่องรอยของ 28 วัน</h3></div><span className="history-count">{memoryDays.reduce((sum, day) => sum + day.count, 0)} กิจกรรม</span></div><div className="memory-calendar" aria-label="ปฏิทินกิจกรรม 28 วัน">{memoryDays.map(day => <button type="button" key={day.key} title={day.label + " · " + day.count + " กิจกรรม"} aria-label={day.label + " · " + day.count + " กิจกรรม"} aria-pressed={memorySelectedDate === day.key} onClick={() => setMemorySelectedDate(day.key)} className={"memory-day level-" + Math.min(4, day.count) + (memorySelectedDate === day.key ? " selected" : "")}><span>{day.day}</span>{day.count > 0 && <i/>}</button>)}</div><div className="memory-detail"><div><strong>{selectedMemoryDay.label}</strong><small>{selectedMemoryDay.count ? "มีบันทึกในวันนี้" : "ยังไม่มีบันทึกในวันที่เลือก"}</small></div><div className="memory-counts"><button onClick={() => { setSearch(""); go("notes") }}><b>{selectedMemoryDay.noteCount}</b><span>โน้ต</span></button><button onClick={() => go("money")}><b>{selectedMemoryDay.moneyCount}</b><span>การเงิน</span></button><button onClick={() => go("health")}><b>{selectedMemoryDay.healthCount}</b><span>สุขภาพ</span></button></div></div><p className="memory-caption">แตะวันที่เพื่อดูจำนวนรายการที่บันทึกไว้ · ไม่มีการสร้างข้อมูลตัวอย่าง</p></section>
         <div className="home-lower"><section className="surface recent-surface" draggable={layoutOpen} onDragStart={() => setDraggedWidget("recent")} onDragOver={event => { if (layoutOpen) event.preventDefault() }} onDrop={() => moveWidget(draggedWidget, "recent")} style={{ order: dashboardOrder.indexOf("recent"), display: hiddenWidgets.includes("recent") ? "none" : undefined }}><div className="surface-heading"><div><span className="eyebrow">รายการล่าสุด</span><h3>เงินเข้าออก</h3></div><button className="text-button" onClick={() => go("money")}>ดูทั้งหมด <Icon name="arrow"/></button></div>{sortedTransactions.slice(0, 4).length ? <div className="activity-list">{sortedTransactions.slice(0, 4).map(t => <div className="activity-row" key={t.id}><span className={t.type === "income" ? "activity-symbol is-income" : "activity-symbol is-expense"}>{t.type === "income" ? "+" : "−"}</span><span className="activity-info"><strong>{t.detail}</strong><small>{dateLabel(t.date)}</small></span><b className={t.type === "income" ? "positive" : "negative"}>{t.type === "income" ? "+" : "−"}{cash(t.amount)}</b></div>)}</div> : <div className="compact-empty"><p>ยังไม่มีรายการเงินเข้าออก</p><button className="text-button" onClick={() => { setEntryType("expense"); setShowEntry(true) }}>เพิ่มรายการแรก <Icon name="arrow"/></button></div>}</section>
@@ -387,6 +395,25 @@ export default function CommandCenter() {
         <div className="page-heading-row"><div><span className="eyebrow">ความคิดของคุณ · NOTES</span><h1>โน้ตของฉัน</h1><p>จดไว้ก่อน แล้วค่อยกลับมาจัดการทีหลัง</p></div><button className="button button-primary" onClick={() => { setEditingNoteId(null); try { const draft = JSON.parse(safeGet("lamoon-note-draft-v1") || "null"); setNoteTitle(typeof draft?.title === "string" ? draft.title : ""); setNoteBody(typeof draft?.body === "string" ? draft.body : "") } catch { setNoteTitle(""); setNoteBody("") } setShowNote(true) }}><Icon name="plus"/>เขียนโน้ต</button></div>
         <div className="notes-tools"><div className="notes-count"><strong>{notes.length}</strong> โน้ต <span>·</span> ปักหมุด {pinned.length}</div><label className="search-field"><Icon name="search"/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="ค้นหาโน้ต..." aria-label="ค้นหาโน้ต"/>{search && <button type="button" onClick={() => setSearch("")} aria-label="ล้างการค้นหา"><Icon name="close"/></button>}</label></div>
         {filteredNotes.length ? <div className="notes-grid">{filteredNotes.map(n => <article className="note-card" key={n.id}><div className="note-card-top"><span className="note-date">{dateLabel(n.updatedAt.slice(0, 10))}</span><button className={n.pinned ? "icon-button pin-button pinned" : "icon-button pin-button"} aria-label={n.pinned ? "เลิกปักหมุด" : "ปักหมุด"} onClick={() => setNotes(old => old.map(x => x.id === n.id ? { ...x, pinned: !x.pinned, updatedAt: new Date().toISOString() } : x))}><Icon name="pin"/></button></div><h3>{n.title || "ไม่มีชื่อ"}</h3><p>{n.body || "ไม่มีเนื้อหา"}</p><div className="note-card-actions"><button className="text-button" onClick={() => { setEditingNoteId(n.id); setNoteTitle(n.title); setNoteBody(n.body); setShowNote(true) }}>แก้ไข</button><button className="icon-button delete-button" aria-label="ลบโน้ต" onClick={() => { if (confirm("ลบโน้ตนี้หรือไม่?")) { const removed = n; setNotes(old => old.filter(x => x.id !== n.id)); setToast({ message: "ลบโน้ตแล้ว", undo: () => setNotes(old => [removed, ...old]) }) } }}><Icon name="trash"/></button></div></article>)}</div> : <Empty title={search ? "ไม่พบโน้ตที่ค้นหา" : "พื้นที่สำหรับความคิดใหม่"} body={search ? "ลองใช้คำค้นหาอื่น หรือกดล้างการค้นหา" : "เขียนสิ่งที่อยากจำ ไอเดีย หรือเรื่องเล็ก ๆ ที่ไม่อยากให้หายไป"} action={search ? "ล้างการค้นหา" : "เขียนโน้ตแรก"} onClick={() => search ? setSearch("") : setShowNote(true)} />}
+      </section>}
+
+
+
+      {page === "split" && <section className="page-content">
+        <div className="page-heading-row"><div><span className="eyebrow">SHARED EXPENSES · กลุ่มและเพื่อน</span><h1>หารค่าใช้จ่าย</h1><p>เที่ยวด้วยกัน กินด้วยกัน แล้วรู้ชัดว่าใครจ่ายไปเท่าไร</p></div><button className="button button-primary" onClick={() => setToast({ message: "หน้าแสดงตัวอย่างอยู่ — ระบบสร้างกลุ่มจะทำแยกในขั้นถัดไป" })}><Icon name="plus"/>สร้างกลุ่ม</button></div>
+        <section className="split-hero"><div className="split-hero-copy"><span className="split-kicker"><Icon name="split"/> SHARE FAIRLY</span><h2>จ่ายแทนกันได้<br/><em>ไม่ต้องจำว่าใครติดใคร</em></h2><p>รวมค่าอาหาร ทริป และค่าใช้จ่ายร่วมกันไว้ในที่เดียว พร้อมสรุปยอดคืนเงินให้อ่านง่าย</p><button className="button split-light-button" onClick={() => setToast({ message: "เราจะออกแบบขั้นตอนเพิ่มค่าใช้จ่ายด้วยกันในรอบถัดไป" })}>เพิ่มค่าใช้จ่าย <Icon name="arrow"/></button></div><div className="split-hero-art" aria-hidden="true"><span className="split-orbit orbit-a"/><span className="split-orbit orbit-b"/><span className="split-avatar avatar-a">ม</span><span className="split-avatar avatar-b">ก</span><span className="split-avatar avatar-c">พ</span><span className="split-coin">฿</span></div></section>
+        <div className="split-stats"><article className="surface split-stat"><span>กลุ่มของคุณ</span><strong>—</strong><small>ยังไม่ได้สร้างกลุ่ม</small></article><article className="surface split-stat"><span>ยอดที่คนอื่นติดคุณ</span><strong>฿ —</strong><small>จะแสดงเมื่อมีรายการจริง</small></article><article className="surface split-stat"><span>ยอดที่คุณต้องคืน</span><strong>฿ —</strong><small>จะแสดงเมื่อมีรายการจริง</small></article></div>
+        <section className="surface split-workspace"><div className="surface-heading"><div><span className="eyebrow">พื้นที่กลุ่ม</span><h3>ค่าใช้จ่ายร่วมกัน</h3></div><span className="draft-pill">เตรียมระบบ</span></div><div className="split-empty"><span className="split-empty-icon"><Icon name="split"/></span><h3>เริ่มจากกลุ่มแรกของคุณ</h3><p>สร้างกลุ่มสำหรับทริป เพื่อนร่วมห้อง หรือมื้ออาหาร จากนั้นค่อยเพิ่มสมาชิกและรายการที่จ่ายแทนกัน</p><button className="button button-secondary" onClick={() => setToast({ message: "ยังไม่ได้บันทึกกลุ่มหรือข้อมูลใด ๆ — หน้านี้เป็นโครง UI ก่อน" })}>ดูขั้นตอนการใช้งาน <Icon name="arrow"/></button></div><div className="split-feature-row"><div><span className="split-feature-icon"><Icon name="wallet"/></span><span><strong>แบ่งได้หลายแบบ</strong><small>หารเท่ากันหรือกำหนดยอดเอง</small></span></div><div><span className="split-feature-icon"><Icon name="check"/></span><span><strong>สรุปยอดคืนเงิน</strong><small>ลดความสับสนว่าใครติดใคร</small></span></div><div><span className="split-feature-icon"><Icon name="calendar"/></span><span><strong>ดูประวัติย้อนหลัง</strong><small>ตรวจรายการในแต่ละกลุ่ม</small></span></div></div></section>
+      </section>}
+
+      {page === "receipt" && <section className="page-content">
+        <div className="page-heading-row"><div><span className="eyebrow">RECEIPT SCANNER · PHOTO TO EXPENSE</span><h1>สแกนใบเสร็จ</h1><p>เริ่มจากรูปถ่าย แล้วตรวจข้อมูลก่อนนำไปบันทึกเป็นรายการ</p></div><span className="receipt-status"><i/>โหมดตัวอย่าง</span></div>
+        <div className="receipt-layout"><section className="surface receipt-upload-panel"><div className="surface-heading"><div><span className="eyebrow">ขั้นตอนที่ 1</span><h3>เพิ่มรูปใบเสร็จ</h3></div><span className="receipt-step">01 / 03</span></div>
+          <label className="receipt-dropzone"><input className="receipt-file-input" type="file" accept="image/*" onChange={e => { const file = e.target.files?.[0]; if (!file) return; setReceiptFileName(file.name); const reader = new FileReader(); reader.onload = () => setReceiptPreview(typeof reader.result === "string" ? reader.result : null); reader.readAsDataURL(file) }}/>{receiptPreview ? <img src={receiptPreview} alt="ตัวอย่างรูปใบเสร็จที่เลือก" className="receipt-preview-image"/> : <><span className="receipt-upload-icon"><Icon name="receipt"/></span><strong>เลือกรูปใบเสร็จ</strong><span>แตะเพื่อเลือกจากรูปภาพในเครื่อง</span><small>รองรับ JPG, PNG และรูปถ่ายจากมือถือ</small></>}<span className="receipt-pick-button">{receiptPreview ? "เลือกรูปใหม่" : "เลือกรูปภาพ"} <Icon name="arrow"/></span></label>
+          {receiptFileName && <div className="receipt-file-meta"><Icon name="check"/><span><strong>{receiptFileName}</strong><small>แสดงตัวอย่างในเครื่องเท่านั้น · ยังไม่ได้อัปโหลดหรือบันทึก</small></span><button className="icon-button" onClick={() => { setReceiptPreview(null); setReceiptFileName("") }} aria-label="ล้างรูปที่เลือก"><Icon name="close"/></button></div>}
+          <div className="receipt-privacy-note"><Icon name="check"/><span>ความเป็นส่วนตัว: ตอนนี้รูปยังไม่ถูกส่งไปที่เซิร์ฟเวอร์</span></div>
+        </section><section className="surface receipt-review-panel"><div className="surface-heading"><div><span className="eyebrow">ขั้นตอนที่ 2</span><h3>ตรวจข้อมูลที่อ่านได้</h3></div><span className="receipt-step">02 / 03</span></div><div className="receipt-fields"><label>ชื่อร้าน<input placeholder="เช่น ร้านอาหาร..." disabled/></label><div className="receipt-field-grid"><label>วันที่<input placeholder="วว/ดด/ปปปป" disabled/></label><label>ยอดรวม (บาท)<input placeholder="0.00" disabled/></label></div><label>หมวดหมู่<select disabled defaultValue=""><option value="">เลือกหมวดหมู่</option></select></label></div><div className="receipt-review-empty"><span><Icon name="sparkles"/></span><p>{receiptPreview ? "รูปพร้อมสำหรับขั้นตอนอ่านข้อมูล — ระบบ OCR จะทำในรอบถัดไป" : "เมื่อเลือกรูปแล้ว ข้อมูลที่อ่านได้จะแสดงตรงนี้ให้ตรวจทานก่อนบันทึก"}</p></div><button className="button button-primary button-full" disabled={!receiptPreview} onClick={() => setToast({ message: "ยังไม่ได้เปิดระบบ OCR — รูปยังไม่ถูกส่งหรือบันทึก" })}><Icon name="sparkles"/>อ่านข้อมูลจากใบเสร็จ</button></section></div>
+        <div className="receipt-steps"><div className="receipt-step-card active"><span>01</span><strong>เลือกรูป</strong><small>เลือกจากมือถือหรือคอมพิวเตอร์</small></div><div className="receipt-step-card"><span>02</span><strong>ตรวจข้อมูล</strong><small>ตรวจยอด วันที่ และชื่อร้าน</small></div><div className="receipt-step-card"><span>03</span><strong>บันทึกรายการ</strong><small>เพิ่มเข้าประวัติการเงินเมื่อพร้อม</small></div></div>
       </section>}
 
       {page === "health" && <section className="page-content">
@@ -416,7 +443,9 @@ export default function CommandCenter() {
             { id: "home", label: "ภาพรวม", detail: "กลับไปหน้าแรก", icon: "home", run: () => go("home") },
             { id: "money", label: "การเงิน", detail: "ดูบันทึกเงินเข้าออก", icon: "money", run: () => go("money") },
             { id: "notes", label: "โน้ต", detail: "ค้นหาและจัดการโน้ต", icon: "notes", run: () => go("notes") },
-            { id: "health", label: "สุขภาพ", detail: "เปิดบันทึกสุขภาพ", icon: "health", run: () => go("health") }
+            { id: "health", label: "สุขภาพ", detail: "เปิดบันทึกสุขภาพ", icon: "health", run: () => go("health") },
+            { id: "split", label: "หารค่าใช้จ่าย", detail: "แยกค่าใช้จ่ายกับเพื่อน", icon: "split", run: () => go("split") },
+            { id: "receipt", label: "สแกนใบเสร็จ", detail: "เตรียมรูปใบเสร็จสำหรับบันทึก", icon: "receipt", run: () => go("receipt") }
           ] as const).filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className={"command-item-icon command-icon-" + item.id}><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
           {[
             { id: "new-note", label: "เขียนโน้ตใหม่", detail: "จดไอเดียหรือสิ่งที่ต้องจำ", icon: "plus", run: () => { setEditingNoteId(null); setNoteTitle(""); setNoteBody(""); setShowNote(true) } },
@@ -424,7 +453,7 @@ export default function CommandCenter() {
             { id: "new-health", label: "บันทึกสุขภาพ", detail: "เพิ่มกิจกรรมหรือข้อมูลสุขภาพ", icon: "plus", run: () => setShowHealth(true) }
           ].filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className="command-item-icon command-icon-action"><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
           {commandQuery.trim() && filteredNotes.filter(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase())).slice(0, 5).map(note => <button className="command-item" key={note.id} onClick={() => { setEditingNoteId(note.id); setNoteTitle(note.title); setNoteBody(note.body); setShowNote(true); setCommandOpen(false) }}><span className="command-item-icon command-icon-notes"><Icon name="notes"/></span><span className="command-item-copy"><strong>{note.title}</strong><small>{note.body || "ไม่มีเนื้อหา"}</small></span><kbd>↵</kbd></button>)}
-          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
+          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","หารค่าใช้จ่าย","สแกนใบเสร็จ","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
         </div>
         <footer className="command-footer"><span><kbd>↑↓</kbd> เลือกด้วยเมาส์</span><span><kbd>Ctrl</kbd> + <kbd>K</kbd> เปิด/ปิด</span><span>ค้นหาจากโน้ตที่บันทึกไว้</span></footer>
       </section>
