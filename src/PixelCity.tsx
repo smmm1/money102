@@ -458,7 +458,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       button.on("pointerdown", () => {
         // Building zones sit over the roof/body for easy tapping. Route the resident
         // to the front doorstep, just beyond the building collision rectangle.
-        const entranceY = Phaser.Math.Clamp(worldY + 58, 4, WORLD_H - 4)
+        const entranceY = Phaser.Math.Clamp(worldY + 70, 4, WORLD_H - 4)
         this.issueAction(action, {
           x: Number(((worldX / WORLD_W) * 100).toFixed(2)),
           y: Number(((entranceY / WORLD_H) * 100).toFixed(2)),
