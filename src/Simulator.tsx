@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import "./simulator.css"
+import PixelCity from "./PixelCity"
 import { SIMULATOR_PORTALS, formatPortalCurrency, formatWorldClock, worldPhase, type SimulatorPortalId, type SimulatorPortalSnapshot } from "./simulator-world"
 
 type Resident = { id: string; name: string; role: string; mood: string; activity?: string; x: number; y: number; color: string; bio: string }
@@ -30,7 +31,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
   const [world, setWorld] = useState<WorldState>(initialState)
   const [status, setStatus] = useState<"loading" | "connected" | "offline">("loading")
   const [busy, setBusy] = useState(false)
-  const [selected, setSelected] = useState("mira")
+  const [selected, setSelected] = useState("ploy")
   const [error, setError] = useState("")
   const load = useCallback(async () => {
     try {
@@ -69,14 +70,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     <div className="sim-layout">
       <section className="sim-world-panel">
         <div className="sim-panel-heading"><div><span className="sim-eyebrow">THE NEIGHBORHOOD</span><h2>Little Pixel Town</h2></div><span className="sim-resident-count">● {world.residents.length} residents</span></div>
-        <div className="sim-map" aria-label="แผนที่โลกจำลอง Pixel Art">
-          <div className="sim-cloud cloud-one" /><div className="sim-cloud cloud-two" />
-          <div className="sim-path path-one" /><div className="sim-path path-two" />
-          <button type="button" className="sim-building sim-cafe" onClick={() => onNavigate("money")} aria-label="เปิดบ้านการเงิน"><span>FINANCE</span><b>฿</b></button><button type="button" className="sim-building sim-home" onClick={() => onNavigate("notes")} aria-label="เปิดคาเฟ่บันทึก"><span>NOTES</span><b>▤</b></button><button type="button" className="sim-building sim-library" onClick={() => onNavigate("health")} aria-label="เปิดสวนสุขภาพ"><span>HEALTH</span><b>♡</b></button><button type="button" className="sim-building sim-market" onClick={() => onNavigate("split")} aria-label="เปิดตลาดหารบิล"><span>SPLIT</span><b>÷</b></button><button type="button" className="sim-building sim-bbq" onClick={() => onNavigate("pork")} aria-label="เปิดลานหมูกระทะ"><span>BBQ</span><b>♨</b></button>
-          <div className="sim-pond"><i /><i /></div><div className="sim-tree tree-one">✦</div><div className="sim-tree tree-two">✦</div><div className="sim-tree tree-three">✦</div><div className="sim-flower flower-one">✿</div><div className="sim-flower flower-two">✿</div>
-          {world.residents.map((person, index) => <button key={person.id} className={"sim-person " + person.color + (selected === person.id ? " selected" : "")} style={{ left: person.x + "%", top: person.y + "%" }} onClick={() => setSelected(person.id)} aria-label={"เลือก " + person.name}><span className="sim-sprite"><i /><b /><em /></span><small>{person.name}</small><span className="sim-mood">{index === 0 ? "✦" : index === 1 ? "♡" : "!"}</span></button>)}
-          <div className="sim-map-label">PIXEL WORLD · LIVE MAP</div>
-        </div>
+        <PixelCity residents={world.residents} selectedId={selected} onSelect={setSelected} />
         <div className="sim-world-actions"><button disabled={busy} onClick={() => void act("wander")}>↗ สำรวจเมือง</button><button disabled={busy} onClick={() => void act("socialize")}>♡ พบปะกัน</button><button disabled={busy} onClick={() => void act("advance_time")}>◷ เดินเวลา</button></div>
       </section>
       <aside className="sim-side">
