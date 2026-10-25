@@ -71,6 +71,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.drawResidentSprites()
     this.drawLabels()
     this.ambientOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x18234c, 0).setScrollFactor(0).setDepth(2500)
+    this.drawCameraControls(width)
     this.updateAmbient(this.worldHour)
     this.scale.on("resize", (size: Phaser.Structs.Size) => {
       this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
@@ -98,6 +99,26 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       this.worldHour = hour
       this.updateAmbient(hour)
       this.refreshResidents()
+    })
+  }
+
+  private drawCameraControls(width: number) {
+    const camera = this.cameras.main
+    const controls: Array<{ label: string; x: number; action: () => void; hint: string }> = [
+      { label: "⌖", x: width - 118, action: () => { camera.setZoom(Math.min(width / 1120, this.scale.height / 740, 0.78)); camera.centerOn(WORLD_W / 2, WORLD_H / 2) }, hint: "กลับไปกลางเมือง" },
+      { label: "−", x: width - 76, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom - 0.12, 0.35, 1.15)), hint: "ซูมออก" },
+      { label: "+", x: width - 34, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom + 0.12, 0.35, 1.15)), hint: "ซูมเข้า" },
+    ]
+    controls.forEach(({ label, x, action, hint }) => {
+      const button = this.add.rectangle(x, 24, 34, 32, 0xf5edcf, 0.96)
+        .setStrokeStyle(2, 0x55734e).setScrollFactor(0).setDepth(3000).setInteractive({ useHandCursor: true })
+      const text = this.add.text(x, 24, label, {
+        fontFamily: "Tahoma, sans-serif", fontSize: label === "⌖" ? "19px" : "22px",
+        fontStyle: "bold", color: "#38583e",
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(3001)
+      button.setData("controlHint", hint)
+      button.on("pointerdown", action)
+      text.setInteractive({ useHandCursor: true }).on("pointerdown", action)
     })
   }
 
