@@ -142,6 +142,11 @@ export default function CommandCenter() {
   const [receiptOcrStatus, setReceiptOcrStatus] = useState<"idle" | "loading" | "done" | "error">("idle")
   const [receiptOcrText, setReceiptOcrText] = useState("")
   const [receiptMerchant, setReceiptMerchant] = useState("")
+  const [receiptDocType, setReceiptDocType] = useState("ยังไม่จำแนก")
+  const [receiptTime, setReceiptTime] = useState("")
+  const [receiptReference, setReceiptReference] = useState("")
+  const [receiptCounterparty, setReceiptCounterparty] = useState("")
+  const [receiptFee, setReceiptFee] = useState("")
   const [receiptDate, setReceiptDate] = useState(today())
   const [receiptTotal, setReceiptTotal] = useState("")
   const [receiptCategory, setReceiptCategory] = useState("อาหาร")
@@ -466,7 +471,7 @@ export default function CommandCenter() {
       </section>}
 
       {page === "receipt" && <section className="page-content receipt-simple-page">
-        <div className="page-heading-row"><div><span className="eyebrow">PHOTO TO EXPENSE</span><h1>สแกนใบเสร็จ</h1><p>เลือกรูป ให้ระบบอ่าน แล้วตรวจข้อมูลก่อนบันทึก</p></div><span className={"receipt-status " + (receiptOcrStatus === "done" ? "receipt-status-ready" : "")}><i/>{receiptOcrStatus === "loading" ? "กำลังอ่านภาพ" : receiptOcrStatus === "done" ? "อ่านภาพแล้ว" : receiptOcrStatus === "error" ? "อ่านไม่สำเร็จ" : "OCR ในเบราว์เซอร์"}</span></div>
+        <div className="page-heading-row"><div><span className="eyebrow">K PLUS & RECEIPTS</span><h1>อ่านสลิปและใบเสร็จ</h1><p>แยกสลิปโอนเงิน สลิปจ่ายบิล และใบเสร็จอัตโนมัติ ตรวจข้อมูลก่อนบันทึก</p></div><span className={"receipt-status " + (receiptOcrStatus === "done" ? "receipt-status-ready" : "")}><i/>{receiptOcrStatus === "loading" ? "กำลังอ่านภาพ" : receiptOcrStatus === "done" ? "อ่านภาพแล้ว" : receiptOcrStatus === "error" ? "อ่านไม่สำเร็จ" : "OCR ในเบราว์เซอร์"}</span></div>
         <div className="receipt-simple-layout">
           <section className="surface receipt-upload-panel">
             <div className="surface-heading"><div><span className="eyebrow">ขั้นตอน 1</span><h3>เลือกรูปจากมือถือ</h3></div></div>
@@ -489,16 +494,32 @@ export default function CommandCenter() {
                 if (!text) throw new Error("ไม่พบข้อความในภาพ ลองถ่ายให้ชัดและมีแสงเพียงพอ")
                 setReceiptOcrText(text)
                 const lines = text.split(/\r?\n/).map((line:string)=>line.trim()).filter(Boolean)
-                setReceiptMerchant(lines.find((line:string)=>line.length > 2 && !/ใบเสร็จ|ใบกำกับภาษี|วันที่|เวลา|รายการ|จำนวน|ราคา|รวมทั้งสิ้น|ยอดรวม/.test(line)) || "")
+                const normalized = text.toLowerCase()
+                const isKasikorn = /k\s*plus|kplus|kasikorn|กสิกร|ธนาคารกสิกร/.test(normalized)
+                const isBillPayment = /จ่ายบิล|ชำระบิล|bill payment|ชำระเงิน|ผู้ให้บริการ|หมายเลขอ้างอิง|reference no|ref\.?\s*no/i.test(text)
+                const isTransfer = /โอนเงิน|ผู้โอน|ผู้รับ|transfer|บัญชีต้นทาง|บัญชีปลายทาง|พร้อมเพย์|promptpay/i.test(text)
+                const detectedType = isKasikorn ? (isBillPayment && !isTransfer ? "จ่ายบิล K PLUS" : isTransfer ? "โอนเงิน K PLUS" : "รายการ K PLUS") : "ใบเสร็จทั่วไป"
+                setReceiptDocType(detectedType)
+                const ignoredMerchant = /k\s*plus|kplus|kasikorn|กสิกร|ธนาคาร|วันที่|เวลา|จำนวนเงิน|ยอดเงิน|ยอดโอน|ค่าธรรมเนียม|เลขที่รายการ|รหัสอ้างอิง|สถานะ|สำเร็จ|ใบเสร็จ|ใบกำกับภาษี|รายการ|จำนวน|ราคา|รวมทั้งสิ้น|ยอดรวม|ผู้โอน|ผู้รับ|บัญชี|หมายเลขอ้างอิง|reference|transaction|transfer|promptpay/i
+                const merchantLine = lines.find((line:string)=>line.length > 2 && !ignoredMerchant.test(line) && !/^[\d\s.,:/-]+$/.test(line))
+                setReceiptMerchant(merchantLine || (isKasikorn ? (isBillPayment ? "จ่ายบิล K PLUS" : "โอนเงิน K PLUS") : ""))
                 const dateMatch = text.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/)
                 if (dateMatch) { let year = Number(dateMatch[3]); if (year > 2400) year -= 543; else if (year < 100) year += 2000; const d = new Date(year, Number(dateMatch[2])-1, Number(dateMatch[1])); if (!Number.isNaN(d.getTime())) setReceiptDate(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")) }
-                const moneyMatches = [...text.matchAll(/(?:฿|บาท\s*)?\b(\d{1,7}(?:,\d{3})*(?:\.\d{2})?)\b/g)].map((m:any)=>Number(String(m[1]).replace(/,/g,""))).filter((n:number)=>n > 0 && n < 10000000)
-                const totalLine = lines.slice().reverse().find((line:string)=>/ยอดสุทธิ|ยอดรวม|รวมทั้งสิ้น|grand total|total|net total/i.test(line))
-                const totalMatch = totalLine?.match(/(\d[\d,]*(?:\.\d{1,2})?)/g)?.map((v:string)=>Number(v.replace(/,/g,""))).filter((n:number)=>n>0).pop()
-                const total = totalMatch || (moneyMatches.length ? Math.max(...moneyMatches) : 0)
+                const moneyMatches = [...text.matchAll(/(?:฿|บาท\s*)?\b(\d{1,7}(?:,\d{3})*(?:\.\d{1,2})?)\b/g)].map((m:any)=>({value:Number(String(m[1]).replace(/,/g,"")),line:lines.find((line:string)=>line.includes(m[1]))||""})).filter((x:any)=>x.value > 0 && x.value < 10000000)
+                const preferredTotalLine = lines.find((line:string)=>/ยอดที่ต้องชำระ|จำนวนเงินที่โอน|ยอดโอน|ยอดชำระ|จำนวนเงิน|ยอดสุทธิ|ยอดรวม|รวมทั้งสิ้น|amount|total/i.test(line) && !/ค่าธรรมเนียม|fee|ส่วนลด|ยอดคงเหลือ|balance/i.test(line))
+                const preferredNumbers = preferredTotalLine?.match(/\d[\d,]*(?:\.\d{1,2})?/g)?.map((v:string)=>Number(v.replace(/,/g,""))).filter((n:number)=>n>0 && n<10000000) || []
+                const total = preferredNumbers.length ? preferredNumbers[preferredNumbers.length-1] : (moneyMatches.length ? moneyMatches[moneyMatches.length-1].value : 0)
                 if (total) setReceiptTotal(String(total))
-                const parsedItems = lines.map((line:string)=>{const m=line.match(/^(.{2,50}?)\s+(\d[\d,]*(?:\.\d{1,2})?)\s*$/);return m && !/รวม|total|vat|ภาษี|ส่วนลด/i.test(m[1]) ? {id:uid(),name:m[1].trim(),amount:String(Number(m[2].replace(/,/g,"")))} : null}).filter(Boolean) as {id:string;name:string;amount:string}[]
-                setReceiptItems(parsedItems.slice(0,30))
+                const timeMatch = text.match(/(?:เวลา\s*)?(\d{1,2}:\d{2}(?::\d{2})?)/)
+                setReceiptTime(timeMatch?.[1] || "")
+                const refMatch = text.match(/(?:เลขที่รายการ|รหัสอ้างอิง|หมายเลขอ้างอิง|reference(?:\s*no)?|transaction\s*id)\s*[:#]?\s*([A-Z0-9-]{6,})/i)
+                setReceiptReference(refMatch?.[1] || "")
+                const feeMatch = text.match(/(?:ค่าธรรมเนียม|fee)\s*[:：]?\s*(?:฿\s*)?(\d[\d,]*(?:\.\d{1,2})?)/i)
+                setReceiptFee(feeMatch ? String(Number(feeMatch[1].replace(/,/g,""))) : "")
+                const personMatch = text.match(/(?:ผู้รับเงิน|ชื่อผู้รับ|ผู้รับ|to)\s*[:：]?\s*([^\n]+)/i)
+                setReceiptCounterparty(personMatch?.[1]?.trim().slice(0,100) || "")
+                const parsedItems = lines.map((line:string)=>{const m=line.match(/^(.{2,50}?)\s+(\d[\d,]*(?:\.\d{1,2})?)\s*$/);return m && !/รวม|total|vat|ภาษี|ส่วนลด|ค่าธรรมเนียม|fee/i.test(m[1]) ? {id:uid(),name:m[1].trim(),amount:String(Number(m[2].replace(/,/g,"")))} : null}).filter(Boolean) as {id:string;name:string;amount:string}[]
+                setReceiptItems(isKasikorn ? [] : parsedItems.slice(0,30))
                 setReceiptOcrStatus("done")
               } catch (error) { setReceiptOcrStatus("error"); setToast({message:error instanceof Error ? error.message : "อ่านรูปไม่สำเร็จ ลองอีกครั้ง"}) }
             }}><Icon name="sparkles"/>{receiptOcrStatus === "loading" ? "กำลังอ่านข้อความจากภาพ…" : "อ่านข้อมูลจากใบเสร็จ"}</button>
@@ -508,14 +529,18 @@ export default function CommandCenter() {
             <div className="surface-heading"><div><span className="eyebrow">ขั้นตอน 2</span><h3>ตรวจและแก้ไขข้อมูล</h3></div></div>
             {receiptOcrStatus === "loading" && <div className="receipt-review-empty"><span><Icon name="sparkles"/></span><p>กำลังอ่านตัวอักษร อาจใช้เวลาสักครู่ โดยเฉพาะการอ่านภาษาไทยครั้งแรก</p></div>}
             <div className="receipt-fields">
-              <label>ชื่อร้าน<input value={receiptMerchant} onChange={e=>setReceiptMerchant(e.target.value)} placeholder="ชื่อร้านจากใบเสร็จ"/></label>
-              <div className="receipt-field-grid"><label>วันที่<input type="date" value={receiptDate} onChange={e=>setReceiptDate(e.target.value)}/></label><label>ยอดรวม (บาท)<input inputMode="decimal" value={receiptTotal} onChange={e=>setReceiptTotal(e.target.value.replace(/[^\d.]/g,""))} placeholder="0.00"/></label></div>
+              <label>ประเภทที่ระบบตรวจพบ<input value={receiptDocType} onChange={e=>setReceiptDocType(e.target.value)} /></label>
+              <label>{receiptDocType.includes("โอนเงิน") ? "รายละเอียด / ธนาคาร" : receiptDocType.includes("จ่ายบิล") ? "ผู้ให้บริการ / รายละเอียดบิล" : "ชื่อร้าน / รายละเอียด"}<input value={receiptMerchant} onChange={e=>setReceiptMerchant(e.target.value)} placeholder="ชื่อร้านจากใบเสร็จ"/></label>
+              <div className="receipt-field-grid"><label>วันที่<input type="date" value={receiptDate} onChange={e=>setReceiptDate(e.target.value)}/></label><label>ยอดเงิน (บาท)<input inputMode="decimal" value={receiptTotal} onChange={e=>setReceiptTotal(e.target.value.replace(/[^\d.]/g,""))} placeholder="0.00"/></label></div>
+              <div className="receipt-field-grid"><label>เวลา<input value={receiptTime} onChange={e=>setReceiptTime(e.target.value)} placeholder="เช่น 14:35"/></label><label>ค่าธรรมเนียม (ถ้ามี)<input inputMode="decimal" value={receiptFee} onChange={e=>setReceiptFee(e.target.value.replace(/[^\d.]/g,""))} placeholder="0.00"/></label></div>
+              <label>ผู้รับเงิน / ผู้ให้บริการ<input value={receiptCounterparty} onChange={e=>setReceiptCounterparty(e.target.value)} placeholder="ตรวจและแก้ไขได้"/></label>
+              <label>เลขที่รายการ / รหัสอ้างอิง<input value={receiptReference} onChange={e=>setReceiptReference(e.target.value)} placeholder="ถ้ามีในสลิป"/></label>
               <label>หมวดหมู่<select value={receiptCategory} onChange={e=>setReceiptCategory(e.target.value)}><option>อาหาร</option><option>เดินทาง</option><option>ของใช้</option><option>สุขภาพ</option><option>บิลและสาธารณูปโภค</option><option>ช้อปปิ้ง</option><option>อื่น ๆ</option></select></label>
             </div>
             {receiptItems.length > 0 && <div className="receipt-items-review"><div className="receipt-items-heading"><strong>รายการที่อ่านได้</strong><small>{receiptItems.length} รายการ · ตรวจแก้ได้</small></div>{receiptItems.map((item,index)=><div className="receipt-item-row" key={item.id}><input aria-label={"ชื่อรายการ "+(index+1)} value={item.name} onChange={e=>setReceiptItems(old=>old.map(x=>x.id===item.id?{...x,name:e.target.value}:x))}/><input aria-label={"ราคาของรายการ "+(index+1)} inputMode="decimal" value={item.amount} onChange={e=>setReceiptItems(old=>old.map(x=>x.id===item.id?{...x,amount:e.target.value.replace(/[^\d.]/g,"")}:x))}/><button className="icon-button" aria-label="ลบรายการ" onClick={()=>setReceiptItems(old=>old.filter(x=>x.id!==item.id))}><Icon name="close"/></button></div>)}</div>}
             {receiptOcrText && <details className="receipt-raw-text"><summary>ดูข้อความดิบจาก OCR</summary><pre>{receiptOcrText}</pre></details>}
             {receiptOcrStatus === "done" && <p className="receipt-review-success"><Icon name="check"/>อ่านภาพแล้ว กรุณาตรวจยอดและวันที่ก่อนบันทึก</p>}
-            <button className="button button-primary button-full receipt-save-button" disabled={!receiptPreview || receiptOcrStatus!=="done" || !(Number(receiptTotal)>0)} onClick={()=>{const value=Number(receiptTotal);if(!value||value<=0)return;const transaction:Transaction={id:uid(),type:"expense",amount:value,detail:("ใบเสร็จ"+(receiptMerchant.trim()?" · "+receiptMerchant.trim():"")+(receiptItems.length?" · "+receiptItems.map(i=>i.name).filter(Boolean).slice(0,4).join(", "):"")),date:receiptDate||today(),createdAt:Date.now()};setTransactions(old=>[transaction,...old]);setDelightActive(true);setToast({message:"กำลังบันทึกรายจ่ายจากใบเสร็จลงระบบ…"});setReceiptOcrStatus("idle");setReceiptPreview(null);setReceiptFileName("");setReceiptOcrText("");setReceiptMerchant("");setReceiptDate(today());setReceiptTotal("");setReceiptItems([])}}><Icon name="check"/>ยืนยันและบันทึกเป็นรายจ่าย</button>
+            <button className="button button-primary button-full receipt-save-button" disabled={!receiptPreview || receiptOcrStatus!=="done" || !(Number(receiptTotal)>0)} onClick={()=>{const value=Number(receiptTotal);if(!value||value<=0)return;const transaction:Transaction={id:uid(),type:"expense",amount:value,detail:((receiptDocType || "รายการจากภาพ")+(receiptMerchant.trim()?" · "+receiptMerchant.trim():"")+(receiptCounterparty.trim()?" · ถึง "+receiptCounterparty.trim():"")+(receiptReference.trim()?" · อ้างอิง "+receiptReference.trim():"")+(receiptFee && Number(receiptFee)>0?" · ค่าธรรมเนียม "+receiptFee+" บาท":"")+(receiptItems.length?" · "+receiptItems.map(i=>i.name).filter(Boolean).slice(0,4).join(", "):"")),date:receiptDate||today(),createdAt:Date.now()};setTransactions(old=>[transaction,...old]);setDelightActive(true);setToast({message:"กำลังบันทึกรายจ่ายจากใบเสร็จลงระบบ…"});setReceiptOcrStatus("idle");setReceiptPreview(null);setReceiptFileName("");setReceiptOcrText("");setReceiptMerchant("");setReceiptDocType("ยังไม่จำแนก");setReceiptTime("");setReceiptReference("");setReceiptCounterparty("");setReceiptFee("");setReceiptDate(today());setReceiptTotal("");setReceiptItems([])}}><Icon name="check"/>ยืนยันและบันทึกเป็นรายจ่าย</button>
             <small className="receipt-save-hint">จะบันทึกยอดรวมเป็นรายจ่ายหนึ่งรายการใน Money102 รายการย่อยที่อ่านได้ใช้สำหรับตรวจทาน</small>
           </section>
         </div>
