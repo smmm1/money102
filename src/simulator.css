@@ -31,3 +31,6 @@
 .app-shell.game-mode .topbar,.app-shell.game-mode .mobile-nav{display:none!important}
 .app-shell.game-mode .main-area{padding:0!important;margin:0!important;min-width:0}
 .app-shell.game-mode .simulator-page{width:100%;max-width:none;min-height:100vh;box-sizing:border-box}
+
+.sim-activity{display:flex;align-items:center;justify-content:center;gap:5px;margin:0 auto 10px;color:#6e8b69;font-size:10px;line-height:1.5}
+.sim-activity:first-letter{font-size:7px;color:#83aa77}
