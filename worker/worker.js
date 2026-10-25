@@ -93,6 +93,30 @@ function applyResidentActivity(p,activity,minute) {
  const moodScore=clampNeed(Object.values(p.needs).reduce((sum,n)=>sum+n,0)/Object.values(p.needs).length*.7+(p.health||80)*.3);p.moodScore=moodScore;p.mood=moodScore>=75?"สบายใจ":moodScore>=55?"ค่อนข้างดี":moodScore>=35?"เหนื่อยล้า":"เครียดและต้องพัก";p.activityLabel=a.label;
  return true;
 }
+function moveResidentForActivity(p,activity) {
+ const homes={ploy:[31,27],non:[12,63],fah:[39,27],somchai:[12,36],may:[57,36],jay:[66,27]};
+ const jobs={ploy:[31,36],non:[82,43],fah:[39,63],somchai:[12,36],may:[59,18],jay:[66,18]};
+ const spots={
+  eat:[[12,20],[82,43],[83,43]],shop:[82,43],socialize:[59,63],exercise:[78,83],study:[39,63],
+  relax:[[72,83],[57,36],[31,27]],use_phone:[[31,27],[12,63],[39,27],[12,36],[57,36],[66,27]],
+  commute:[[45,49]],travel:[[45,49]],cook:[[12,36]],clean:[[31,27]],bathe:[[31,27]],sleep:[[31,27]],use_toilet:[[31,27]],work:[[31,36]]
+ };
+ const ids=["ploy","non","fah","somchai","may","jay"];
+ const home=homes[p.id]||[50,50],job=jobs[p.id]||[50,50];
+ let destination=home;
+ if(activity==="work")destination=job;
+ else if(activity==="eat"||activity==="shop")destination=p.id==="somchai"?[12,20]:[82,43];
+ else if(activity==="socialize")destination=[59,63];
+ else if(activity==="exercise")destination=[78,83];
+ else if(activity==="study")destination=p.id==="fah"?[39,63]:home;
+ else if(activity==="commute"||activity==="travel")destination=[45,49];
+ else if(activity==="cook")destination=p.id==="somchai"?[12,20]:home;
+ else if(activity==="relax"||activity==="sleep"||activity==="bathe"||activity==="clean"||activity==="use_phone"||activity==="use_toilet")destination=home;
+ // Small deterministic offsets keep residents from occupying the exact same pixel.
+ const offset=ids.indexOf(p.id);
+ p.x=Math.max(4,Math.min(96,destination[0]+((offset%3)-1)*1.8));
+ p.y=Math.max(5,Math.min(94,destination[1]+(Math.floor(offset/3)-0.5)*2));
+}
 function advanceLifeWorld(state,elapsedMinutes) {
  const steps=Math.max(0,Math.min(10080,Math.floor(elapsedMinutes/10)));
  for(let i=0;i<steps;i++){
@@ -125,6 +149,7 @@ function advanceLifeWorld(state,elapsedMinutes) {
    if(p.needs.bladder<15)next="use_toilet";else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";else if(p.needs.hygiene<18)next="bathe";else if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";else if(!next&& (h>=23||h<5))next="sleep";else if(!next&&h>=6&&h<9)next="eat";else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";else if(!next&&h>=17&&h<20)next="shop";else if(!next)next="relax";
    if(next && next!=="wake" && next!==p.activity){
     applyResidentActivity(p,next,state.minute);
+    moveResidentForActivity(p,next);
     const action=SIM_ACTIVITIES[next]?.label||next;
     state.events.unshift({id:crypto.randomUUID(),text:p.name+" "+action,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(state.minute%60).padStart(2,"0")});
    }
@@ -171,8 +196,8 @@ export default { async scheduled(controller,env) { try { await ensureSchema(env.
     const person=state.residents.find(p=>p.id===residentId)||state.residents[0];
     if(action==="advance_time"){advanceLifeWorld(state,180);}
     else if(action==="wander"){person.x=10+((Number(person.x)+17)%80);person.y=18+((Number(person.y)+13)%65);person.mood="กำลังสำรวจ";state.events.unshift({id:crypto.randomUUID(),text:person.name+" ออกไปสำรวจชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
-    else if(action==="socialize"){for(const p of state.residents){if(p.id!==person.id){p.relationship=p.relationship||{};p.relationship[person.id]=Math.min(100,(p.relationship[person.id]||35)+1);person.relationship=person.relationship||{};person.relationship[p.id]=Math.min(100,(person.relationship[p.id]||35)+1);}}applyResidentActivity(person,"socialize",Number(state.minute)||state.hour*60);state.events.unshift({id:crypto.randomUUID(),text:person.name+" พบปะพูดคุยกับคนในชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
-    else {const minute=Number(state.minute)||state.hour*60;applyResidentActivity(person,action,minute);state.events.unshift({id:crypto.randomUUID(),text:person.name+" "+SIM_ACTIVITIES[action].label,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(minute%60).padStart(2,"0")});}
+    else if(action==="socialize"){moveResidentForActivity(person,"socialize");for(const p of state.residents){if(p.id!==person.id){p.relationship=p.relationship||{};p.relationship[person.id]=Math.min(100,(p.relationship[person.id]||35)+1);person.relationship=person.relationship||{};person.relationship[p.id]=Math.min(100,(person.relationship[p.id]||35)+1);}}applyResidentActivity(person,"socialize",Number(state.minute)||state.hour*60);state.events.unshift({id:crypto.randomUUID(),text:person.name+" พบปะพูดคุยกับคนในชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
+    else {const minute=Number(state.minute)||state.hour*60;applyResidentActivity(person,action,minute);moveResidentForActivity(person,action);state.events.unshift({id:crypto.randomUUID(),text:person.name+" "+SIM_ACTIVITIES[action].label,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(minute%60).padStart(2,"0")});}
     state.memoriesCount=0;await saveSimulatorState(env.DB,user.id,state);return json(request,env,{ok:true,state});
    }
    if(url.pathname==="/api/simulator/turn"&&request.method==="POST") return json(request,env,{error:"AI dialogue is disabled. Use player activity commands."},410);
