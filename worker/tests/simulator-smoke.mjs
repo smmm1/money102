@@ -1,7 +1,9 @@
 import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
 
-const source = await readFile(new URL("../worker.js", import.meta.url), "utf8")
+const workerSources = [new URL("../worker.js", import.meta.url), new URL("../../workers/money102-api.js", import.meta.url)]
+for (const workerUrl of workerSources) {
+const source = await readFile(workerUrl, "utf8")
 assert.doesNotThrow(() => new Function(source.replace("export default {", "return {")))
 
 const executable = source
@@ -72,4 +74,5 @@ engine.moveResidentForActivity(visitor, "work", { x: 120, y: -5 })
 assert.ok(visitor.x >= 4 && visitor.x <= 96)
 assert.ok(visitor.y >= 5 && visitor.y <= 94)
 
-console.log("Worker syntax, 30-day life simulation, command duration, priority, wages, and interior routing smoke checks passed.")
+console.log("Worker syntax, 30-day life simulation, command duration, priority, wages, and interior routing smoke checks passed:", workerUrl.pathname)
+}
