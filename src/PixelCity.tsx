@@ -29,7 +29,6 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   private selectedId = ""
   private selectResident: (id: string) => void = () => {}
   private residentSprites = new Map<string, Phaser.GameObjects.Container>()
-  private clockText?: Phaser.GameObjects.Text
   private interiorLayer?: Phaser.GameObjects.Container
 
   constructor() {
@@ -57,6 +56,21 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.scale.on("resize", (size: Phaser.Structs.Size) => {
       this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
       this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
+    })
+    let dragStart: { x: number; y: number; scrollX: number; scrollY: number } | null = null
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
+      if (currentlyOver.length === 0) dragStart = { x: pointer.x, y: pointer.y, scrollX: this.cameras.main.scrollX, scrollY: this.cameras.main.scrollY }
+    })
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.isDown || !dragStart) return
+      const camera = this.cameras.main
+      camera.scrollX = dragStart.scrollX - (pointer.x - dragStart.x) / camera.zoom
+      camera.scrollY = dragStart.scrollY - (pointer.y - dragStart.y) / camera.zoom
+    })
+    this.input.on("pointerup", () => { dragStart = null })
+    this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number) => {
+      const camera = this.cameras.main
+      camera.setZoom(Phaser.Math.Clamp(camera.zoom - dy * 0.0005, 0.35, 1.15))
     })
     this.events.on("update-residents", (residents: PixelResident[], selectedId: string) => {
       this.residents = residents
@@ -349,6 +363,10 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       fontFamily: "Tahoma, sans-serif", fontSize: "13px", color: "#f9f0d5",
       backgroundColor: "#496b4c", padding: { x: 10, y: 6 },
     }).setOrigin(0.5, 0).setDepth(2000)
+    this.add.text(16, 16, "ลากเพื่อเลื่อนเมือง · เลื่อนล้อเมาส์เพื่อซูม · แตะอาคารเพื่อเข้า", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#fff7dc",
+      backgroundColor: "#496b4c", padding: { x: 8, y: 5 },
+    }).setScrollFactor(0).setDepth(3000)
   }
 }
 
