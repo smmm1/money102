@@ -54,10 +54,6 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.drawInteriorEntrances()
     this.drawResidentSprites()
     this.drawLabels()
-    this.input.on("gameobjectdown", (_pointer: Phaser.Input.Pointer, object: Phaser.GameObjects.GameObject) => {
-      const id = (object as Phaser.GameObjects.GameObject & { residentId?: string }).residentId
-      if (id) this.selectResident(id)
-    })
     this.scale.on("resize", (size: Phaser.Structs.Size) => {
       this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
       this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
@@ -284,15 +280,13 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       furniture(x + panelW - 112, y + 194, 104, 50, 0x9a8b68)
       add(this.add.text(x + panelW / 2, y + panelH - 73, "พื้นที่ใช้งาน · อุปกรณ์ · จุดพัก", { fontFamily: "Tahoma", fontSize: "11px", color: "#53634d" }).setOrigin(0.5).setScrollFactor(0))
     }
-    add(this.add.text(x + 22, y + panelH - 32, "แตะพื้นที่อื่นเพื่อออกจากอาคาร", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
-    const closeZone = this.add.zone(width / 2, height / 2, width, height).setScrollFactor(0).setInteractive()
-    closeZone.setDepth(-1)
-    closeZone.on("pointerdown", () => { this.interiorLayer?.destroy(true); this.interiorLayer = undefined })
-    layer.add(closeZone)
-    closeZone.setDepth(0)
-    // Keep the close surface behind all interior artwork.
-    layer.sendToBack(closeZone)
-    this.input.setTopOnly(true)
+    add(this.add.text(x + 22, y + panelH - 32, "ห้องจำลอง · แตะปุ่มปิดเพื่อกลับสู่เมือง", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
+    const closeButton = this.add.text(x + panelW - 18, y + 17, "× ปิด", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "14px", fontStyle: "bold", color: "#fff3d2",
+      backgroundColor: "#9b5848", padding: { x: 9, y: 5 },
+    }).setOrigin(1, 0).setScrollFactor(0).setInteractive({ useHandCursor: true })
+    closeButton.on("pointerdown", () => { this.interiorLayer?.destroy(true); this.interiorLayer = undefined })
+    layer.add(closeButton)
   }
 
   private drawResidentSprites() {
