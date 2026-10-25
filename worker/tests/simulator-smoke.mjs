@@ -7,7 +7,7 @@ assert.doesNotThrow(() => new Function(source.replace("export default {", "retur
 const executable = source
   .slice(0, source.indexOf("export default {"))
   .replaceAll("crypto.randomUUID()", '"smoke-id"')
-const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld };")()
+const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity };")()
 const state = engine.starterSimulatorState()
 
 assert.equal(state.version, 1)
@@ -30,4 +30,35 @@ assert.ok(state.residents.every((resident) => Number.isFinite(resident.money) &&
 assert.ok(state.residents.every((resident) => Number.isFinite(resident.sleepDebt) && resident.sleepDebt >= 0))
 assert.ok(state.residents.some((resident, index) => resident.money !== before[index]), "scheduled work should accrue simulated income")
 
-console.log("Worker syntax and deterministic 30-day simulation smoke checks passed.")
+// Starting work must not pay an entire hourly wage immediately; wages accrue on hourly ticks.
+const wageWorld = engine.starterSimulatorState()
+const wageResident = wageWorld.residents.find((resident) => resident.id === "ploy")
+const moneyBeforeWork = wageResident.money
+engine.applyResidentActivity(wageResident, "work", wageWorld.minute)
+assert.equal(wageResident.money, moneyBeforeWork, "starting a work shift must not grant instant wages")
+
+// A manual order should override the routine for one in-game hour, then let the schedule resume.
+const commandWorld = engine.starterSimulatorState()
+const commanded = commandWorld.residents.find((resident) => resident.id === "ploy")
+commanded.playerCommand = "cook"
+commanded.playerCommandUntil = (commandWorld.day - 1) * 1440 + commandWorld.minute + 60
+engine.advanceLifeWorld(commandWorld, 30)
+assert.equal(commandWorld.minute, 450)
+assert.equal(commanded.activity, "cook", "player order should override the normal morning routine")
+assert.equal(commanded.playerCommand, "cook")
+engine.advanceLifeWorld(commandWorld, 40)
+assert.equal(commandWorld.minute, 490)
+assert.equal(commanded.playerCommand, undefined, "expired player order should be cleared")
+assert.equal(commanded.playerCommandUntil, undefined)
+assert.equal(commanded.activity, "commute", "normal resident routine should resume after the command expires")
+
+// Critical needs remain more important than a manual order.
+const urgentWorld = engine.starterSimulatorState()
+const urgentResident = urgentWorld.residents.find((resident) => resident.id === "ploy")
+urgentResident.needs.bladder = 2
+urgentResident.playerCommand = "cook"
+urgentResident.playerCommandUntil = (urgentWorld.day - 1) * 1440 + urgentWorld.minute + 60
+engine.advanceLifeWorld(urgentWorld, 10)
+assert.equal(urgentResident.activity, "use_toilet", "urgent bladder need should override the player order")
+
+console.log("Worker syntax, 30-day life simulation, command duration, priority, and wage smoke checks passed.")
