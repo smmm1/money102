@@ -143,6 +143,20 @@ export default function CommandCenter() {
   useEffect(() => { safeSet("money102-motion-v1", JSON.stringify(motionLevel)) }, [motionLevel])
   useEffect(() => { safeSet("money102-sounds-enabled-v1", JSON.stringify(soundsEnabled)) }, [soundsEnabled])
   useEffect(() => {
+    const onSaved = () => setToast({ message: "บันทึกลง Cloudflare D1 สำเร็จแล้ว" })
+    const onError = (event: Event) => {
+      const detail = (event as CustomEvent).detail
+      setToast({ message: "บันทึกไม่สำเร็จ: " + (detail || "เชื่อมต่อ Cloudflare ไม่ได้") })
+    }
+    window.addEventListener("d1-persist-success", onSaved)
+    window.addEventListener("d1-persist-error", onError)
+    return () => {
+      window.removeEventListener("d1-persist-success", onSaved)
+      window.removeEventListener("d1-persist-error", onError)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!soundsEnabled) return
     let audio: AudioContext | null = null
     const play = (kind: string) => {
@@ -288,7 +302,7 @@ export default function CommandCenter() {
     const transaction: Transaction = { id: uid(), type: entryType, amount: value, detail: detail.trim(), date: entryDate, createdAt: Date.now() }
     setTransactions(old => [transaction, ...old])
     setDelightActive(true)
-    setToast({ message: "บันทึกรายการแล้ว", undo: () => setTransactions(old => old.filter(item => item.id !== transaction.id)) })
+    setToast({ message: "กำลังบันทึกรายการลง Cloudflare D1…", undo: () => setTransactions(old => old.filter(item => item.id !== transaction.id)) })
     setAmount(""); setDetail(""); setEntryDate(today()); setShowEntry(false); setQuickAddOpen(false)
   }
   function saveNote(e: FormEvent) {
@@ -299,7 +313,7 @@ export default function CommandCenter() {
     else setNotes(old => [{ id: uid(), title: noteTitle.trim() || "ไม่มีชื่อ", body: noteBody.trim(), tags: [], mood: "neutral", pinned: false, createdAt: now, updatedAt: now }, ...old])
     safeRemove("lamoon-note-draft-v1")
     setDelightActive(true)
-    setToast({ message: editingNoteId ? "อัปเดตโน้ตแล้ว" : "บันทึกโน้ตแล้ว" })
+    setToast({ message: "กำลังบันทึกโน้ตลง Cloudflare D1…" })
     setNoteTitle(""); setNoteBody(""); setEditingNoteId(null); setShowNote(false); setQuickAddOpen(false)
   }
   function saveHealth(e: FormEvent) {
@@ -309,6 +323,7 @@ export default function CommandCenter() {
     if (healthType === "exercise") { record.exercise = exercise; record.distance = Number(distance) || 0; record.duration = Number(duration) || 0; record.reps = Number(reps) || 0; record.sets = Number(sets) || 0 }
     if (healthType === "wellness") { record.water = Number(water) || 0; record.sleep = Number(sleep) || 0 }
     setHealth(old => ({ ...old, records: [...old.records, record] }))
+    setToast({ message: "กำลังบันทึกข้อมูลสุขภาพลง Cloudflare D1…" })
     setDelightActive(true)
     setWeight(""); setDistance(""); setDuration(""); setReps(""); setSets("3"); setShowHealth(false)
   }

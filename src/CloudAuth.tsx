@@ -15,33 +15,62 @@ export function AccountMenu() {
 }
 type LocalSnapshot = Record<string, string>
 const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
-const TOKEN_KEY = isCommandCenterPreview ? "money102_cloudflare_session_preview" : "money102_cloudflare_session"
-const OWNER_KEY = isCommandCenterPreview ? "money102_cloudflare_owner_preview" : "money102_cloudflare_owner"
-const LOCAL_PREFIX = "lamoon-"
 const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
   ? "https://money102-api-staging.s2mtha16.workers.dev"
   : "https://money102-api.s2mtha16.workers.dev"
 const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
 
-function readLocalSnapshot(): LocalSnapshot {
-  const snapshot: LocalSnapshot = {}
-  for (let i = 0; i < localStorage.length; i += 1) {
-    const key = localStorage.key(i)
-    if (key?.startsWith(LOCAL_PREFIX)) {
-      const value = localStorage.getItem(key)
-      if (value !== null) snapshot[key] = value
-    }
+let memorySnapshot: LocalSnapshot = {}
+let storageShimInstalled = false
+function installStorageShim() {
+  if (storageShimInstalled) return
+  storageShimInstalled = true
+  const proto = Storage.prototype
+  const nativeGet = proto.getItem
+  const nativeSet = proto.setItem
+  const nativeRemove = proto.removeItem
+  proto.getItem = function(key: string) {
+    if (this === window.localStorage) return memorySnapshot[String(key)] ?? null
+    return nativeGet.call(this, key)
   }
-  return snapshot
+  proto.setItem = function(key: string, value: string) {
+    if (this !== window.localStorage) return nativeSet.call(this, key, value)
+    const k = String(key), v = String(value)
+    memorySnapshot[k] = v
+    scheduleCloudSave()
+  }
+  proto.removeItem = function(key: string) {
+    if (this !== window.localStorage) return nativeRemove.call(this, key)
+    const k = String(key)
+    delete memorySnapshot[k]
+    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
+  }
 }
-
+function readLocalSnapshot(): LocalSnapshot {
+  return { ...memorySnapshot }
+}
+let saveTimer: number | undefined
+let saveChain: Promise<unknown> = Promise.resolve()
+function scheduleCloudSave() {
+  if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+  saveTimer = window.setTimeout(() => {
+    const payload = readLocalSnapshot()
+    saveChain = saveChain.then(() => api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) }))
+      .then(() => window.dispatchEvent(new CustomEvent("d1-persist-success")))
+      .catch((error: unknown) => window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) })))
+  }, 250)
+}
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  Object.entries(snapshot || {}).forEach(([key, value]) => {
-    if (key.startsWith(LOCAL_PREFIX) && typeof value === "string") localStorage.setItem(key, value)
-  })
+  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.length > 0 && typeof value === "string"))
 }
-
-function getToken() { return localStorage.getItem(TOKEN_KEY) || "" }
+const AUTH_TOKEN_KEY = "money102_auth_token"
+let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
+function getToken() { return sessionToken }
+function setSessionToken(token: string) {
+  sessionToken = token
+  if (token) window.sessionStorage.setItem(AUTH_TOKEN_KEY, token)
+  else window.sessionStorage.removeItem(AUTH_TOKEN_KEY)
+}
 
 async function api(path: string, init: RequestInit = {}) {
   const token = getToken()
@@ -68,7 +97,7 @@ function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | 
 }
 export default function CloudAuth({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
-  const [checking, setChecking] = useState(true)
+  const [checking] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [busy, setBusy] = useState(false)
@@ -78,17 +107,16 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   useEffect(() => {
+    installStorageShim()
+    if (!sessionToken) return
     let cancelled = false
     ;(async () => {
-      const token = getToken()
-      if (!token) { if (!cancelled) setChecking(false); return }
       try {
-        const result = await api("/api/auth/me")
-        if (!cancelled) setUser(result.user as AppUser)
+        const result = await api("/api/auth/me") as { user: AppUser }
+        if (!cancelled) setUser(result.user)
       } catch {
-        localStorage.removeItem(TOKEN_KEY)
-      } finally {
-        if (!cancelled) setChecking(false)
+        setSessionToken("")
+        if (!cancelled) setUser(null)
       }
     })()
     return () => { cancelled = true }
@@ -97,28 +125,11 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) { setCloudReady(false); setCloudError(""); return }
     let cancelled = false
-    setCloudReady(false)
-    setCloudError("")
+    setCloudReady(false); setCloudError("")
     ;(async () => {
       const result = await api("/api/state") as { payload?: LocalSnapshot | null }
       if (cancelled) return
-      const localSnapshot = readLocalSnapshot()
-      const cloudSnapshot = result.payload && typeof result.payload === "object" ? result.payload : {}
-      const previousOwner = localStorage.getItem(OWNER_KEY)
-      const sameAccount = !previousOwner || previousOwner === user.id
-      const mergedSnapshot = sameAccount ? { ...localSnapshot, ...cloudSnapshot } : cloudSnapshot
-
-      // Keep local app data isolated when switching accounts in the same browser.
-      if (!sameAccount) {
-        Object.keys(localSnapshot).forEach((key) => localStorage.removeItem(key))
-      }
-      await api("/api/state", {
-        method: "PUT",
-        body: JSON.stringify({ payload: mergedSnapshot }),
-      })
-      if (cancelled) return
-      restoreSnapshot(mergedSnapshot)
-      localStorage.setItem(OWNER_KEY, user.id)
+      restoreSnapshot(result.payload && typeof result.payload === "object" ? result.payload : {})
       setCloudReady(true)
     })().catch((error: unknown) => {
       if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
@@ -127,39 +138,10 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }, [user?.id])
 
   useEffect(() => {
-    if (!user || !cloudReady) return
-    const originalSetItem = Storage.prototype.setItem
-    const originalRemoveItem = Storage.prototype.removeItem
-    let timer: number | undefined
-    let stopped = false
-    const sync = async () => {
-      if (stopped) return
-      await api("/api/state", { method: "PUT", body: JSON.stringify({ payload: readLocalSnapshot() }) })
-      if (!stopped) setCloudError("")
-    }
-    const schedule = () => {
-      if (timer !== undefined) window.clearTimeout(timer)
-      timer = window.setTimeout(() => {
-        void sync().catch((error: unknown) => {
-          if (!stopped) setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
-        })
-      }, 600)
-    }
-    Storage.prototype.setItem = function (key: string, value: string) {
-      originalSetItem.call(this, key, value)
-      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule()
-    }
-    Storage.prototype.removeItem = function (key: string) {
-      originalRemoveItem.call(this, key)
-      if (this === window.localStorage && key.startsWith(LOCAL_PREFIX)) schedule()
-    }
-    return () => {
-      stopped = true
-      if (timer !== undefined) window.clearTimeout(timer)
-      Storage.prototype.setItem = originalSetItem
-      Storage.prototype.removeItem = originalRemoveItem
-    }
-  }, [user?.id, cloudReady])
+    const handler = (event: Event) => setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + ((event as CustomEvent).detail || "ไม่ทราบสาเหตุ"))
+    window.addEventListener("d1-persist-error", handler)
+    return () => window.removeEventListener("d1-persist-error", handler)
+  }, [])
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -170,7 +152,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       }) as { token: string; user: AppUser }
-      localStorage.setItem(TOKEN_KEY, result.token)
+      setSessionToken(result.token)
       setUser(result.user)
       setPassword("")
       setMessage("เข้าสู่ระบบสำเร็จ")
@@ -183,7 +165,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
 
   async function signOut() {
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
-    localStorage.removeItem(TOKEN_KEY)
+    setSessionToken("")
     setUser(null)
     setCloudReady(false)
     setCloudError("")
