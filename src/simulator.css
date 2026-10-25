@@ -51,3 +51,8 @@
 .sim-avatar.blue:after{background:#668b71}
 .sim-map-label{z-index:6;background:#fff8dfeb;color:#6f7653;border:1px solid #d8d1a8;font-size:9px}
 @media(max-width:560px){.sim-building{width:64px;height:58px;font-size:8px}.sim-building b{font-size:21px}.sim-crops{width:25%;height:17%;left:30%}.sim-river{width:22%}.sim-mill{right:3%}.sim-market{left:39%}}
+
+.sim-profile-details{display:grid;gap:8px;margin:12px 0 4px;text-align:left}
+.sim-profile-details>div{padding:9px 10px;background:#f8f8f1;border:1px solid #edf0e5;border-radius:8px}
+.sim-profile-details small{display:block;font-size:9px;font-weight:700;color:#9a8668;margin-bottom:4px}
+.sim-profile-details p{font-size:10px;line-height:1.75;color:#687664;margin:0}
