@@ -109,8 +109,9 @@ function advanceLifeWorld(state,elapsedMinutes) {
   state.hour=Math.floor(state.minute/60);
   for(const p of state.residents){
    p.needs=p.needs||{hunger:80,energy:80,hygiene:75,social:55,fun:50,bladder:80};
-   p.needs.hunger=clampNeed(p.needs.hunger-.42);p.needs.energy=clampNeed(p.needs.energy+(p.activity==="sleep"?.35:-.28));
-   p.needs.hygiene=clampNeed(p.needs.hygiene-.08);p.needs.social=clampNeed(p.needs.social-.07);p.needs.fun=clampNeed(p.needs.fun-.04);p.needs.bladder=clampNeed(p.needs.bladder-.23);
+   p.needs.hunger=clampNeed(p.needs.hunger-1.05);p.needs.energy=clampNeed(p.needs.energy+(p.activity==="sleep"?.45:-.38));
+   p.needs.hygiene=clampNeed(p.needs.hygiene-.16);p.needs.social=clampNeed(p.needs.social-.12);p.needs.fun=clampNeed(p.needs.fun-.09);p.needs.bladder=clampNeed(p.needs.bladder-.72);
+   if(p.activity!=="sleep")p.sleepDebt=Math.min(120,(p.sleepDebt||0)+.08);
    const h=state.hour;let next=p.routine?.[h];
    if(p.needs.bladder<15)next="use_toilet";else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";else if(p.needs.hygiene<18)next="bathe";else if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";else if(!next&& (h>=23||h<5))next="sleep";else if(!next&&h>=6&&h<9)next="eat";else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";else if(!next&&h>=17&&h<20)next="shop";else if(!next)next="relax";
    if(next && next!=="wake" && (next!==p.activity || state.minute-(p.activityStartedAt||0)>=30)){
