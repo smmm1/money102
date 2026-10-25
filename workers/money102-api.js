@@ -89,6 +89,20 @@ function applyResidentActivity(p,activity,minute) {
  if(activity==="eat"){const cost=p.money>=70?55:25;p.money=Math.max(0,p.money-cost);p.lastMealAt=minute;}
  if(activity==="cook"){p.money=Math.max(0,p.money-18);p.lastMealAt=minute;}
  if(activity==="socialize")p.lastSocialAt=minute;
+ if(activity==="shop")p.money=Math.max(0,(p.money||0)-Math.min(35,Math.max(0,p.money||0)));
+ if(activity==="exercise"){p.health=clampNeed((p.health||80)+2);p.needs.energy=clampNeed(p.needs.energy-3);}
+ // Persistent deterministic skill progression: each meaningful activity grants XP once
+ // when the activity starts, with a new level every 100 XP.
+ const skillForActivity={work:"career",study:"learning",cook:"cooking",socialize:"social",exercise:"fitness"};
+ const skillKey=skillForActivity[activity];
+ if(skillKey){
+  p.skills=p.skills||{};
+  const skill=p.skills[skillKey]||{xp:0,level:1};
+  const gains={work:8,study:10,cook:8,socialize:8,exercise:8};
+  skill.xp=Math.max(0,Number(skill.xp)||0)+(gains[activity]||5);
+  skill.level=Math.floor(skill.xp/100)+1;
+  p.skills[skillKey]=skill;
+ }
  const moodScore=clampNeed(Object.values(p.needs).reduce((sum,n)=>sum+n,0)/Object.values(p.needs).length*.7+(p.health||80)*.3);p.moodScore=moodScore;p.mood=moodScore>=75?"สบายใจ":moodScore>=55?"ค่อนข้างดี":moodScore>=35?"เหนื่อยล้า":"เครียดและต้องพัก";p.activityLabel=a.label;
  return true;
 }
