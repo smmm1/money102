@@ -13,6 +13,7 @@ type PixelCityProps = {
   residents: PixelResident[]
   selectedId: string
   onSelect: (id: string) => void
+  hour: number
 }
 
 const WORLD_W = 1920
@@ -39,15 +40,18 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   private selectResident: (id: string) => void = () => {}
   private residentSprites = new Map<string, Phaser.GameObjects.Container>()
   private interiorLayer?: Phaser.GameObjects.Container
+  private ambientOverlay?: Phaser.GameObjects.Rectangle
+  private worldHour = 7
 
   constructor() {
     super("thai-neighbourhood")
   }
 
-  init(data: { residents: PixelResident[]; selectedId: string; onSelect: (id: string) => void }) {
+  init(data: { residents: PixelResident[]; selectedId: string; onSelect: (id: string) => void; hour: number }) {
     this.residents = data.residents
     this.selectedId = data.selectedId
     this.selectResident = data.onSelect
+    this.worldHour = data.hour ?? 7
   }
 
   create() {
@@ -62,9 +66,12 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.drawInteriorEntrances()
     this.drawResidentSprites()
     this.drawLabels()
+    this.ambientOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x18234c, 0).setScrollFactor(0).setDepth(2500)
+    this.updateAmbient(this.worldHour)
     this.scale.on("resize", (size: Phaser.Structs.Size) => {
       this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
       this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
+      this.ambientOverlay?.setPosition(size.width / 2, size.height / 2).setSize(size.width, size.height)
     })
     let dragStart: { x: number; y: number; scrollX: number; scrollY: number } | null = null
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
@@ -81,11 +88,25 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       const camera = this.cameras.main
       camera.setZoom(Phaser.Math.Clamp(camera.zoom - dy * 0.0005, 0.35, 1.15))
     })
-    this.events.on("update-residents", (residents: PixelResident[], selectedId: string) => {
+    this.events.on("update-residents", (residents: PixelResident[], selectedId: string, hour = this.worldHour) => {
       this.residents = residents
       this.selectedId = selectedId
+      this.worldHour = hour
+      this.updateAmbient(hour)
       this.refreshResidents()
     })
+  }
+
+  private updateAmbient(hour: number) {
+    if (!this.ambientOverlay) return
+    const h = ((Math.floor(hour) % 24) + 24) % 24
+    let color = 0x18234c
+    let alpha = 0
+    if (h >= 19 || h < 5) { color = 0x17254f; alpha = 0.34 }
+    else if (h >= 17) { color = 0x9d6048; alpha = 0.18 }
+    else if (h < 7) { color = 0x657a9a; alpha = 0.17 }
+    else if (h >= 15) { color = 0xe5a05e; alpha = 0.07 }
+    this.ambientOverlay.setFillStyle(color, alpha)
   }
 
   private findWalkPath(startX: number, startY: number, targetX: number, targetY: number) {
@@ -464,14 +485,16 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   }
 }
 
-export default function PixelCity({ residents, selectedId, onSelect }: PixelCityProps) {
+export default function PixelCity({ residents, selectedId, onSelect, hour }: PixelCityProps) {
   const host = useRef<HTMLDivElement>(null)
   const game = useRef<Phaser.Game | null>(null)
   const sceneRef = useRef<ThaiNeighbourhoodScene | null>(null)
   const residentsRef = useRef(residents)
   const selectedRef = useRef(selectedId)
+  const hourPropRef = useRef(hour)
   const onSelectRef = useRef(onSelect)
   residentsRef.current = residents
+  hourPropRef.current = hour
   selectedRef.current = selectedId
   onSelectRef.current = onSelect
 
@@ -484,6 +507,7 @@ export default function PixelCity({ residents, selectedId, onSelect }: PixelCity
           residents: residentsRef.current,
           selectedId: selectedRef.current,
           onSelect: (id) => onSelectRef.current(id),
+          hour: hourPropRef.current,
         })
       }
     }()
@@ -509,8 +533,8 @@ export default function PixelCity({ residents, selectedId, onSelect }: PixelCity
 
   useEffect(() => {
     const active = sceneRef.current
-    if (active?.scene?.isActive()) active.events.emit("update-residents", residents, selectedId)
-  }, [residents, selectedId])
+    if (active?.scene?.isActive()) active.events.emit("update-residents", residents, selectedId, hour)
+  }, [residents, selectedId, hour])
 
   return <div className="pixel-city" ref={host} role="img" aria-label="แผนที่ชุมชนไทย Pixel Art แบบ top-down พร้อมร้านค้า บ้านเช่า วัด ตลาด สวน และตัวละครที่เลือกได้" />
 }
