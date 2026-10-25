@@ -103,7 +103,7 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 function isSnapshot(value: unknown): value is Snapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const entries = Object.entries(value as Record<string, unknown>);
-  return entries.length <= 500 && entries.every(([key, item]) => key.startsWith("lamoon-") && typeof item === "string");
+  return entries.length <= 500 && entries.every(([key, item]) => key.length > 0 && key.length <= 200 && typeof item === "string");
 }
 
 async function parseBody(request: Request): Promise<Record<string, unknown> | null> {
@@ -223,7 +223,7 @@ export default {
 
       const body = await parseBody(request);
       if (!body || !isSnapshot(body.payload)) {
-        return json(request, env, { error: "payload ต้องเป็น object ที่มีเฉพาะค่า string ของคีย์ lamoon-* (ไม่เกิน 500 รายการ)" }, 400);
+        return json(request, env, { error: "payload ต้องเป็น object ที่มีคีย์และค่า string (ไม่เกิน 500 รายการ)" }, 400);
       }
       const serialized = JSON.stringify(body.payload);
       if (serialized.length > 900_000) return json(request, env, { error: "Payload exceeds 900 KB limit" }, 413);
