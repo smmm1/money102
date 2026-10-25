@@ -1389,10 +1389,15 @@ body { background:#faf8f5; color:#302b38; }
 .pork-total-badge strong { color:var(--ink,#30362f); font-size:20px; line-height:1; }
 .pork-total-badge small { color:var(--muted,#858b80); font-size:11px; }
 .pork-form-surface,.pork-calendar-surface,.pork-history-surface { padding:clamp(16px,2.5vw,24px); }
-.pork-form { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(130px,.7fr) minmax(150px,.9fr) auto; gap:12px; align-items:end; }
+.pork-form { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1.25fr) minmax(120px,.65fr) minmax(145px,.85fr) auto; gap:12px; align-items:end; }
 .pork-form label { display:flex; flex-direction:column; gap:7px; color:var(--ink,#30362f); font-size:12px; font-weight:650; min-width:0; }
 .pork-form label span { color:var(--muted,#858b80); font-size:10px; font-weight:400; }
 .pork-form input { width:100%; min-width:0; min-height:45px; border:1px solid var(--line,#e4e7de); border-radius:11px; padding:10px 12px; color:var(--ink,#30362f); background:var(--surface,#fff); font:inherit; outline:none; }
+.pork-form select { width:100%; min-width:0; min-height:45px; border:1px solid var(--line,#e4e7de); border-radius:11px; padding:10px 12px; color:var(--ink,#30362f); background:var(--surface,#fff); font:inherit; outline:none; }
+.pork-form select:focus { border-color:#bd8b70; box-shadow:0 0 0 3px #bd8b701c; }
+.pork-map-link { display:inline-flex; align-items:center; gap:5px; width:max-content; color:var(--accent,#6d7e61); font-size:11px; font-weight:650; text-decoration:none; }
+.pork-map-link:hover { text-decoration:underline; }
+.pork-map-link svg { width:13px; height:13px; }
 .pork-form input:focus { border-color:#bd8b70; box-shadow:0 0 0 3px #bd8b701c; }
 .pork-save-button { min-height:45px; white-space:nowrap; }
 .pork-notice { display:flex; align-items:center; gap:7px; margin:13px 0 0; color:#557b54; font-size:12px; }
@@ -1429,5 +1434,5 @@ body { background:#faf8f5; color:#302b38; }
 .pork-empty>span svg { width:24px; height:24px; }
 .pork-empty strong { font-size:14px; }
 .pork-empty p { max-width:360px; margin:0 0 5px; color:var(--muted,#858b80); font-size:12px; line-height:1.7; }
-@media (max-width: 900px) { .pork-form { grid-template-columns:repeat(2,minmax(0,1fr)); } .pork-shop-field { grid-column:1/-1; } .pork-save-button { width:100%; } }
-@media (max-width: 600px) { .pork-page { gap:12px; } .pork-total-badge { padding:9px 11px; } .pork-form { grid-template-columns:1fr 1fr; gap:10px; } .pork-form .pork-shop-field { grid-column:1/-1; } .pork-form label { font-size:11px; } .pork-form input { min-height:43px; padding:9px; font-size:12px; } .pork-form .pork-save-button { grid-column:1/-1; } .pork-calendar-grid { gap:2px; } .pork-calendar-day { min-height:39px; border-radius:8px; font-size:12px; } .pork-calendar-blank { min-height:39px; } .pork-history-row { grid-template-columns:34px minmax(0,1fr) auto; gap:8px; } .pork-history-icon { width:34px; height:34px; } .pork-history-price { grid-column:2; grid-row:2; justify-self:start; font-size:12px; } .pork-history-actions { grid-column:3; grid-row:1 / span 2; } .pork-history-main { align-self:end; } .pork-history-row { align-items:center; } .pork-history-summary strong { font-size:15px; } }
+@media (max-width: 900px) { .pork-form { grid-template-columns:repeat(2,minmax(0,1fr)); } .pork-shop-field,.pork-map-field { grid-column:1/-1; } .pork-save-button { width:100%; } }
+@media (max-width: 600px) { .pork-page { gap:12px; } .pork-total-badge { padding:9px 11px; } .pork-form { grid-template-columns:1fr 1fr; gap:10px; } .pork-form .pork-shop-field,.pork-form .pork-map-field { grid-column:1/-1; } .pork-form label { font-size:11px; } .pork-form input { min-height:43px; padding:9px; font-size:12px; } .pork-form .pork-save-button { grid-column:1/-1; } .pork-calendar-grid { gap:2px; } .pork-calendar-day { min-height:39px; border-radius:8px; font-size:12px; } .pork-calendar-blank { min-height:39px; } .pork-history-row { grid-template-columns:34px minmax(0,1fr) auto; gap:8px; } .pork-history-icon { width:34px; height:34px; } .pork-history-price { grid-column:2; grid-row:2; justify-self:start; font-size:12px; } .pork-history-actions { grid-column:3; grid-row:1 / span 2; } .pork-history-main { align-self:end; } .pork-history-row { align-items:center; } .pork-history-summary strong { font-size:15px; } }
