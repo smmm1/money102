@@ -61,7 +61,7 @@ async function readSimulatorState(db,userId) {
  }
  const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
  const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000)));
- if(elapsed>=10){advanceLifeWorld(v,elapsed);await saveSimulatorState(db,userId,v);}
+ if(elapsed>=10){advancePersistedWorld(v,elapsed,last);await saveSimulatorState(db,userId,v);}
  return v;
 }
 async function saveSimulatorState(db,userId,state) {
@@ -135,6 +135,13 @@ function moveResidentForActivity(p,activity,target=null) {
  p.x=Math.max(4,Math.min(96,destination[0]+(hasTarget?0:((offset%3)-1)*1.8)));
  p.y=Math.max(5,Math.min(94,destination[1]+(hasTarget?0:(Math.floor(offset/3)-0.5)*2)));
 }
+function advancePersistedWorld(state,elapsedMinutes,lastTimestamp) {
+ const completedMinutes=Math.floor(Math.max(0,Math.min(10080,Math.floor(elapsedMinutes)))/10)*10;
+ advanceLifeWorld(state,elapsedMinutes);
+ // Preserve any unprocessed remainder so delayed cron ticks do not lose simulation time.
+ state.last_simulated_at=Number(lastTimestamp)+completedMinutes*60000;
+ return state;
+}
 function advanceLifeWorld(state,elapsedMinutes) {
  const steps=Math.max(0,Math.min(10080,Math.floor(elapsedMinutes/10)));
  for(let i=0;i<steps;i++){
@@ -191,7 +198,7 @@ function advanceLifeWorld(state,elapsedMinutes) {
  state.events=state.events.slice(0,80);state.last_simulated_at=Date.now();return state;
 }
 
-export default { async scheduled(controller,env) { try { await ensureSchema(env.DB); await ensureSimulatorSchema(env.DB); const rows=await env.DB.prepare("SELECT user_id,state_json,updated_at FROM simulator_worlds").all(); for(const row of rows.results||[]){ let state; try{state=JSON.parse(row.state_json)}catch{continue;} if(!state||!Array.isArray(state.residents))continue; const last=Number(state.last_simulated_at)||Date.parse(row.updated_at)||controller.scheduledTime; const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000))); if(elapsed>=10){advanceLifeWorld(state,elapsed); await saveSimulatorState(env.DB,row.user_id,state);} } } catch(error){console.error("Life simulation scheduled tick failed",error);} }, async fetch(request,env) {
+export default { async scheduled(controller,env) { try { await ensureSchema(env.DB); await ensureSimulatorSchema(env.DB); const rows=await env.DB.prepare("SELECT user_id,state_json,updated_at FROM simulator_worlds").all(); for(const row of rows.results||[]){ let state; try{state=JSON.parse(row.state_json)}catch{continue;} if(!state||!Array.isArray(state.residents))continue; const last=Number(state.last_simulated_at)||Date.parse(row.updated_at)||controller.scheduledTime; const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000))); if(elapsed>=10){advancePersistedWorld(state,elapsed,last); await saveSimulatorState(env.DB,row.user_id,state);} } } catch(error){console.error("Life simulation scheduled tick failed",error);} }, async fetch(request,env) {
  const url=new URL(request.url); if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(request,env)});
  try { await ensureSchema(env.DB);
   if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api",auth:"cloudflare-d1"});
