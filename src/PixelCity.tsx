@@ -161,7 +161,21 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   }
 
   private animateAlongPath(group: Phaser.GameObjects.Container, path: Array<{ x: number; y: number }>, index = 0) {
-    if (!group.active || index >= path.length) return
+    if (!group.active) return
+    const legs = group.getData("legs") as Phaser.GameObjects.Rectangle | undefined
+    if (index === 0 && legs) {
+      const previous = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+      previous?.stop()
+      const walkTween = this.tweens.add({ targets: legs, angle: { from: -10, to: 10 }, duration: 105, yoyo: true, repeat: -1, ease: "Linear" })
+      group.setData("walkTween", walkTween)
+    }
+    if (index >= path.length) {
+      const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+      walkTween?.stop()
+      group.setData("walkTween", undefined)
+      if (legs) legs.setAngle(0)
+      return
+    }
     const point = path[index]
     this.tweens.add({
       targets: group, x: point.x, y: point.y, duration: 90, ease: "Linear",
@@ -411,6 +425,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     const legs = this.add.rectangle(0, 17, 17, 5, 0x4b5b62)
     const outline = this.add.rectangle(0, 0, 32, 42).setStrokeStyle(2, 0xf7e4a4, 0).setFillStyle(0xffffff, 0)
     group.add([shadow, legs, body, head, hair, eyes, eye2, outline])
+    group.setData("legs", legs)
     const name = this.add.text(0, 28, resident.name, {
       fontFamily: "Tahoma, sans-serif", fontSize: "12px", color: "#263b2b",
       backgroundColor: "#fff5db", padding: { x: 5, y: 3 },
