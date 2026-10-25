@@ -92,7 +92,7 @@ function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | 
 }
 export default function CloudAuth({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
-  const [checking, setChecking] = useState(true)
+  const [checking] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [busy, setBusy] = useState(false)
