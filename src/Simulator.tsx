@@ -6,9 +6,9 @@ type EventItem = { id: string; text: string; time: string }
 type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; memoriesCount: number }
 const API = window.location.hostname === "money102-command-center-preview.onrender.com" || window.location.hostname === "money102-staging.onrender.com" ? "https://money102-api-staging.s2mtha16.workers.dev" : "https://money102-api.s2mtha16.workers.dev"
 const initialResidents: Resident[] = [
-  { id: "mira", name: "Mira", role: "The Planner", mood: "กำลังวางแผน", x: 24, y: 28, color: "coral", bio: "ชอบวางแผนและจัดระเบียบสิ่งต่าง ๆ" },
-  { id: "nori", name: "Nori", role: "The Observer", mood: "กำลังสังเกต", x: 53, y: 55, color: "mint", bio: "ช่างสังเกตและชอบจดจำเรื่องเล็ก ๆ" },
-  { id: "kai", name: "Kai", role: "The Explorer", mood: "กำลังสำรวจ", x: 76, y: 30, color: "blue", bio: "อยากรู้อยากเห็นและชอบค้นพบสิ่งใหม่" },
+  { id: "mira", name: "Mira", role: "คนทำสวนประจำหมู่บ้าน", mood: "กำลังดูแปลงผัก", x: 28, y: 53, color: "coral", bio: "เติบโตมากับสวนผักของยาย ตื่นเช้ามารดน้ำทุกวัน และเก็บสมุดบันทึกสูตรอาหารพื้นบ้านไว้เล่มหนึ่ง" },
+  { id: "nori", name: "Nori", role: "คนดูแลร้านน้ำชา", mood: "กำลังชงชา", x: 52, y: 36, color: "mint", bio: "เปิดร้านน้ำชาเล็ก ๆ ริมลำธาร ชอบฟังเรื่องของคนในหมู่บ้าน และจำได้ว่าใครชอบชาแบบไหน" },
+  { id: "kai", name: "Kai", role: "ช่างไม้และช่างซ่อม", mood: "กำลังซ่อมรั้ว", x: 75, y: 59, color: "blue", bio: "ช่างไม้หนุ่มที่กลับมาอยู่บ้านเกิด เขากำลังซ่อมกังหันเก่าบนเนินเขา ซึ่งปู่ของเขาทิ้งปริศนาไว้ให้" },
 ]
 const initialState: WorldState = { residents: initialResidents, events: [{ id: "welcome", text: "โลกจำลองพร้อมแล้ว — รอเชื่อมระบบความทรงจำ", time: "NOW" }], day: 1, hour: 9, memoriesCount: 0 }
 function token() { try { return sessionStorage.getItem("money102_auth_token") || "" } catch { return "" } }
@@ -80,14 +80,15 @@ export default function Simulator({ onExit }: { onExit: () => void }) {
     {error && <div className="sim-notice" role="status"><span>ⓘ</span><p>{error}</p></div>}
     <div className="sim-layout">
       <section className="sim-world-panel">
-        <div className="sim-panel-heading"><div><span className="sim-eyebrow">THE NEIGHBORHOOD</span><h2>Little Pixel Town</h2></div><span className="sim-resident-count">● {world.residents.length} residents</span></div>
+        <div className="sim-panel-heading"><div><span className="sim-eyebrow">THE NEIGHBORHOOD</span><h2>หมู่บ้านปลายทุ่ง</h2></div><span className="sim-resident-count">● {world.residents.length} residents</span></div>
         <div className="sim-map" aria-label="แผนที่โลกจำลอง Pixel Art">
-          <div className="sim-cloud cloud-one" /><div className="sim-cloud cloud-two" />
-          <div className="sim-path path-one" /><div className="sim-path path-two" />
-          <div className="sim-building sim-cafe"><span>CAFE</span><b>▦</b></div><div className="sim-building sim-home"><span>HOME</span><b>▤</b></div><div className="sim-building sim-library"><span>BOOKS</span><b>▥</b></div>
-          <div className="sim-pond"><i /><i /></div><div className="sim-tree tree-one">✦</div><div className="sim-tree tree-two">✦</div><div className="sim-tree tree-three">✦</div><div className="sim-flower flower-one">✿</div><div className="sim-flower flower-two">✿</div>
-          {world.residents.map((person, index) => <button key={person.id} className={"sim-person " + person.color + (selected === person.id ? " selected" : "")} style={{ left: person.x + "%", top: person.y + "%" }} onClick={() => setSelected(person.id)} aria-label={"เลือก " + person.name}><span className="sim-sprite"><i /><b /><em /></span><small>{person.name}</small><span className="sim-mood">{index === 0 ? "✦" : index === 1 ? "♡" : "!"}</span></button>)}
-          <div className="sim-map-label">PIXEL WORLD · LIVE MAP</div>
+          <div className="sim-cloud cloud-one" /><div className="sim-cloud cloud-two" /><div className="sim-mountain" />
+          <div className="sim-river"><i /><i /><i /></div><div className="sim-path path-one" /><div className="sim-path path-two" /><div className="sim-path path-three" />
+          <div className="sim-building sim-cafe"><span>ร้านน้ำชา</span><b>▦</b></div><div className="sim-building sim-home"><span>บ้านไม้</span><b>▤</b></div><div className="sim-building sim-library"><span>โรงช่าง</span><b>⚒</b></div><div className="sim-building sim-market"><span>ตลาดเช้า</span><b>▧</b></div><div className="sim-building sim-mill"><span>กังหันเก่า</span><b>✣</b></div>
+          <div className="sim-crops"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div><div className="sim-fence fence-one" /><div className="sim-fence fence-two" /><div className="sim-pond"><i /><i /></div>
+          <div className="sim-tree tree-one">✦</div><div className="sim-tree tree-two">✦</div><div className="sim-tree tree-three">✦</div><div className="sim-tree tree-four">✦</div><div className="sim-tree tree-five">✦</div><div className="sim-flower flower-one">✿</div><div className="sim-flower flower-two">✿</div><div className="sim-flower flower-three">✿</div>
+          {world.residents.map((person, index) => <button key={person.id} className={"sim-person " + person.id + " " + person.color + (selected === person.id ? " selected" : "")} style={{ left: person.x + "%", top: person.y + "%" }} onClick={() => setSelected(person.id)} aria-label={"เลือก " + person.name}><span className="sim-sprite"><i /><b /><em /></span><small>{person.name}</small><span className="sim-mood">{index === 0 ? "✦" : index === 1 ? "♡" : "!"}</span></button>)}
+          <div className="sim-map-label">ปลายทุ่ง · หมู่บ้านชนบท</div>
         </div>
         <div className="sim-world-actions"><button disabled={busy} onClick={() => void act("wander")}>↗ สำรวจเมือง</button><button disabled={busy} onClick={() => void act("socialize")}>♡ พบปะกัน</button><button disabled={busy} onClick={() => void act("advance_time")}>◷ เดินเวลา</button></div>
       </section>
