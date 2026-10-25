@@ -9,7 +9,7 @@ assert.doesNotThrow(() => new Function(source.replace("export default {", "retur
 const executable = source
   .slice(0, source.indexOf("export default {"))
   .replaceAll("crypto.randomUUID()", '"smoke-id"')
-const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity };")()
+const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity, readSimulatorState };")()
 
 // The scheduled handler must advance and persist a world even when no player is online.
 const worker = new Function(source.replace("export default {", "return {"))()
@@ -43,6 +43,29 @@ await worker.scheduled({ scheduledTime: staleTimestamp }, { DB: fakeDb })
 assert.ok(savedScheduledState, "scheduled tick should persist the simulated world")
 assert.equal(savedScheduledState.minute, 480, "one hour of offline time should advance the in-game clock")
 assert.ok(savedScheduledState.last_simulated_at > staleTimestamp, "scheduled tick should update the simulation timestamp")
+
+// Corrupt legacy saves must be archived before the recovery state overwrites the active row.
+let archivedPayload = null
+let recoveredPayload = null
+const brokenDb = {
+  prepare(sql) {
+    const statement = {
+      sql,
+      params: [],
+      bind(...params) { this.params = params; return this },
+      async first() { return { state_json: "{invalid-json", updated_at: new Date().toISOString() } },
+      async run() {
+        if (this.sql.startsWith("INSERT INTO simulator_world_archive")) archivedPayload = this.params[2]
+        if (this.sql.startsWith("INSERT INTO simulator_worlds")) recoveredPayload = JSON.parse(this.params[1])
+        return { success: true }
+      },
+    }
+    return statement
+  },
+}
+const recoveredWorld = await engine.readSimulatorState(brokenDb, "smoke-user")
+assert.equal(archivedPayload, "{invalid-json", "corrupt save should be archived before recovery")
+assert.ok(recoveredPayload && recoveredPayload.residents.length === 6, "recovery should persist a fresh valid world")
 
 const state = engine.starterSimulatorState()
 
