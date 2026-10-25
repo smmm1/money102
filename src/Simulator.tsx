@@ -92,6 +92,11 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
         </div>
         <div className="sim-world-actions"><button disabled={busy} onClick={() => void act("wander")}>↗ สำรวจเมือง</button><button disabled={busy} onClick={() => void act("socialize")}>♡ พบปะกัน</button><button disabled={busy} onClick={() => void act("advance_time")}>◷ เดินเวลา</button></div>
       </section>
+      <aside className="sim-side">
+        <section className="sim-card sim-character-card"><div className="sim-card-head"><span className="sim-eyebrow">CHARACTER FILE</span><span className="sim-online"><i /> {status === "connected" ? "LIVE" : "DEMO"}</span></div><div className={"sim-avatar " + (resident?.color || "mint")}><span className="sim-avatar-hair" /><span className="sim-avatar-face">•ᴗ•</span></div><h2>{resident?.name || "Resident"}</h2><p className="sim-role">{resident?.role || "Resident"}</p><p className="sim-bio">{resident?.bio || "ตัวละครในโลกจำลอง"}</p><div className="sim-traits"><span>CURIOUS</span><span>MEMORY</span><span>PERSONALITY</span></div><div className="sim-memory-count"><span>ความทรงจำที่บันทึก</span><strong>{world.memoriesCount}</strong></div></section>
+        <section className="sim-card sim-events"><div className="sim-card-head"><div><span className="sim-eyebrow">HAPPENING NOW</span><h3>เรื่องราวในเมือง</h3></div><span className="sim-live-dot" /></div>{world.events.slice(0,5).map(item => <div className="sim-event" key={item.id}><span className="sim-event-dot" /><div><p>{item.text}</p><small>{item.time}</small></div></div>)}</section>
+        <section className="sim-card sim-chat"><div className="sim-card-head"><div><span className="sim-eyebrow">TALK TO YOUR WORLD</span><h3>คุยกับ {resident?.name || "ตัวละคร"}</h3></div><span>✧</span></div>{reply && <div className="sim-reply"><strong>{resident?.name}</strong><p>{reply}</p></div>}<form onSubmit={talk}><input value={message} onChange={e => setMessage(e.target.value)} placeholder="ชวนคุยเรื่องอะไรดี…" maxLength={500} /><button disabled={busy || !message.trim()} aria-label="ส่งข้อความ">↑</button></form><small className="sim-chat-foot">Gemini AI · ความทรงจำส่วนตัวของบัญชีคุณ</small></section>
+      </aside>
       <section className="sim-portal-zone">
           <div className="sim-portal-heading"><div><span className="sim-eyebrow">YOUR REAL LIFE, IN THIS WORLD</span><h3>ประตูสู่ระบบ Money102</h3></div><span className="sim-portal-live">ข้อมูลจากบัญชีของคุณ</span></div>
           <div className="sim-portal-grid">
@@ -104,13 +109,9 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
             <div><small>รายการเงิน</small><strong>{portal.transactionCount}</strong><span>รายการที่บันทึกไว้</span></div>
             <div><small>โน้ตส่วนตัว</small><strong>{portal.notesCount}</strong><span>บันทึกที่เก็บไว้</span></div>
             <div><small>สุขภาพล่าสุด</small><strong>{portal.latestWeight == null ? "—" : portal.latestWeight + " กก."}</strong><span>{portal.healthRecordCount} รายการสุขภาพ</span></div>
+            <div><small>เป้าหมายออมเงิน</small><strong>{formatPortalCurrency(portal.savingsGoal)}</strong><span>เป้าหมายที่ตั้งไว้</span></div>
           </div>
         </section>
-      <aside className="sim-side">
-        <section className="sim-card sim-character-card"><div className="sim-card-head"><span className="sim-eyebrow">CHARACTER FILE</span><span className="sim-online"><i /> {status === "connected" ? "LIVE" : "DEMO"}</span></div><div className={"sim-avatar " + (resident?.color || "mint")}><span className="sim-avatar-hair" /><span className="sim-avatar-face">•ᴗ•</span></div><h2>{resident?.name || "Resident"}</h2><p className="sim-role">{resident?.role || "Resident"}</p><p className="sim-bio">{resident?.bio || "ตัวละครในโลกจำลอง"}</p><div className="sim-traits"><span>CURIOUS</span><span>MEMORY</span><span>PERSONALITY</span></div><div className="sim-memory-count"><span>ความทรงจำที่บันทึก</span><strong>{world.memoriesCount}</strong></div></section>
-        <section className="sim-card sim-events"><div className="sim-card-head"><div><span className="sim-eyebrow">HAPPENING NOW</span><h3>เรื่องราวในเมือง</h3></div><span className="sim-live-dot" /></div>{world.events.slice(0,5).map(item => <div className="sim-event" key={item.id}><span className="sim-event-dot" /><div><p>{item.text}</p><small>{item.time}</small></div></div>)}</section>
-        <section className="sim-card sim-chat"><div className="sim-card-head"><div><span className="sim-eyebrow">TALK TO YOUR WORLD</span><h3>คุยกับ {resident?.name || "ตัวละคร"}</h3></div><span>✧</span></div>{reply && <div className="sim-reply"><strong>{resident?.name}</strong><p>{reply}</p></div>}<form onSubmit={talk}><input value={message} onChange={e => setMessage(e.target.value)} placeholder="ชวนคุยเรื่องอะไรดี…" maxLength={500} /><button disabled={busy || !message.trim()} aria-label="ส่งข้อความ">↑</button></form><small className="sim-chat-foot">Gemini AI · ความทรงจำส่วนตัวของบัญชีคุณ</small></section>
-      </aside>
     </div>
     <footer className="sim-footer"><span>✳ โลกจำลองส่วนตัว</span><span>ยังไม่เปิดเผยข้อมูลให้ผู้ใช้อื่น · {status === "connected" ? "บันทึกผ่าน D1" : "ข้อมูลตัวอย่างไม่ถูกบันทึก"}</span></footer>
   </main>
