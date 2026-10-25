@@ -38,7 +38,7 @@ function starterSimulatorState() {
  ]};
 }
 async function readSimulatorState(db,userId) {
- const row=await db.prepare("SELECT state_json FROM simulator_worlds WHERE user_id=?").bind(userId).first();
+ const row=await db.prepare("SELECT state_json,updated_at FROM simulator_worlds WHERE user_id=?").bind(userId).first();
  if(!row){const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh;}
  try {
   const v=JSON.parse(row.state_json);
@@ -50,6 +50,9 @@ async function readSimulatorState(db,userId) {
    await saveSimulatorState(db,userId,fresh);
    return fresh;
   }
+  const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
+  const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000)));
+  if(elapsed>=10){advanceLifeWorld(v,elapsed);await saveSimulatorState(db,userId,v);}
   return v;
  } catch { const fresh=starterSimulatorState();await saveSimulatorState(db,userId,fresh);return fresh; }
 }
