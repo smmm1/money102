@@ -405,7 +405,7 @@ export default function CommandCenter() {
   ]
   const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", pork: "ประวัติหมูกระทะ", simulator: "AI Simulator" }
 
-  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
+  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold") + (page === "simulator" ? " game-mode" : "")}>
     <main className="main-area">
       <header className="topbar">
         <button className="brand" onClick={event => { if (event.detail >= 2) go("simulator"); else go("home") }} aria-label="กลับหน้าภาพรวม · ดับเบิลคลิกเพื่อเปิด AI Simulator" title="ดับเบิลคลิกเพื่อเปิด AI Simulator"><span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path className="brand-loop" d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" /><circle className="brand-spark" cx="30" cy="10" r="2.2" /></svg></span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
@@ -418,7 +418,7 @@ export default function CommandCenter() {
         return <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "mobile-nav-link active" : "mobile-nav-link"} aria-label={item.label} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{mobileLabel[item.id]}</span></button>
       })}</nav>
 
-      {page === "simulator" && <Simulator onExit={() => go("home")} />}
+      {page === "simulator" && <Simulator onExit={() => go("home")} onNavigate={(next) => go(next)} portal={{ balance, income, expense, transactionCount: transactions.length, notesCount: notes.length, healthRecordCount: healthRecords.length, latestWeight: latestWeight ?? null, savingsGoal: goal }} />}
       {page === "home" && <section className="page-content">
         <div className="welcome-row"><div><span className="eyebrow">{greeting} · ยินดีต้อนรับกลับมา</span><h1>ค่อย ๆ จัดการ<br/><em>ทีละเรื่องก็พอ</em></h1><p className="intro-copy">พื้นที่เล็ก ๆ สำหรับดูแลเงิน ความคิด และตัวเอง โดยไม่ต้องทำให้ทุกอย่างยุ่งยาก</p></div><div className="date-card"><span>วันนี้</span><strong>{new Date().toLocaleDateString("th-TH", { day: "numeric" })}</strong><small>{new Date().toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</small></div></div>
         <section className="balance-card"><div className="balance-copy"><span className="eyebrow light">ภาพรวมการเงิน</span><p>ยอดคงเหลือทั้งหมด</p><strong><AnimatedMoney value={balance} /></strong><div className="balance-detail"><span><i className="legend-dot income-dot" />รับเข้า {cash(income)}</span><span><i className="legend-dot expense-dot" />จ่ายออก {cash(expense)}</span></div></div><div className="balance-art" aria-hidden="true"><span className="art-ring ring-one"/><span className="art-ring ring-two"/><span className="art-core">฿</span></div><button className="balance-link" onClick={() => go("money")}>ดูรายละเอียด <Icon name="arrow"/></button></section>
