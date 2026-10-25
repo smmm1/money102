@@ -15,7 +15,6 @@ export function AccountMenu() {
 }
 type LocalSnapshot = Record<string, string>
 const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
-const LOCAL_PREFIX = "lamoon-"
 const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
   ? "https://money102-api-staging.s2mtha16.workers.dev"
   : "https://money102-api.s2mtha16.workers.dev"
@@ -38,7 +37,7 @@ function installStorageShim() {
     if (this !== window.localStorage) return nativeSet.call(this, key, value)
     const k = String(key), v = String(value)
     memorySnapshot[k] = v
-    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
+    scheduleCloudSave()
   }
   proto.removeItem = function(key: string) {
     if (this !== window.localStorage) return nativeRemove.call(this, key)
@@ -48,7 +47,7 @@ function installStorageShim() {
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
-  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key]) => key.startsWith(LOCAL_PREFIX)))
+  return { ...memorySnapshot }
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
@@ -62,7 +61,7 @@ function scheduleCloudSave() {
   }, 250)
 }
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
+  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.length > 0 && typeof value === "string"))
 }
 let sessionToken = ""
 function getToken() { return sessionToken }
