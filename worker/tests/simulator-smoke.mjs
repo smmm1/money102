@@ -76,6 +76,28 @@ assert.equal(previewCors["Access-Control-Allow-Origin"], previewOrigin, "Money10
 const untrustedCors = engine.corsHeaders(new Request("https://money102-api-staging.s2mtha16.workers.dev/health", { headers: { Origin: "https://untrusted.example" } }), {})
 assert.equal(untrustedCors["Access-Control-Allow-Origin"], undefined, "untrusted origins must not be reflected")
 
+// Exercise the actual Worker router, including health, CORS preflight, and auth protection.
+const routeDb = {
+  prepare(sql) {
+    return {
+      sql,
+      params: [],
+      bind(...params) { this.params = params; return this },
+      async run() { return { success: true } },
+      async all() { return { results: [] } },
+      async first() { return null },
+    }
+  },
+}
+const healthResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/health"), { DB: routeDb })
+assert.equal(healthResponse.status, 200, "health endpoint should respond")
+assert.equal((await healthResponse.json()).ok, true, "health endpoint should report healthy")
+const preflightResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/state", { method: "OPTIONS", headers: { Origin: previewOrigin } }), { DB: routeDb })
+assert.equal(preflightResponse.status, 204, "CORS preflight should be handled")
+assert.equal(preflightResponse.headers.get("Access-Control-Allow-Origin"), previewOrigin, "preflight should allow the Money102 preview origin")
+const unauthorizedResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/state"), { DB: routeDb })
+assert.equal(unauthorizedResponse.status, 401, "simulator state must require an authenticated session")
+
 assert.equal(state.version, 1)
 assert.equal(state.residents.length, 6)
 assert.ok(state.residents.some((resident) => resident.id === "ploy"))
