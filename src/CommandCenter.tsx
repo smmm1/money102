@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { AccountMenu } from "./CloudAuth"
 import "./command-center.css"
 
-type Page = "home" | "money" | "notes" | "health" | "split"
+type Page = "home" | "money" | "notes" | "health" | "split" | "pork"
 type Transaction = { id: string; type: "income" | "expense"; amount: number; detail: string; date: string; createdAt: number }
 type Note = { id: string; title: string; body: string; tags?: string[]; mood?: string; pinned?: boolean; createdAt: string; updatedAt: string }
 type Profile = { id: string; name: string; height: number; age: number }
@@ -83,7 +83,7 @@ function MoneyTrend({ transactions }: { transactions: Transaction[] }) {
 }
 
 export default function CommandCenter() {
-  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split"].includes(hash) ? hash as Page : "home") })
+  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split", "pork"].includes(hash) ? hash as Page : "home") })
   const [transactions, setTransactions] = useState<Transaction[]>(() => read(KEYS.money, []))
   const [goal, setGoal] = useState(() => Number(safeGet(KEYS.goal)) || 20000)
   const [goalTitle, setGoalTitle] = useState(() => safeGet(KEYS.goalTitle) || "เงินสำรองของฉัน")
@@ -148,6 +148,15 @@ export default function CommandCenter() {
   const [splitHistory, setSplitHistory] = useState<SplitBill[]>(() => read("money102-split-bill-history-v1", []))
   const [showSplitHistory, setShowSplitHistory] = useState(false)
   const [splitNotice, setSplitNotice] = useState("")
+  type PorkBBQEntry = { id: string; shop: string; price: number; date: string; createdAt: string; updatedAt: string }
+  const [porkEntries, setPorkEntries] = useState<PorkBBQEntry[]>(() => read("money102-pork-bbq-history-v1", []))
+  const [porkShop, setPorkShop] = useState("")
+  const [porkPrice, setPorkPrice] = useState("")
+  const [porkDate, setPorkDate] = useState(today())
+  const [editingPorkId, setEditingPorkId] = useState<string | null>(null)
+  const [porkMonth, setPorkMonth] = useState(() => today().slice(0, 7))
+  const [porkSelectedDate, setPorkSelectedDate] = useState<string | null>(null)
+  const [porkNotice, setPorkNotice] = useState("")
   const splitBase = Math.max(0, Number(splitTotal) || 0)
   const splitExtra = Math.max(0, Number(splitTip) || 0)
   const splitGrandTotal = Math.round((splitBase + splitExtra) * 100) / 100
@@ -175,6 +184,7 @@ export default function CommandCenter() {
     setShowSplitHistory(false)
   }
   useEffect(() => { safeSet("money102-split-bill-history-v1", JSON.stringify(splitHistory)) }, [splitHistory])
+  useEffect(() => { safeSet("money102-pork-bbq-history-v1", JSON.stringify(porkEntries)) }, [porkEntries])
 
   useEffect(() => { safeSet(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { safeSet("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) }, [hiddenWidgets])
@@ -297,7 +307,7 @@ export default function CommandCenter() {
   useEffect(() => { safeSet(KEYS.notes, JSON.stringify(notes)) }, [notes])
   useEffect(() => { safeSet(KEYS.health, JSON.stringify(health)) }, [health])
   useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
-  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
+  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "pork"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
   const income = transactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
@@ -382,9 +392,10 @@ export default function CommandCenter() {
     { id: "money", label: "การเงิน", icon: "money" },
     { id: "notes", label: "โน้ต", icon: "notes" },
     { id: "health", label: "สุขภาพ", icon: "health" },
-    { id: "split", label: "หารค่าใช้จ่าย", icon: "split" }
+    { id: "split", label: "หารค่าใช้จ่าย", icon: "split" },
+    { id: "pork", label: "ประวัติหมูกระทะ", icon: "pork" }
   ]
-  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย" }
+  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", pork: "ประวัติหมูกระทะ" }
 
   return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
     <main className="main-area">
@@ -395,7 +406,7 @@ export default function CommandCenter() {
       </header>
 
       <nav className="mobile-nav" aria-label="เมนูหลักสำหรับมือถือ">{nav.map(item => {
-        const mobileLabel: Record<Page, string> = { home: "ภาพรวม", money: "เงิน", notes: "โน้ต", health: "สุขภาพ", split: "หารบิล" }
+        const mobileLabel: Record<Page, string> = { home: "ภาพรวม", money: "เงิน", notes: "โน้ต", health: "สุขภาพ", split: "หารบิล", pork: "หมูกระทะ" }
         return <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "mobile-nav-link active" : "mobile-nav-link"} aria-label={item.label} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{mobileLabel[item.id]}</span></button>
       })}</nav>
 
@@ -416,6 +427,7 @@ export default function CommandCenter() {
           <button className="tool-card tool-notes" onClick={() => go("notes")}><span className="tool-icon"><Icon name="notes"/></span><span className="tool-meta">ความคิด</span><strong>เก็บโน้ตไว้ที่เดียว</strong><p>จดไอเดีย เรื่องที่ต้องจำ หรือสิ่งที่อยากกลับมาอ่าน</p><span className="tool-bottom"><b>{notes.length} โน้ต · ปักหมุด {pinned.length}</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-health" onClick={() => go("health")}><span className="tool-icon"><Icon name="health"/></span><span className="tool-meta">สุขภาพ</span><strong>ดูแลตัวเองทีละนิด</strong><p>บันทึกน้ำหนัก การเคลื่อนไหว และการพักผ่อน</p><span className="tool-bottom"><b>{latestWeight ? "น้ำหนัก " + latestWeight + " กก." : "เริ่มบันทึกสุขภาพ"}</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-split" onClick={() => go("split")}><span className="tool-icon"><Icon name="split"/></span><span className="tool-meta">ใช้ร่วมกับคนอื่น</span><strong>หารค่าใช้จ่าย</strong><p>จัดการค่าอาหาร ค่าเที่ยว และยอดที่เพื่อนต้องคืนกัน</p><span className="tool-bottom"><b>หน้าใหม่ · เตรียมระบบ</b><i><Icon name="arrow"/></i></span></button>
+          <button className="tool-card tool-pork" onClick={() => go("pork")}><span className="tool-icon"><Icon name="pork"/></span><span className="tool-meta">บันทึกความอร่อย</span><strong>ประวัติหมูกระทะ</strong><p>จำร้านเดิมได้ บันทึกราคา และดูวันที่กินจากปฏิทิน</p><span className="tool-bottom"><b>{porkEntries.length} ครั้งที่บันทึก</b><i><Icon name="arrow"/></i></span></button>
         </div>
         <section className="memory-galaxy surface"><div className="surface-heading"><div><span className="eyebrow">MEMORY GALAXY · จากข้อมูลจริง</span><h3>ร่องรอยของ 28 วัน</h3></div><span className="history-count">{memoryDays.reduce((sum, day) => sum + day.count, 0)} กิจกรรม</span></div><div className="memory-calendar" aria-label="ปฏิทินกิจกรรม 28 วัน">{memoryDays.map(day => <button type="button" key={day.key} title={day.label + " · " + day.count + " กิจกรรม"} aria-label={day.label + " · " + day.count + " กิจกรรม"} aria-pressed={memorySelectedDate === day.key} onClick={() => setMemorySelectedDate(day.key)} className={"memory-day level-" + Math.min(4, day.count) + (memorySelectedDate === day.key ? " selected" : "")}><span>{day.day}</span>{day.count > 0 && <i/>}</button>)}</div><div className="memory-detail"><div><strong>{selectedMemoryDay.label}</strong><small>{selectedMemoryDay.count ? "มีบันทึกในวันนี้" : "ยังไม่มีบันทึกในวันที่เลือก"}</small></div><div className="memory-counts"><button onClick={() => { setSearch(""); go("notes") }}><b>{selectedMemoryDay.noteCount}</b><span>โน้ต</span></button><button onClick={() => go("money")}><b>{selectedMemoryDay.moneyCount}</b><span>การเงิน</span></button><button onClick={() => go("health")}><b>{selectedMemoryDay.healthCount}</b><span>สุขภาพ</span></button></div></div><p className="memory-caption">แตะวันที่เพื่อดูจำนวนรายการที่บันทึกไว้ · ไม่มีการสร้างข้อมูลตัวอย่าง</p></section>
         <div className="home-lower"><section className="surface recent-surface" draggable={layoutOpen} onDragStart={() => setDraggedWidget("recent")} onDragOver={event => { if (layoutOpen) event.preventDefault() }} onDrop={() => moveWidget(draggedWidget, "recent")} style={{ order: dashboardOrder.indexOf("recent"), display: hiddenWidgets.includes("recent") ? "none" : undefined }}><div className="surface-heading"><div><span className="eyebrow">รายการล่าสุด</span><h3>เงินเข้าออก</h3></div><button className="text-button" onClick={() => go("money")}>ดูทั้งหมด <Icon name="arrow"/></button></div>{sortedTransactions.slice(0, 4).length ? <div className="activity-list">{sortedTransactions.slice(0, 4).map(t => <div className="activity-row" key={t.id}><span className={t.type === "income" ? "activity-symbol is-income" : "activity-symbol is-expense"}>{t.type === "income" ? "+" : "−"}</span><span className="activity-info"><strong>{t.detail}</strong><small>{dateLabel(t.date)}</small></span><b className={t.type === "income" ? "positive" : "negative"}>{t.type === "income" ? "+" : "−"}{cash(t.amount)}</b></div>)}</div> : <div className="compact-empty"><p>ยังไม่มีรายการเงินเข้าออก</p><button className="text-button" onClick={() => { setEntryType("expense"); setShowEntry(true) }}>เพิ่มรายการแรก <Icon name="arrow"/></button></div>}</section>
@@ -454,6 +466,30 @@ export default function CommandCenter() {
         {showSplitHistory && <section className="surface split-history-surface"><div className="surface-heading"><div><span className="eyebrow">ประวัติ</span><h3>บิลที่บันทึกไว้</h3></div><span className="history-count">{splitHistory.length} บิล</span></div>{splitHistory.length ? <div className="split-history-list">{splitHistory.map(bill => <article className="split-history-item" key={bill.id}><div className="split-history-main"><span className="split-history-icon"><Icon name="receipt"/></span><div><strong>{bill.title}</strong><small>{new Date(bill.createdAt).toLocaleString("th-TH", {dateStyle:"medium",timeStyle:"short"})} · {bill.people.length} คน</small><div className="split-history-people">{bill.people.map((name, index) => <span key={index}>{name}: {splitMoney(bill.shares[index] || 0)}</span>)}</div></div></div><div className="split-history-total"><strong>{splitMoney(bill.total + bill.tip)}</strong><button className="icon-button delete-button" aria-label={"ลบบิล " + bill.title} onClick={() => {if (confirm("ลบบิลนี้ออกจากประวัติหรือไม่?")) setSplitHistory(old => old.filter(item => item.id !== bill.id))}}><Icon name="trash"/></button></div></article>)}</div> : <Empty title="ยังไม่มีประวัติบิล" body="บันทึกบิลไว้แล้วจะกลับมาดูได้ตรงนี้" action="กลับไปหารบิล" onClick={() => setShowSplitHistory(false)}/>}</section>}
       </section>}
 
+      {page === "pork" && <section className="page-content pork-page">
+        <div className="page-heading-row"><div><span className="eyebrow">บันทึกมื้อโปรด · FOOD LOG</span><h1>ประวัติการกินหมูกระทะ</h1><p>จำร้านที่เคยไปได้ บันทึกแค่ร้าน ราคา และวันที่ก็พอ</p></div><div className="pork-total-badge"><Icon name="pork"/><span><strong>{porkEntries.length}</strong><small>ครั้งที่กิน</small></span></div></div>
+        <section className="surface pork-form-surface">
+          <div className="surface-heading"><div><span className="eyebrow">{editingPorkId ? "แก้ไขรายการเดิม" : "บันทึกครั้งใหม่"}</span><h3>{editingPorkId ? "แก้ข้อมูลมื้อนี้" : "ไปกินร้านไหนมา?"}</h3></div>{editingPorkId && <button className="text-button" type="button" onClick={() => {setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkDate(today());setPorkNotice("")}}>ยกเลิกการแก้ไข</button>}</div>
+          <form className="pork-form" onSubmit={event => {event.preventDefault();const shop=porkShop.trim();const price=Number(porkPrice);if(!shop||!Number.isFinite(price)||price<=0){setPorkNotice("กรอกชื่อร้านและราคาที่มากกว่า 0 ก่อนนะ");return}if(editingPorkId){setPorkEntries(old=>old.map(item=>item.id===editingPorkId?{...item,shop,price,date:porkDate||today(),updatedAt:new Date().toISOString()}:item));setPorkNotice("แก้ไขประวัติเรียบร้อยแล้ว")}else{setPorkEntries(old=>[{id:uid(),shop,price,date:porkDate||today(),createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},...old]);setPorkNotice("บันทึกประวัติหมูกระทะแล้ว")}setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkDate(today());setPorkSelectedDate(null);setPorkMonth(today().slice(0,7))}}>
+            <label className="pork-shop-field">ชื่อร้าน <span>เลือกชื่อเดิมหรือพิมพ์ชื่อร้านใหม่</span><input list="pork-shop-options" value={porkShop} onChange={event=>setPorkShop(event.target.value)} placeholder="เช่น ร้านหมูย่างหน้าปากซอย" autoComplete="off" required/><datalist id="pork-shop-options">{Array.from(new Set(porkEntries.map(item=>item.shop.trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"th")).map(shop=><option key={shop} value={shop}/>)}</datalist></label>
+            <label>ราคา (บาท)<input type="number" min="1" step="0.01" inputMode="decimal" value={porkPrice} onChange={event=>setPorkPrice(event.target.value)} placeholder="เช่น 259" required/></label>
+            <label>วันที่กิน <span>ตั้งเป็นวันนี้ให้อัตโนมัติ</span><input type="date" value={porkDate} onChange={event=>setPorkDate(event.target.value)} required/></label>
+            <button className="button button-primary pork-save-button" type="submit"><Icon name="check"/>{editingPorkId ? "บันทึกการแก้ไข" : "บันทึกมื้อนี้"}</button>
+          </form>
+          {porkNotice && <p className="pork-notice" role="status"><Icon name="check"/>{porkNotice}</p>}
+        </section>
+        <section className="surface pork-calendar-surface">
+          <div className="surface-heading"><div><span className="eyebrow">มองเห็นได้ทันที</span><h3>ปฏิทินหมูกระทะ</h3></div><div className="pork-calendar-controls"><button className="icon-button" aria-label="เดือนก่อนหน้า" onClick={()=>{const d=new Date(porkMonth+"-15T12:00:00");d.setMonth(d.getMonth()-1);setPorkMonth(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));setPorkSelectedDate(null)}}><Icon name="chevron-left"/></button><strong>{new Date(porkMonth+"-15T12:00:00").toLocaleDateString("th-TH",{month:"long",year:"numeric"})}</strong><button className="icon-button" aria-label="เดือนถัดไป" onClick={()=>{const d=new Date(porkMonth+"-15T12:00:00");d.setMonth(d.getMonth()+1);setPorkMonth(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"));setPorkSelectedDate(null)}}><Icon name="chevron-right"/></button></div></div>
+          <div className="pork-calendar-grid">{["อา","จ","อ","พ","พฤ","ศ","ส"].map(day=><span className="pork-weekday" key={day}>{day}</span>)}{Array.from({length:new Date(Number(porkMonth.slice(0,4)),Number(porkMonth.slice(5,7))-1,1).getDay()},(_,index)=><span className="pork-calendar-blank" key={"blank-"+index}/>)}{Array.from({length:new Date(Number(porkMonth.slice(0,4)),Number(porkMonth.slice(5,7)),0).getDate()},(_,index)=>{const day=index+1;const date=porkMonth+"-"+String(day).padStart(2,"0");const count=porkEntries.filter(item=>item.date===date).length;return <button type="button" key={date} className={"pork-calendar-day"+(count?" has-pork":"")+(porkSelectedDate===date?" selected":"")+(date===today()?" is-today":"")} onClick={()=>setPorkSelectedDate(porkSelectedDate===date?null:date)} aria-pressed={porkSelectedDate===date} title={count?count+" ครั้งที่บันทึก":"ไม่มีบันทึก"}><span>{day}</span>{count>0&&<i/>}</button>})}</div>
+          <div className="pork-calendar-legend"><span><i/>วันที่มีบันทึก</span><span>แตะวันที่เพื่อกรองประวัติ</span>{porkSelectedDate&&<button className="text-button" onClick={()=>setPorkSelectedDate(null)}>ดูทั้งหมด</button>}</div>
+        </section>
+        <section className="surface pork-history-surface">
+          <div className="surface-heading"><div><span className="eyebrow">ทุกมื้อที่บันทึกไว้</span><h3>{porkSelectedDate ? "ประวัติวันที่ "+dateLabel(porkSelectedDate) : "ประวัติทั้งหมด"}</h3></div><span className="history-count">{porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).length} รายการ</span></div>
+          {porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).length ? <div className="pork-history-list">{porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt)).map(item=><article className="pork-history-row" key={item.id}><span className="pork-history-icon"><Icon name="pork"/></span><div className="pork-history-main"><strong>{item.shop}</strong><small><Icon name="calendar"/>{dateLabel(item.date)}</small></div><strong className="pork-history-price">{cash(item.price)}</strong><div className="pork-history-actions"><button className="icon-button" aria-label={"แก้ไข "+item.shop} onClick={()=>{setEditingPorkId(item.id);setPorkShop(item.shop);setPorkPrice(String(item.price));setPorkDate(item.date);setPorkNotice("");window.scrollTo({top:0,behavior:"smooth"})}}><Icon name="edit"/></button><button className="icon-button delete-button" aria-label={"ลบ "+item.shop} onClick={()=>{if(confirm("ลบประวัติร้าน "+item.shop+" วันที่ "+dateLabel(item.date)+" หรือไม่?")){setPorkEntries(old=>old.filter(entry=>entry.id!==item.id));if(editingPorkId===item.id){setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkDate(today())}setPorkNotice("ลบประวัติแล้ว")}}}><Icon name="trash"/></button></div></article>)}</div> : <div className="pork-empty"><span><Icon name="pork"/></span><strong>{porkSelectedDate?"วันนี้ยังไม่มีบันทึกหมูกระทะ":"ยังไม่มีประวัติหมูกระทะ"}</strong><p>{porkSelectedDate?"เลือกวันอื่น หรือกดดูทั้งหมด":"บันทึกมื้อแรกไว้ได้เลย ครั้งต่อไปเลือกร้านเดิมจากรายการแนะนำได้ทันที"}</p>{porkSelectedDate&&<button className="button button-secondary" onClick={()=>setPorkSelectedDate(null)}>ดูประวัติทั้งหมด</button>}</div>}
+          {porkEntries.length>0&&<div className="pork-history-summary"><span>ยอดที่บันทึกทั้งหมด</span><strong>{cash(porkEntries.reduce((sum,item)=>sum+item.price,0))}</strong></div>}
+        </section>
+      </section>}
+
       {page === "health" && <section className="page-content">
         <div className="page-heading-row"><div><span className="eyebrow">ดูแลตัวเอง · WELLBEING</span><h1>สุขภาพ</h1><p>ติดตามความเปลี่ยนแปลง เพื่อเข้าใจตัวเอง ไม่ใช่กดดันตัวเอง</p></div><button className="button button-primary" onClick={() => setShowHealth(true)}><Icon name="plus"/>บันทึกสุขภาพ</button></div>
         <section className="profile-bar"><span className="profile-avatar"><Icon name="health"/></span><div className="profile-info"><strong>{profile?.name || "ฉัน"}</strong><small>{profile?.height || 163} ซม. · อายุ {profile?.age || "—"} ปี</small></div><select aria-label="เลือกโปรไฟล์สุขภาพ" value={profile?.id || ""} onChange={e => setHealth(old => ({ ...old, activeProfileId: e.target.value }))}>{health.profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button className="button button-secondary" onClick={() => setShowProfile(true)}><Icon name="plus"/>เพิ่มโปรไฟล์</button></section>
@@ -483,6 +519,7 @@ export default function CommandCenter() {
             { id: "notes", label: "โน้ต", detail: "ค้นหาและจัดการโน้ต", icon: "notes", run: () => go("notes") },
             { id: "health", label: "สุขภาพ", detail: "เปิดบันทึกสุขภาพ", icon: "health", run: () => go("health") },
             { id: "split", label: "หารค่าใช้จ่าย", detail: "แยกค่าใช้จ่ายกับเพื่อน", icon: "split", run: () => go("split") },
+            { id: "pork", label: "ประวัติหมูกระทะ", detail: "บันทึกร้าน ราคา และวันที่กิน", icon: "pork", run: () => go("pork") },
           ] as const).filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className={"command-item-icon command-icon-" + item.id}><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
           {[
             { id: "new-note", label: "เขียนโน้ตใหม่", detail: "จดไอเดียหรือสิ่งที่ต้องจำ", icon: "plus", run: () => { setEditingNoteId(null); setNoteTitle(""); setNoteBody(""); setShowNote(true) } },
@@ -490,7 +527,7 @@ export default function CommandCenter() {
             { id: "new-health", label: "บันทึกสุขภาพ", detail: "เพิ่มกิจกรรมหรือข้อมูลสุขภาพ", icon: "plus", run: () => setShowHealth(true) }
           ].filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className="command-item-icon command-icon-action"><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
           {commandQuery.trim() && filteredNotes.filter(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase())).slice(0, 5).map(note => <button className="command-item" key={note.id} onClick={() => { setEditingNoteId(note.id); setNoteTitle(note.title); setNoteBody(note.body); setShowNote(true); setCommandOpen(false) }}><span className="command-item-icon command-icon-notes"><Icon name="notes"/></span><span className="command-item-copy"><strong>{note.title}</strong><small>{note.body || "ไม่มีเนื้อหา"}</small></span><kbd>↵</kbd></button>)}
-          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","หารค่าใช้จ่าย","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
+          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","หารค่าใช้จ่าย","ประวัติหมูกระทะ","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
         </div>
         <footer className="command-footer"><span><kbd>↑↓</kbd> เลือกด้วยเมาส์</span><span><kbd>Ctrl</kbd> + <kbd>K</kbd> เปิด/ปิด</span><span>ค้นหาจากโน้ตที่บันทึกไว้</span></footer>
       </section>
