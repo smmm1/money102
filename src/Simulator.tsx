@@ -4,7 +4,7 @@ import "./simulator.css"
 type Resident = { id: string; name: string; role: string; mood: string; x: number; y: number; color: string; bio: string }
 type EventItem = { id: string; text: string; time: string }
 type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; memoriesCount: number }
-const API = "https://money102-api.s2mtha16.workers.dev"
+const API = window.location.hostname === "money102-command-center-preview.onrender.com" || window.location.hostname === "money102-staging.onrender.com" ? "https://money102-api-staging.s2mtha16.workers.dev" : "https://money102-api.s2mtha16.workers.dev"
 const initialResidents: Resident[] = [
   { id: "mira", name: "Mira", role: "The Planner", mood: "กำลังวางแผน", x: 24, y: 28, color: "coral", bio: "ชอบวางแผนและจัดระเบียบสิ่งต่าง ๆ" },
   { id: "nori", name: "Nori", role: "The Observer", mood: "กำลังสังเกต", x: 53, y: 55, color: "mint", bio: "ช่างสังเกตและชอบจดจำเรื่องเล็ก ๆ" },
