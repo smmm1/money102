@@ -92,7 +92,7 @@ function applyResidentActivity(p,activity,minute) {
  const moodScore=clampNeed(Object.values(p.needs).reduce((sum,n)=>sum+n,0)/Object.values(p.needs).length*.7+(p.health||80)*.3);p.moodScore=moodScore;p.mood=moodScore>=75?"สบายใจ":moodScore>=55?"ค่อนข้างดี":moodScore>=35?"เหนื่อยล้า":"เครียดและต้องพัก";p.activityLabel=a.label;
  return true;
 }
-function moveResidentForActivity(p,activity) {
+function moveResidentForActivity(p,activity,target=null) {
  const homes={ploy:[31,27],non:[12,69],fah:[39,27],somchai:[12,42],may:[57,44],jay:[66,27]};
  const jobs={ploy:[36,44],non:[82,43],fah:[39,63],somchai:[12,28],may:[59,28],jay:[66,27]};
  const ids=["ploy","non","fah","somchai","may","jay"];
@@ -106,10 +106,12 @@ function moveResidentForActivity(p,activity) {
  else if(activity==="commute"||activity==="travel")destination=[45,49];
  else if(activity==="cook")destination=p.id==="somchai"?[12,28]:home;
  else if(activity==="relax"||activity==="sleep"||activity==="bathe"||activity==="clean"||activity==="use_phone"||activity==="use_toilet")destination=home;
+ const hasTarget=!!target&&Number.isFinite(target.x)&&Number.isFinite(target.y)&&target.x>=0&&target.x<=100&&target.y>=0&&target.y<=100;
+ if(hasTarget)destination=[target.x,target.y];
  // Small deterministic offsets keep residents from occupying the exact same pixel.
  const offset=ids.indexOf(p.id);
- p.x=Math.max(4,Math.min(96,destination[0]+((offset%3)-1)*1.8));
- p.y=Math.max(5,Math.min(94,destination[1]+(Math.floor(offset/3)-0.5)*2));
+ p.x=Math.max(4,Math.min(96,destination[0]+(hasTarget?0:((offset%3)-1)*1.8)));
+ p.y=Math.max(5,Math.min(94,destination[1]+(hasTarget?0:(Math.floor(offset/3)-0.5)*2)));
 }
 function advanceLifeWorld(state,elapsedMinutes) {
  const steps=Math.max(0,Math.min(10080,Math.floor(elapsedMinutes/10)));
@@ -200,13 +202,13 @@ export default { async scheduled(controller,env) { try { await ensureSchema(env.
     state.memoriesCount=Number(count?.count||0); return json(request,env,state);
    }
    if(url.pathname==="/api/simulator/action"&&request.method==="POST") {
-    const body=await parseBody(request), action=typeof body?.action==="string"?body.action:"", residentId=typeof body?.residentId==="string"?body.residentId:"";
+    const body=await parseBody(request), action=typeof body?.action==="string"?body.action:"", residentId=typeof body?.residentId==="string"?body.residentId:"", target=body?.target&&typeof body.target==="object"?body.target:null;
     if(!["wander","socialize","advance_time",...Object.keys(SIM_ACTIVITIES)].includes(action))return json(request,env,{error:"Unknown simulator action"},400);
     const person=state.residents.find(p=>p.id===residentId)||state.residents[0];
     if(action==="advance_time"){advanceLifeWorld(state,180);}
     else if(action==="wander"){person.x=10+((Number(person.x)+17)%80);person.y=18+((Number(person.y)+13)%65);person.mood="กำลังสำรวจ";state.events.unshift({id:crypto.randomUUID(),text:person.name+" ออกไปสำรวจชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
-    else if(action==="socialize"){const minute=Number(state.minute ?? state.hour*60);person.playerCommand="socialize";person.playerCommandUntil=((Number(state.day)||1)-1)*1440+minute+60;moveResidentForActivity(person,"socialize");for(const p of state.residents){if(p.id!==person.id){p.relationship=p.relationship||{};p.relationship[person.id]=Math.min(100,(p.relationship[person.id]||35)+1);person.relationship=person.relationship||{};person.relationship[p.id]=Math.min(100,(person.relationship[p.id]||35)+1);}}applyResidentActivity(person,"socialize",minute);state.events.unshift({id:crypto.randomUUID(),text:person.name+" พบปะพูดคุยกับคนในชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
-    else {const minute=Number(state.minute ?? state.hour*60);person.playerCommand=action;person.playerCommandUntil=((Number(state.day)||1)-1)*1440+minute+60;applyResidentActivity(person,action,minute);moveResidentForActivity(person,action);state.events.unshift({id:crypto.randomUUID(),text:person.name+" "+SIM_ACTIVITIES[action].label,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(minute%60).padStart(2,"0")});}
+    else if(action==="socialize"){const minute=Number(state.minute ?? state.hour*60);person.playerCommand="socialize";person.playerCommandUntil=((Number(state.day)||1)-1)*1440+minute+60;moveResidentForActivity(person,"socialize",target);for(const p of state.residents){if(p.id!==person.id){p.relationship=p.relationship||{};p.relationship[person.id]=Math.min(100,(p.relationship[person.id]||35)+1);person.relationship=person.relationship||{};person.relationship[p.id]=Math.min(100,(person.relationship[p.id]||35)+1);}}applyResidentActivity(person,"socialize",minute);state.events.unshift({id:crypto.randomUUID(),text:person.name+" พบปะพูดคุยกับคนในชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
+    else {const minute=Number(state.minute ?? state.hour*60);person.playerCommand=action;person.playerCommandUntil=((Number(state.day)||1)-1)*1440+minute+60;applyResidentActivity(person,action,minute);moveResidentForActivity(person,action,target);state.events.unshift({id:crypto.randomUUID(),text:person.name+" "+SIM_ACTIVITIES[action].label,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(minute%60).padStart(2,"0")});}
     state.memoriesCount=0;await saveSimulatorState(env.DB,user.id,state);return json(request,env,{ok:true,state});
    }
    if(url.pathname==="/api/simulator/turn"&&request.method==="POST") return json(request,env,{error:"AI dialogue is disabled. Use player activity commands."},410);
