@@ -17,7 +17,6 @@ type PixelCityProps = {
 
 const WORLD_W = 1920
 const WORLD_H = 1280
-const TILE = 32
 const COLORS: Record<string, number> = {
   coral: 0xe58b78,
   mint: 0x76bda0,
@@ -373,6 +372,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
 export default function PixelCity({ residents, selectedId, onSelect }: PixelCityProps) {
   const host = useRef<HTMLDivElement>(null)
   const game = useRef<Phaser.Game | null>(null)
+  const sceneRef = useRef<ThaiNeighbourhoodScene | null>(null)
   const residentsRef = useRef(residents)
   const selectedRef = useRef(selectedId)
   const onSelectRef = useRef(onSelect)
@@ -382,7 +382,17 @@ export default function PixelCity({ residents, selectedId, onSelect }: PixelCity
 
   useEffect(() => {
     if (!host.current || game.current) return
-    const scene = new ThaiNeighbourhoodScene()
+    const scene = new class extends ThaiNeighbourhoodScene {
+      constructor() { super() }
+      init() {
+        super.init({
+          residents: residentsRef.current,
+          selectedId: selectedRef.current,
+          onSelect: (id) => onSelectRef.current(id),
+        })
+      }
+    }()
+    sceneRef.current = scene
     game.current = new Phaser.Game({
       type: Phaser.AUTO,
       parent: host.current,
@@ -393,25 +403,17 @@ export default function PixelCity({ residents, selectedId, onSelect }: PixelCity
       antialias: false,
       roundPixels: true,
       scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
-      scene: [class extends ThaiNeighbourhoodScene {
-        constructor() { super() }
-        init() {
-          super.init({
-            residents: residentsRef.current,
-            selectedId: selectedRef.current,
-            onSelect: (id) => onSelectRef.current(id),
-          })
-        }
-      }],
+      scene: [scene],
     })
     return () => {
       game.current?.destroy(true)
       game.current = null
+      sceneRef.current = null
     }
   }, [])
 
   useEffect(() => {
-    const active = game.current?.scene.getScene("thai-neighbourhood") as ThaiNeighbourhoodScene | undefined
+    const active = sceneRef.current
     if (active?.scene?.isActive()) active.events.emit("update-residents", residents, selectedId)
   }, [residents, selectedId])
 
