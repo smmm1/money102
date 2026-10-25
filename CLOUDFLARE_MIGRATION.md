@@ -24,8 +24,6 @@ This branch is a staging implementation only. It does not change `main`, Render 
 
 The Worker has been provisioned, but the HTTP/authentication and frontend end-to-end checks below are not yet complete. Do not treat the migration as production-ready until they pass.
 
-## Staging checks required before production
-
 - `GET /health` returns `{"ok":true,...}`.
 - `GET /api/state` without a bearer token returns 401.
 - A signed-in test user can write and read a snapshot.
