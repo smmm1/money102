@@ -48,5 +48,13 @@ Names and traits are fictional and editable.
 - Reliability: snapshot backup before cast reset, schema migration only after confirming current D1 tables and owner key.
 - Tests: need drift, sleep schedule, shift work, affordability, relationships, day rollover, 7-day offline cap, command validation, ownership isolation, duplicate scheduled run and rollback.
 
-## Implementation status
-This branch begins the deterministic TypeScript rules foundation. It does not yet wire the engine to the UI or Worker, install Phaser, migrate D1, or deploy. Those steps must follow Worker/schema inspection and build tests.
+## Implementation status (feature branch; not deployed)
+- Added a Phaser-powered canvas renderer with a broad Thai semi-urban neighbourhood: market, curry-rice shop, grocery, rental rooms, dorm, office, clinic, repair shop, laundry, pharmacy, library, bus stop, park, community pavilion, transit station and temple.
+- Buildings have clickable entry areas with separate room-interior scenes; the large map supports drag panning and wheel zoom.
+- Added selectable pixel-style residents, resident needs bars and an in-game wallet panel. Game money is separate from real Money102 financial data.
+- Replaced the old starter cast with six fictional Thai residents and distinct work/school/sleep routines, including an overnight nursing shift.
+- Added deterministic hunger, energy, hygiene, social, fun and bladder progression, activity labels, mood bands, work income, weekly household spending and monthly rent.
+- Added a smoke test by evaluating the Worker source with a deterministic UUID stub: syntax passed; 6-resident world, bounded needs, valid activities, finite balances and multi-week progression passed.
+- Vercel status still reports a build-rate-limit failure, so the frontend TypeScript/Vite build is not yet independently confirmed.
+- Still to do before rollout: proper Phaser tilemap/collision/pathfinding and animated sprite assets, richer room-specific interaction/actions, automated tests in repository CI, staging deployment with the intended D1 binding, Cron Trigger configuration, and end-to-end verification of login and all Money102 features.
+- No production deployment, D1 reset, login changes or real Money102 data changes have been made.
