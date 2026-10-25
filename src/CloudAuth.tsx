@@ -15,8 +15,6 @@ export function AccountMenu() {
 }
 type LocalSnapshot = Record<string, string>
 const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
-const TOKEN_KEY = isCommandCenterPreview ? "money102_cloudflare_session_preview" : "money102_cloudflare_session"
-const OWNER_KEY = isCommandCenterPreview ? "money102_cloudflare_owner_preview" : "money102_cloudflare_owner"
 const LOCAL_PREFIX = "lamoon-"
 const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
   ? "https://money102-api-staging.s2mtha16.workers.dev"
@@ -41,7 +39,8 @@ function restoreSnapshot(snapshot: LocalSnapshot) {
   })
 }
 
-function getToken() { return localStorage.getItem(TOKEN_KEY) || "" }
+let sessionToken = ""
+function getToken() { return sessionToken }
 
 async function api(path: string, init: RequestInit = {}) {
   const token = getToken()
@@ -86,7 +85,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
         const result = await api("/api/auth/me")
         if (!cancelled) setUser(result.user as AppUser)
       } catch {
-        localStorage.removeItem(TOKEN_KEY)
+        sessionToken = ""
       } finally {
         if (!cancelled) setChecking(false)
       }
@@ -170,7 +169,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       }) as { token: string; user: AppUser }
-      localStorage.setItem(TOKEN_KEY, result.token)
+      sessionToken = result.token
       setUser(result.user)
       setPassword("")
       setMessage("เข้าสู่ระบบสำเร็จ")
@@ -183,7 +182,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
 
   async function signOut() {
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
-    localStorage.removeItem(TOKEN_KEY)
+    sessionToken = ""
     setUser(null)
     setCloudReady(false)
     setCloudError("")
