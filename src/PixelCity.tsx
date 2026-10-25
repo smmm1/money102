@@ -61,6 +61,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
     this.drawGround()
     this.drawRoads()
+    this.drawDistricts()
     this.drawGreenery()
     this.drawNeighbourhood()
     this.drawInteriorEntrances()
@@ -224,6 +225,31 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     g.fillStyle(0xbab39c, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236).fillRect(1018, 740, 210, 18).fillRect(474, 760, 240, 18)
     g.fillStyle(0xd9d0b8, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236)
     g.destroy()
+  }
+
+  private drawDistricts() {
+    const districts = [
+      { x: 150, y: 135, w: 310, title: "01 · ย่านบ้านพักและร้านชำ", sub: "HOME & LOCAL SHOPS", color: 0x527d57 },
+      { x: 1050, y: 135, w: 420, title: "02 · ย่านบริการและอาชีพ", sub: "CLINIC · WORK · CAFE", color: 0x537b87 },
+      { x: 150, y: 700, w: 390, title: "03 · ย่านเรียนรู้และห้องเช่า", sub: "STUDENT LIFE", color: 0x8b7554 },
+      { x: 1050, y: 700, w: 440, title: "04 · ตลาดและพื้นที่ชุมชน", sub: "FRESH MARKET · COMMUNITY", color: 0x9a6550 },
+      { x: 660, y: 965, w: 570, title: "05 · โซนวัดและการเดินทาง", sub: "TEMPLE · SONGTHAEW STATION", color: 0x756894 },
+    ]
+    for (const district of districts) {
+      const plate = this.add.graphics().setDepth(140)
+      plate.fillStyle(0xf8efd8, 0.96).fillRect(district.x, district.y, district.w, 39)
+      plate.fillStyle(district.color, 1).fillRect(district.x, district.y, 7, 39)
+      plate.fillStyle(0xffffff, 0.45).fillRect(district.x + 8, district.y + 2, district.w - 10, 2)
+      plate.destroy()
+      this.add.text(district.x + 17, district.y + 4, district.title, {
+        fontFamily: "Tahoma, sans-serif", fontSize: "15px", fontStyle: "bold",
+        color: "#354a39", padding: { x: 2, y: 1 },
+      }).setDepth(142)
+      this.add.text(district.x + 18, district.y + 23, district.sub, {
+        fontFamily: "Tahoma, sans-serif", fontSize: "8px", color: "#77715e",
+        letterSpacing: 1,
+      }).setDepth(142)
+    }
   }
 
   private drawGreenery() {
