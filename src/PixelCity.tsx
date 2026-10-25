@@ -17,6 +17,16 @@ type PixelCityProps = {
 
 const WORLD_W = 1920
 const WORLD_H = 1280
+const TILE = 32
+const BUILDING_BLOCKERS: Array<[number, number, number, number]> = [
+  [172, 192, 128, 110], [322, 197, 121, 105], [532, 177, 136, 124], [682, 177, 136, 124],
+  [1082, 182, 144, 119], [1252, 182, 136, 119], [1527, 192, 134, 114],
+  [172, 402, 139, 119], [342, 412, 126, 106], [532, 412, 144, 119],
+  [1072, 407, 136, 119], [1252, 412, 136, 109], [1507, 402, 141, 119],
+  [172, 752, 132, 114], [342, 757, 124, 109], [532, 752, 141, 114],
+  [1072, 752, 146, 114], [1262, 757, 131, 109], [1512, 757, 141, 114],
+  [682, 1002, 141, 109], [872, 1002, 146, 109], [1082, 1002, 141, 109],
+]
 const COLORS: Record<string, number> = {
   coral: 0xe58b78,
   mint: 0x76bda0,
@@ -75,6 +85,66 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       this.residents = residents
       this.selectedId = selectedId
       this.refreshResidents()
+    })
+  }
+
+  private findWalkPath(startX: number, startY: number, targetX: number, targetY: number) {
+    const cols = WORLD_W / TILE
+    const rows = WORLD_H / TILE
+    const blocked = (gx: number, gy: number) => {
+      if (gx < 1 || gy < 1 || gx >= cols - 1 || gy >= rows - 1) return true
+      const px = gx * TILE + TILE / 2
+      const py = gy * TILE + TILE / 2
+      return BUILDING_BLOCKERS.some(([x, y, w, h]) => px >= x - 4 && px <= x + w + 4 && py >= y - 4 && py <= y + h + 4)
+    }
+    const nearestOpen = (x: number, y: number) => {
+      let gx = Phaser.Math.Clamp(Math.floor(x / TILE), 1, cols - 2)
+      let gy = Phaser.Math.Clamp(Math.floor(y / TILE), 1, rows - 2)
+      if (!blocked(gx, gy)) return { gx, gy }
+      for (let radius = 1; radius < 8; radius++) {
+        for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) {
+          if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue
+          if (!blocked(gx + dx, gy + dy)) return { gx: gx + dx, gy: gy + dy }
+        }
+      }
+      return { gx, gy }
+    }
+    const start = nearestOpen(startX, startY)
+    const goal = nearestOpen(targetX, targetY)
+    const startIndex = start.gy * cols + start.gx
+    const goalIndex = goal.gy * cols + goal.gx
+    const parent = new Int32Array(cols * rows).fill(-2)
+    const queue = new Int32Array(cols * rows)
+    let head = 0, tail = 0
+    queue[tail++] = startIndex
+    parent[startIndex] = -1
+    const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    while (head < tail && parent[goalIndex] === -2) {
+      const current = queue[head++]
+      const cx = current % cols, cy = Math.floor(current / cols)
+      for (const [dx, dy] of directions) {
+        const nx = cx + dx, ny = cy + dy
+        if (blocked(nx, ny)) continue
+        const next = ny * cols + nx
+        if (parent[next] !== -2) continue
+        parent[next] = current
+        queue[tail++] = next
+      }
+    }
+    if (parent[goalIndex] === -2) return [{ x: targetX, y: targetY }]
+    const path: Array<{ x: number; y: number }> = []
+    for (let at = goalIndex; at !== -1; at = parent[at]) path.push({ x: (at % cols) * TILE + TILE / 2, y: Math.floor(at / cols) * TILE + TILE / 2 })
+    path.reverse()
+    path[path.length - 1] = { x: targetX, y: targetY }
+    return path
+  }
+
+  private animateAlongPath(group: Phaser.GameObjects.Container, path: Array<{ x: number; y: number }>, index = 0) {
+    if (!group.active || index >= path.length) return
+    const point = path[index]
+    this.tweens.add({
+      targets: group, x: point.x, y: point.y, duration: 90, ease: "Linear",
+      onComplete: () => this.animateAlongPath(group, path, index + 1),
     })
   }
 
@@ -360,7 +430,10 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
       const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
       this.tweens.killTweensOf(group)
-      this.tweens.add({ targets: group, x, y, duration: 1100, ease: "Sine.inOut" })
+      if (Phaser.Math.Distance.Between(group.x, group.y, x, y) > 24) {
+        const path = this.findWalkPath(group.x, group.y, x, y)
+        this.animateAlongPath(group, path)
+      }
       group.setDepth(y + 50)
       const activity = group.getData("activityLabel") as Phaser.GameObjects.Text | undefined
       activity?.setText(resident.activity ?? "ใช้ชีวิตประจำวัน")
