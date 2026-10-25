@@ -30,6 +30,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   private selectResident: (id: string) => void = () => {}
   private residentSprites = new Map<string, Phaser.GameObjects.Container>()
   private clockText?: Phaser.GameObjects.Text
+  private interiorLayer?: Phaser.GameObjects.Container
 
   constructor() {
     super("thai-neighbourhood")
@@ -50,6 +51,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.drawRoads()
     this.drawGreenery()
     this.drawNeighbourhood()
+    this.drawInteriorEntrances()
     this.drawResidentSprites()
     this.drawLabels()
     this.input.on("gameobjectdown", (_pointer: Phaser.Input.Pointer, object: Phaser.GameObjects.GameObject) => {
@@ -203,13 +205,103 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     }
   }
 
+
+  private drawInteriorEntrances() {
+    const places = [
+      { x: 236, y: 258, w: 110, h: 62, name: "ร้านข้าวแกง", kind: "shop" },
+      { x: 382, y: 262, w: 104, h: 58, name: "ร้านชำชุมชน", kind: "shop" },
+      { x: 600, y: 246, w: 120, h: 62, name: "ห้องเช่าของพลอย", kind: "home" },
+      { x: 750, y: 246, w: 120, h: 62, name: "หอพักนักศึกษา", kind: "home" },
+      { x: 1150, y: 250, w: 120, h: 62, name: "คลินิกชุมชน", kind: "clinic" },
+      { x: 1320, y: 252, w: 120, h: 62, name: "ร้านซ่อมมือถือ", kind: "shop" },
+      { x: 1590, y: 260, w: 120, h: 60, name: "ร้านกาแฟ", kind: "cafe" },
+      { x: 240, y: 468, w: 125, h: 62, name: "บ้านลุงสมชาย", kind: "home" },
+      { x: 410, y: 472, w: 110, h: 58, name: "ร้านซักผ้า", kind: "shop" },
+      { x: 600, y: 472, w: 125, h: 62, name: "สำนักงานบัญชี", kind: "office" },
+      { x: 1140, y: 466, w: 120, h: 62, name: "บ้านเมย์", kind: "home" },
+      { x: 1320, y: 470, w: 120, h: 58, name: "ร้านอาหารตามสั่ง", kind: "shop" },
+      { x: 1580, y: 468, w: 125, h: 62, name: "ตลาดสด", kind: "market" },
+      { x: 240, y: 808, w: 115, h: 60, name: "ห้องเช่าของนนท์", kind: "home" },
+      { x: 405, y: 810, w: 105, h: 58, name: "ร้านยา", kind: "clinic" },
+      { x: 600, y: 808, w: 125, h: 60, name: "ห้องสมุด", kind: "study" },
+      { x: 1145, y: 808, w: 125, h: 60, name: "ศาลาชุมชน", kind: "community" },
+      { x: 1328, y: 812, w: 112, h: 58, name: "สถานีรถ", kind: "transit" },
+      { x: 1582, y: 812, w: 125, h: 60, name: "สวนสาธารณะ", kind: "park" },
+      { x: 752, y: 1055, w: 125, h: 60, name: "ร้านหมูกระทะ", kind: "shop" },
+      { x: 945, y: 1055, w: 125, h: 60, name: "สถานีรถสองแถว", kind: "transit" },
+      { x: 1150, y: 1055, w: 125, h: 60, name: "วัดร่มเย็น", kind: "temple" },
+    ]
+    for (const place of places) {
+      this.add.zone(place.x, place.y, place.w, place.h).setOrigin(0.5, 0.5)
+        .setInteractive({ useHandCursor: true })
+        .on("pointerdown", () => this.showInterior(place.name, place.kind))
+        .on("pointerover", () => this.game.canvas.style.cursor = "pointer")
+        .on("pointerout", () => this.game.canvas.style.cursor = "default")
+    }
+  }
+
+  private showInterior(name: string, kind: string) {
+    this.interiorLayer?.destroy(true)
+    const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(10000)
+    this.interiorLayer = layer
+    const width = this.scale.width
+    const height = this.scale.height
+    const panelW = Math.min(width - 36, 600)
+    const panelH = Math.min(height - 36, 410)
+    const x = (width - panelW) / 2
+    const y = (height - panelH) / 2
+    const add = (obj: Phaser.GameObjects.GameObject) => { layer.add(obj); return obj }
+    add(this.add.rectangle(width / 2, height / 2, width, height, 0x24382b, 0.68).setScrollFactor(0))
+    add(this.add.rectangle(width / 2 + 5, height / 2 + 7, panelW, panelH, 0x31432f, 0.28).setScrollFactor(0))
+    add(this.add.rectangle(width / 2, height / 2, panelW, panelH, 0xf2e7c9).setStrokeStyle(5, 0x725c42).setScrollFactor(0))
+    add(this.add.rectangle(width / 2, y + 31, panelW - 10, 52, 0x527553).setScrollFactor(0))
+    add(this.add.text(x + 22, y + 16, name, { fontFamily: "Tahoma, sans-serif", fontSize: "18px", color: "#fff3d2", fontStyle: "bold" }).setScrollFactor(0))
+    add(this.add.text(x + 22, y + 61, "INTERIOR VIEW · จำลองกิจกรรมภายในอาคาร", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#66715b" }).setScrollFactor(0))
+    const floorX = x + 24
+    const floorY = y + 92
+    const floorW = panelW - 48
+    const floorH = panelH - 142
+    add(this.add.rectangle(width / 2, floorY + floorH / 2, floorW, floorH, kind === "home" ? 0xd8bc91 : 0xd9d3b4).setStrokeStyle(2, 0xb5a37f).setScrollFactor(0))
+    for (let px = floorX + 8; px < floorX + floorW - 8; px += 32) {
+      add(this.add.rectangle(px, floorY + 2, 2, floorH - 4, 0xb8ad8b, 0.35).setScrollFactor(0))
+    }
+    const furniture = (fx: number, fy: number, fw: number, fh: number, color: number) => {
+      add(this.add.rectangle(fx, fy, fw, fh, color).setStrokeStyle(3, 0x77664d).setScrollFactor(0))
+      add(this.add.rectangle(fx, fy - fh / 2 + 5, fw - 8, 5, 0xf0e1bd).setScrollFactor(0))
+    }
+    if (kind === "home") {
+      furniture(x + 100, y + 210, 112, 58, 0x9a6d50)
+      furniture(x + panelW - 100, y + 200, 84, 92, 0x7b9c83)
+      add(this.add.rectangle(x + panelW / 2, y + panelH - 82, 76, 38, 0x6b8f9b).setStrokeStyle(3, 0x536e72).setScrollFactor(0))
+      add(this.add.text(x + panelW / 2, y + panelH - 90, "เตียง / พักผ่อน", { fontFamily: "Tahoma", fontSize: "11px", color: "#fff8df" }).setOrigin(0.5).setScrollFactor(0))
+    } else if (kind === "market" || kind === "shop" || kind === "cafe") {
+      furniture(x + 105, y + 190, 140, 42, 0xa86648)
+      furniture(x + panelW - 112, y + 190, 100, 62, 0x759a6a)
+      for (let i = 0; i < 5; i++) add(this.add.rectangle(x + 68 + i * 25, y + 178, 12, 12, [0xd36c52,0xe4b44f,0x78a66e][i % 3]).setScrollFactor(0))
+      add(this.add.text(x + panelW / 2, y + panelH - 73, "เคาน์เตอร์ · วัตถุดิบ · พื้นที่ทำงาน", { fontFamily: "Tahoma", fontSize: "11px", color: "#53634d" }).setOrigin(0.5).setScrollFactor(0))
+    } else {
+      furniture(x + 112, y + 194, 112, 50, 0x6f8b9b)
+      furniture(x + panelW - 112, y + 194, 104, 50, 0x9a8b68)
+      add(this.add.text(x + panelW / 2, y + panelH - 73, "พื้นที่ใช้งาน · อุปกรณ์ · จุดพัก", { fontFamily: "Tahoma", fontSize: "11px", color: "#53634d" }).setOrigin(0.5).setScrollFactor(0))
+    }
+    add(this.add.text(x + 22, y + panelH - 32, "แตะพื้นที่อื่นเพื่อออกจากอาคาร", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
+    const closeZone = this.add.zone(width / 2, height / 2, width, height).setScrollFactor(0).setInteractive()
+    closeZone.setDepth(-1)
+    closeZone.on("pointerdown", () => { this.interiorLayer?.destroy(true); this.interiorLayer = undefined })
+    layer.add(closeZone)
+    closeZone.setDepth(0)
+    // Keep the close surface behind all interior artwork.
+    layer.sendToBack(closeZone)
+    this.input.setTopOnly(true)
+  }
+
   private drawResidentSprites() {
     this.residents.forEach((resident, index) => this.addResident(resident, index))
   }
 
   private addResident(resident: PixelResident, index: number) {
-    const x = 250 + (index * 253) % 1400
-    const y = 350 + (index * 157) % 610
+    const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
+    const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
     const group = this.add.container(x, y).setDepth(y + 50)
     const shadow = this.add.rectangle(0, 18, 23, 7, 0x52634b, 0.25)
     const bodyColor = COLORS[resident.color] ?? 0x76bda0
