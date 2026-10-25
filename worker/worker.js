@@ -74,7 +74,7 @@ async function parseBody(request) { const length=Number(request.headers.get("Con
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
 const SIM_ACTIVITIES = {
- sleep:{label:"เข้านอนพัก",need:"energy",delta:16}, eat:{label:"กินข้าว",need:"hunger",delta:24}, bathe:{label:"อาบน้ำ",need:"hygiene",delta:24},
+ wake:{label:"ตื่นนอน",need:"energy",delta:5}, sleep:{label:"เข้านอนพัก",need:"energy",delta:16}, eat:{label:"กินข้าว",need:"hunger",delta:24}, bathe:{label:"อาบน้ำ",need:"hygiene",delta:24},
  work:{label:"ไปทำงาน",need:"fun",delta:-3}, commute:{label:"เดินทาง",need:"energy",delta:-4}, shop:{label:"ซื้อของ",need:"fun",delta:5},
  cook:{label:"ทำอาหาร",need:"hunger",delta:15}, clean:{label:"ทำความสะอาด",need:"hygiene",delta:2}, socialize:{label:"พบปะพูดคุย",need:"social",delta:20},
  relax:{label:"พักผ่อน",need:"energy",delta:7}, exercise:{label:"ออกกำลังกาย",need:"health",delta:2}, study:{label:"เรียน/อ่านหนังสือ",need:"fun",delta:-2},
@@ -172,7 +172,7 @@ function advanceLifeWorld(state,elapsedMinutes) {
     else if(!next&&h>=17&&h<20)next="shop";
     else if(!next)next="relax";
    }
-   if(next && next!=="wake" && next!==p.activity){
+   if(next && next!==p.activity){
     applyResidentActivity(p,next,state.minute);
     moveResidentForActivity(p,next);
     const action=SIM_ACTIVITIES[next]?.label||next;
