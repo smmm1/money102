@@ -5,7 +5,7 @@ import { SIMULATOR_PORTALS, formatPortalCurrency, formatWorldClock, worldPhase, 
 
 type Resident = { id: string; name: string; role: string; mood: string; activity?: string; x: number; y: number; color: string; bio: string; money?: number; needs?: Record<string, number>; moodScore?: number }
 type EventItem = { id: string; text: string; time: string }
-type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; memoriesCount: number; lastSimulatedAt?: string }
+type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; minute?: number; memoriesCount: number; last_simulated_at?: number; lastSimulatedAt?: string }
 const API = window.location.hostname === "money102-command-center-preview.onrender.com" || window.location.hostname === "money102-staging.onrender.com" ? "https://money102-api-staging.s2mtha16.workers.dev" : "https://money102-api.s2mtha16.workers.dev"
 const initialResidents: Resident[] = [
   { id: "ploy", name: "พลอย", role: "พนักงานบัญชี · 27 ปี", mood: "เตรียมตัวไปทำงาน", activity: "เตรียมอาหารเช้า", x: 24, y: 28, color: "coral", bio: "พนักงานบัญชีที่เช่าห้องใกล้ตลาด ชอบวางแผนค่าใช้จ่ายและโทรหาแม่หลังเลิกงาน" },
@@ -61,6 +61,10 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     }
   }, [])
   useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    const timer = window.setInterval(() => { void load() }, 30000)
+    return () => window.clearInterval(timer)
+  }, [load])
   async function act(action: string) {
     setBusy(true); setError("")
     try {
@@ -73,7 +77,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     } finally { setBusy(false) }
   }
   const resident = world.residents.find(item => item.id === selected) || world.residents[0]
-  const clock = formatWorldClock(world.hour)
+  const clock = formatWorldClock(world.hour, world.minute == null ? 0 : world.minute % 60)
   return <main className="simulator-page">
     <header className="sim-topline"><button className="sim-back" onClick={onExit}>← กลับ Money102</button><div className="sim-wordmark"><span>✳</span> TINY / WORLD</div><div className={"sim-status " + status}><i />{status === "connected" ? "D1 MEMORY CONNECTED" : status === "loading" ? "CONNECTING…" : "PREVIEW MODE"}</div></header>
     <section className="sim-intro"><div><span className="sim-eyebrow">A WORLD THAT LIVES ON</span><h1>ชีวิตเล็ก ๆ <em>ในโลกของเรา</em></h1><p>ชีวิตประจำวันของคนไทย จำลองด้วยกฎ เวลา และการตัดสินใจของตัวละคร</p></div><div className="sim-clock"><small>DAY {world.day}</small><strong>{clock}</strong><span>{worldPhase(world.hour)}</span><span className="sim-offline-hint">โลกเดินต่อเมื่อคุณไม่อยู่</span></div></section>
