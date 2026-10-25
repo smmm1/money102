@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { AccountMenu } from "./CloudAuth"
 import "./command-center.css"
 
-type Page = "home" | "money" | "notes" | "health" | "split" | "receipt"
+type Page = "home" | "money" | "notes" | "health" | "split"
 type Transaction = { id: string; type: "income" | "expense"; amount: number; detail: string; date: string; createdAt: number }
 type Note = { id: string; title: string; body: string; tags?: string[]; mood?: string; pinned?: boolean; createdAt: string; updatedAt: string }
 type Profile = { id: string; name: string; height: number; age: number }
@@ -83,7 +83,7 @@ function MoneyTrend({ transactions }: { transactions: Transaction[] }) {
 }
 
 export default function CommandCenter() {
-  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split", "receipt"].includes(hash) ? hash as Page : "home") })
+  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split"].includes(hash) ? hash as Page : "home") })
   const [transactions, setTransactions] = useState<Transaction[]>(() => read(KEYS.money, []))
   const [goal, setGoal] = useState(() => Number(safeGet(KEYS.goal)) || 20000)
   const [goalTitle, setGoalTitle] = useState(() => safeGet(KEYS.goalTitle) || "เงินสำรองของฉัน")
@@ -311,7 +311,7 @@ export default function CommandCenter() {
   useEffect(() => { safeSet(KEYS.notes, JSON.stringify(notes)) }, [notes])
   useEffect(() => { safeSet(KEYS.health, JSON.stringify(health)) }, [health])
   useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
-  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "receipt"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
+  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
   const income = transactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
@@ -396,10 +396,9 @@ export default function CommandCenter() {
     { id: "money", label: "การเงิน", icon: "money" },
     { id: "notes", label: "โน้ต", icon: "notes" },
     { id: "health", label: "สุขภาพ", icon: "health" },
-    { id: "split", label: "หารค่าใช้จ่าย", icon: "split" },
-    { id: "receipt", label: "สแกนใบเสร็จ", icon: "receipt" }
+    { id: "split", label: "หารค่าใช้จ่าย", icon: "split" }
   ]
-  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", receipt: "สแกนใบเสร็จ" }
+  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย" }
 
   return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
     <main className="main-area">
@@ -410,7 +409,7 @@ export default function CommandCenter() {
       </header>
 
       <nav className="mobile-nav" aria-label="เมนูหลักสำหรับมือถือ">{nav.map(item => {
-        const mobileLabel: Record<Page, string> = { home: "ภาพรวม", money: "เงิน", notes: "โน้ต", health: "สุขภาพ", split: "หารบิล", receipt: "ใบเสร็จ" }
+        const mobileLabel: Record<Page, string> = { home: "ภาพรวม", money: "เงิน", notes: "โน้ต", health: "สุขภาพ", split: "หารบิล" }
         return <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "mobile-nav-link active" : "mobile-nav-link"} aria-label={item.label} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{mobileLabel[item.id]}</span></button>
       })}</nav>
 
@@ -431,7 +430,6 @@ export default function CommandCenter() {
           <button className="tool-card tool-notes" onClick={() => go("notes")}><span className="tool-icon"><Icon name="notes"/></span><span className="tool-meta">ความคิด</span><strong>เก็บโน้ตไว้ที่เดียว</strong><p>จดไอเดีย เรื่องที่ต้องจำ หรือสิ่งที่อยากกลับมาอ่าน</p><span className="tool-bottom"><b>{notes.length} โน้ต · ปักหมุด {pinned.length}</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-health" onClick={() => go("health")}><span className="tool-icon"><Icon name="health"/></span><span className="tool-meta">สุขภาพ</span><strong>ดูแลตัวเองทีละนิด</strong><p>บันทึกน้ำหนัก การเคลื่อนไหว และการพักผ่อน</p><span className="tool-bottom"><b>{latestWeight ? "น้ำหนัก " + latestWeight + " กก." : "เริ่มบันทึกสุขภาพ"}</b><i><Icon name="arrow"/></i></span></button>
           <button className="tool-card tool-split" onClick={() => go("split")}><span className="tool-icon"><Icon name="split"/></span><span className="tool-meta">ใช้ร่วมกับคนอื่น</span><strong>หารค่าใช้จ่าย</strong><p>จัดการค่าอาหาร ค่าเที่ยว และยอดที่เพื่อนต้องคืนกัน</p><span className="tool-bottom"><b>หน้าใหม่ · เตรียมระบบ</b><i><Icon name="arrow"/></i></span></button>
-          <button className="tool-card tool-receipt" onClick={() => go("receipt")}><span className="tool-icon"><Icon name="receipt"/></span><span className="tool-meta">บันทึกให้ง่ายขึ้น</span><strong>สแกนใบเสร็จ</strong><p>นำรูปใบเสร็จเข้ามาเตรียมตรวจข้อมูลก่อนบันทึก</p><span className="tool-bottom"><b>หน้าใหม่ · เตรียมระบบ</b><i><Icon name="arrow"/></i></span></button>
         </div>
         <section className="memory-galaxy surface"><div className="surface-heading"><div><span className="eyebrow">MEMORY GALAXY · จากข้อมูลจริง</span><h3>ร่องรอยของ 28 วัน</h3></div><span className="history-count">{memoryDays.reduce((sum, day) => sum + day.count, 0)} กิจกรรม</span></div><div className="memory-calendar" aria-label="ปฏิทินกิจกรรม 28 วัน">{memoryDays.map(day => <button type="button" key={day.key} title={day.label + " · " + day.count + " กิจกรรม"} aria-label={day.label + " · " + day.count + " กิจกรรม"} aria-pressed={memorySelectedDate === day.key} onClick={() => setMemorySelectedDate(day.key)} className={"memory-day level-" + Math.min(4, day.count) + (memorySelectedDate === day.key ? " selected" : "")}><span>{day.day}</span>{day.count > 0 && <i/>}</button>)}</div><div className="memory-detail"><div><strong>{selectedMemoryDay.label}</strong><small>{selectedMemoryDay.count ? "มีบันทึกในวันนี้" : "ยังไม่มีบันทึกในวันที่เลือก"}</small></div><div className="memory-counts"><button onClick={() => { setSearch(""); go("notes") }}><b>{selectedMemoryDay.noteCount}</b><span>โน้ต</span></button><button onClick={() => go("money")}><b>{selectedMemoryDay.moneyCount}</b><span>การเงิน</span></button><button onClick={() => go("health")}><b>{selectedMemoryDay.healthCount}</b><span>สุขภาพ</span></button></div></div><p className="memory-caption">แตะวันที่เพื่อดูจำนวนรายการที่บันทึกไว้ · ไม่มีการสร้างข้อมูลตัวอย่าง</p></section>
         <div className="home-lower"><section className="surface recent-surface" draggable={layoutOpen} onDragStart={() => setDraggedWidget("recent")} onDragOver={event => { if (layoutOpen) event.preventDefault() }} onDrop={() => moveWidget(draggedWidget, "recent")} style={{ order: dashboardOrder.indexOf("recent"), display: hiddenWidgets.includes("recent") ? "none" : undefined }}><div className="surface-heading"><div><span className="eyebrow">รายการล่าสุด</span><h3>เงินเข้าออก</h3></div><button className="text-button" onClick={() => go("money")}>ดูทั้งหมด <Icon name="arrow"/></button></div>{sortedTransactions.slice(0, 4).length ? <div className="activity-list">{sortedTransactions.slice(0, 4).map(t => <div className="activity-row" key={t.id}><span className={t.type === "income" ? "activity-symbol is-income" : "activity-symbol is-expense"}>{t.type === "income" ? "+" : "−"}</span><span className="activity-info"><strong>{t.detail}</strong><small>{dateLabel(t.date)}</small></span><b className={t.type === "income" ? "positive" : "negative"}>{t.type === "income" ? "+" : "−"}{cash(t.amount)}</b></div>)}</div> : <div className="compact-empty"><p>ยังไม่มีรายการเงินเข้าออก</p><button className="text-button" onClick={() => { setEntryType("expense"); setShowEntry(true) }}>เพิ่มรายการแรก <Icon name="arrow"/></button></div>}</section>
@@ -470,88 +468,6 @@ export default function CommandCenter() {
         {showSplitHistory && <section className="surface split-history-surface"><div className="surface-heading"><div><span className="eyebrow">ประวัติ</span><h3>บิลที่บันทึกไว้</h3></div><span className="history-count">{splitHistory.length} บิล</span></div>{splitHistory.length ? <div className="split-history-list">{splitHistory.map(bill => <article className="split-history-item" key={bill.id}><div className="split-history-main"><span className="split-history-icon"><Icon name="receipt"/></span><div><strong>{bill.title}</strong><small>{new Date(bill.createdAt).toLocaleString("th-TH", {dateStyle:"medium",timeStyle:"short"})} · {bill.people.length} คน</small><div className="split-history-people">{bill.people.map((name, index) => <span key={index}>{name}: {splitMoney(bill.shares[index] || 0)}</span>)}</div></div></div><div className="split-history-total"><strong>{splitMoney(bill.total + bill.tip)}</strong><button className="icon-button delete-button" aria-label={"ลบบิล " + bill.title} onClick={() => {if (confirm("ลบบิลนี้ออกจากประวัติหรือไม่?")) setSplitHistory(old => old.filter(item => item.id !== bill.id))}}><Icon name="trash"/></button></div></article>)}</div> : <Empty title="ยังไม่มีประวัติบิล" body="บันทึกบิลไว้แล้วจะกลับมาดูได้ตรงนี้" action="กลับไปหารบิล" onClick={() => setShowSplitHistory(false)}/>}</section>}
       </section>}
 
-      {page === "receipt" && <section className="page-content receipt-simple-page">
-        <div className="page-heading-row"><div><span className="eyebrow">K PLUS & RECEIPTS</span><h1>อ่านสลิปและใบเสร็จ</h1><p>แยกสลิปโอนเงิน สลิปจ่ายบิล และใบเสร็จอัตโนมัติ ตรวจข้อมูลก่อนบันทึก</p></div><span className={"receipt-status " + (receiptOcrStatus === "done" ? "receipt-status-ready" : "")}><i/>{receiptOcrStatus === "loading" ? "กำลังอ่านภาพ" : receiptOcrStatus === "done" ? "อ่านภาพแล้ว" : receiptOcrStatus === "error" ? "อ่านไม่สำเร็จ" : "OCR ในเบราว์เซอร์"}</span></div>
-        <div className="receipt-simple-layout">
-          <section className="surface receipt-upload-panel">
-            <div className="surface-heading"><div><span className="eyebrow">ขั้นตอน 1</span><h3>เลือกรูปจากมือถือ</h3></div></div>
-            <label className="receipt-dropzone"><input className="receipt-file-input" type="file" accept="image/*" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!file.type.startsWith("image/")) { setToast({message:"กรุณาเลือกรูปภาพ"}); return } setReceiptFileName(file.name); setReceiptOcrStatus("idle"); setReceiptOcrText(""); setReceiptItems([]); setReceiptMerchant(""); setReceiptDate(today()); setReceiptTotal(""); const reader = new FileReader(); reader.onload = () => setReceiptPreview(typeof reader.result === "string" ? reader.result : null); reader.readAsDataURL(file) }}/>{receiptPreview ? <img src={receiptPreview} alt="ตัวอย่างรูปใบเสร็จ" className="receipt-preview-image"/> : <><span className="receipt-upload-icon"><Icon name="receipt"/></span><strong>ถ่ายรูปหรือเลือกรูปใบเสร็จ</strong><span>รองรับ JPG, PNG และภาพจากแกลเลอรี</span></>}<span className="receipt-pick-button">{receiptPreview ? "เปลี่ยนรูป" : "เลือกรูปภาพ"} <Icon name="arrow"/></span></label>
-            {receiptFileName && <div className="receipt-file-meta"><Icon name="check"/><span><strong>{receiptFileName}</strong><small>ประมวลผล OCR ในเบราว์เซอร์ รูปไม่ถูกอัปโหลดไปยังเซิร์ฟเวอร์</small></span><button className="icon-button" onClick={() => {setReceiptPreview(null);setReceiptFileName("");setReceiptOcrStatus("idle");setReceiptOcrText("");setReceiptItems([])}} aria-label="ล้างรูป"><Icon name="close"/></button></div>}
-            <button className="button button-primary button-full receipt-read-button" disabled={!receiptPreview || receiptOcrStatus === "loading"} onClick={async () => {
-              if (!receiptPreview) return
-              setReceiptOcrStatus("loading")
-              try {
-                const w = window as any
-                if (!w.Tesseract) {
-                  await new Promise<void>((resolve,reject) => {
-                    const existing = document.querySelector('script[data-receipt-tesseract="1"]') as HTMLScriptElement | null
-                    if (existing) { existing.addEventListener("load",()=>resolve(),{once:true}); existing.addEventListener("error",()=>reject(new Error("โหลด OCR ไม่สำเร็จ")),{once:true}); return }
-                    const script = document.createElement("script"); script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; script.async = true; script.dataset.receiptTesseract = "1"; script.onload = () => resolve(); script.onerror = () => reject(new Error("โหลด OCR ไม่สำเร็จ")); document.head.appendChild(script)
-                  })
-                }
-                const result = await w.Tesseract.recognize(receiptPreview, "tha+eng", { logger: (m: any) => { if (m.status === "recognizing text") setReceiptOcrStatus("loading") } })
-                const text = String(result?.data?.text || "").trim()
-                if (!text) throw new Error("ไม่พบข้อความในภาพ ลองถ่ายให้ชัดและมีแสงเพียงพอ")
-                setReceiptOcrText(text)
-                const lines = text.split(/\r?\n/).map((line:string)=>line.trim()).filter(Boolean)
-                const normalized = text.toLowerCase()
-                const isKasikorn = /k\s*plus|kplus|kasikorn|กสิกร|ธนาคารกสิกร/.test(normalized)
-                const isBillPayment = /จ่ายบิล|ชำระบิล|bill payment|ชำระเงิน|ผู้ให้บริการ|หมายเลขอ้างอิง|reference no|ref\.?\s*no/i.test(text)
-                const isTransfer = /โอนเงิน|ผู้โอน|ผู้รับ|transfer|บัญชีต้นทาง|บัญชีปลายทาง|พร้อมเพย์|promptpay/i.test(text)
-                const detectedType = isKasikorn ? (isBillPayment && !isTransfer ? "จ่ายบิล K PLUS" : isTransfer ? "โอนเงิน K PLUS" : "รายการ K PLUS") : "ใบเสร็จทั่วไป"
-                setReceiptDocType(detectedType)
-                const ignoredMerchant = /k\s*plus|kplus|kasikorn|กสิกร|ธนาคาร|วันที่|เวลา|จำนวนเงิน|ยอดเงิน|ยอดโอน|ค่าธรรมเนียม|เลขที่รายการ|รหัสอ้างอิง|สถานะ|สำเร็จ|ใบเสร็จ|ใบกำกับภาษี|รายการ|จำนวน|ราคา|รวมทั้งสิ้น|ยอดรวม|ผู้โอน|ผู้รับ|บัญชี|หมายเลขอ้างอิง|reference|transaction|transfer|promptpay/i
-                const merchantLine = lines.find((line:string)=>line.length > 2 && !ignoredMerchant.test(line) && !/^[\d\s.,:/-]+$/.test(line))
-                setReceiptMerchant(merchantLine || (isKasikorn ? (isBillPayment ? "จ่ายบิล K PLUS" : "โอนเงิน K PLUS") : ""))
-                const thaiMonths:Record<string,number> = {"ม.ค.":1,"มกราคม":1,"ก.พ.":2,"กุมภาพันธ์":2,"มี.ค.":3,"มีนาคม":3,"เม.ย.":4,"เมษายน":4,"พ.ค.":5,"พฤษภาคม":5,"มิ.ย.":6,"มิถุนายน":6,"ก.ค.":7,"กรกฎาคม":7,"ส.ค.":8,"สิงหาคม":8,"ก.ย.":9,"กันยายน":9,"ต.ค.":10,"ตุลาคม":10,"พ.ย.":11,"พฤศจิกายน":11,"ธ.ค.":12,"ธันวาคม":12}
-                const thaiDateMatch = text.match(/(\d{1,2})\s+(ม\.ค\.|มกราคม|ก\.พ\.|กุมภาพันธ์|มี\.ค\.|มีนาคม|เม\.ย\.|เมษายน|พ\.ค\.|พฤษภาคม|มิ\.ย\.|มิถุนายน|ก\.ค\.|กรกฎาคม|ส\.ค\.|สิงหาคม|ก\.ย\.|กันยายน|ต\.ค\.|ตุลาคม|พ\.ย\.|พฤศจิกายน|ธ\.ค\.|ธันวาคม)\s*(\d{2,4})/i)
-                const dateMatch = text.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/)
-                if (thaiDateMatch) { let year=Number(thaiDateMatch[3]); if(year>2400) year-=543; else if(year<100) year+=2000; const month=thaiMonths[thaiDateMatch[2]]; const d=new Date(year,month-1,Number(thaiDateMatch[1])); if(!Number.isNaN(d.getTime())) setReceiptDate(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")) }
-                else if (dateMatch) { let year = Number(dateMatch[3]); if (year > 2400) year -= 543; else if (year < 100) year += 2000; const d = new Date(year, Number(dateMatch[2])-1, Number(dateMatch[1])); if (!Number.isNaN(d.getTime())) setReceiptDate(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")) }
-                const moneyMatches = [...text.matchAll(/(?:฿|บาท\s*)?\b(\d{1,7}(?:,\d{3})*(?:\.\d{1,2})?)\b/g)].map((m:any)=>({value:Number(String(m[1]).replace(/,/g,"")),line:lines.find((line:string)=>line.includes(m[1]))||""})).filter((x:any)=>x.value > 0 && x.value < 10000000)
-                const amountLabelIndex = lines.findIndex((line:string)=>/^(จำนวนเงิน|จำนวน|ยอดโอน|ยอดชำระ|ยอดที่ต้องชำระ|ยอดเงิน|amount)\s*[:：]?\s*$/i.test(line.trim()))
-                const amountValueLine = amountLabelIndex >= 0 ? lines.slice(amountLabelIndex+1,Math.min(lines.length,amountLabelIndex+3)).find((line:string)=>/\d[\d,]*(?:\.\d{1,2})?/.test(line) && !/ค่าธรรมเนียม|fee|เลขที่|รายการ|reference/i.test(line)) : undefined
-                const labeledAmountLine = lines.find((line:string)=>/(จำนวนเงิน|ยอดโอน|ยอดชำระ|ยอดที่ต้องชำระ|ยอดเงิน|amount)\s*[:：]?\s*\d/i.test(line) && !/ค่าธรรมเนียม|fee|ยอดคงเหลือ|balance/i.test(line))
-                const preferredTotalLine = labeledAmountLine || amountValueLine || lines.find((line:string)=>/ยอดสุทธิ|ยอดรวม|รวมทั้งสิ้น|grand total|net total/i.test(line) && !/ค่าธรรมเนียม|fee|ยอดคงเหลือ|balance/i.test(line))
-                const preferredNumbers = preferredTotalLine?.match(/\d[\d,]*(?:\.\d{1,2})?/g)?.map((v:string)=>Number(v.replace(/,/g,""))).filter((n:number)=>n>0 && n<10000000) || []
-                const total = preferredNumbers.length ? preferredNumbers[preferredNumbers.length-1] : (moneyMatches.length ? Math.max(...moneyMatches.map((x:any)=>x.value)) : 0)
-                if (total) setReceiptTotal(String(total))
-                const timeMatch = text.match(/(?:เวลา\s*)?(\d{1,2}:\d{2}(?::\d{2})?)/)
-                setReceiptTime(timeMatch?.[1] || "")
-                const refMatch = text.match(/(?:เลขที่รายการ|รหัสอ้างอิง|หมายเลขอ้างอิง|reference(?:\s*no)?|transaction\s*id)\s*[:#]?\s*([A-Z0-9-]{6,})/i)
-                setReceiptReference(refMatch?.[1] || "")
-                const feeMatch = text.match(/(?:ค่าธรรมเนียม|fee)\s*[:：]?\s*(?:฿\s*)?(\d[\d,]*(?:\.\d{1,2})?)/i)
-                setReceiptFee(feeMatch ? String(Number(feeMatch[1].replace(/,/g,""))) : "")
-                const personMatch = text.match(/(?:ผู้รับเงิน|ชื่อผู้รับ|ผู้รับ|to)\s*[:：]?\s*([^\n]+)/i)
-                setReceiptCounterparty(personMatch?.[1]?.trim().slice(0,100) || "")
-                const parsedItems = lines.map((line:string)=>{const m=line.match(/^(.{2,50}?)\s+(\d[\d,]*(?:\.\d{1,2})?)\s*$/);return m && !/รวม|total|vat|ภาษี|ส่วนลด|ค่าธรรมเนียม|fee/i.test(m[1]) ? {id:uid(),name:m[1].trim(),amount:String(Number(m[2].replace(/,/g,"")))} : null}).filter(Boolean) as {id:string;name:string;amount:string}[]
-                setReceiptItems(isKasikorn ? [] : parsedItems.slice(0,30))
-                setReceiptOcrStatus("done")
-              } catch (error) { setReceiptOcrStatus("error"); setToast({message:error instanceof Error ? error.message : "อ่านรูปไม่สำเร็จ ลองอีกครั้ง"}) }
-            }}><Icon name="sparkles"/>{receiptOcrStatus === "loading" ? "กำลังอ่านข้อความจากภาพ…" : "อ่านข้อมูลจากใบเสร็จ"}</button>
-            <p className="receipt-privacy-note"><Icon name="check"/><span>OCR ทำงานบนอุปกรณ์หลังโหลดไลบรารีและภาษาในครั้งแรก รูปใบเสร็จไม่ถูกส่งไปบันทึกบนเซิร์ฟเวอร์</span></p>
-          </section>
-          <section className="surface receipt-review-panel">
-            <div className="surface-heading"><div><span className="eyebrow">ขั้นตอน 2</span><h3>ตรวจและแก้ไขข้อมูล</h3></div></div>
-            {receiptOcrStatus === "loading" && <div className="receipt-review-empty"><span><Icon name="sparkles"/></span><p>กำลังอ่านตัวอักษร อาจใช้เวลาสักครู่ โดยเฉพาะการอ่านภาษาไทยครั้งแรก</p></div>}
-            <div className="receipt-fields">
-              <label>ประเภทที่ระบบตรวจพบ<input value={receiptDocType} onChange={e=>setReceiptDocType(e.target.value)} /></label>
-              <label>{receiptDocType.includes("โอนเงิน") ? "รายละเอียด / ธนาคาร" : receiptDocType.includes("จ่ายบิล") ? "ผู้ให้บริการ / รายละเอียดบิล" : "ชื่อร้าน / รายละเอียด"}<input value={receiptMerchant} onChange={e=>setReceiptMerchant(e.target.value)} placeholder="ชื่อร้านจากใบเสร็จ"/></label>
-              <div className="receipt-field-grid"><label>วันที่<input type="date" value={receiptDate} onChange={e=>setReceiptDate(e.target.value)}/></label><label>ยอดเงิน (บาท)<input inputMode="decimal" value={receiptTotal} onChange={e=>setReceiptTotal(e.target.value.replace(/[^\d.]/g,""))} placeholder="0.00"/></label></div>
-              <div className="receipt-field-grid"><label>เวลา<input value={receiptTime} onChange={e=>setReceiptTime(e.target.value)} placeholder="เช่น 14:35"/></label><label>ค่าธรรมเนียม (ถ้ามี)<input inputMode="decimal" value={receiptFee} onChange={e=>setReceiptFee(e.target.value.replace(/[^\d.]/g,""))} placeholder="0.00"/></label></div>
-              <label>ผู้รับเงิน / ผู้ให้บริการ<input value={receiptCounterparty} onChange={e=>setReceiptCounterparty(e.target.value)} placeholder="ตรวจและแก้ไขได้"/></label>
-              <label>เลขที่รายการ / รหัสอ้างอิง<input value={receiptReference} onChange={e=>setReceiptReference(e.target.value)} placeholder="ถ้ามีในสลิป"/></label>
-              <label>หมวดหมู่<select value={receiptCategory} onChange={e=>setReceiptCategory(e.target.value)}><option>อาหาร</option><option>เดินทาง</option><option>ของใช้</option><option>สุขภาพ</option><option>บิลและสาธารณูปโภค</option><option>ช้อปปิ้ง</option><option>อื่น ๆ</option></select></label>
-            </div>
-            {receiptItems.length > 0 && <div className="receipt-items-review"><div className="receipt-items-heading"><strong>รายการที่อ่านได้</strong><small>{receiptItems.length} รายการ · ตรวจแก้ได้</small></div>{receiptItems.map((item,index)=><div className="receipt-item-row" key={item.id}><input aria-label={"ชื่อรายการ "+(index+1)} value={item.name} onChange={e=>setReceiptItems(old=>old.map(x=>x.id===item.id?{...x,name:e.target.value}:x))}/><input aria-label={"ราคาของรายการ "+(index+1)} inputMode="decimal" value={item.amount} onChange={e=>setReceiptItems(old=>old.map(x=>x.id===item.id?{...x,amount:e.target.value.replace(/[^\d.]/g,"")}:x))}/><button className="icon-button" aria-label="ลบรายการ" onClick={()=>setReceiptItems(old=>old.filter(x=>x.id!==item.id))}><Icon name="close"/></button></div>)}</div>}
-            {receiptOcrText && <details className="receipt-raw-text"><summary>ดูข้อความดิบจาก OCR</summary><pre>{receiptOcrText}</pre></details>}
-            {receiptOcrStatus === "done" && <p className="receipt-review-success"><Icon name="check"/>อ่านภาพแล้ว กรุณาตรวจยอดและวันที่ก่อนบันทึก</p>}
-            <button className="button button-primary button-full receipt-save-button" disabled={!receiptPreview || receiptOcrStatus!=="done" || !(Number(receiptTotal)>0)} onClick={()=>{const value=Number(receiptTotal);if(!value||value<=0)return;const transaction:Transaction={id:uid(),type:"expense",amount:value,detail:((receiptDocType || "รายการจากภาพ")+(receiptMerchant.trim()?" · "+receiptMerchant.trim():"")+(receiptCounterparty.trim()?" · ถึง "+receiptCounterparty.trim():"")+(receiptReference.trim()?" · อ้างอิง "+receiptReference.trim():"")+(receiptFee && Number(receiptFee)>0?" · ค่าธรรมเนียม "+receiptFee+" บาท":"")+(receiptItems.length?" · "+receiptItems.map(i=>i.name).filter(Boolean).slice(0,4).join(", "):"")),date:receiptDate||today(),createdAt:Date.now()};setTransactions(old=>[transaction,...old]);setDelightActive(true);setToast({message:"กำลังบันทึกรายจ่ายจากใบเสร็จลงระบบ…"});setReceiptOcrStatus("idle");setReceiptPreview(null);setReceiptFileName("");setReceiptOcrText("");setReceiptMerchant("");setReceiptDocType("ยังไม่จำแนก");setReceiptTime("");setReceiptReference("");setReceiptCounterparty("");setReceiptFee("");setReceiptDate(today());setReceiptTotal("");setReceiptItems([])}}><Icon name="check"/>ยืนยันและบันทึกเป็นรายจ่าย</button>
-            <small className="receipt-save-hint">จะบันทึกยอดรวมเป็นรายจ่ายหนึ่งรายการใน Money102 รายการย่อยที่อ่านได้ใช้สำหรับตรวจทาน</small>
-          </section>
-        </div>
-      </section>}
-
       {page === "health" && <section className="page-content">
         <div className="page-heading-row"><div><span className="eyebrow">ดูแลตัวเอง · WELLBEING</span><h1>สุขภาพ</h1><p>ติดตามความเปลี่ยนแปลง เพื่อเข้าใจตัวเอง ไม่ใช่กดดันตัวเอง</p></div><button className="button button-primary" onClick={() => setShowHealth(true)}><Icon name="plus"/>บันทึกสุขภาพ</button></div>
         <section className="profile-bar"><span className="profile-avatar"><Icon name="health"/></span><div className="profile-info"><strong>{profile?.name || "ฉัน"}</strong><small>{profile?.height || 163} ซม. · อายุ {profile?.age || "—"} ปี</small></div><select aria-label="เลือกโปรไฟล์สุขภาพ" value={profile?.id || ""} onChange={e => setHealth(old => ({ ...old, activeProfileId: e.target.value }))}>{health.profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button className="button button-secondary" onClick={() => setShowProfile(true)}><Icon name="plus"/>เพิ่มโปรไฟล์</button></section>
@@ -581,7 +497,6 @@ export default function CommandCenter() {
             { id: "notes", label: "โน้ต", detail: "ค้นหาและจัดการโน้ต", icon: "notes", run: () => go("notes") },
             { id: "health", label: "สุขภาพ", detail: "เปิดบันทึกสุขภาพ", icon: "health", run: () => go("health") },
             { id: "split", label: "หารค่าใช้จ่าย", detail: "แยกค่าใช้จ่ายกับเพื่อน", icon: "split", run: () => go("split") },
-            { id: "receipt", label: "สแกนใบเสร็จ", detail: "เตรียมรูปใบเสร็จสำหรับบันทึก", icon: "receipt", run: () => go("receipt") }
           ] as const).filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className={"command-item-icon command-icon-" + item.id}><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
           {[
             { id: "new-note", label: "เขียนโน้ตใหม่", detail: "จดไอเดียหรือสิ่งที่ต้องจำ", icon: "plus", run: () => { setEditingNoteId(null); setNoteTitle(""); setNoteBody(""); setShowNote(true) } },
@@ -589,7 +504,7 @@ export default function CommandCenter() {
             { id: "new-health", label: "บันทึกสุขภาพ", detail: "เพิ่มกิจกรรมหรือข้อมูลสุขภาพ", icon: "plus", run: () => setShowHealth(true) }
           ].filter(item => (item.label + " " + item.detail).toLowerCase().includes(commandQuery.trim().toLowerCase())).map(item => <button className="command-item" key={item.id} onClick={() => { item.run(); setCommandOpen(false) }}><span className="command-item-icon command-icon-action"><Icon name={item.icon}/></span><span className="command-item-copy"><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>↵</kbd></button>)}
           {commandQuery.trim() && filteredNotes.filter(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase())).slice(0, 5).map(note => <button className="command-item" key={note.id} onClick={() => { setEditingNoteId(note.id); setNoteTitle(note.title); setNoteBody(note.body); setShowNote(true); setCommandOpen(false) }}><span className="command-item-icon command-icon-notes"><Icon name="notes"/></span><span className="command-item-copy"><strong>{note.title}</strong><small>{note.body || "ไม่มีเนื้อหา"}</small></span><kbd>↵</kbd></button>)}
-          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","หารค่าใช้จ่าย","สแกนใบเสร็จ","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
+          {commandQuery.trim() && !(["ภาพรวม","การเงิน","โน้ต","สุขภาพ","หารค่าใช้จ่าย","เขียนโน้ตใหม่","เพิ่มรายการเงิน","บันทึกสุขภาพ"].some(label => label.toLowerCase().includes(commandQuery.trim().toLowerCase())) || filteredNotes.some(note => (note.title + " " + note.body).toLowerCase().includes(commandQuery.trim().toLowerCase()))) && <p className="command-empty">ไม่พบสิ่งที่ตรงกัน ลองใช้คำอื่นดูนะ</p>}
         </div>
         <footer className="command-footer"><span><kbd>↑↓</kbd> เลือกด้วยเมาส์</span><span><kbd>Ctrl</kbd> + <kbd>K</kbd> เปิด/ปิด</span><span>ค้นหาจากโน้ตที่บันทึกไว้</span></footer>
       </section>
