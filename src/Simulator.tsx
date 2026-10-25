@@ -66,6 +66,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     return () => window.clearInterval(timer)
   }, [load])
   async function act(action: string, target?: { x: number; y: number }) {
+    if (busy) return
     setBusy(true); setError("")
     try {
       const data = await request("/api/simulator/action", { method: "POST", body: JSON.stringify({ action, residentId: selected, ...(target ? { target } : {}) }) })
