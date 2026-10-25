@@ -1,5 +1,6 @@
 name: AI Simulator build check
 on:
+  workflow_dispatch:
   push:
     branches:
       - feature/ai-simulator-pixel-world
