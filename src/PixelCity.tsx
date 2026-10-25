@@ -1,0 +1,334 @@
+import { useEffect, useRef } from "react"
+import Phaser from "phaser"
+
+type PixelResident = {
+  id: string
+  name: string
+  x: number
+  y: number
+  color: string
+  activity?: string
+}
+type PixelCityProps = {
+  residents: PixelResident[]
+  selectedId: string
+  onSelect: (id: string) => void
+}
+
+const WORLD_W = 1920
+const WORLD_H = 1280
+const TILE = 32
+const COLORS: Record<string, number> = {
+  coral: 0xe58b78,
+  mint: 0x76bda0,
+  blue: 0x78a9d6,
+}
+
+class ThaiNeighbourhoodScene extends Phaser.Scene {
+  private residents: PixelResident[] = []
+  private selectedId = ""
+  private selectResident: (id: string) => void = () => {}
+  private residentSprites = new Map<string, Phaser.GameObjects.Container>()
+  private clockText?: Phaser.GameObjects.Text
+
+  constructor() {
+    super("thai-neighbourhood")
+  }
+
+  init(data: { residents: PixelResident[]; selectedId: string; onSelect: (id: string) => void }) {
+    this.residents = data.residents
+    this.selectedId = data.selectedId
+    this.selectResident = data.onSelect
+  }
+
+  create() {
+    const { width, height } = this.scale
+    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H)
+    this.cameras.main.setZoom(Math.min(width / 1120, height / 740, 0.78))
+    this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
+    this.drawGround()
+    this.drawRoads()
+    this.drawGreenery()
+    this.drawNeighbourhood()
+    this.drawResidentSprites()
+    this.drawLabels()
+    this.input.on("gameobjectdown", (_pointer: Phaser.Input.Pointer, object: Phaser.GameObjects.GameObject) => {
+      const id = (object as Phaser.GameObjects.GameObject & { residentId?: string }).residentId
+      if (id) this.selectResident(id)
+    })
+    this.scale.on("resize", (size: Phaser.Structs.Size) => {
+      this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
+      this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
+    })
+    this.events.on("update-residents", (residents: PixelResident[], selectedId: string) => {
+      this.residents = residents
+      this.selectedId = selectedId
+      this.refreshResidents()
+    })
+  }
+
+  private drawGround() {
+    const g = this.add.graphics()
+    g.fillStyle(0x9fbd86, 1).fillRect(0, 0, WORLD_W, WORLD_H)
+    // Pixel-sized grass flecks make the base read as a hand-built tilemap.
+    for (let y = 8; y < WORLD_H; y += 24) {
+      for (let x = 7 + ((y / 24) % 2) * 11; x < WORLD_W; x += 37) {
+        const shade = ((x * 7 + y * 3) % 5) === 0 ? 0x88aa76 : 0xb1c991
+        g.fillStyle(shade, 0.8).fillRect(x, y, 3, 3)
+      }
+    }
+    g.fillStyle(0xe1d6b5, 1).fillRect(96, 96, 1728, 1088)
+    g.fillStyle(0xd7c99f, 1).fillRect(112, 112, 1696, 1056)
+    g.fillStyle(0x9fbd86, 1).fillRect(128, 128, 1664, 1024)
+    // Garden plots and small community green.
+    g.fillStyle(0x7ea96f, 1).fillRect(1450, 760, 260, 250)
+    g.fillStyle(0xc3d59a, 1).fillRect(1470, 780, 220, 210)
+    g.fillStyle(0x79a5ae, 1).fillRect(210, 850, 180, 112)
+    g.fillStyle(0x91c1c0, 1).fillRect(220, 860, 160, 92)
+    g.fillStyle(0xd4e3c0, 1).fillRect(232, 871, 17, 5).fillRect(300, 908, 23, 5).fillRect(352, 883, 11, 5)
+    g.destroy()
+  }
+
+  private drawRoads() {
+    const g = this.add.graphics()
+    const road = (x: number, y: number, w: number, h: number) => {
+      g.fillStyle(0x9e9b8a, 1).fillRect(x, y, w, h)
+      g.fillStyle(0xe1d7b7, 1).fillRect(x, y, w, 6).fillRect(x, y + h - 6, w, 6)
+      g.fillStyle(0xf1e8ca, 0.8)
+      if (w > h) for (let dx = x + 18; dx < x + w - 18; dx += 48) g.fillRect(dx, y + h / 2 - 2, 23, 4)
+      else for (let dy = y + 18; dy < y + h - 18; dy += 48) g.fillRect(x + w / 2 - 2, dy, 4, 23)
+    }
+    road(0, 600, WORLD_W, 84)
+    road(930, 0, 88, WORLD_H)
+    road(128, 300, 1664, 54)
+    road(128, 920, 1664, 54)
+    road(420, 128, 54, 1024)
+    road(1430, 128, 54, 1024)
+    // Alleys are intentionally narrower than the main roads.
+    g.fillStyle(0xbab39c, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236).fillRect(1018, 740, 210, 18).fillRect(474, 760, 240, 18)
+    g.fillStyle(0xd9d0b8, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236)
+    g.destroy()
+  }
+
+  private drawGreenery() {
+    const spots = [
+      [170, 180], [255, 410], [355, 510], [530, 210], [720, 420], [800, 1040],
+      [1110, 200], [1280, 430], [1600, 210], [1710, 450], [1650, 1070], [1340, 1070],
+      [270, 1060], [540, 1060], [810, 820], [1150, 1080], [1730, 820], [800, 480],
+    ]
+    for (const [x, y] of spots) this.drawTree(x, y)
+    for (let i = 0; i < 22; i++) {
+      const x = 170 + (i * 73) % 1550
+      const y = 170 + (i * 131) % 940
+      this.add.rectangle(x, y, 5, 5, i % 3 === 0 ? 0xf0c77d : 0xf0d9b5).setDepth(y)
+    }
+  }
+
+  private drawTree(x: number, y: number) {
+    const g = this.add.graphics().setDepth(y)
+    g.fillStyle(0x7d6449, 1).fillRect(x + 10, y + 16, 8, 16)
+    g.fillStyle(0x477b51, 1).fillRect(x, y + 5, 28, 19)
+    g.fillStyle(0x5d965e, 1).fillRect(x + 4, y, 22, 18)
+    g.fillStyle(0x7eaf6c, 1).fillRect(x + 9, y + 3, 7, 5)
+    g.fillStyle(0x3d7049, 1).fillRect(x + 2, y + 19, 8, 5)
+    g.destroy()
+  }
+
+  private building(x: number, y: number, w: number, h: number, wall: number, roof: number, name: string, sign: string) {
+    const g = this.add.graphics().setDepth(y + h)
+    g.fillStyle(0x52604d, 0.18).fillRect(x + 9, y + h - 1, w, 15)
+    g.fillStyle(0xe5d9bd, 1).fillRect(x - 7, y + h - 12, w + 14, 13)
+    g.fillStyle(wall, 1).fillRect(x, y + 18, w, h - 18)
+    g.fillStyle(roof, 1).fillRect(x - 8, y, w + 16, 25)
+    g.fillStyle(0xffffff, 0.25).fillRect(x, y + 19, w, 4)
+    g.fillStyle(0x9a6d51, 1).fillRect(x + w / 2 - 10, y + h - 34, 20, 34)
+    g.fillStyle(0x83b5bc, 1).fillRect(x + 12, y + 35, 19, 17).fillRect(x + w - 31, y + 35, 19, 17)
+    g.fillStyle(0xe9d4a3, 1).fillRect(x + 13, y + 36, 17, 3).fillRect(x + w - 30, y + 36, 17, 3)
+    g.fillStyle(0x3d5542, 1).fillRect(x + 4, y + h - 14, w - 8, 5)
+    g.destroy()
+    const label = this.add.text(x + w / 2, y + h + 8, name, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", color: "#334c39",
+      backgroundColor: "#f8f0d8", padding: { x: 6, y: 3 }, align: "center",
+    }).setOrigin(0.5, 0).setDepth(y + h + 20)
+    const signText = this.add.text(x + w / 2, y + 29, sign, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "11px", fontStyle: "bold",
+      color: "#fff7dc", backgroundColor: "#8e4d42", padding: { x: 5, y: 3 },
+    }).setOrigin(0.5, 0).setDepth(y + h + 21)
+    return { label, signText }
+  }
+
+  private drawNeighbourhood() {
+    const buildings = [
+      [180, 200, 112, 96, 0xf0d4ad, 0xb9604f, "ร้านข้าวแกง", "ข้าวแกงป้า"],
+      [330, 205, 105, 91, 0xe4c9a2, 0x587e63, "ร้านชำ", "ของชุมชน"],
+      [540, 185, 120, 110, 0xd7c2a5, 0x9d554b, "ห้องเช่า A", "บ้านพลอย"],
+      [690, 185, 120, 110, 0xe4d6b6, 0x668b70, "หอพักนักศึกษา", "หอฟ้า"],
+      [1090, 190, 128, 105, 0xe7d3b0, 0x507d78, "คลินิกชุมชน", "สุขภาพดี"],
+      [1260, 190, 120, 105, 0xe3c4a2, 0xc17b54, "ร้านซ่อมมือถือ", "เจ โมบาย"],
+      [1535, 200, 118, 100, 0xe5d1aa, 0x78649b, "ร้านกาแฟ", "Slow Day"],
+      [180, 410, 125, 105, 0xe5d3b5, 0x9a574b, "บ้านลุงสมชาย", "บ้านสวน"],
+      [350, 420, 110, 92, 0xe6d7b9, 0x8c7150, "ร้านซักผ้า", "ซักสะอาด"],
+      [540, 420, 128, 105, 0xdcc9ab, 0x637eab, "สำนักงาน", "บัญชี"],
+      [1080, 415, 120, 105, 0xe8d5b5, 0x7e9e8d, "บ้านเมย์", "พักเวร"],
+      [1260, 420, 120, 95, 0xe5d0a7, 0x9b6b4b, "ร้านอาหารตามสั่ง", "ตามสั่ง"],
+      [1515, 410, 125, 105, 0xe3cfaa, 0xb45e4d, "ตลาดสด", "ตลาดเช้า"],
+      [180, 760, 118, 100, 0xe5d4b7, 0x657e9a, "ห้องเช่า B", "บ้านนนท์"],
+      [350, 765, 110, 95, 0xe8d9bc, 0xb56b4e, "ร้านยา", "เภสัชกร"],
+      [540, 760, 125, 100, 0xdac8a8, 0x6a9873, "ห้องสมุด", "อ่านเพลิน"],
+      [1080, 760, 130, 100, 0xe6d4b2, 0x9d5e50, "ศาลาชุมชน", "พบปะกัน"],
+      [1270, 765, 115, 95, 0xe2d0af, 0x658b9c, "ป้ายรถเมล์", "รถสองแถว"],
+      [1520, 765, 125, 100, 0xe4d2b2, 0x5b8466, "สวนสาธารณะ", "สวนชุมชน"],
+      [690, 1010, 125, 95, 0xe6d2af, 0xb85f4b, "ร้านหมูกระทะ", "ย่างกัน"],
+      [880, 1010, 130, 95, 0xe4d2b3, 0x6d8a9c, "สถานีรถ", "ไปต่อเมือง"],
+      [1090, 1010, 125, 95, 0xe2d0ae, 0x8b6a99, "วัดชุมชน", "วัดร่มเย็น"],
+    ] as const
+    buildings.forEach(([x, y, w, h, wall, roof, name, sign]) => this.building(x, y, w, h, wall, roof, name, sign))
+    // Temple roof and golden stupa make the neighbourhood distinctly Thai.
+    const temple = this.add.graphics().setDepth(1110)
+    temple.fillStyle(0xc29a43, 1).fillRect(1144, 1068, 24, 37)
+    temple.fillStyle(0xe3c56e, 1).fillRect(1137, 1060, 38, 8).fillRect(1149, 1051, 14, 9)
+    temple.fillStyle(0xb65c4c, 1).fillRect(1120, 1025, 74, 20)
+    temple.fillStyle(0xe7c77a, 1).fillRect(1127, 1030, 60, 5)
+    temple.destroy()
+    // Market awnings and produce stalls.
+    for (let i = 0; i < 5; i++) {
+      const x = 1538 + i * 24
+      const y = 530 + (i % 2) * 12
+      const g = this.add.graphics().setDepth(y + 25)
+      g.fillStyle(i % 2 ? 0x6b9d72 : 0xc96956, 1).fillRect(x, y, 22, 16)
+      g.fillStyle(0xf3e4be, 1).fillRect(x, y + 7, 22, 3)
+      g.fillStyle(0x9c7751, 1).fillRect(x + 3, y + 16, 3, 15).fillRect(x + 17, y + 16, 3, 15)
+      g.fillStyle(0xe7b55d, 1).fillRect(x + 3, y + 20, 6, 5).fillRect(x + 12, y + 20, 6, 5)
+      g.destroy()
+    }
+  }
+
+  private drawResidentSprites() {
+    this.residents.forEach((resident, index) => this.addResident(resident, index))
+  }
+
+  private addResident(resident: PixelResident, index: number) {
+    const x = 250 + (index * 253) % 1400
+    const y = 350 + (index * 157) % 610
+    const group = this.add.container(x, y).setDepth(y + 50)
+    const shadow = this.add.rectangle(0, 18, 23, 7, 0x52634b, 0.25)
+    const bodyColor = COLORS[resident.color] ?? 0x76bda0
+    const body = this.add.rectangle(0, 5, 17, 19, bodyColor).setStrokeStyle(2, 0x3d5143)
+    const head = this.add.rectangle(0, -11, 15, 14, 0xf1c6a0).setStrokeStyle(2, 0x6e5547)
+    const hair = this.add.rectangle(0, -17, 16, 7, index % 2 ? 0x393b37 : 0x5b4438)
+    const eyes = this.add.rectangle(-4, -11, 2, 2, 0x3a3a34).setOrigin(0.5)
+    const eye2 = this.add.rectangle(4, -11, 2, 2, 0x3a3a34).setOrigin(0.5)
+    const legs = this.add.rectangle(0, 17, 17, 5, 0x4b5b62)
+    const outline = this.add.rectangle(0, 0, 32, 42).setStrokeStyle(2, 0xf7e4a4, 0).setFillStyle(0xffffff, 0)
+    group.add([shadow, legs, body, head, hair, eyes, eye2, outline])
+    const name = this.add.text(0, 28, resident.name, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "12px", color: "#263b2b",
+      backgroundColor: "#fff5db", padding: { x: 5, y: 3 },
+    }).setOrigin(0.5, 0)
+    group.add(name)
+    const activity = this.add.text(0, -39, resident.activity ?? "ใช้ชีวิตประจำวัน", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "9px", color: "#fffaf0",
+      backgroundColor: "#496c50", padding: { x: 4, y: 2 },
+    }).setOrigin(0.5, 0.5)
+    group.add(activity)
+    group.setSize(36, 64).setInteractive(new Phaser.Geom.Rectangle(-18, -43, 36, 76), Phaser.Geom.Rectangle.Contains)
+    ;(group as Phaser.GameObjects.Container & { residentId?: string }).residentId = resident.id
+    group.on("pointerdown", () => this.selectResident(resident.id))
+    group.setData("outline", outline)
+    group.setData("residentId", resident.id)
+    this.residentSprites.set(resident.id, group)
+    this.paintSelection(resident.id)
+    this.tweens.add({ targets: group, y: y - 2, duration: 900 + index * 80, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+  }
+
+  private paintSelection(id: string) {
+    for (const [residentId, group] of this.residentSprites) {
+      const outline = group.getData("outline") as Phaser.GameObjects.Rectangle | undefined
+      outline?.setStrokeStyle(2, 0xf7e4a4, residentId === id ? 1 : 0)
+    }
+  }
+
+  private refreshResidents() {
+    for (const group of this.residentSprites.values()) group.destroy()
+    this.residentSprites.clear()
+    this.drawResidentSprites()
+  }
+
+  private drawLabels() {
+    this.add.text(960, 42, "ชุมชนริมคลอง · RIM KHLONG COMMUNITY", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "17px", color: "#37563b",
+      backgroundColor: "#dce7c5", padding: { x: 12, y: 7 },
+    }).setOrigin(0.5, 0).setDepth(2000)
+    this.add.text(960, 1200, "ตลาด · บ้านเช่า · ร้านค้า · วัด · สวน · สถานีรถ", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", color: "#f9f0d5",
+      backgroundColor: "#496b4c", padding: { x: 10, y: 6 },
+    }).setOrigin(0.5, 0).setDepth(2000)
+  }
+}
+
+export default function PixelCity({ residents, selectedId, onSelect }: PixelCityProps) {
+  const host = useRef<HTMLDivElement>(null)
+  const game = useRef<Phaser.Game | null>(null)
+  const residentsRef = useRef(residents)
+  const selectedRef = useRef(selectedId)
+  const onSelectRef = useRef(onSelect)
+  residentsRef.current = residents
+  selectedRef.current = selectedId
+  onSelectRef.current = onSelect
+
+  useEffect(() => {
+    if (!host.current || game.current) return
+    const scene = new ThaiNeighbourhoodScene()
+    game.current = new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: host.current,
+      width: host.current.clientWidth || 900,
+      height: host.current.clientHeight || 500,
+      backgroundColor: "#9fbd86",
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+      scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
+      scene: {
+        key: "thai-neighbourhood",
+        create: function (this: Phaser.Scene) {
+          // Scene is created as a real Phaser scene; delegate rendering to our scene class.
+        },
+      },
+    })
+    // Replace the placeholder scene with the full neighbourhood scene once boot completes.
+    game.current.destroy(true)
+    game.current = new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: host.current,
+      width: host.current.clientWidth || 900,
+      height: host.current.clientHeight || 500,
+      backgroundColor: "#9fbd86",
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+      scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
+      scene: [class extends ThaiNeighbourhoodScene {
+        constructor() { super() }
+        init() {
+          super.init({
+            residents: residentsRef.current,
+            selectedId: selectedRef.current,
+            onSelect: (id) => onSelectRef.current(id),
+          })
+        }
+      }],
+    })
+    return () => {
+      game.current?.destroy(true)
+      game.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const active = game.current?.scene.getScene("thai-neighbourhood") as ThaiNeighbourhoodScene | undefined
+    if (active?.scene?.isActive()) active.events.emit("update-residents", residents, selectedId)
+  }, [residents, selectedId])
+
+  return <div className="pixel-city" ref={host} role="img" aria-label="แผนที่ชุมชนไทย Pixel Art แบบ top-down พร้อมร้านค้า บ้านเช่า วัด ตลาด สวน และตัวละครที่เลือกได้" />
+}
