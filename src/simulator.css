@@ -27,3 +27,7 @@
 .sim-live-data span{font-size:8px;line-height:1.5;color:#99a092}
 @media(max-width:850px){.sim-portal-zone{margin-top:14px}.sim-live-data{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.sim-portal-zone{padding:12px}.sim-portal-heading{align-items:flex-start;flex-direction:column}.sim-portal-grid{grid-template-columns:1fr}.sim-portal-tile{padding:10px}.sim-live-data strong{font-size:15px}.sim-market{left:44%;top:13%;transform:scale(.8)}.sim-bbq{right:5%;bottom:35%;transform:scale(.8)}}
+
+.app-shell.game-mode .topbar,.app-shell.game-mode .mobile-nav{display:none!important}
+.app-shell.game-mode .main-area{padding:0!important;margin:0!important;min-width:0}
+.app-shell.game-mode .simulator-page{width:100%;max-width:none;min-height:100vh;box-sizing:border-box}
