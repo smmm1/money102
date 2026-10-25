@@ -1283,3 +1283,67 @@ body { background:#faf8f5; color:#302b38; }
   .split-result-name strong { font-size:13px; }
   .split-total-card > strong { font-size:36px; }
 }
+
+
+/* Simplified split-bill flow: result first, essentials only */
+.split-simple-page { max-width: 760px !important; }
+.split-simple-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.split-simple-heading h1 { margin:5px 0 5px; font-size:clamp(25px,4vw,32px); letter-spacing:-.7px; }
+.split-simple-heading p { margin:0; color:#858b80; font-size:13px; }
+.split-history-toggle { flex:0 0 auto; min-height:38px; font-size:11px; }
+.split-simple-result { padding:22px 24px 15px; border-radius:20px; background:linear-gradient(140deg,#234c32,#3e7149); color:#fff; box-shadow:0 12px 30px #244b321c; margin-bottom:14px; }
+.split-simple-result-top { display:flex; justify-content:space-between; align-items:center; gap:12px; color:#e0eddf; font-size:13px; font-weight:600; }
+.split-simple-count { padding:5px 9px; border-radius:99px; background:#ffffff20; color:#fff; font-size:11px; }
+.split-simple-people { display:grid; gap:0; margin-top:8px; }
+.split-simple-person { display:flex; align-items:center; gap:12px; min-width:0; padding:13px 0; border-bottom:1px solid #ffffff20; }
+.split-simple-avatar { display:grid; place-items:center; width:34px; height:34px; flex:0 0 auto; border-radius:50%; background:#ffffff20; color:#fff; font-size:12px; font-weight:700; }
+.split-simple-person-name { flex:1; min-width:0; overflow-wrap:anywhere; color:#f0f6ef; font-size:14px; }
+.split-simple-person > strong { flex:0 0 auto; color:#fff; font-size:clamp(22px,4vw,30px); line-height:1.15; font-weight:750; letter-spacing:-.7px; font-variant-numeric:tabular-nums; }
+.split-simple-total { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-top:15px; color:#d5e5d4; font-size:12px; }
+.split-simple-total strong { color:#fff; font-size:17px; font-weight:650; font-variant-numeric:tabular-nums; }
+.split-simple-form { padding:22px 24px; display:grid; gap:19px; }
+.split-main-amount { display:flex; flex-wrap:wrap; align-items:center; gap:6px; color:#303a30; font-size:14px; font-weight:700; }
+.split-main-amount > span { color:#8b9387; font-size:11px; font-weight:500; }
+.split-main-amount-input { display:flex; align-items:center; width:100%; gap:10px; min-height:70px; padding:0 17px; border:1.5px solid #d7e2d3; border-radius:14px; background:#f9fcf7; }
+.split-main-amount-input:focus-within { border-color:#6c9b6c; box-shadow:0 0 0 4px #6c9b6c1c; }
+.split-main-amount-input > span { color:#5a7e59; font-size:24px; font-weight:650; }
+.split-main-amount-input input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:#284b30; font-size:clamp(28px,5vw,36px); font-weight:750; letter-spacing:-.8px; box-shadow:none !important; font-variant-numeric:tabular-nums; }
+.split-main-amount-input input::placeholder { color:#c0cbbd; }
+.split-simple-people-heading { display:flex; justify-content:space-between; align-items:center; gap:14px; }
+.split-simple-people-heading > div:first-child { display:flex; flex-direction:column; gap:4px; }
+.split-simple-people-heading strong { color:#343d32; font-size:14px; }
+.split-simple-people-heading small { color:#969c91; font-size:11px; }
+.split-simple-counter { display:flex; align-items:center; gap:13px; padding:5px; border:1px solid #e3e8df; border-radius:12px; background:#fbfcfa; }
+.split-simple-counter button { display:grid; place-items:center; width:34px; height:34px; border:0; border-radius:9px; background:#eaf2e7; color:#416c43; font-size:23px; line-height:1; cursor:pointer; }
+.split-simple-counter button:disabled { opacity:.35; cursor:not-allowed; }
+.split-simple-counter strong { min-width:18px; text-align:center; font-size:16px; font-variant-numeric:tabular-nums; }
+.split-simple-name-list { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.split-simple-name-list label { display:flex; align-items:center; gap:8px; min-width:0; }
+.split-simple-name-list label > span { display:grid; place-items:center; width:26px; height:26px; flex:0 0 auto; border-radius:8px; background:#f0f4ed; color:#6c8167; font-size:10px; font-weight:700; }
+.split-simple-name-list input { width:100%; min-width:0; min-height:40px; padding:9px 10px; font-size:12px; }
+.split-simple-options { padding-top:15px; border-top:1px solid #edf0e9; }
+.split-simple-options summary { display:flex; justify-content:space-between; align-items:center; gap:10px; color:#596452; font-size:12px; font-weight:650; cursor:pointer; list-style-position:inside; }
+.split-simple-options summary span { color:#9ba194; font-size:10px; font-weight:400; text-align:right; }
+.split-simple-tip { display:grid; gap:7px; margin-top:15px; color:#667060; font-size:11px; }
+.split-simple-tip input,.split-title-option > input { min-height:42px; padding:10px 12px; font-size:13px; }
+.split-simple-mode { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; color:#667060; font-size:11px; }
+.split-title-option { margin-top:-5px; }
+.split-title-option > input { width:100%; margin-top:12px; }
+.split-simple-save { min-height:47px; margin-top:0; }
+@media (max-width:600px) {
+  .split-simple-page { padding-left:0; padding-right:0; }
+  .split-simple-heading { align-items:center; margin:0 0 14px; padding:0 2px; }
+  .split-simple-heading h1 { font-size:25px; }
+  .split-simple-heading p { font-size:12px; }
+  .split-history-toggle { padding:0 10px; min-height:35px; font-size:10px; }
+  .split-simple-result { margin-bottom:11px; padding:18px 17px 13px; border-radius:17px; }
+  .split-simple-result-top { font-size:12px; }
+  .split-simple-person { gap:9px; padding:12px 0; }
+  .split-simple-avatar { width:30px; height:30px; }
+  .split-simple-person-name { font-size:12px; }
+  .split-simple-person > strong { font-size:clamp(21px,6vw,27px); }
+  .split-simple-form { padding:18px 16px; gap:17px; border-radius:16px; }
+  .split-main-amount-input { min-height:65px; }
+  .split-simple-name-list { grid-template-columns:1fr; gap:8px; }
+  .split-simple-counter { gap:10px; }
+}
