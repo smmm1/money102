@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [fix/d1-only-persistence]
+    branches: [main, fix/d1-only-persistence]
 
 jobs:
   build:
