@@ -3,7 +3,7 @@ import "./simulator.css"
 import PixelCity from "./PixelCity"
 import { SIMULATOR_PORTALS, formatPortalCurrency, formatWorldClock, worldPhase, type SimulatorPortalId, type SimulatorPortalSnapshot } from "./simulator-world"
 
-type Resident = { id: string; name: string; role: string; mood: string; activity?: string; x: number; y: number; color: string; bio: string; money?: number; needs?: Record<string, number>; moodScore?: number; skills?: Record<string, { xp: number; level: number }> }
+type Resident = { id: string; name: string; role: string; mood: string; activity?: string; x: number; y: number; color: string; bio: string; money?: number; health?: number; needs?: Record<string, number>; moodScore?: number; skills?: Record<string, { xp: number; level: number }> }
 type EventItem = { id: string; text: string; time: string }
 type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; minute?: number; memoriesCount: number; last_simulated_at?: number; lastSimulatedAt?: string }
 const API = window.location.hostname === "money102-command-center-preview.onrender.com" || window.location.hostname === "money102-staging.onrender.com" ? "https://money102-api-staging.s2mtha16.workers.dev" : "https://money102-api.s2mtha16.workers.dev"
