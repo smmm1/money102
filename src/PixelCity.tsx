@@ -532,7 +532,8 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     group.setData("residentId", resident.id)
     this.residentSprites.set(resident.id, group)
     this.paintSelection(resident.id)
-    this.tweens.add({ targets: group, y: y - 2, duration: 900 + index * 80, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+    const idleTween = this.tweens.add({ targets: group, y: y - 2, duration: 900 + index * 80, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+    group.setData("idleTween", idleTween)
   }
 
   private paintSelection(id: string) {
@@ -574,6 +575,11 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
             this.animateAlongPath(group, path)
             group.setData("navigationBlocked", false)
           } else {
+            const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+            walkTween?.stop()
+            group.setData("walkTween", undefined)
+            const legs = group.getData("legs") as Phaser.GameObjects.Rectangle | undefined
+            legs?.setAngle(0)
             // Never cut through a building when the navigation grid has no route.
             group.setData("navigationBlocked", true)
           }
