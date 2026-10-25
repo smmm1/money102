@@ -156,12 +156,6 @@ export default function CommandCenter() {
   const [porkShop, setPorkShop] = useState("")
   const [porkPrice, setPorkPrice] = useState("")
   const [porkMapUrl, setPorkMapUrl] = useState("")
-  const [showPorkMap, setShowPorkMap] = useState(false)
-  const [porkMapSearch, setPorkMapSearch] = useState("")
-  const [porkMapLabel, setPorkMapLabel] = useState("")
-  const [porkMapPoint, setPorkMapPoint] = useState<{lat:number;lng:number} | null>(null)
-  const [porkMapSearching, setPorkMapSearching] = useState(false)
-  const [porkMapError, setPorkMapError] = useState("")
   const [porkDate, setPorkDate] = useState(today())
   const [editingPorkId, setEditingPorkId] = useState<string | null>(null)
   const [porkMonth, setPorkMonth] = useState(() => today().slice(0, 7))
@@ -196,56 +190,8 @@ export default function CommandCenter() {
   useEffect(() => { safeSet("money102-split-bill-history-v1", JSON.stringify(splitHistory)) }, [splitHistory])
   useEffect(() => { safeSet("money102-pork-bbq-history-v1", JSON.stringify(porkEntries)) }, [porkEntries])
 
-  useEffect(() => {
-    if (!showPorkMap) return
-    const L = (window as any).L
-    const el = document.getElementById("pork-location-map")
-    if (!L || !el) { setPorkMapError("โหลดแผนที่ไม่สำเร็จ ลองเปิดใหม่อีกครั้ง"); return }
-    const initial = porkMapPoint || { lat: 18.7883, lng: 98.9853 }
-    const map = L.map(el, { zoomControl: true }).setView([initial.lat, initial.lng], porkMapPoint ? 16 : 12)
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(map)
-    let marker: any = null
-    const place = (lat:number,lng:number,label?:string) => {
-      if (marker) marker.setLatLng([lat,lng])
-      else marker = L.marker([lat,lng], { draggable: true }).addTo(map)
-      marker.off("dragend")
-      marker.on("dragend", (event:any) => {
-        const point = event.target.getLatLng()
-        setPorkMapPoint({lat:point.lat,lng:point.lng})
-      })
-      setPorkMapPoint({lat,lng})
-      if (label) setPorkMapLabel(label)
-    }
-    if (porkMapPoint) place(porkMapPoint.lat,porkMapPoint.lng,porkMapLabel)
-    map.on("click", (event:any) => { place(event.latlng.lat,event.latlng.lng); setPorkMapLabel("พิกัดที่เลือก") })
-    const timer = window.setTimeout(() => map.invalidateSize(), 100)
-    ;(window as any).__porkMapPlace = (lat:number,lng:number,label:string) => { map.setView([lat,lng],16); place(lat,lng,label) }
-    return () => { window.clearTimeout(timer); map.remove(); delete (window as any).__porkMapPlace }
-  }, [showPorkMap])
-  const searchPorkMap = async () => {
-    const query = porkMapSearch.trim()
-    if (!query) { setPorkMapError("พิมพ์ชื่อร้านหรือสถานที่ที่ต้องการค้นหาก่อน"); return }
-    setPorkMapSearching(true); setPorkMapError("")
-    try {
-      const response = await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=" + encodeURIComponent(query))
-      if (!response.ok) throw new Error("search")
-      const results = await response.json()
-      if (!results.length) { setPorkMapError("ไม่พบสถานที่นี้ ลองค้นหาด้วยชื่อหรือที่อยู่สั้นลง"); return }
-      const first = results[0]
-      const lat = Number(first.lat), lng = Number(first.lon)
-      setPorkMapLabel(String(first.display_name || query))
-      ;(window as any).__porkMapPlace?.(lat,lng,String(first.display_name || query))
-      setPorkMapPoint({lat,lng})
-    } catch { setPorkMapError("ค้นหาสถานที่ไม่ได้ในตอนนี้ ลองปักหมุดบนแผนที่แทน") }
-    finally { setPorkMapSearching(false) }
-  }
-  const confirmPorkMap = () => {
-    if (!porkMapPoint) { setPorkMapError("แตะบนแผนที่เพื่อเลือกตำแหน่งก่อน"); return }
-    const url = "https://www.google.com/maps/dir/?api=1&destination=" + porkMapPoint.lat + "," + porkMapPoint.lng
-    setPorkMapUrl(url)
-    setPorkMapLabel(porkMapLabel || "ตำแหน่งที่เลือก")
-    setShowPorkMap(false)
-  }
+  useEffect(() => { safeSet("money102-split-bill-history-v1", JSON.stringify(splitHistory)) }, [splitHistory])
+  useEffect(() => { safeSet("money102-pork-bbq-history-v1", JSON.stringify(porkEntries)) }, [porkEntries])
 
   useEffect(() => { safeSet(KEYS.money, JSON.stringify(transactions)) }, [transactions])
   useEffect(() => { safeSet("money102-hidden-widgets-v1", JSON.stringify(hiddenWidgets)) }, [hiddenWidgets])
@@ -530,10 +476,10 @@ export default function CommandCenter() {
       {page === "pork" && <section className="page-content pork-page">
         <div className="page-heading-row"><div><span className="eyebrow">บันทึกมื้อโปรด · FOOD LOG</span><h1>ประวัติการกินหมูกระทะ</h1><p>จำร้านที่เคยไปได้ บันทึกแค่ร้าน ราคา และวันที่ก็พอ</p></div><div className="pork-total-badge"><Icon name="pork"/><span><strong>{porkEntries.length}</strong><small>ครั้งที่กิน</small></span></div></div>
         <section className="surface pork-form-surface">
-          <div className="surface-heading"><div><span className="eyebrow">{editingPorkId ? "แก้ไขรายการเดิม" : "บันทึกครั้งใหม่"}</span><h3>{editingPorkId ? "แก้ข้อมูลมื้อนี้" : "ไปกินร้านไหนมา?"}</h3></div>{editingPorkId && <button className="text-button" type="button" onClick={() => {setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkMapUrl("");setPorkMapPoint(null);setPorkMapLabel("");setPorkDate(today());setPorkNotice("")}}>ยกเลิกการแก้ไข</button>}</div>
-          <form className="pork-form" onSubmit={event => {event.preventDefault();const shop=porkShop.trim();const price=Number(porkPrice);const mapUrl=porkMapUrl.trim();if(!shop||!Number.isFinite(price)||price<=0){setPorkNotice("กรอกชื่อร้านและราคาที่มากกว่า 0 ก่อนนะ");return}if(editingPorkId){setPorkEntries(old=>old.map(item=>item.id===editingPorkId?{...item,shop,price,date:porkDate||today(),mapUrl:mapUrl||undefined,mapLat:porkMapPoint?.lat,mapLng:porkMapPoint?.lng,mapLabel:porkMapLabel||undefined,updatedAt:new Date().toISOString()}:item));setPorkNotice("แก้ไขประวัติเรียบร้อยแล้ว")}else{setPorkEntries(old=>[{id:uid(),shop,price,date:porkDate||today(),mapUrl:mapUrl||undefined,mapLat:porkMapPoint?.lat,mapLng:porkMapPoint?.lng,mapLabel:porkMapLabel||undefined,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},...old]);setPorkNotice("บันทึกประวัติหมูกระทะแล้ว")}setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkMapUrl("");setPorkMapPoint(null);setPorkMapLabel("");setPorkDate(today());setPorkSelectedDate(null);setPorkMonth(today().slice(0,7))}}>
-            <label className="pork-shop-field">ชื่อร้าน <span>เลือกร้านเดิมจากรายการ หรือเลือกเพิ่มร้านใหม่</span><select aria-label="เลือกร้านหมูกระทะเดิม" value={porkEntries.some(item=>item.shop.trim()===porkShop.trim()) ? porkShop.trim() : (porkShop.trim() ? "__new__" : "")} onChange={event=>{const selected=event.target.value;const shop=selected==="__new__"?"":selected;const prior=shop?porkEntries.find(item=>item.shop.trim()===shop&&(item.mapUrl||item.mapLat!=null)):undefined;setPorkShop(shop);setPorkMapUrl(prior?.mapUrl||"");setPorkMapPoint(prior?.mapLat!=null&&prior?.mapLng!=null?{lat:prior.mapLat,lng:prior.mapLng}:null);setPorkMapLabel(prior?.mapLabel||"")}}><option value="">เลือกร้านที่เคยไป…</option>{Array.from(new Set(porkEntries.map(item=>item.shop.trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"th")).map(shop=><option key={shop} value={shop}>{shop}</option>)}<option value="__new__">＋ เพิ่มร้านใหม่</option></select>{(!porkShop.trim() || !porkEntries.some(item=>item.shop.trim()===porkShop.trim())) && <input value={porkShop} onChange={event=>setPorkShop(event.target.value)} placeholder="พิมพ์ชื่อร้านใหม่" autoComplete="off" required maxLength={120}/>}</label>
-            <div className="pork-map-field"><span className="pork-map-label">ตำแหน่งร้าน <span>ไม่บังคับ · ค้นหาและปักหมุดได้ฟรี</span></span><button type="button" className="button button-secondary pork-map-pick-button" onClick={() => {setPorkMapError("");setPorkMapSearch(porkShop);setShowPorkMap(true)}}><Icon name="map"/> {porkMapPoint ? "เปลี่ยนตำแหน่งบนแผนที่" : porkMapUrl ? "แก้ไขตำแหน่งแผนที่" : "เลือกตำแหน่งบนแผนที่"}</button>{porkMapPoint && <small className="pork-map-selected">เลือกแล้ว · {porkMapLabel || (porkMapPoint.lat.toFixed(5)+", "+porkMapPoint.lng.toFixed(5))}</small>}</div>
+          <div className="surface-heading"><div><span className="eyebrow">{editingPorkId ? "แก้ไขรายการเดิม" : "บันทึกครั้งใหม่"}</span><h3>{editingPorkId ? "แก้ข้อมูลมื้อนี้" : "ไปกินร้านไหนมา?"}</h3></div>{editingPorkId && <button className="text-button" type="button" onClick={() => {setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkMapUrl("");setPorkDate(today());setPorkNotice("")}}>ยกเลิกการแก้ไข</button>}</div>
+          <form className="pork-form" onSubmit={event => {event.preventDefault();const shop=porkShop.trim();const price=Number(porkPrice);const mapUrl=porkMapUrl.trim();if(!shop||!Number.isFinite(price)||price<=0){setPorkNotice("กรอกชื่อร้านและราคาที่มากกว่า 0 ก่อนนะ");return}if(editingPorkId){setPorkEntries(old=>old.map(item=>item.id===editingPorkId?{...item,shop,price,date:porkDate||today(),mapUrl:mapUrl||undefined,updatedAt:new Date().toISOString()}:item));setPorkNotice("แก้ไขประวัติเรียบร้อยแล้ว")}else{setPorkEntries(old=>[{id:uid(),shop,price,date:porkDate||today(),mapUrl:mapUrl||undefined,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()},...old]);setPorkNotice("บันทึกประวัติหมูกระทะแล้ว")}setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkMapUrl("");setPorkMapPoint(null);setPorkMapLabel("");setPorkDate(today());setPorkSelectedDate(null);setPorkMonth(today().slice(0,7))}}>
+            <label className="pork-shop-field">ชื่อร้าน <span>เลือกร้านเดิมจากรายการ หรือเลือกเพิ่มร้านใหม่</span><select aria-label="เลือกร้านหมูกระทะเดิม" value={porkEntries.some(item=>item.shop.trim()===porkShop.trim()) ? porkShop.trim() : (porkShop.trim() ? "__new__" : "")} onChange={event=>{const selected=event.target.value;const shop=selected==="__new__"?"":selected;const prior=shop?porkEntries.find(item=>item.shop.trim()===shop&&(item.mapUrl||item.mapLat!=null)):undefined;setPorkShop(shop);setPorkMapUrl(prior?.mapUrl||"");}}><option value="">เลือกร้านที่เคยไป…</option>{Array.from(new Set(porkEntries.map(item=>item.shop.trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"th")).map(shop=><option key={shop} value={shop}>{shop}</option>)}<option value="__new__">＋ เพิ่มร้านใหม่</option></select>{(!porkShop.trim() || !porkEntries.some(item=>item.shop.trim()===porkShop.trim())) && <input value={porkShop} onChange={event=>setPorkShop(event.target.value)} placeholder="พิมพ์ชื่อร้านใหม่" autoComplete="off" required maxLength={120}/>}</label>
+            <label className="pork-map-field">ลิงก์ Google Maps <span>ไม่บังคับ · คัดลอกลิงก์แชร์จาก Google Maps มาวางได้</span><input type="url" value={porkMapUrl} onChange={event=>setPorkMapUrl(event.target.value)} placeholder="https://maps.app.goo.gl/…" autoComplete="url" /></label>
             <label>ราคา (บาท)<input type="number" min="1" step="0.01" inputMode="decimal" value={porkPrice} onChange={event=>setPorkPrice(event.target.value)} placeholder="เช่น 259" required/></label>
             <label>วันที่กิน <span>ตั้งเป็นวันนี้ให้อัตโนมัติ</span><input type="date" value={porkDate} onChange={event=>setPorkDate(event.target.value)} required/></label>
             <button className="button button-primary pork-save-button" type="submit"><Icon name="check"/>{editingPorkId ? "บันทึกการแก้ไข" : "บันทึกมื้อนี้"}</button>
@@ -547,7 +493,7 @@ export default function CommandCenter() {
         </section>
         <section className="surface pork-history-surface">
           <div className="surface-heading"><div><span className="eyebrow">ทุกมื้อที่บันทึกไว้</span><h3>{porkSelectedDate ? "ประวัติวันที่ "+dateLabel(porkSelectedDate) : "ประวัติทั้งหมด"}</h3></div><span className="history-count">{porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).length} รายการ</span></div>
-          {porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).length ? <div className="pork-history-list">{porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt)).map(item=><article className="pork-history-row" key={item.id}><span className="pork-history-icon"><Icon name="pork"/></span><div className="pork-history-main"><strong>{item.shop}</strong><small><Icon name="calendar"/>{dateLabel(item.date)}</small>{(item.mapUrl||item.mapLat!=null)&&<a className="pork-map-link" href={item.mapUrl || ("https://www.google.com/maps/dir/?api=1&destination="+item.mapLat+","+item.mapLng)} target="_blank" rel="noopener noreferrer"><Icon name="map"/>เปิดเส้นทางใน Google Maps</a>}</div><strong className="pork-history-price">{cash(item.price)}</strong><div className="pork-history-actions"><button className="icon-button" aria-label={"แก้ไข "+item.shop} onClick={()=>{setEditingPorkId(item.id);setPorkShop(item.shop);setPorkPrice(String(item.price));setPorkMapUrl(item.mapUrl||"");setPorkMapPoint(item.mapLat!=null&&item.mapLng!=null?{lat:item.mapLat,lng:item.mapLng}:null);setPorkMapLabel(item.mapLabel||"");setPorkDate(item.date);setPorkNotice("");window.scrollTo({top:0,behavior:"smooth"})}}><Icon name="edit"/></button><button className="icon-button delete-button" aria-label={"ลบ "+item.shop} onClick={()=>{if(confirm("ลบประวัติร้าน "+item.shop+" วันที่ "+dateLabel(item.date)+" หรือไม่?")){setPorkEntries(old=>old.filter(entry=>entry.id!==item.id));if(editingPorkId===item.id){setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkMapUrl("");setPorkDate(today())}setPorkNotice("ลบประวัติแล้ว")}}}><Icon name="trash"/></button></div></article>)}</div> : <div className="pork-empty"><span><Icon name="pork"/></span><strong>{porkSelectedDate?"วันนี้ยังไม่มีบันทึกหมูกระทะ":"ยังไม่มีประวัติหมูกระทะ"}</strong><p>{porkSelectedDate?"เลือกวันอื่น หรือกดดูทั้งหมด":"บันทึกมื้อแรกไว้ได้เลย ครั้งต่อไปเลือกร้านเดิมจากรายการแนะนำได้ทันที"}</p>{porkSelectedDate&&<button className="button button-secondary" onClick={()=>setPorkSelectedDate(null)}>ดูประวัติทั้งหมด</button>}</div>}
+          {porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).length ? <div className="pork-history-list">{porkEntries.filter(item=>!porkSelectedDate||item.date===porkSelectedDate).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt.localeCompare(a.createdAt)).map(item=><article className="pork-history-row" key={item.id}><span className="pork-history-icon"><Icon name="pork"/></span><div className="pork-history-main"><strong>{item.shop}</strong><small><Icon name="calendar"/>{dateLabel(item.date)}</small>{item.mapUrl&&<a className="pork-map-link" href={item.mapUrl} target="_blank" rel="noopener noreferrer"><Icon name="map"/>เปิดเส้นทางใน Google Maps</a>}</div><strong className="pork-history-price">{cash(item.price)}</strong><div className="pork-history-actions"><button className="icon-button" aria-label={"แก้ไข "+item.shop} onClick={()=>{setEditingPorkId(item.id);setPorkShop(item.shop);setPorkPrice(String(item.price));setPorkMapUrl(item.mapUrl||"");setPorkDate(item.date);setPorkNotice("");window.scrollTo({top:0,behavior:"smooth"})}}><Icon name="edit"/></button><button className="icon-button delete-button" aria-label={"ลบ "+item.shop} onClick={()=>{if(confirm("ลบประวัติร้าน "+item.shop+" วันที่ "+dateLabel(item.date)+" หรือไม่?")){setPorkEntries(old=>old.filter(entry=>entry.id!==item.id));if(editingPorkId===item.id){setEditingPorkId(null);setPorkShop("");setPorkPrice("");setPorkMapUrl("");setPorkDate(today())}setPorkNotice("ลบประวัติแล้ว")}}}><Icon name="trash"/></button></div></article>)}</div> : <div className="pork-empty"><span><Icon name="pork"/></span><strong>{porkSelectedDate?"วันนี้ยังไม่มีบันทึกหมูกระทะ":"ยังไม่มีประวัติหมูกระทะ"}</strong><p>{porkSelectedDate?"เลือกวันอื่น หรือกดดูทั้งหมด":"บันทึกมื้อแรกไว้ได้เลย ครั้งต่อไปเลือกร้านเดิมจากรายการแนะนำได้ทันที"}</p>{porkSelectedDate&&<button className="button button-secondary" onClick={()=>setPorkSelectedDate(null)}>ดูประวัติทั้งหมด</button>}</div>}
           {porkEntries.length>0&&<div className="pork-history-summary"><span>ยอดที่บันทึกทั้งหมด</span><strong>{cash(porkEntries.reduce((sum,item)=>sum+item.price,0))}</strong></div>}
         </section>
       </section>}
@@ -564,7 +510,7 @@ export default function CommandCenter() {
 
 
 
-    {showPorkMap && <div className="modal-backdrop pork-map-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setShowPorkMap(false) }}><section className="modal-card pork-map-modal" role="dialog" aria-modal="true" aria-labelledby="pork-map-title"><div className="modal-heading"><div><span className="eyebrow">OPENSTREETMAP · FREE</span><h2 id="pork-map-title">เลือกตำแหน่งร้าน</h2><p>ค้นหาสถานที่ หรือแตะบนแผนที่เพื่อปักหมุด แล้วกดยืนยัน</p></div><button className="icon-button" onClick={() => setShowPorkMap(false)} aria-label="ปิดแผนที่"><Icon name="close"/></button></div><form className="pork-map-search" onSubmit={e => {e.preventDefault();void searchPorkMap()}}><input value={porkMapSearch} onChange={e => setPorkMapSearch(e.target.value)} placeholder="ค้นหาร้านหรือที่อยู่ เช่น ชื่อร้านหมูกระทะ เชียงใหม่" aria-label="ค้นหาสถานที่"/><button type="submit" className="button button-secondary" disabled={porkMapSearching}><Icon name="search"/>{porkMapSearching ? "กำลังค้นหา…" : "ค้นหา"}</button></form><div id="pork-location-map" className="pork-location-map" role="application" aria-label="แผนที่สำหรับเลือกตำแหน่ง"/>{porkMapError && <p className="pork-map-error" role="alert">{porkMapError}</p>}<div className="pork-map-modal-footer"><span>{porkMapPoint ? "พิกัด "+porkMapPoint.lat.toFixed(5)+", "+porkMapPoint.lng.toFixed(5) : "ยังไม่ได้เลือกตำแหน่ง"}</span><button type="button" className="button button-primary" onClick={confirmPorkMap}><Icon name="check"/>ยืนยันตำแหน่ง</button></div></section></div>}
+
 
     {showEntry && <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setShowEntry(false) }}><section className="modal-card" role="dialog" aria-modal="true" aria-labelledby="entry-title"><div className="modal-heading"><div><span className="eyebrow">การเงิน</span><h2 id="entry-title">เพิ่มรายการ</h2></div><button className="icon-button" onClick={() => setShowEntry(false)} aria-label="ปิด"><Icon name="close"/></button></div><form onSubmit={saveMoney} className="form-stack"><div className="segmented"><button type="button" className={entryType === "expense" ? "selected expense-selected" : ""} onClick={() => setEntryType("expense")}>รายจ่าย</button><button type="button" className={entryType === "income" ? "selected income-selected" : ""} onClick={() => setEntryType("income")}>รายรับ</button></div><label>จำนวนเงิน (บาท)<input autoFocus type="number" min="1" step="0.01" required value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00"/></label><label>รายการ<input required value={detail} onChange={e => setDetail(e.target.value)} placeholder="เช่น ค่าอาหาร เงินเดือน"/></label><label>วันที่<input type="date" required value={entryDate} onChange={e => setEntryDate(e.target.value)}/></label><button className="button button-primary button-full" type="submit">บันทึกรายการ</button></form></section></div>}
 
