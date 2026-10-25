@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { AccountMenu } from "./CloudAuth"
 import Simulator from "./Simulator"
 import "./command-center.css"
@@ -317,6 +317,17 @@ export default function CommandCenter() {
   useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
   useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "pork", "simulator"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
+  const lastBrandTap = useRef(0)
+  const handleBrandTap = () => {
+    const now = Date.now()
+    if (now - lastBrandTap.current < 500) {
+      lastBrandTap.current = 0
+      go("simulator")
+    } else {
+      lastBrandTap.current = now
+      go("home")
+    }
+  }
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
   const income = transactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
   const expense = transactions.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0)
@@ -408,7 +419,7 @@ export default function CommandCenter() {
   return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold") + (page === "simulator" ? " game-mode" : "")}>
     <main className="main-area">
       <header className="topbar">
-        <button className="brand" onClick={event => { if (event.detail >= 2) go("simulator"); else go("home") }} aria-label="กลับหน้าภาพรวม · ดับเบิลคลิกเพื่อเปิด AI Simulator" title="ดับเบิลคลิกเพื่อเปิด AI Simulator"><span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path className="brand-loop" d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" /><circle className="brand-spark" cx="30" cy="10" r="2.2" /></svg></span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
+        <button className="brand" onClick={handleBrandTap} aria-label="แตะสองครั้งเพื่อเปิด AI Simulator" title="แตะสองครั้งเพื่อเปิด AI Simulator"><span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path className="brand-loop" d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" /><circle className="brand-spark" cx="30" cy="10" r="2.2" /></svg></span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
         <nav className="top-nav" aria-label="เมนูหลัก">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "top-nav-link active" : "top-nav-link"} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{item.label}</span></button>)}</nav>
         <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="theme-studio-wrap"><button className={themeStudioOpen ? "theme-trigger active" : "theme-trigger"} onClick={() => setThemeStudioOpen(open => !open)} aria-label="ปรับธีมและการเคลื่อนไหว" aria-expanded={themeStudioOpen}><Icon name="sparkles"/><span>ธีม</span></button>{themeStudioOpen && <div className="theme-studio" role="dialog" aria-label="Theme Studio"><div className="theme-studio-heading"><div><strong>Theme Studio</strong><small>ปรับอารมณ์พื้นที่ส่วนตัว</small></div><button className="theme-close" onClick={() => setThemeStudioOpen(false)} aria-label="ปิด">×</button></div><div className="theme-swatches">{([{id:"lavender",label:"Lavender",color:"#e8ddf8"},{id:"matcha",label:"Matcha",color:"#dcebd7"},{id:"cream",label:"Cream",color:"#f6e8cf"},{id:"midnight",label:"Midnight",color:"#343047"}] as const).map(option => <button key={option.id} className={theme === option.id ? "theme-swatch selected" : "theme-swatch"} onClick={() => setTheme(option.id)} aria-pressed={theme === option.id}><i style={{background:option.color}}/><span>{option.label}</span></button>)}</div><div className="sound-choice"><span><strong>เสียง UI</strong><small>เสียงต่างกันตามปุ่มและธีม</small></span><button className={soundsEnabled ? "sound-switch enabled" : "sound-switch"} onClick={() => setSoundsEnabled(enabled => !enabled)} aria-label={soundsEnabled ? "ปิดเสียง" : "เปิดเสียง"} aria-pressed={soundsEnabled}><i/></button></div><div className="motion-choice"><span>Motion</span><button className={motionLevel === "bold" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("bold")} aria-pressed={motionLevel === "bold"}>Bold</button><button className={motionLevel === "soft" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("soft")} aria-pressed={motionLevel === "soft"}>Soft</button></div><p>บันทึกการตั้งค่าไว้ในเครื่องนี้เท่านั้น</p></div>}</div><div className="topbar-account"><AccountMenu /></div></div>
       </header>
