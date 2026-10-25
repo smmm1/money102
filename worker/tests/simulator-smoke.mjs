@@ -9,7 +9,7 @@ assert.doesNotThrow(() => new Function(source.replace("export default {", "retur
 const executable = source
   .slice(0, source.indexOf("export default {"))
   .replaceAll("crypto.randomUUID()", '"smoke-id"')
-const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity, readSimulatorState };")()
+const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity, readSimulatorState, corsHeaders };")()
 
 // The scheduled handler must advance and persist a world even when no player is online.
 const worker = new Function(source.replace("export default {", "return {"))()
@@ -68,6 +68,13 @@ assert.equal(archivedPayload, "{invalid-json", "corrupt save should be archived 
 assert.ok(recoveredPayload && recoveredPayload.residents.length === 6, "recovery should persist a fresh valid world")
 
 const state = engine.starterSimulatorState()
+
+// Preview deployments use staging, and only this project's Vercel preview origins are CORS-allowed.
+const previewOrigin = "https://money102-smoke-test-mustangm.vercel.app"
+const previewCors = engine.corsHeaders(new Request("https://money102-api-staging.s2mtha16.workers.dev/health", { headers: { Origin: previewOrigin } }), {})
+assert.equal(previewCors["Access-Control-Allow-Origin"], previewOrigin, "Money102 Vercel preview origin should be allowed")
+const untrustedCors = engine.corsHeaders(new Request("https://money102-api-staging.s2mtha16.workers.dev/health", { headers: { Origin: "https://untrusted.example" } }), {})
+assert.equal(untrustedCors["Access-Control-Allow-Origin"], undefined, "untrusted origins must not be reflected")
 
 assert.equal(state.version, 1)
 assert.equal(state.residents.length, 6)
