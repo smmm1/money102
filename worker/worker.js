@@ -99,11 +99,6 @@ function applyResidentActivity(p,activity,minute) {
 function moveResidentForActivity(p,activity) {
  const homes={ploy:[31,27],non:[12,63],fah:[39,27],somchai:[12,36],may:[57,36],jay:[66,27]};
  const jobs={ploy:[31,36],non:[82,43],fah:[39,63],somchai:[12,36],may:[59,18],jay:[66,18]};
- const spots={
-  eat:[[12,20],[82,43],[83,43]],shop:[82,43],socialize:[59,63],exercise:[78,83],study:[39,63],
-  relax:[[72,83],[57,36],[31,27]],use_phone:[[31,27],[12,63],[39,27],[12,36],[57,36],[66,27]],
-  commute:[[45,49]],travel:[[45,49]],cook:[[12,36]],clean:[[31,27]],bathe:[[31,27]],sleep:[[31,27]],use_toilet:[[31,27]],work:[[31,36]]
- };
  const ids=["ploy","non","fah","somchai","may","jay"];
  const home=homes[p.id]||[50,50],job=jobs[p.id]||[50,50];
  let destination=home;
