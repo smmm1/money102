@@ -1,0 +1,13 @@
+name = "money102-api"
+main = "worker/index.ts"
+compatibility_date = "2026-10-23"
+
+# Isolated Preview D1 database. Do not point this binding at the production database.
+# Production frontend cutover is intentionally blocked until staging checks pass.
+[[d1_databases]]
+binding = "DB"
+database_name = "money102-data"
+database_id = "277cf48b-5eb6-44ae-a712-b6c45bca77f9"
+
+[vars]
+APP_ORIGIN = "https://money102-web.onrender.com"
