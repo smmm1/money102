@@ -139,6 +139,13 @@ export default function CommandCenter() {
   const [soundsEnabled, setSoundsEnabled] = useState<boolean>(() => read("money102-sounds-enabled-v1", true))
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
   const [receiptFileName, setReceiptFileName] = useState("")
+  const [receiptOcrStatus, setReceiptOcrStatus] = useState<"idle" | "loading" | "done" | "error">("idle")
+  const [receiptOcrText, setReceiptOcrText] = useState("")
+  const [receiptMerchant, setReceiptMerchant] = useState("")
+  const [receiptDate, setReceiptDate] = useState(today())
+  const [receiptTotal, setReceiptTotal] = useState("")
+  const [receiptCategory, setReceiptCategory] = useState("อาหาร")
+  const [receiptItems, setReceiptItems] = useState<{id:string;name:string;amount:string}[]>([])
 
   type SplitBill = { id: string; title: string; total: number; tip: number; people: string[]; shares: number[]; mode: "equal" | "custom"; createdAt: string }
   const [splitTitle, setSplitTitle] = useState("")
@@ -458,14 +465,60 @@ export default function CommandCenter() {
         {showSplitHistory && <section className="surface split-history-surface"><div className="surface-heading"><div><span className="eyebrow">ประวัติ</span><h3>บิลที่บันทึกไว้</h3></div><span className="history-count">{splitHistory.length} บิล</span></div>{splitHistory.length ? <div className="split-history-list">{splitHistory.map(bill => <article className="split-history-item" key={bill.id}><div className="split-history-main"><span className="split-history-icon"><Icon name="receipt"/></span><div><strong>{bill.title}</strong><small>{new Date(bill.createdAt).toLocaleString("th-TH", {dateStyle:"medium",timeStyle:"short"})} · {bill.people.length} คน</small><div className="split-history-people">{bill.people.map((name, index) => <span key={index}>{name}: {splitMoney(bill.shares[index] || 0)}</span>)}</div></div></div><div className="split-history-total"><strong>{splitMoney(bill.total + bill.tip)}</strong><button className="icon-button delete-button" aria-label={"ลบบิล " + bill.title} onClick={() => {if (confirm("ลบบิลนี้ออกจากประวัติหรือไม่?")) setSplitHistory(old => old.filter(item => item.id !== bill.id))}}><Icon name="trash"/></button></div></article>)}</div> : <Empty title="ยังไม่มีประวัติบิล" body="บันทึกบิลไว้แล้วจะกลับมาดูได้ตรงนี้" action="กลับไปหารบิล" onClick={() => setShowSplitHistory(false)}/>}</section>}
       </section>}
 
-      {page === "receipt" && <section className="page-content">
-        <div className="page-heading-row"><div><span className="eyebrow">RECEIPT SCANNER · PHOTO TO EXPENSE</span><h1>สแกนใบเสร็จ</h1><p>เริ่มจากรูปถ่าย แล้วตรวจข้อมูลก่อนนำไปบันทึกเป็นรายการ</p></div><span className="receipt-status"><i/>โหมดตัวอย่าง</span></div>
-        <div className="receipt-layout"><section className="surface receipt-upload-panel"><div className="surface-heading"><div><span className="eyebrow">ขั้นตอนที่ 1</span><h3>เพิ่มรูปใบเสร็จ</h3></div><span className="receipt-step">01 / 03</span></div>
-          <label className="receipt-dropzone"><input className="receipt-file-input" type="file" accept="image/*" onChange={e => { const file = e.target.files?.[0]; if (!file) return; setReceiptFileName(file.name); const reader = new FileReader(); reader.onload = () => setReceiptPreview(typeof reader.result === "string" ? reader.result : null); reader.readAsDataURL(file) }}/>{receiptPreview ? <img src={receiptPreview} alt="ตัวอย่างรูปใบเสร็จที่เลือก" className="receipt-preview-image"/> : <><span className="receipt-upload-icon"><Icon name="receipt"/></span><strong>เลือกรูปใบเสร็จ</strong><span>แตะเพื่อเลือกจากรูปภาพในเครื่อง</span><small>รองรับ JPG, PNG และรูปถ่ายจากมือถือ</small></>}<span className="receipt-pick-button">{receiptPreview ? "เลือกรูปใหม่" : "เลือกรูปภาพ"} <Icon name="arrow"/></span></label>
-          {receiptFileName && <div className="receipt-file-meta"><Icon name="check"/><span><strong>{receiptFileName}</strong><small>แสดงตัวอย่างในเครื่องเท่านั้น · ยังไม่ได้อัปโหลดหรือบันทึก</small></span><button className="icon-button" onClick={() => { setReceiptPreview(null); setReceiptFileName("") }} aria-label="ล้างรูปที่เลือก"><Icon name="close"/></button></div>}
-          <div className="receipt-privacy-note"><Icon name="check"/><span>ความเป็นส่วนตัว: ตอนนี้รูปยังไม่ถูกส่งไปที่เซิร์ฟเวอร์</span></div>
-        </section><section className="surface receipt-review-panel"><div className="surface-heading"><div><span className="eyebrow">ขั้นตอนที่ 2</span><h3>ตรวจข้อมูลที่อ่านได้</h3></div><span className="receipt-step">02 / 03</span></div><div className="receipt-fields"><label>ชื่อร้าน<input placeholder="เช่น ร้านอาหาร..." disabled/></label><div className="receipt-field-grid"><label>วันที่<input placeholder="วว/ดด/ปปปป" disabled/></label><label>ยอดรวม (บาท)<input placeholder="0.00" disabled/></label></div><label>หมวดหมู่<select disabled defaultValue=""><option value="">เลือกหมวดหมู่</option></select></label></div><div className="receipt-review-empty"><span><Icon name="sparkles"/></span><p>{receiptPreview ? "รูปพร้อมสำหรับขั้นตอนอ่านข้อมูล — ระบบ OCR จะทำในรอบถัดไป" : "เมื่อเลือกรูปแล้ว ข้อมูลที่อ่านได้จะแสดงตรงนี้ให้ตรวจทานก่อนบันทึก"}</p></div><button className="button button-primary button-full" disabled={!receiptPreview} onClick={() => setToast({ message: "ยังไม่ได้เปิดระบบ OCR — รูปยังไม่ถูกส่งหรือบันทึก" })}><Icon name="sparkles"/>อ่านข้อมูลจากใบเสร็จ</button></section></div>
-        <div className="receipt-steps"><div className="receipt-step-card active"><span>01</span><strong>เลือกรูป</strong><small>เลือกจากมือถือหรือคอมพิวเตอร์</small></div><div className="receipt-step-card"><span>02</span><strong>ตรวจข้อมูล</strong><small>ตรวจยอด วันที่ และชื่อร้าน</small></div><div className="receipt-step-card"><span>03</span><strong>บันทึกรายการ</strong><small>เพิ่มเข้าประวัติการเงินเมื่อพร้อม</small></div></div>
+      {page === "receipt" && <section className="page-content receipt-simple-page">
+        <div className="page-heading-row"><div><span className="eyebrow">PHOTO TO EXPENSE</span><h1>สแกนใบเสร็จ</h1><p>เลือกรูป ให้ระบบอ่าน แล้วตรวจข้อมูลก่อนบันทึก</p></div><span className={"receipt-status " + (receiptOcrStatus === "done" ? "receipt-status-ready" : "")}><i/>{receiptOcrStatus === "loading" ? "กำลังอ่านภาพ" : receiptOcrStatus === "done" ? "อ่านภาพแล้ว" : receiptOcrStatus === "error" ? "อ่านไม่สำเร็จ" : "OCR ในเบราว์เซอร์"}</span></div>
+        <div className="receipt-simple-layout">
+          <section className="surface receipt-upload-panel">
+            <div className="surface-heading"><div><span className="eyebrow">ขั้นตอน 1</span><h3>เลือกรูปจากมือถือ</h3></div></div>
+            <label className="receipt-dropzone"><input className="receipt-file-input" type="file" accept="image/*" capture="environment" onChange={e => { const file = e.target.files?.[0]; if (!file) return; if (!file.type.startsWith("image/")) { setToast({message:"กรุณาเลือกรูปภาพ"}); return } setReceiptFileName(file.name); setReceiptOcrStatus("idle"); setReceiptOcrText(""); setReceiptItems([]); setReceiptMerchant(""); setReceiptDate(today()); setReceiptTotal(""); const reader = new FileReader(); reader.onload = () => setReceiptPreview(typeof reader.result === "string" ? reader.result : null); reader.readAsDataURL(file) }}/>{receiptPreview ? <img src={receiptPreview} alt="ตัวอย่างรูปใบเสร็จ" className="receipt-preview-image"/> : <><span className="receipt-upload-icon"><Icon name="receipt"/></span><strong>ถ่ายรูปหรือเลือกรูปใบเสร็จ</strong><span>รองรับ JPG, PNG และภาพจากแกลเลอรี</span></>}<span className="receipt-pick-button">{receiptPreview ? "เปลี่ยนรูป" : "เลือกรูปภาพ"} <Icon name="arrow"/></span></label>
+            {receiptFileName && <div className="receipt-file-meta"><Icon name="check"/><span><strong>{receiptFileName}</strong><small>ประมวลผล OCR ในเบราว์เซอร์ รูปไม่ถูกอัปโหลดไปยังเซิร์ฟเวอร์</small></span><button className="icon-button" onClick={() => {setReceiptPreview(null);setReceiptFileName("");setReceiptOcrStatus("idle");setReceiptOcrText("");setReceiptItems([])}} aria-label="ล้างรูป"><Icon name="close"/></button></div>}
+            <button className="button button-primary button-full receipt-read-button" disabled={!receiptPreview || receiptOcrStatus === "loading"} onClick={async () => {
+              if (!receiptPreview) return
+              setReceiptOcrStatus("loading")
+              try {
+                const w = window as any
+                if (!w.Tesseract) {
+                  await new Promise<void>((resolve,reject) => {
+                    const existing = document.querySelector('script[data-receipt-tesseract="1"]') as HTMLScriptElement | null
+                    if (existing) { existing.addEventListener("load",()=>resolve(),{once:true}); existing.addEventListener("error",()=>reject(new Error("โหลด OCR ไม่สำเร็จ")),{once:true}); return }
+                    const script = document.createElement("script"); script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"; script.async = true; script.dataset.receiptTesseract = "1"; script.onload = () => resolve(); script.onerror = () => reject(new Error("โหลด OCR ไม่สำเร็จ")); document.head.appendChild(script)
+                  })
+                }
+                const result = await w.Tesseract.recognize(receiptPreview, "tha+eng", { logger: (m: any) => { if (m.status === "recognizing text") setReceiptOcrStatus("loading") } })
+                const text = String(result?.data?.text || "").trim()
+                if (!text) throw new Error("ไม่พบข้อความในภาพ ลองถ่ายให้ชัดและมีแสงเพียงพอ")
+                setReceiptOcrText(text)
+                const lines = text.split(/\r?\n/).map((line:string)=>line.trim()).filter(Boolean)
+                setReceiptMerchant(lines.find((line:string)=>line.length > 2 && !/ใบเสร็จ|ใบกำกับภาษี|วันที่|เวลา|รายการ|จำนวน|ราคา|รวมทั้งสิ้น|ยอดรวม/.test(line)) || "")
+                const dateMatch = text.match(/(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/)
+                if (dateMatch) { let year = Number(dateMatch[3]); if (year > 2400) year -= 543; else if (year < 100) year += 2000; const d = new Date(year, Number(dateMatch[2])-1, Number(dateMatch[1])); if (!Number.isNaN(d.getTime())) setReceiptDate(d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")) }
+                const moneyMatches = [...text.matchAll(/(?:฿|บาท\s*)?\b(\d{1,7}(?:,\d{3})*(?:\.\d{2})?)\b/g)].map((m:any)=>Number(String(m[1]).replace(/,/g,""))).filter((n:number)=>n > 0 && n < 10000000)
+                const totalLine = lines.slice().reverse().find((line:string)=>/ยอดสุทธิ|ยอดรวม|รวมทั้งสิ้น|grand total|total|net total/i.test(line))
+                const totalMatch = totalLine?.match(/(\d[\d,]*(?:\.\d{1,2})?)/g)?.map((v:string)=>Number(v.replace(/,/g,""))).filter((n:number)=>n>0).pop()
+                const total = totalMatch || (moneyMatches.length ? Math.max(...moneyMatches) : 0)
+                if (total) setReceiptTotal(String(total))
+                const parsedItems = lines.map((line:string)=>{const m=line.match(/^(.{2,50}?)\s+(\d[\d,]*(?:\.\d{1,2})?)\s*$/);return m && !/รวม|total|vat|ภาษี|ส่วนลด/i.test(m[1]) ? {id:uid(),name:m[1].trim(),amount:String(Number(m[2].replace(/,/g,"")))} : null}).filter(Boolean) as {id:string;name:string;amount:string}[]
+                setReceiptItems(parsedItems.slice(0,30))
+                setReceiptOcrStatus("done")
+              } catch (error) { setReceiptOcrStatus("error"); setToast({message:error instanceof Error ? error.message : "อ่านรูปไม่สำเร็จ ลองอีกครั้ง"}) }
+            }}><Icon name="sparkles"/>{receiptOcrStatus === "loading" ? "กำลังอ่านข้อความจากภาพ…" : "อ่านข้อมูลจากใบเสร็จ"}</button>
+            <p className="receipt-privacy-note"><Icon name="check"/><span>OCR ทำงานบนอุปกรณ์หลังโหลดไลบรารีและภาษาในครั้งแรก รูปใบเสร็จไม่ถูกส่งไปบันทึกบนเซิร์ฟเวอร์</span></p>
+          </section>
+          <section className="surface receipt-review-panel">
+            <div className="surface-heading"><div><span className="eyebrow">ขั้นตอน 2</span><h3>ตรวจและแก้ไขข้อมูล</h3></div></div>
+            {receiptOcrStatus === "loading" && <div className="receipt-review-empty"><span><Icon name="sparkles"/></span><p>กำลังอ่านตัวอักษร อาจใช้เวลาสักครู่ โดยเฉพาะการอ่านภาษาไทยครั้งแรก</p></div>}
+            <div className="receipt-fields">
+              <label>ชื่อร้าน<input value={receiptMerchant} onChange={e=>setReceiptMerchant(e.target.value)} placeholder="ชื่อร้านจากใบเสร็จ"/></label>
+              <div className="receipt-field-grid"><label>วันที่<input type="date" value={receiptDate} onChange={e=>setReceiptDate(e.target.value)}/></label><label>ยอดรวม (บาท)<input inputMode="decimal" value={receiptTotal} onChange={e=>setReceiptTotal(e.target.value.replace(/[^\d.]/g,""))} placeholder="0.00"/></label></div>
+              <label>หมวดหมู่<select value={receiptCategory} onChange={e=>setReceiptCategory(e.target.value)}><option>อาหาร</option><option>เดินทาง</option><option>ของใช้</option><option>สุขภาพ</option><option>บิลและสาธารณูปโภค</option><option>ช้อปปิ้ง</option><option>อื่น ๆ</option></select></label>
+            </div>
+            {receiptItems.length > 0 && <div className="receipt-items-review"><div className="receipt-items-heading"><strong>รายการที่อ่านได้</strong><small>{receiptItems.length} รายการ · ตรวจแก้ได้</small></div>{receiptItems.map((item,index)=><div className="receipt-item-row" key={item.id}><input aria-label={"ชื่อรายการ "+(index+1)} value={item.name} onChange={e=>setReceiptItems(old=>old.map(x=>x.id===item.id?{...x,name:e.target.value}:x))}/><input aria-label={"ราคาของรายการ "+(index+1)} inputMode="decimal" value={item.amount} onChange={e=>setReceiptItems(old=>old.map(x=>x.id===item.id?{...x,amount:e.target.value.replace(/[^\d.]/g,"")}:x))}/><button className="icon-button" aria-label="ลบรายการ" onClick={()=>setReceiptItems(old=>old.filter(x=>x.id!==item.id))}><Icon name="close"/></button></div>)}</div>}
+            {receiptOcrText && <details className="receipt-raw-text"><summary>ดูข้อความดิบจาก OCR</summary><pre>{receiptOcrText}</pre></details>}
+            {receiptOcrStatus === "done" && <p className="receipt-review-success"><Icon name="check"/>อ่านภาพแล้ว กรุณาตรวจยอดและวันที่ก่อนบันทึก</p>}
+            <button className="button button-primary button-full receipt-save-button" disabled={!receiptPreview || receiptOcrStatus!=="done" || !(Number(receiptTotal)>0)} onClick={()=>{const value=Number(receiptTotal);if(!value||value<=0)return;const transaction:Transaction={id:uid(),type:"expense",amount:value,detail:("ใบเสร็จ"+(receiptMerchant.trim()?" · "+receiptMerchant.trim():"")+(receiptItems.length?" · "+receiptItems.map(i=>i.name).filter(Boolean).slice(0,4).join(", "):"")),date:receiptDate||today(),createdAt:Date.now()};setTransactions(old=>[transaction,...old]);setDelightActive(true);setToast({message:"กำลังบันทึกรายจ่ายจากใบเสร็จลงระบบ…"});setReceiptOcrStatus("idle");setReceiptPreview(null);setReceiptFileName("");setReceiptOcrText("");setReceiptMerchant("");setReceiptDate(today());setReceiptTotal("");setReceiptItems([])}}><Icon name="check"/>ยืนยันและบันทึกเป็นรายจ่าย</button>
+            <small className="receipt-save-hint">จะบันทึกยอดรวมเป็นรายจ่ายหนึ่งรายการใน Money102 รายการย่อยที่อ่านได้ใช้สำหรับตรวจทาน</small>
+          </section>
+        </div>
       </section>}
 
       {page === "health" && <section className="page-content">
