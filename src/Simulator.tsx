@@ -65,10 +65,10 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     const timer = window.setInterval(() => { void load() }, 30000)
     return () => window.clearInterval(timer)
   }, [load])
-  async function act(action: string) {
+  async function act(action: string, target?: { x: number; y: number }) {
     setBusy(true); setError("")
     try {
-      const data = await request("/api/simulator/action", { method: "POST", body: JSON.stringify({ action, residentId: selected }) })
+      const data = await request("/api/simulator/action", { method: "POST", body: JSON.stringify({ action, residentId: selected, ...(target ? { target } : {}) }) })
       if (data.state) setWorld(presentWorld(data.state))
       else await load()
       setStatus("connected")
@@ -85,7 +85,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
     <div className="sim-layout">
       <section className="sim-world-panel">
         <div className="sim-panel-heading"><div><span className="sim-eyebrow">THE NEIGHBORHOOD</span><h2>Little Pixel Town</h2></div><span className="sim-resident-count">● {world.residents.length} residents</span></div>
-        <PixelCity residents={world.residents} selectedId={selected} onSelect={setSelected} hour={world.hour} />
+        <PixelCity residents={world.residents} selectedId={selected} onSelect={setSelected} onAction={(action, target) => void act(action, target)} hour={world.hour} />
         <div className="sim-world-actions"><button disabled={busy} onClick={() => void act("wander")}>↗ สำรวจเมือง</button><button disabled={busy} onClick={() => void act("socialize")}>♡ พบปะกัน</button><button disabled={busy} onClick={() => void act("advance_time")}>◷ เดินเวลา</button></div>
       </section>
       <aside className="sim-side">
