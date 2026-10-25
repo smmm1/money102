@@ -88,10 +88,6 @@ function applyResidentActivity(p,activity,minute) {
  if(activity==="sleep"){p.needs.energy=clampNeed(p.needs.energy+2);}
  if(activity==="eat"){const cost=p.money>=70?55:25;p.money=Math.max(0,p.money-cost);p.lastMealAt=minute;}
  if(activity==="cook"){p.money=Math.max(0,p.money-18);p.lastMealAt=minute;}
- if(activity==="work"){
-  const wage=p.occupation?.includes("ไรเดอร์")?55:p.occupation?.includes("พยาบาล")?48:p.occupation?.includes("ร้าน")?38:p.occupation?.includes("ช่าง")?42:p.occupation?.includes("นักศึกษา")?32:45;
-  p.money=(p.money||0)+wage;
- }
  if(activity==="socialize")p.lastSocialAt=minute;
  const moodScore=clampNeed(Object.values(p.needs).reduce((sum,n)=>sum+n,0)/Object.values(p.needs).length*.7+(p.health||80)*.3);p.moodScore=moodScore;p.mood=moodScore>=75?"สบายใจ":moodScore>=55?"ค่อนข้างดี":moodScore>=35?"เหนื่อยล้า":"เครียดและต้องพัก";p.activityLabel=a.label;
  return true;
@@ -144,7 +140,22 @@ function advanceLifeWorld(state,elapsedMinutes) {
     p.money=(p.money||0)+wage;
    }
    const h=state.hour;let next=p.routine?.[h];
-   if(p.needs.bladder<15)next="use_toilet";else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";else if(p.needs.hygiene<18)next="bathe";else if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";else if(!next&& (h>=23||h<5))next="sleep";else if(!next&&h>=6&&h<9)next="eat";else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";else if(!next&&h>=17&&h<20)next="shop";else if(!next)next="relax";
+   const absoluteMinute=((Number(state.day)||1)-1)*1440+Number(state.minute ?? h*60);
+   // Critical needs take priority; explicit player commands then override ordinary routines for one in-game hour.
+   if(p.needs.bladder<15)next="use_toilet";
+   else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";
+   else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";
+   else if(p.needs.hygiene<18)next="bathe";
+   else if(p.playerCommand && SIM_ACTIVITIES[p.playerCommand] && Number(p.playerCommandUntil)>absoluteMinute)next=p.playerCommand;
+   else {
+    if(p.playerCommandUntil!=null && Number(p.playerCommandUntil)<=absoluteMinute){delete p.playerCommand;delete p.playerCommandUntil;}
+    if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";
+    else if(!next&& (h>=23||h<5))next="sleep";
+    else if(!next&&h>=6&&h<9)next="eat";
+    else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";
+    else if(!next&&h>=17&&h<20)next="shop";
+    else if(!next)next="relax";
+   }
    if(next && next!=="wake" && next!==p.activity){
     applyResidentActivity(p,next,state.minute);
     moveResidentForActivity(p,next);
@@ -194,8 +205,8 @@ export default { async scheduled(controller,env) { try { await ensureSchema(env.
     const person=state.residents.find(p=>p.id===residentId)||state.residents[0];
     if(action==="advance_time"){advanceLifeWorld(state,180);}
     else if(action==="wander"){person.x=10+((Number(person.x)+17)%80);person.y=18+((Number(person.y)+13)%65);person.mood="กำลังสำรวจ";state.events.unshift({id:crypto.randomUUID(),text:person.name+" ออกไปสำรวจชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
-    else if(action==="socialize"){moveResidentForActivity(person,"socialize");for(const p of state.residents){if(p.id!==person.id){p.relationship=p.relationship||{};p.relationship[person.id]=Math.min(100,(p.relationship[person.id]||35)+1);person.relationship=person.relationship||{};person.relationship[p.id]=Math.min(100,(person.relationship[p.id]||35)+1);}}applyResidentActivity(person,"socialize",Number(state.minute)||state.hour*60);state.events.unshift({id:crypto.randomUUID(),text:person.name+" พบปะพูดคุยกับคนในชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
-    else {const minute=Number(state.minute)||state.hour*60;applyResidentActivity(person,action,minute);moveResidentForActivity(person,action);state.events.unshift({id:crypto.randomUUID(),text:person.name+" "+SIM_ACTIVITIES[action].label,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(minute%60).padStart(2,"0")});}
+    else if(action==="socialize"){const minute=Number(state.minute ?? state.hour*60);person.playerCommand="socialize";person.playerCommandUntil=((Number(state.day)||1)-1)*1440+minute+60;moveResidentForActivity(person,"socialize");for(const p of state.residents){if(p.id!==person.id){p.relationship=p.relationship||{};p.relationship[person.id]=Math.min(100,(p.relationship[person.id]||35)+1);person.relationship=person.relationship||{};person.relationship[p.id]=Math.min(100,(person.relationship[p.id]||35)+1);}}applyResidentActivity(person,"socialize",minute);state.events.unshift({id:crypto.randomUUID(),text:person.name+" พบปะพูดคุยกับคนในชุมชน",time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":00"});}
+    else {const minute=Number(state.minute ?? state.hour*60);person.playerCommand=action;person.playerCommandUntil=((Number(state.day)||1)-1)*1440+minute+60;applyResidentActivity(person,action,minute);moveResidentForActivity(person,action);state.events.unshift({id:crypto.randomUUID(),text:person.name+" "+SIM_ACTIVITIES[action].label,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(minute%60).padStart(2,"0")});}
     state.memoriesCount=0;await saveSimulatorState(env.DB,user.id,state);return json(request,env,{ok:true,state});
    }
    if(url.pathname==="/api/simulator/turn"&&request.method==="POST") return json(request,env,{error:"AI dialogue is disabled. Use player activity commands."},410);
