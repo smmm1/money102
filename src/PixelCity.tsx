@@ -330,6 +330,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       backgroundColor: "#496c50", padding: { x: 4, y: 2 },
     }).setOrigin(0.5, 0.5)
     group.add(activity)
+    group.setData("activityLabel", activity)
     group.setSize(36, 64).setInteractive(new Phaser.Geom.Rectangle(-18, -43, 36, 76), Phaser.Geom.Rectangle.Contains)
     ;(group as Phaser.GameObjects.Container & { residentId?: string }).residentId = resident.id
     group.on("pointerdown", () => this.selectResident(resident.id))
@@ -348,9 +349,30 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   }
 
   private refreshResidents() {
-    for (const group of this.residentSprites.values()) group.destroy()
-    this.residentSprites.clear()
-    this.drawResidentSprites()
+    const seen = new Set<string>()
+    this.residents.forEach((resident, index) => {
+      seen.add(resident.id)
+      const group = this.residentSprites.get(resident.id)
+      if (!group || !group.active) {
+        this.addResident(resident, index)
+        return
+      }
+      const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
+      const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
+      this.tweens.killTweensOf(group)
+      this.tweens.add({ targets: group, x, y, duration: 1100, ease: "Sine.inOut" })
+      group.setDepth(y + 50)
+      const activity = group.getData("activityLabel") as Phaser.GameObjects.Text | undefined
+      activity?.setText(resident.activity ?? "ใช้ชีวิตประจำวัน")
+      group.setData("activity", resident.activity)
+      this.paintSelection(resident.id)
+    })
+    for (const [id, group] of this.residentSprites) {
+      if (!seen.has(id)) {
+        group.destroy()
+        this.residentSprites.delete(id)
+      }
+    }
   }
 
   private drawLabels() {
