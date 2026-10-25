@@ -17,12 +17,14 @@ assert.ok(state.residents.some((resident) => resident.id === "may" && resident.s
 assert.ok(state.residents.every((resident) => resident.needs && typeof resident.money === "number"))
 
 const before = state.residents.map((resident) => resident.money)
-engine.advanceLifeWorld(state, 29 * 24 * 60)
+engine.advanceLifeWorld(state, 6 * 24 * 60)
+assert.equal(state.day, 7)
+assert.ok(state.events.some((event) => event.text.includes("ค่าอาหารและของใช้")))
+engine.advanceLifeWorld(state, 23 * 24 * 60)
 
 assert.equal(state.day, 30)
 assert.equal(state.residents.length, 6)
 assert.ok(state.events.some((event) => event.text.includes("ค่าเช่าห้อง")))
-assert.ok(state.events.some((event) => event.text.includes("ค่าอาหารและของใช้")))
 assert.ok(state.residents.every((resident) => Object.values(resident.needs).every((need) => Number.isFinite(need) && need >= 0 && need <= 100)))
 assert.ok(state.residents.every((resident) => Number.isFinite(resident.money) && resident.money >= 0))
 assert.ok(state.residents.every((resident) => Number.isFinite(resident.sleepDebt) && resident.sleepDebt >= 0))
