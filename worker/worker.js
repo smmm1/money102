@@ -82,7 +82,7 @@ function applyResidentActivity(p,activity,minute) {
  const a=SIM_ACTIVITIES[activity]; if(!a)return false;
  p.activity=activity;p.activityStartedAt=minute;p.status=activity==="sleep"?"sleeping":activity==="work"?"working":activity==="commute"||activity==="travel"?"travelling":"out";
  if(p.needs&&a.need in p.needs)p.needs[a.need]=clampNeed((p.needs[a.need]||0)+a.delta);
- if(activity==="sleep"){p.sleepDebt=Math.max(0,(p.sleepDebt||0)-5);p.needs.energy=clampNeed(p.needs.energy+8);}
+ if(activity==="sleep"){p.needs.energy=clampNeed(p.needs.energy+2);}
  if(activity==="eat"){const cost=p.money>=70?55:25;p.money=Math.max(0,p.money-cost);p.lastMealAt=minute;}
  if(activity==="cook"){p.money=Math.max(0,p.money-18);p.lastMealAt=minute;}
  if(activity==="work"){
@@ -109,18 +109,24 @@ function advanceLifeWorld(state,elapsedMinutes) {
   state.hour=Math.floor(state.minute/60);
   for(const p of state.residents){
    p.needs=p.needs||{hunger:80,energy:80,hygiene:75,social:55,fun:50,bladder:80};
-   p.needs.hunger=clampNeed(p.needs.hunger-1.05);p.needs.energy=clampNeed(p.needs.energy+(p.activity==="sleep"?.45:-.38));
-   p.needs.hygiene=clampNeed(p.needs.hygiene-.16);p.needs.social=clampNeed(p.needs.social-.12);p.needs.fun=clampNeed(p.needs.fun-.09);p.needs.bladder=clampNeed(p.needs.bladder-.72);
-   if(p.activity!=="sleep")p.sleepDebt=Math.min(120,(p.sleepDebt||0)+.08);
+   p.needs.hunger=clampNeed(p.needs.hunger-.16);
+   p.needs.energy=clampNeed(p.needs.energy+(p.activity==="sleep"?.85:-.07));
+   p.needs.hygiene=clampNeed(p.needs.hygiene-.025);
+   p.needs.social=clampNeed(p.needs.social-.018);
+   p.needs.fun=clampNeed(p.needs.fun-.015);
+   p.needs.bladder=clampNeed(p.needs.bladder-.12);
+   if(p.activity==="sleep")p.sleepDebt=Math.max(0,(p.sleepDebt||0)-.7);
+   else p.sleepDebt=Math.min(120,(p.sleepDebt||0)+.025);
+   if(p.activity==="work" && state.minute%60===0){
+    const wage=p.occupation?.includes("ไรเดอร์")?55:p.occupation?.includes("พยาบาล")?48:p.occupation?.includes("ร้าน")?38:p.occupation?.includes("ช่าง")?42:p.occupation?.includes("นักศึกษา")?32:45;
+    p.money=(p.money||0)+wage;
+   }
    const h=state.hour;let next=p.routine?.[h];
    if(p.needs.bladder<15)next="use_toilet";else if(p.needs.energy<16||((p.sleepDebt||0)>60&&p.needs.energy<35))next="sleep";else if(p.needs.hunger<18)next=(p.money||0)>=25?"eat":"cook";else if(p.needs.hygiene<18)next="bathe";else if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";else if(!next&& (h>=23||h<5))next="sleep";else if(!next&&h>=6&&h<9)next="eat";else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";else if(!next&&h>=17&&h<20)next="shop";else if(!next)next="relax";
-   if(next && next!=="wake" && (next!==p.activity || state.minute-(p.activityStartedAt||0)>=30)){
-    const changed=next!==p.activity;
+   if(next && next!=="wake" && next!==p.activity){
     applyResidentActivity(p,next,state.minute);
-    if(changed){
-     const action=SIM_ACTIVITIES[next]?.label||next;
-     state.events.unshift({id:crypto.randomUUID(),text:p.name+" "+action,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(state.minute%60).padStart(2,"0")});
-    }
+    const action=SIM_ACTIVITIES[next]?.label||next;
+    state.events.unshift({id:crypto.randomUUID(),text:p.name+" "+action,time:"DAY "+state.day+" · "+String(state.hour).padStart(2,"0")+":"+String(state.minute%60).padStart(2,"0")});
    }
   }
  }
