@@ -74,6 +74,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
       else await load()
       setStatus("connected")
     } catch (err) {
+      setStatus("offline")
       setError(err instanceof Error ? err.message : "บันทึกการกระทำไม่สำเร็จ")
     } finally { setBusy(false) }
   }
