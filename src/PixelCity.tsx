@@ -61,7 +61,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale
     this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H)
-    this.cameras.main.setZoom(Math.min(width / 1120, height / 740, 0.78))
+    this.cameras.main.setZoom(this.getInitialZoom(width, height))
     this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
     this.drawGround()
     this.drawRoads()
@@ -75,7 +75,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.drawCameraControls(width)
     this.updateAmbient(this.worldHour)
     this.scale.on("resize", (size: Phaser.Structs.Size) => {
-      this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
+      this.cameras.main.setZoom(this.getInitialZoom(size.width, size.height))
       this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
       this.ambientOverlay?.setPosition(size.width / 2, size.height / 2).setSize(size.width, size.height)
       this.interiorLayer?.destroy(true)
@@ -95,7 +95,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     this.input.on("pointerup", () => { dragStart = null })
     this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number) => {
       const camera = this.cameras.main
-      camera.setZoom(Phaser.Math.Clamp(camera.zoom - dy * 0.0005, 0.35, 1.15))
+      camera.setZoom(Phaser.Math.Clamp(camera.zoom - dy * 0.0005, 0.48, 1.35))
     })
     this.events.on("update-residents", (residents: PixelResident[], selectedId: string, hour = this.worldHour) => {
       this.residents = residents
@@ -106,14 +106,22 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     })
   }
 
+  private getInitialZoom(width: number, height: number) {
+    // Keep people and building entrances legible on phones instead of fitting the
+    // entire city into a tiny overview. Players can pan and zoom out whenever needed.
+    if (width < 520) return 0.78
+    if (width < 820) return 0.72
+    return Math.min(width / 1120, height / 740, 0.78)
+  }
+
   private drawCameraControls(width: number) {
     this.cameraControlItems.forEach(({ button, text }) => { button.destroy(); text.destroy() })
     this.cameraControlItems = []
     const camera = this.cameras.main
     const controls: Array<{ label: string; offset: number; action: () => void; hint: string }> = [
-      { label: "⌖", offset: 118, action: () => { camera.setZoom(Math.min(this.scale.width / 1120, this.scale.height / 740, 0.78)); camera.centerOn(WORLD_W / 2, WORLD_H / 2) }, hint: "กลับไปกลางเมือง" },
-      { label: "−", offset: 76, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom - 0.12, 0.35, 1.15)), hint: "ซูมออก" },
-      { label: "+", offset: 34, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom + 0.12, 0.35, 1.15)), hint: "ซูมเข้า" },
+      { label: "⌖", offset: 118, action: () => { camera.setZoom(this.getInitialZoom(this.scale.width, this.scale.height)); camera.centerOn(WORLD_W / 2, WORLD_H / 2) }, hint: "กลับไปกลางเมือง" },
+      { label: "−", offset: 76, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom - 0.12, 0.48, 1.35)), hint: "ซูมออก" },
+      { label: "+", offset: 34, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom + 0.12, 0.48, 1.35)), hint: "ซูมเข้า" },
     ]
     controls.forEach(({ label, offset, action, hint }) => {
       const x = width - offset
