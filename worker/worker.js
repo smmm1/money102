@@ -33,7 +33,7 @@ function starterSimulatorState() {
   {id:"may",name:"เมย์",role:"พยาบาลเวรสลับ · 34 ปี",age:34,gender:"หญิง",occupation:"พยาบาลเวรสลับ",home:"บ้านเมย์",rent:0,mood:"พักฟื้นหลังเวร",x:65,y:57,color:"mint",bio:"พยาบาลที่ต้องจัดการเวลานอนตามกะงานและใช้วันหยุดเดินเล่นในสวน",money:7600,health:90,sleepDebt:20,activity:"sleep",activityStartedAt:240,lastMealAt:210,lastSocialAt:0,shift:{start:19,end:7},routine:{6:"commute",7:"eat",8:"relax",9:"sleep",10:"sleep",11:"sleep",12:"sleep",13:"sleep",14:"sleep",15:"relax",16:"bathe",17:"eat",18:"commute",19:"work",20:"work",21:"work",22:"work",23:"work",0:"work",1:"work",2:"work",3:"work",4:"work",5:"work"},needs:{hunger:62,energy:40,hygiene:71,social:39,fun:42,bladder:68}},
   {id:"jay",name:"เจ",role:"ช่างซ่อมมือถือ · 25 ปี",age:25,gender:"ชาย",occupation:"ช่างซ่อมมือถือ",home:"ห้องเช่า C",rent:2800,mood:"กำลังเปิดร้าน",x:69,y:28,color:"blue",bio:"ช่างซ่อมมือถือที่ทำงานในร้านเล็ก ๆ และเล่นเกมกับเพื่อนหลังปิดร้าน",money:5100,health:86,sleepDebt:6,activity:"clean",activityStartedAt:390,lastMealAt:360,lastSocialAt:0,shift:{start:10,end:19},routine:{7:"wake",8:"bathe",9:"eat",10:"work",11:"work",12:"work",13:"eat",14:"work",15:"work",16:"work",17:"work",18:"work",19:"clean",20:"eat",21:"use_phone",22:"socialize",23:"relax",0:"sleep",1:"sleep",2:"sleep",3:"sleep",4:"sleep",5:"sleep",6:"sleep"},needs:{hunger:73,energy:74,hygiene:77,social:52,fun:65,bladder:75}}
  ];
- return {version:1,day:1,hour:7,minute:420,last_simulated_at:now,memoriesCount:0,residents,events:[
+ return {version:1,day:1,weekday:"จันทร์",isWeekend:false,hour:7,minute:420,last_simulated_at:now,memoriesCount:0,residents,events:[
   {id:crypto.randomUUID(),text:"เริ่มวันใหม่ในชุมชนริมคลอง — ร้านข้าวแกงกำลังเตรียมเปิดตลาด",time:"DAY 1 · 07:00"},
   {id:crypto.randomUUID(),text:"เพื่อนบ้าน 6 คนเริ่มต้นกิจวัตรของตัวเอง",time:"DAY 1 · 07:00"}
  ]};
@@ -59,7 +59,7 @@ async function readSimulatorState(db,userId) {
   await saveSimulatorState(db,userId,fresh);
   return fresh;
  }
- const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
+ const calendar=calendarForDay(v.day);v.weekday=calendar.weekday;v.isWeekend=calendar.isWeekend;\n const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
  const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000)));
  if(elapsed>=10){advancePersistedWorld(v,elapsed,last);await saveSimulatorState(db,userId,v);}
  return v;
@@ -135,6 +135,27 @@ function moveResidentForActivity(p,activity,target=null) {
  p.x=Math.max(4,Math.min(96,destination[0]+(hasTarget?0:((offset%3)-1)*1.8)));
  p.y=Math.max(5,Math.min(94,destination[1]+(hasTarget?0:(Math.floor(offset/3)-0.5)*2)));
 }
+const THAI_WEEKDAYS = ["จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์","อาทิตย์"];
+function calendarForDay(day) {
+ const index=((Math.floor(Number(day)||1)-1)%7+7)%7;
+ return {weekday:THAI_WEEKDAYS[index],isWeekend:index>=5,weekdayIndex:index};
+}
+function residentWorksToday(person,day) {
+ const {weekdayIndex}=calendarForDay(day);
+ if(person.occupation?.includes("พนักงานบัญชี")) return weekdayIndex<5;
+ if(person.occupation?.includes("นักศึกษา")) return weekdayIndex>=5;
+ if(person.occupation?.includes("เจ้าของร้านข้าวแกง")) return weekdayIndex!==6;
+ return true;
+}
+const COMMUNITY_DAY_EVENTS = [
+ "ชุมชนเริ่มต้นสัปดาห์ คนทำงานทยอยออกจากบ้านแต่เช้า",
+ "ตลาดเช้ามีผักสดและวัตถุดิบเข้าร้านค้า",
+ "เพื่อนบ้านแวะทักทายกันระหว่างทำกิจวัตร",
+ "ศาลาชุมชนประกาศกิจกรรมเล็ก ๆ ในช่วงเย็น",
+ "หลายคนวางแผนค่าใช้จ่ายก่อนเข้าสู่วันหยุด",
+ "ตลาดนัดสุดสัปดาห์คึกคักกว่าปกติ",
+ "ชุมชนชะลอจังหวะลง หลายครอบครัวใช้เวลาพักผ่อน",
+];
 function advancePersistedWorld(state,elapsedMinutes,lastTimestamp) {
  const completedMinutes=Math.floor(Math.max(0,Math.min(10080,Math.floor(elapsedMinutes)))/10)*10;
  advanceLifeWorld(state,elapsedMinutes);
@@ -147,7 +168,7 @@ function advanceLifeWorld(state,elapsedMinutes) {
  for(let i=0;i<steps;i++){
   state.minute=(state.minute==null?Number(state.hour||7)*60:Number(state.minute))+10;
   if(state.minute>=1440){
-   state.minute-=1440;state.day=(state.day||1)+1;
+   state.minute-=1440;state.day=(state.day||1)+1;const calendar=calendarForDay(state.day);state.weekday=calendar.weekday;state.isWeekend=calendar.isWeekend;state.events.unshift({id:crypto.randomUUID(),text:COMMUNITY_DAY_EVENTS[calendar.weekdayIndex],time:"DAY "+state.day+" · 00:00"});
    if(state.day%7===0){
     for(const p of state.residents){if((p.money||0)>150){p.money=Math.max(0,p.money-180);state.events.unshift({id:crypto.randomUUID(),text:p.name+" จ่ายค่าอาหารและของใช้ประจำสัปดาห์ 180 บาท",time:"DAY "+state.day+" · 00:00"});}}
    }
@@ -170,7 +191,7 @@ function advanceLifeWorld(state,elapsedMinutes) {
     const wage=p.occupation?.includes("ไรเดอร์")?55:p.occupation?.includes("พยาบาล")?48:p.occupation?.includes("ร้าน")?38:p.occupation?.includes("ช่าง")?42:p.occupation?.includes("นักศึกษา")?32:45;
     p.money=(p.money||0)+wage;
    }
-   const h=state.hour;let next=p.routine?.[h];
+   const h=state.hour;let next=p.routine?.[h];const calendar=calendarForDay(state.day);if(next==="work"&&!residentWorksToday(p,state.day))next=p.occupation?.includes("นักศึกษา")?"study":"relax";
    const absoluteMinute=((Number(state.day)||1)-1)*1440+Number(state.minute ?? h*60);
    // Critical needs take priority; explicit player commands then override ordinary routines for one in-game hour.
    if(p.needs.bladder<15)next="use_toilet";
@@ -180,10 +201,10 @@ function advanceLifeWorld(state,elapsedMinutes) {
    else if(p.playerCommand && SIM_ACTIVITIES[p.playerCommand] && Number(p.playerCommandUntil)>absoluteMinute)next=p.playerCommand;
    else {
     if(p.playerCommandUntil!=null && Number(p.playerCommandUntil)<=absoluteMinute){delete p.playerCommand;delete p.playerCommandUntil;}
-    if(p.shift&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";
+    if(p.shift&&residentWorksToday(p,state.day)&&(p.shift.start<=p.shift.end?(h>=p.shift.start&&h<p.shift.end):(h>=p.shift.start||h<p.shift.end)))next="work";
     else if(!next&& (h>=23||h<5))next="sleep";
     else if(!next&&h>=6&&h<9)next="eat";
-    else if(!next&&h>=9&&h<17)next=p.shift?"work":"study";
+    else if(!next&&h>=9&&h<17)next=p.occupation?.includes("นักศึกษา")?"study":p.shift&&residentWorksToday(p,state.day)?"work":"relax";
     else if(!next&&h>=17&&h<20)next="shop";
     else if(!next)next="relax";
    }
