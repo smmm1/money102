@@ -19,6 +19,8 @@ jobs:
           node-version: 22
       - name: Install frontend dependencies
         run: npm install --no-audit --no-fund
+      - name: Type-check frontend
+        run: npx tsc --noEmit
       - name: Build frontend
         run: npm run build
       - name: Run deterministic Worker smoke tests
