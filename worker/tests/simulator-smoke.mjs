@@ -9,7 +9,7 @@ assert.doesNotThrow(() => new Function(source.replace("export default {", "retur
 const executable = source
   .slice(0, source.indexOf("export default {"))
   .replaceAll("crypto.randomUUID()", '"smoke-id"')
-const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity, readSimulatorState, corsHeaders };")()
+const engine = new Function(executable + "; return { starterSimulatorState, advanceLifeWorld, applyResidentActivity, moveResidentForActivity, readSimulatorState, corsHeaders, calendarForDay, residentWorksToday };")()
 
 // The scheduled handler must advance and persist a world even when no player is online.
 const worker = new Function(source.replace("export default {", "return {"))()
@@ -138,6 +138,13 @@ assert.ok(cancelBody.state.events.some((event) => event.text.includes("ยกเ
 assert.equal(state.version, 1)
 assert.equal(state.residents.length, 6)
 assert.ok(state.residents.some((resident) => resident.id === "ploy"))
+assert.equal(state.weekday, "จันทร์", "new world should start on Monday")
+assert.equal(state.isWeekend, false, "Monday should be a workday")
+assert.equal(engine.calendarForDay(6).weekday, "เสาร์", "day six should be Saturday")
+assert.equal(engine.calendarForDay(7).isWeekend, true, "day seven should be a weekend")
+assert.equal(engine.residentWorksToday(state.residents.find((resident) => resident.id === "ploy"), 6), false, "accounting staff should have weekends off")
+assert.equal(engine.residentWorksToday(state.residents.find((resident) => resident.id === "fah"), 6), true, "student part-time shifts should run on weekends")
+assert.equal(engine.residentWorksToday(state.residents.find((resident) => resident.id === "somchai"), 7), false, "the curry-rice shop owner should rest on Sundays")
 const wakeWorld = engine.starterSimulatorState()
 wakeWorld.minute = 350
 wakeWorld.hour = 5
@@ -150,6 +157,9 @@ assert.ok(state.residents.every((resident) => resident.needs && typeof resident.
 const before = state.residents.map((resident) => resident.money)
 engine.advanceLifeWorld(state, 6 * 24 * 60)
 assert.equal(state.day, 7)
+assert.equal(state.weekday, "อาทิตย์", "after six days the world should roll over to Sunday")
+assert.equal(state.isWeekend, true, "weekend state should update on day rollover")
+assert.ok(state.events.some((event) => event.text.includes("ชุมชนชะลอจังหวะลง")), "weekday-based community event should be recorded")
 assert.ok(state.events.some((event) => event.text.includes("ค่าอาหารและของใช้")))
 engine.advanceLifeWorld(state, 23 * 24 * 60)
 
