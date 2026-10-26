@@ -5,7 +5,7 @@ import { SIMULATOR_PORTALS, formatPortalCurrency, formatWorldClock, worldPhase, 
 
 type Resident = { id: string; name: string; role: string; mood: string; activity?: string; x: number; y: number; color: string; bio: string; money?: number; health?: number; needs?: Record<string, number>; moodScore?: number; skills?: Record<string, { xp: number; level: number }> }
 type EventItem = { id: string; text: string; time: string }
-type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; minute?: number; memoriesCount: number; last_simulated_at?: number; lastSimulatedAt?: string }
+type WorldState = { residents: Resident[]; events: EventItem[]; day: number; weekday?: string; isWeekend?: boolean; hour: number; minute?: number; memoriesCount: number; last_simulated_at?: number; lastSimulatedAt?: string }
 // Unknown hosts (including Vercel preview deployments and localhost) must use staging.
 // Only the two established main-branch Render sites use production data. The feature branch site stays on isolated staging.
 const PRODUCTION_HOSTS = new Set(["money102.onrender.com", "money102-web.onrender.com"])
@@ -18,7 +18,7 @@ const initialResidents: Resident[] = [
   { id: "may", name: "เมย์", role: "พยาบาลเวรสลับ · 34 ปี", mood: "พักฟื้นหลังเวร", activity: "พักผ่อน", x: 67, y: 72, color: "mint", bio: "พยาบาลที่ต้องจัดการเวลานอนตามกะงานและใช้วันหยุดเดินเล่นในสวน" },
   { id: "jay", name: "เจ", role: "ช่างซ่อมมือถือ · 25 ปี", mood: "กำลังเปิดร้าน", activity: "จัดอุปกรณ์ช่าง", x: 45, y: 20, color: "blue", bio: "ช่างซ่อมมือถือที่ทำงานในร้านเล็ก ๆ และเล่นเกมกับเพื่อนหลังปิดร้าน" },
 ]
-const initialState: WorldState = { residents: initialResidents, events: [{ id: "welcome", text: "เริ่มชีวิตใหม่ในชุมชนไทย — ตัวละครชุดใหม่พร้อมแล้ว", time: "07:00" }], day: 1, hour: 7, memoriesCount: 1 }
+const initialState: WorldState = { residents: initialResidents, events: [{ id: "welcome", text: "เริ่มชีวิตใหม่ในชุมชนไทย — ตัวละครชุดใหม่พร้อมแล้ว", time: "07:00" }], day: 1, weekday: "จันทร์", isWeekend: false, hour: 7, memoriesCount: 1 }
 const activityNames: Record<string, string> = { wake: "ตื่นนอน", sleep: "นอนหลับ", eat: "กินข้าว", bathe: "อาบน้ำ", work: "ทำงาน", commute: "เดินทาง", shop: "ซื้อของ", cook: "ทำอาหาร", clean: "ทำความสะอาด", socialize: "พบปะพูดคุย", relax: "พักผ่อน", exercise: "ออกกำลังกาย", study: "เรียน/อ่านหนังสือ", use_phone: "ใช้โทรศัพท์", use_toilet: "เข้าห้องน้ำ", travel: "เดินทาง", idle: "พักระหว่างกิจกรรม" }
 function token() { try { return sessionStorage.getItem("money102_auth_token") || "" } catch { return "" } }
 function presentWorld(data: any): WorldState {
@@ -89,7 +89,7 @@ export default function Simulator({ onExit, onNavigate, portal }: { onExit: () =
   const clock = formatWorldClock(world.hour, world.minute == null ? 0 : world.minute % 60)
   return <main className="simulator-page">
     <header className="sim-topline"><button className="sim-back" onClick={onExit}>← กลับ Money102</button><div className="sim-wordmark"><span>✳</span> TINY / WORLD</div><div className={"sim-status " + status}><i />{status === "connected" ? "D1 MEMORY CONNECTED" : status === "loading" ? "CONNECTING…" : "PREVIEW MODE"}</div></header>
-    <section className="sim-intro"><div><span className="sim-eyebrow">A WORLD THAT LIVES ON</span><h1>ชีวิตเล็ก ๆ <em>ในโลกของเรา</em></h1><p>ชีวิตประจำวันของคนไทย จำลองด้วยกฎ เวลา และการตัดสินใจของตัวละคร</p></div><div className="sim-clock"><small>DAY {world.day}</small><strong>{clock}</strong><span>{worldPhase(world.hour)}</span><span className="sim-offline-hint">โลกเดินต่อเมื่อคุณไม่อยู่</span></div></section>
+    <section className="sim-intro"><div><span className="sim-eyebrow">A WORLD THAT LIVES ON</span><h1>ชีวิตเล็ก ๆ <em>ในโลกของเรา</em></h1><p>ชีวิตประจำวันของคนไทย จำลองด้วยกฎ เวลา และการตัดสินใจของตัวละคร</p></div><div className="sim-clock"><small>DAY {world.day} · {world.weekday || "จันทร์"}{world.isWeekend ? " · วันหยุด" : ""}</small><strong>{clock}</strong><span>{worldPhase(world.hour)}</span><span className="sim-offline-hint">โลกเดินต่อเมื่อคุณไม่อยู่</span></div></section>
     {error && <div className="sim-notice" role="status"><span>ⓘ</span><p>{error}</p></div>}
     <div className="sim-layout">
       <section className="sim-world-panel">
