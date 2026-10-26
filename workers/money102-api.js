@@ -59,7 +59,8 @@ async function readSimulatorState(db,userId) {
   await saveSimulatorState(db,userId,fresh);
   return fresh;
  }
- const calendar=calendarForDay(v.day);v.weekday=calendar.weekday;v.isWeekend=calendar.isWeekend;\n const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
+ const calendar=calendarForDay(v.day);v.weekday=calendar.weekday;v.isWeekend=calendar.isWeekend;
+ const last=Number(v.last_simulated_at)||Date.parse(row.updated_at)||Date.now();
  const elapsed=Math.max(0,Math.min(10080,Math.floor((Date.now()-last)/60000)));
  if(elapsed>=10){advancePersistedWorld(v,elapsed,last);await saveSimulatorState(db,userId,v);}
  return v;
