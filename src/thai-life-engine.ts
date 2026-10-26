@@ -54,13 +54,14 @@ export function thaiDayPart(minute:number) {
   if(h>=20&&h<23)return "กลางคืน"
   return "ดึก"
 }
-const needsOf = (a:ActivityId) => ({
+const activityEffects: Record<ActivityId, Record<string, number>> = {
   sleep:{energy:0.72,hunger:-0.05,bladder:-0.08}, eat:{hunger:0.8,fun:0.03}, cook:{hunger:0.06,energy:-0.06},
   bathe:{hygiene:0.8,energy:-0.02}, work:{energy:-0.12,hunger:-0.09,fun:-0.03}, commute:{energy:-0.04,fun:-0.01},
   shop:{fun:0.04,energy:-0.04}, clean:{hygiene:0.05,energy:-0.08}, socialize:{social:0.24,fun:0.1,energy:-0.03},
   relax:{energy:0.12,fun:0.12}, exercise:{health:0.1,energy:-0.16,fun:0.03}, study:{energy:-0.1,fun:-0.02},
   use_phone:{fun:0.08,social:0.04,energy:-0.02}, use_toilet:{bladder:0.85}, travel:{energy:-0.03}, idle:{energy:0.01}
-} as Record<ActivityId,Record<string,number>>)
+}
+const needsOf = (activity: ActivityId) => activityEffects[activity]
 const activityText:Record<ActivityId,string> = {sleep:"กำลังนอนพัก",eat:"กำลังกินข้าว",bathe:"กำลังอาบน้ำ",work:"กำลังทำงาน",commute:"กำลังเดินทาง",shop:"กำลังซื้อของ",cook:"กำลังทำอาหาร",clean:"กำลังทำความสะอาด",socialize:"กำลังพูดคุยกับคนในชุมชน",relax:"กำลังพักผ่อน",exercise:"กำลังออกกำลังกาย",study:"กำลังเรียนหรืออ่านหนังสือ",use_phone:"กำลังใช้โทรศัพท์",use_toilet:"กำลังเข้าห้องน้ำ",travel:"กำลังเดินทาง",idle:"กำลังเลือกว่าจะทำอะไร"}
 
 function chooseActivity(p:ThaiResident, minute:number):ActivityId {
