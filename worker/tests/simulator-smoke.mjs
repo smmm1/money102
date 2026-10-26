@@ -73,6 +73,9 @@ const state = engine.starterSimulatorState()
 const previewOrigin = "https://money102-smoke-test-mustangm.vercel.app"
 const previewCors = engine.corsHeaders(new Request("https://money102-api-staging.s2mtha16.workers.dev/health", { headers: { Origin: previewOrigin } }), {})
 assert.equal(previewCors["Access-Control-Allow-Origin"], previewOrigin, "Money102 Vercel preview origin should be allowed")
+const renderStagingOrigin = "https://money102-life-simulation-staging.onrender.com"
+const renderStagingCors = engine.corsHeaders(new Request("https://money102-api-staging.s2mtha16.workers.dev/health", { headers: { Origin: renderStagingOrigin } }), {})
+assert.equal(renderStagingCors["Access-Control-Allow-Origin"], renderStagingOrigin, "Render Life Simulation staging origin should be allowed")
 const untrustedCors = engine.corsHeaders(new Request("https://money102-api-staging.s2mtha16.workers.dev/health", { headers: { Origin: "https://untrusted.example" } }), {})
 assert.equal(untrustedCors["Access-Control-Allow-Origin"], undefined, "untrusted origins must not be reflected")
 
