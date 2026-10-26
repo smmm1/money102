@@ -135,6 +135,88 @@ assert.equal(cancelledResident.playerCommand, undefined, "cancelled order should
 assert.equal(cancelledResident.playerCommandUntil, undefined, "cancelled order expiry should be removed")
 assert.ok(cancelBody.state.events.some((event) => event.text.includes("ยกเลิกคำสั่ง")), "cancellation should be recorded in the event history")
 
+// Full Worker-router test: signup, signin, session auth, world creation, order persistence, and refresh.
+const testUsers = new Map()
+const testSessions = new Map()
+const testWorlds = new Map()
+const authDb = {
+  prepare(sql) {
+    const statement = { sql, params: [], bind(...params) { this.params = params; return this } }
+    statement.run = async () => {
+      const p = statement.params
+      if (sql.startsWith("INSERT INTO app_users")) {
+        testUsers.set(p[1], { id: p[0], email: p[1], password_salt: p[2], password_hash: p[3], created_at: p[4] })
+      } else if (sql.startsWith("INSERT INTO app_sessions")) {
+        testSessions.set(p[0], { user_id: p[1], expires_at: p[2], created_at: p[3] })
+      } else if (sql.startsWith("DELETE FROM app_sessions")) {
+        testSessions.delete(p[0])
+      } else if (sql.startsWith("INSERT INTO simulator_worlds")) {
+        testWorlds.set(p[0], { state_json: p[1], updated_at: p[2] })
+      }
+      return { success: true }
+    }
+    statement.all = async () => ({ results: [] })
+    statement.first = async () => {
+      const p = statement.params
+      if (sql.includes("SELECT id FROM app_users WHERE email=?")) {
+        const user = testUsers.get(p[0])
+        return user ? { id: user.id } : null
+      }
+      if (sql.includes("SELECT id,email,password_salt,password_hash FROM app_users WHERE email=?")) return testUsers.get(p[0]) || null
+      if (sql.includes("JOIN app_users")) {
+        const session = testSessions.get(p[0])
+        const user = session && session.expires_at > p[1] ? [...testUsers.values()].find((item) => item.id === session.user_id) : null
+        return user ? { id: user.id, email: user.email } : null
+      }
+      if (sql.includes("SELECT state_json,updated_at FROM simulator_worlds WHERE user_id=?")) return testWorlds.get(p[0]) || null
+      if (sql.includes("COUNT(*) AS count FROM simulator_memories")) return { count: 0 }
+      return null
+    }
+    return statement
+  },
+}
+const signupResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/auth/signup", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email: "life-sim-smoke@example.test", password: "Test-password-123!" }),
+}), { DB: authDb })
+assert.equal(signupResponse.status, 201, "signup should create a staging-style test account")
+const signupBody = await signupResponse.json()
+assert.ok(signupBody.token && signupBody.token.length >= 30, "signup should issue a session token")
+const signinResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/auth/signin", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ email: "life-sim-smoke@example.test", password: "Test-password-123!" }),
+}), { DB: authDb })
+assert.equal(signinResponse.status, 200, "signin should validate the saved password")
+const signinBody = await signinResponse.json()
+const authHeaders = { Authorization: "Bearer " + signinBody.token }
+const meResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/auth/me", { headers: authHeaders }), { DB: authDb })
+assert.equal(meResponse.status, 200, "valid session should authenticate")
+const initialGameResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/state", { headers: authHeaders }), { DB: authDb })
+assert.equal(initialGameResponse.status, 200, "authenticated player should load the world")
+const initialGameBody = await initialGameResponse.json()
+assert.equal(initialGameBody.residents.length, 6, "new account should receive the six-resident world")
+assert.ok(testWorlds.has(signupBody.user.id), "new game world should be persisted under the authenticated account")
+const orderResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/action", {
+  method: "POST",
+  headers: { ...authHeaders, "Content-Type": "application/json" },
+  body: JSON.stringify({ action: "cook", residentId: "ploy" }),
+}), { DB: authDb })
+assert.equal(orderResponse.status, 200, "player order should be accepted")
+assert.equal((await orderResponse.json()).state.residents.find((resident) => resident.id === "ploy").playerCommand, "cook")
+const cancelAgainResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/action", {
+  method: "POST",
+  headers: { ...authHeaders, "Content-Type": "application/json" },
+  body: JSON.stringify({ action: "cancel_order", residentId: "ploy" }),
+}), { DB: authDb })
+assert.equal(cancelAgainResponse.status, 200, "player order should be cancellable through the authenticated route")
+const refreshResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/state", { headers: authHeaders }), { DB: authDb })
+assert.equal(refreshResponse.status, 200, "world should still load after refresh")
+const refreshedBody = await refreshResponse.json()
+assert.equal(refreshedBody.residents.find((resident) => resident.id === "ploy").playerCommand, undefined, "cancelled order should remain cleared after refresh")
+assert.ok(refreshedBody.events.some((event) => event.text.includes("ยกเลิกคำสั่ง")), "cancellation history should persist after refresh")
+
 assert.equal(state.version, 1)
 assert.equal(state.residents.length, 6)
 assert.ok(state.residents.some((resident) => resident.id === "ploy"))
