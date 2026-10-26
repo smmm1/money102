@@ -7,7 +7,8 @@ type Resident = { id: string; name: string; role: string; mood: string; activity
 type EventItem = { id: string; text: string; time: string }
 type WorldState = { residents: Resident[]; events: EventItem[]; day: number; hour: number; minute?: number; memoriesCount: number; last_simulated_at?: number; lastSimulatedAt?: string }
 // Unknown hosts (including Vercel preview deployments and localhost) must use staging.
-const PRODUCTION_HOSTS = new Set(["money102.onrender.com", "money102-web.onrender.com", "money102-new-live.onrender.com"])
+// Only the two established main-branch Render sites use production data. The feature branch site stays on isolated staging.
+const PRODUCTION_HOSTS = new Set(["money102.onrender.com", "money102-web.onrender.com"])
 const API = PRODUCTION_HOSTS.has(window.location.hostname.toLowerCase()) ? "https://money102-api.s2mtha16.workers.dev" : "https://money102-api-staging.s2mtha16.workers.dev"
 const initialResidents: Resident[] = [
   { id: "ploy", name: "พลอย", role: "พนักงานบัญชี · 27 ปี", mood: "เตรียมตัวไปทำงาน", activity: "เตรียมอาหารเช้า", x: 24, y: 28, color: "coral", bio: "พนักงานบัญชีที่เช่าห้องใกล้ตลาด ชอบวางแผนค่าใช้จ่ายและโทรหาแม่หลังเลิกงาน" },
