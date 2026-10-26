@@ -584,29 +584,45 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
     const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
     const group = this.add.container(x, y).setDepth(y + 50)
-    const shadow = this.add.rectangle(0, 18, 23, 7, 0x52634b, 0.25)
     const bodyColor = COLORS[resident.color] ?? 0x76bda0
-    const body = this.add.rectangle(0, 5, 17, 19, bodyColor).setStrokeStyle(2, 0x3d5143)
-    const head = this.add.rectangle(0, -11, 15, 14, 0xf1c6a0).setStrokeStyle(2, 0x6e5547)
-    const hair = this.add.rectangle(0, -17, 16, 7, index % 2 ? 0x393b37 : 0x5b4438)
-    const eyes = this.add.rectangle(-4, -11, 2, 2, 0x3a3a34).setOrigin(0.5)
-    const eye2 = this.add.rectangle(4, -11, 2, 2, 0x3a3a34).setOrigin(0.5)
-    const legs = this.add.rectangle(0, 17, 17, 5, 0x4b5b62)
-    const outline = this.add.rectangle(0, 0, 32, 42).setStrokeStyle(2, 0xf7e4a4, 0).setFillStyle(0xffffff, 0)
-    group.add([shadow, legs, body, head, hair, eyes, eye2, outline])
+    const skin = index % 3 === 0 ? 0xf2c59a : index % 3 === 1 ? 0xe7b487 : 0xf5d0aa
+    const hairColor = index % 2 ? 0x393b37 : 0x5b4438
+    const shadow = this.add.ellipse(0, 20, 29, 10, 0x365c3a, 0.35)
+    const selection = this.add.ellipse(0, 17, 36, 14, 0xf5d66d, 0.45).setVisible(false)
+    const legs = this.add.rectangle(-5, 14, 7, 13, 0x4c5b70).setStrokeStyle(1, 0x2f4053)
+    const legs2 = this.add.rectangle(5, 14, 7, 13, 0x4c5b70).setStrokeStyle(1, 0x2f4053)
+    const shoes = this.add.rectangle(-5, 21, 9, 4, 0x57483c)
+    const shoes2 = this.add.rectangle(5, 21, 9, 4, 0x57483c)
+    const body = this.add.rectangle(0, 1, 20, 20, bodyColor).setStrokeStyle(2, 0x344c42)
+    const shirtHighlight = this.add.rectangle(-4, -4, 4, 7, 0xffffff, 0.45)
+    const armL = this.add.rectangle(-12, 2, 6, 15, bodyColor).setStrokeStyle(1, 0x344c42)
+    const armR = this.add.rectangle(12, 2, 6, 15, bodyColor).setStrokeStyle(1, 0x344c42)
+    const handL = this.add.rectangle(-12, 10, 5, 5, skin)
+    const handR = this.add.rectangle(12, 10, 5, 5, skin)
+    const head = this.add.rectangle(0, -14, 17, 17, skin).setStrokeStyle(2, 0x6e5547)
+    const hairCap = this.add.rectangle(0, -21, 19, 8, hairColor).setStrokeStyle(1, 0x2e302c)
+    const hairSide = this.add.rectangle(-7, -16, 5, 10, hairColor)
+    const fringe = this.add.rectangle(3, -19, 10, 4, hairColor)
+    const eyes = this.add.rectangle(-4, -13, 2, 3, 0x263b37)
+    const eye2 = this.add.rectangle(4, -13, 2, 3, 0x263b37)
+    const mouth = this.add.rectangle(1, -8, 4, 1, 0x9b5b50)
+    const outline = this.add.rectangle(0, 0, 36, 52).setStrokeStyle(3, 0xffe078, 0).setFillStyle(0xffffff, 0)
+    group.add([shadow, selection, legs, legs2, shoes, shoes2, body, armL, armR, handL, handR, shirtHighlight, head, hairCap, hairSide, fringe, eyes, eye2, mouth, outline])
     group.setData("legs", legs)
-    const name = this.add.text(0, 28, resident.name, {
-      fontFamily: "Tahoma, sans-serif", fontSize: "12px", color: "#263b2b",
-      backgroundColor: "#fff5db", padding: { x: 5, y: 3 },
+    group.setData("selectionRing", selection)
+    const name = this.add.text(0, 29, resident.name, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", fontStyle: "bold", color: "#203d2b",
+      backgroundColor: "#fff6d7", padding: { x: 6, y: 4 },
+      stroke: "#fff6d7", strokeThickness: 2,
     }).setOrigin(0.5, 0)
     group.add(name)
-    const activity = this.add.text(0, -39, resident.activity ?? "ใช้ชีวิตประจำวัน", {
-      fontFamily: "Tahoma, sans-serif", fontSize: "9px", color: "#fffaf0",
-      backgroundColor: "#496c50", padding: { x: 4, y: 2 },
+    const activity = this.add.text(0, -43, resident.activity ?? "ใช้ชีวิตประจำวัน", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "10px", fontStyle: "bold", color: "#fffaf0",
+      backgroundColor: "#245b77", padding: { x: 5, y: 3 },
     }).setOrigin(0.5, 0.5)
     group.add(activity)
     group.setData("activityLabel", activity)
-    group.setSize(36, 64).setInteractive(new Phaser.Geom.Rectangle(-18, -43, 36, 76), Phaser.Geom.Rectangle.Contains)
+    group.setSize(40, 76).setInteractive(new Phaser.Geom.Rectangle(-20, -48, 40, 78), Phaser.Geom.Rectangle.Contains)
     ;(group as Phaser.GameObjects.Container & { residentId?: string }).residentId = resident.id
     group.on("pointerdown", () => this.selectResident(resident.id))
     group.setData("outline", outline)
