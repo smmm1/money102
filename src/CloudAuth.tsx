@@ -43,7 +43,7 @@ function installStorageShim() {
     if (this !== window.localStorage) return nativeRemove.call(this, key)
     const k = String(key)
     delete memorySnapshot[k]
-    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
+    scheduleCloudSave()
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
