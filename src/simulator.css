@@ -65,3 +65,73 @@
 .sim-skill>small{font-size:9px;color:#858e7e;text-align:right}
 .sim-skill-track{height:6px;border-radius:2px;background:#e9eadf;overflow:hidden}
 .sim-skill-track i{display:block;height:100%;background:#d1a76e;border-right:2px solid #9b7547;transition:width .3s steps(5)}
+
+
+/* Pokemon-inspired readable RPG presentation: map-first, colorful, high-contrast HUD */
+.simulator-page{
+  --rpg-ink:#f7fbff;--rpg-panel:#12345b;--rpg-panel2:#194875;--rpg-line:#4779a4;
+  max-width:none;padding:0 clamp(10px,2vw,28px) 24px;background:#d9e8d0;
+  background-image:linear-gradient(180deg,#c9e5f5 0,#e5f0d9 180px,#d9e8d0 100%);
+  color:#17314a;font-family:"Noto Sans Thai",Tahoma,sans-serif
+}
+.sim-topline{height:58px;border:0;max-width:1600px;margin:auto}
+.sim-back{background:#12345b;color:#fff;border:2px solid #7da6c9;border-radius:12px;font-weight:700}
+.sim-wordmark{color:#173e66;letter-spacing:.08em;font-size:14px}
+.sim-status{background:#12345b;color:#f6fbff;border:2px solid #6796bd;border-radius:20px;padding:8px 12px;font-size:9px;font-weight:800}
+.sim-status i,.sim-online i{width:8px;height:8px}
+.sim-intro{display:none}
+.sim-notice{max-width:1600px;margin:8px auto 12px;background:#fff7d9;border:2px solid #e6bd56;color:#624a16;border-radius:12px;font-weight:600}
+.sim-layout{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.sim-world-panel{background:#12345b;border:3px solid #729fc4;border-radius:18px;padding:12px;box-shadow:0 7px 0 #8aaf90,0 12px 24px #214e4030}
+.sim-panel-heading{padding:2px 4px 8px;color:#fff}
+.sim-panel-heading .sim-eyebrow{color:#a9d9ff}
+.sim-panel-heading h2{font-size:clamp(17px,2vw,25px);color:#fff;margin:4px 0 0;font-weight:800;letter-spacing:0}
+.sim-resident-count{color:#d8ecff;background:#20527d;border:1px solid #5786ae;padding:5px 9px;border-radius:18px;font-weight:700}
+.pixel-city{height:clamp(480px,68vh,820px);border:4px solid #fff0c5;border-radius:10px;background:#83b96e;box-shadow:inset 0 0 0 2px #a7d6e9,0 4px 0 #0a2949}
+.pixel-city canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+.sim-world-actions{margin-top:10px;gap:8px}
+.sim-world-actions button{background:#20527d;border:2px solid #5e94bf;color:#fff;border-radius:11px;padding:11px;font-weight:700;font-size:12px;box-shadow:0 3px 0 #0b2847}
+.sim-world-actions button:hover:not(:disabled){background:#2f6b9d;transform:translateY(-1px)}
+.sim-side{grid-template-columns:minmax(260px,1.1fr) minmax(250px,1fr) minmax(280px,1.1fr);gap:12px;align-items:stretch}
+.sim-card{background:#12345b;border:3px solid #6f9bc1;border-radius:16px;color:#f4f9ff;box-shadow:0 4px 0 #9ebc99;padding:15px}
+.sim-eyebrow{color:#a9d9ff;font-size:10px;letter-spacing:.07em}
+.sim-online{color:#d7eaff}
+.sim-card-head h3{color:#fff;font-size:16px;font-weight:800}
+.sim-avatar{border-radius:14px;border:3px solid #fff0c5;box-shadow:0 3px 0 #092847}
+.sim-character-card h2{color:#fff;font-size:21px;font-weight:800}
+.sim-role{color:#ffdb8b;font-weight:700;font-size:12px}
+.sim-bio{color:#d8eaff;font-size:12px}
+.sim-activity{color:#b8f0bc;font-size:12px;font-weight:700}
+.sim-wallet{background:#0d2948;border:2px solid #477ba7;border-radius:12px}
+.sim-wallet span,.sim-wallet small{color:#d2e7f8}
+.sim-wallet strong{color:#ffdf76;font-size:21px;font-weight:800}
+.sim-needs-title strong,.sim-skills-head strong{color:#fff;font-size:13px}
+.sim-needs-title span,.sim-skills-head span{color:#c6def4;font-size:10px}
+.sim-need span,.sim-skill span{color:#e3f1ff;font-size:11px}
+.sim-need-track,.sim-skill-track{height:9px;border:1px solid #7da6c9;background:#092847;border-radius:8px;overflow:hidden}
+.sim-need-track i{background:linear-gradient(90deg,#f6a84c,#ffdf75);border-radius:8px}
+.sim-skill-track i{background:linear-gradient(90deg,#5fda9a,#b3f38e);border-radius:8px}
+.sim-need small,.sim-skill small{color:#fff;font-weight:700}
+.sim-memory-count{border-color:#426f96;color:#d5e8f8}
+.sim-memory-count strong{color:#ffdf76;font-weight:800}
+.sim-event{border-color:#365f83}
+.sim-event p{color:#f4f9ff;font-size:12px}
+.sim-event small{color:#b7d7f1;font-size:10px}
+.sim-event-dot{background:#ffcf64;box-shadow:0 0 0 3px #2b5276}
+.sim-live-dot{background:#79e99d;box-shadow:0 0 0 4px #285a69}
+.sim-command-intro{color:#d4e8fa;font-size:12px}
+.sim-command-grid button{background:#20527d;border:2px solid #5687b2;color:#fff;border-radius:9px;font-weight:700;font-size:12px;box-shadow:0 2px 0 #0a2949}
+.sim-command-grid button:hover:not(:disabled){background:#2c6b9c;border-color:#a6d5ff}
+.sim-chat-foot{color:#b4d8f1}
+.sim-portal-zone{max-width:1600px;width:100%;box-sizing:border-box;margin:12px auto;background:#12345b;border:3px solid #6f9bc1;border-radius:16px;color:#fff;box-shadow:0 4px 0 #9ebc99}
+.sim-portal-heading h3{color:#fff}.sim-portal-live{color:#cce5fb}
+.sim-portal-tile{background:#1b4770;border:2px solid #5687b2;color:#fff}
+.sim-portal-copy strong{color:#fff}.sim-portal-copy small{color:#d2e7f8}.sim-portal-arrow{color:#ffdf76}
+.sim-live-data>div{background:#0d2948;border:1px solid #477ba7}
+.sim-live-data small,.sim-live-data span{color:#c0d8ec}.sim-live-data strong{color:#ffdf76}
+.sim-footer{max-width:1600px;margin:auto;color:#315777}
+@media(min-width:1100px){.sim-side{grid-template-columns:minmax(260px,1fr) minmax(260px,1fr) minmax(300px,1.05fr)}}
+@media(max-width:850px){.sim-side{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-chat{grid-column:1/-1}.pixel-city{height:clamp(420px,62vh,650px)}}
+@media(max-width:560px){
+ .simulator-page{padding:0 8px 18px}.sim-topline{height:54px}.sim-wordmark{font-size:11px}.sim-status{padding:6px 8px;font-size:7px}.sim-world-panel{padding:7px;border-radius:13px}.sim-panel-heading h2{font-size:16px}.pixel-city{height:58vh;min-height:390px;max-height:580px}.sim-world-actions button{font-size:11px;padding:10px 5px}.sim-side{grid-template-columns:1fr}.sim-chat{grid-column:auto}.sim-card{padding:13px}.sim-portal-zone{padding:12px}
+}
