@@ -722,9 +722,10 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       fontFamily: "Tahoma, sans-serif", fontSize: "13px", color: "#f9f0d5",
       backgroundColor: "#496b4c", padding: { x: 10, y: 6 },
     }).setOrigin(0.5, 0).setDepth(2000)
-    this.add.text(16, 16, "ลากเพื่อเลื่อนเมือง · เลื่อนล้อเมาส์เพื่อซูม · แตะอาคารเพื่อเข้า", {
-      fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#fff7dc",
-      backgroundColor: "#496b4c", padding: { x: 8, y: 5 },
+    const isCompact = width < 520
+    this.add.text(16, 16, isCompact ? "ลากเลื่อนเมือง · แตะอาคารเพื่อเข้า" : "ลากเพื่อเลื่อนเมือง · เลื่อนล้อเมาส์เพื่อซูม · แตะอาคารเพื่อเข้า", {
+      fontFamily: "Tahoma, sans-serif", fontSize: isCompact ? "9px" : "11px", color: "#fff7dc",
+      backgroundColor: "#496b4c", padding: { x: isCompact ? 5 : 8, y: 5 },
     }).setScrollFactor(0).setDepth(3000)
   }
 }
