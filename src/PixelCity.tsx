@@ -635,8 +635,11 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
 
   private paintSelection(id: string) {
     for (const [residentId, group] of this.residentSprites) {
+      const active = residentId === id
       const outline = group.getData("outline") as Phaser.GameObjects.Rectangle | undefined
-      outline?.setStrokeStyle(2, 0xf7e4a4, residentId === id ? 1 : 0)
+      const ring = group.getData("selectionRing") as Phaser.GameObjects.Ellipse | undefined
+      outline?.setStrokeStyle(3, 0xffe078, active ? 1 : 0)
+      ring?.setVisible(active)
     }
   }
 
