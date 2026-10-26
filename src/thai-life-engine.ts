@@ -85,7 +85,7 @@ function chooseActivity(p:ThaiResident, minute:number):ActivityId {
 function applyActivity(p:ThaiResident, activity:ActivityId, minute:number, world:LifeWorld) {
   p.activity=activity; p.activityStartedAt=minute; p.status=activity==="sleep"?"sleeping":activity==="work"?"working":activity==="commute"||activity==="travel"?"travelling":activity==="idle"?"awake":"out"
   const effects=needsOf(activity)
-  for(const [key,value] of Object.entries(effects)) {
+  for(const [key,value] of Object.entries(effects) as [string, number][]) {
     if(key==="health") p.health=clamp(p.health+value*10)
     else if(key in p.needs) p.needs[key as Need]=clamp(p.needs[key as Need]+value*10)
   }
