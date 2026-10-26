@@ -28,8 +28,10 @@ export type SimulatorPortalSnapshot = {
   savingsGoal: number
 }
 
-export function formatWorldClock(hour: number) {
-  return String(Math.max(0, Math.min(23, Math.floor(hour)))).padStart(2, "0") + ":00"
+export function formatWorldClock(hour: number, minute = 0) {
+  const h = String(Math.max(0, Math.min(23, Math.floor(hour)))).padStart(2, "0")
+  const m = String(Math.max(0, Math.min(59, Math.floor(minute)))).padStart(2, "0")
+  return h + ":" + m
 }
 
 export function formatPortalCurrency(value: number) {

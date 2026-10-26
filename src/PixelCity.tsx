@@ -1,0 +1,788 @@
+import { useEffect, useRef } from "react"
+import Phaser from "phaser"
+
+type PixelResident = {
+  id: string
+  name: string
+  x: number
+  y: number
+  color: string
+  activity?: string
+}
+type PixelCityProps = {
+  residents: PixelResident[]
+  selectedId: string
+  onSelect: (id: string) => void
+  onAction: (action: string, target: { x: number; y: number }) => void
+  hour: number
+}
+
+const WORLD_W = 1920
+const WORLD_H = 1280
+const TILE = 32
+const BUILDING_BLOCKERS: Array<[number, number, number, number]> = [
+  [172, 192, 128, 110], [322, 197, 121, 105], [532, 177, 136, 124], [682, 177, 136, 124],
+  [1082, 182, 144, 119], [1252, 182, 136, 119], [1527, 192, 134, 114],
+  [172, 402, 139, 119], [342, 412, 126, 106], [532, 412, 144, 119],
+  [1072, 407, 136, 119], [1252, 412, 136, 109], [1507, 402, 141, 119],
+  [172, 752, 132, 114], [342, 757, 124, 109], [532, 752, 141, 114],
+  [1072, 752, 146, 114], [1262, 757, 131, 109], [1512, 757, 141, 114],
+  [682, 1002, 141, 109], [872, 1002, 146, 109], [1082, 1002, 141, 109],
+]
+const COLORS: Record<string, number> = {
+  coral: 0xe58b78,
+  mint: 0x76bda0,
+  blue: 0x78a9d6,
+}
+
+class ThaiNeighbourhoodScene extends Phaser.Scene {
+  private residents: PixelResident[] = []
+  private selectedId = ""
+  private selectResident: (id: string) => void = () => {}
+  private issueAction: (action: string, target: { x: number; y: number }) => void = () => {}
+  private residentSprites = new Map<string, Phaser.GameObjects.Container>()
+  private interiorLayer?: Phaser.GameObjects.Container
+  private ambientOverlay?: Phaser.GameObjects.Rectangle
+  private cameraControlItems: Array<{ button: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text }> = []
+  private worldHour = 7
+
+  constructor() {
+    super("thai-neighbourhood")
+  }
+
+  init(data: { residents: PixelResident[]; selectedId: string; onSelect: (id: string) => void; onAction: (action: string, target: { x: number; y: number }) => void; hour: number }) {
+    this.residents = data.residents
+    this.selectedId = data.selectedId
+    this.selectResident = data.onSelect
+    this.issueAction = data.onAction
+    this.worldHour = data.hour ?? 7
+  }
+
+  create() {
+    const { width, height } = this.scale
+    this.cameras.main.setBounds(0, 0, WORLD_W, WORLD_H)
+    this.cameras.main.setZoom(this.getInitialZoom(width, height))
+    this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
+    this.drawGround()
+    this.drawRoads()
+    this.drawDistricts()
+    this.drawGreenery()
+    this.drawNeighbourhood()
+    this.drawInteriorEntrances()
+    this.drawResidentSprites()
+    this.drawLabels()
+    this.ambientOverlay = this.add.rectangle(width / 2, height / 2, width, height, 0x18234c, 0).setScrollFactor(0).setDepth(2500)
+    this.drawCameraControls(width)
+    this.updateAmbient(this.worldHour)
+    this.scale.on("resize", (size: Phaser.Structs.Size) => {
+      this.cameras.main.setZoom(this.getInitialZoom(size.width, size.height))
+      this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
+      this.ambientOverlay?.setPosition(size.width / 2, size.height / 2).setSize(size.width, size.height)
+      this.interiorLayer?.destroy(true)
+      this.interiorLayer = undefined
+      this.drawCameraControls(size.width)
+    })
+    let dragStart: { x: number; y: number; scrollX: number; scrollY: number } | null = null
+    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
+      if (currentlyOver.length === 0) dragStart = { x: pointer.x, y: pointer.y, scrollX: this.cameras.main.scrollX, scrollY: this.cameras.main.scrollY }
+    })
+    this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
+      if (!pointer.isDown || !dragStart) return
+      const camera = this.cameras.main
+      camera.scrollX = dragStart.scrollX - (pointer.x - dragStart.x) / camera.zoom
+      camera.scrollY = dragStart.scrollY - (pointer.y - dragStart.y) / camera.zoom
+    })
+    this.input.on("pointerup", () => { dragStart = null })
+    this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: Phaser.GameObjects.GameObject[], _dx: number, dy: number) => {
+      const camera = this.cameras.main
+      camera.setZoom(Phaser.Math.Clamp(camera.zoom - dy * 0.0005, 0.48, 1.35))
+    })
+    this.events.on("update-residents", (residents: PixelResident[], selectedId: string, hour = this.worldHour) => {
+      this.residents = residents
+      this.selectedId = selectedId
+      this.worldHour = hour
+      this.updateAmbient(hour)
+      this.refreshResidents()
+    })
+  }
+
+  private getInitialZoom(width: number, height: number) {
+    // Keep people and building entrances legible on phones instead of fitting the
+    // entire city into a tiny overview. Players can pan and zoom out whenever needed.
+    if (width < 520) return 0.78
+    if (width < 820) return 0.72
+    return Math.min(width / 1120, height / 740, 0.78)
+  }
+
+  private drawCameraControls(width: number) {
+    this.cameraControlItems.forEach(({ button, text }) => { button.destroy(); text.destroy() })
+    this.cameraControlItems = []
+    const camera = this.cameras.main
+    const controls: Array<{ label: string; offset: number; action: () => void; hint: string }> = [
+      { label: "⌖", offset: 118, action: () => { camera.setZoom(this.getInitialZoom(this.scale.width, this.scale.height)); camera.centerOn(WORLD_W / 2, WORLD_H / 2) }, hint: "กลับไปกลางเมือง" },
+      { label: "−", offset: 76, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom - 0.12, 0.48, 1.35)), hint: "ซูมออก" },
+      { label: "+", offset: 34, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom + 0.12, 0.48, 1.35)), hint: "ซูมเข้า" },
+    ]
+    controls.forEach(({ label, offset, action, hint }) => {
+      const x = width - offset
+      const button = this.add.rectangle(x, 24, 34, 32, 0xf5edcf, 0.96)
+        .setStrokeStyle(2, 0x55734e).setScrollFactor(0).setDepth(3000).setInteractive({ useHandCursor: true })
+      const text = this.add.text(x, 24, label, {
+        fontFamily: "Tahoma, sans-serif", fontSize: label === "⌖" ? "19px" : "22px",
+        fontStyle: "bold", color: "#38583e",
+      }).setOrigin(0.5).setScrollFactor(0).setDepth(3001)
+      button.setData("controlHint", hint)
+      button.on("pointerdown", action)
+      text.setInteractive({ useHandCursor: true }).on("pointerdown", action)
+      this.cameraControlItems.push({ button, text })
+    })
+  }
+
+  private updateAmbient(hour: number) {
+    if (!this.ambientOverlay) return
+    const h = ((Math.floor(hour) % 24) + 24) % 24
+    let color = 0x18234c
+    let alpha = 0
+    if (h >= 19 || h < 5) { color = 0x17254f; alpha = 0.34 }
+    else if (h >= 17) { color = 0x9d6048; alpha = 0.18 }
+    else if (h < 7) { color = 0x657a9a; alpha = 0.17 }
+    else if (h >= 15) { color = 0xe5a05e; alpha = 0.07 }
+    this.ambientOverlay.setFillStyle(color, alpha)
+  }
+
+  private findWalkPath(startX: number, startY: number, targetX: number, targetY: number) {
+    const cols = WORLD_W / TILE
+    const rows = WORLD_H / TILE
+    const blocked = (gx: number, gy: number) => {
+      if (gx < 1 || gy < 1 || gx >= cols - 1 || gy >= rows - 1) return true
+      const px = gx * TILE + TILE / 2
+      const py = gy * TILE + TILE / 2
+      return BUILDING_BLOCKERS.some(([x, y, w, h]) => px >= x - 4 && px <= x + w + 4 && py >= y - 4 && py <= y + h + 4)
+    }
+    const nearestOpen = (x: number, y: number) => {
+      let gx = Phaser.Math.Clamp(Math.floor(x / TILE), 1, cols - 2)
+      let gy = Phaser.Math.Clamp(Math.floor(y / TILE), 1, rows - 2)
+      if (!blocked(gx, gy)) return { gx, gy }
+      for (let radius = 1; radius < 8; radius++) {
+        for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) {
+          if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue
+          if (!blocked(gx + dx, gy + dy)) return { gx: gx + dx, gy: gy + dy }
+        }
+      }
+      return { gx, gy }
+    }
+    const start = nearestOpen(startX, startY)
+    const goal = nearestOpen(targetX, targetY)
+    const startIndex = start.gy * cols + start.gx
+    const goalIndex = goal.gy * cols + goal.gx
+    const parent = new Int32Array(cols * rows).fill(-2)
+    const queue = new Int32Array(cols * rows)
+    let head = 0, tail = 0
+    queue[tail++] = startIndex
+    parent[startIndex] = -1
+    const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    while (head < tail && parent[goalIndex] === -2) {
+      const current = queue[head++]
+      const cx = current % cols, cy = Math.floor(current / cols)
+      for (const [dx, dy] of directions) {
+        const nx = cx + dx, ny = cy + dy
+        if (blocked(nx, ny)) continue
+        const next = ny * cols + nx
+        if (parent[next] !== -2) continue
+        parent[next] = current
+        queue[tail++] = next
+      }
+    }
+    if (parent[goalIndex] === -2) return []
+    const path: Array<{ x: number; y: number }> = []
+    for (let at = goalIndex; at !== -1; at = parent[at]) path.push({ x: (at % cols) * TILE + TILE / 2, y: Math.floor(at / cols) * TILE + TILE / 2 })
+    path.reverse()
+    path[path.length - 1] = { x: targetX, y: targetY }
+    return path
+  }
+
+  private animateAlongPath(group: Phaser.GameObjects.Container, path: Array<{ x: number; y: number }>, index = 0) {
+    if (!group.active) return
+    const legs = group.getData("legs") as Phaser.GameObjects.Rectangle | undefined
+    if (index === 0) {
+      const previousMove = group.getData("moveTween") as Phaser.Tweens.Tween | undefined
+      previousMove?.stop()
+      const idleTween = group.getData("idleTween") as Phaser.Tweens.Tween | undefined
+      idleTween?.stop()
+      group.setData("idleTween", undefined)
+      group.setData("isWalking", true)
+      const previousWalk = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+      previousWalk?.stop()
+      if (legs) {
+        const walkTween = this.tweens.add({ targets: legs, angle: { from: -10, to: 10 }, duration: 105, yoyo: true, repeat: -1, ease: "Linear" })
+        group.setData("walkTween", walkTween)
+      }
+    }
+    if (index >= path.length) {
+      const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+      walkTween?.stop()
+      group.setData("walkTween", undefined)
+      group.setData("moveTween", undefined)
+      group.setData("isWalking", false)
+      group.setData("moveTargetX", undefined)
+      group.setData("moveTargetY", undefined)
+      if (legs) legs.setAngle(0)
+      const idleTween = this.tweens.add({ targets: group, y: group.y - 2, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+      group.setData("idleTween", idleTween)
+      return
+    }
+    const point = path[index]
+    const moveTween = this.tweens.add({
+      targets: group, x: point.x, y: point.y, duration: 90, ease: "Linear",
+      onComplete: () => {
+        if (group.getData("moveTween") === moveTween) group.setData("moveTween", undefined)
+        this.animateAlongPath(group, path, index + 1)
+      },
+    })
+    group.setData("moveTween", moveTween)
+  }
+
+  private drawGround() {
+    const g = this.add.graphics()
+    // Rich, readable tile-based grass like a classic handheld RPG.
+    g.fillStyle(0x8fbd69, 1).fillRect(0, 0, WORLD_W, WORLD_H)
+    for (let ty = 0; ty < WORLD_H; ty += TILE) {
+      for (let tx = 0; tx < WORLD_W; tx += TILE) {
+        const variant = ((tx / TILE * 7 + ty / TILE * 11) % 9)
+        g.fillStyle(variant < 2 ? 0x9acb75 : variant < 4 ? 0x86b962 : 0x93c471, 1)
+        g.fillRect(tx + 1, ty + 1, TILE - 2, TILE - 2)
+        if (variant === 1 || variant === 5) {
+          g.fillStyle(0x659e55, 1).fillRect(tx + 7, ty + 9, 4, 4).fillRect(tx + 20, ty + 22, 3, 3)
+          g.fillStyle(0xb5d985, 1).fillRect(tx + 8, ty + 8, 3, 3)
+        }
+      }
+    }
+    // Soft park clearings and garden plots, edged with a contrasting tile border.
+    g.fillStyle(0x6fa65b, 1).fillRect(1440, 750, 280, 270)
+    g.fillStyle(0xb9d982, 1).fillRect(1452, 762, 256, 246)
+    g.fillStyle(0x8fc36b, 1).fillRect(1470, 780, 220, 210)
+    for (let y = 795; y < 980; y += 32) {
+      for (let x = 1485; x < 1685; x += 32) {
+        g.fillStyle(0x6da755, 1).fillRect(x, y, 5, 5)
+        g.fillStyle(0xd9e9a0, 1).fillRect(x + 2, y - 2, 3, 3)
+      }
+    }
+    // Small pond with stepped pixel banks, water highlights and reeds.
+    g.fillStyle(0x668f53, 1).fillRect(192, 842, 202, 132)
+    g.fillStyle(0xe3d6a3, 1).fillRect(202, 850, 184, 116)
+    g.fillStyle(0x55aeb9, 1).fillRect(212, 860, 164, 96)
+    g.fillStyle(0x80d3d0, 1).fillRect(220, 868, 55, 5).fillRect(286, 897, 40, 5).fillRect(330, 923, 29, 4)
+    g.fillStyle(0xe2f1c5, 1).fillRect(226, 878, 22, 3).fillRect(303, 886, 17, 3)
+    g.fillStyle(0x6d9d57, 1).fillRect(202, 850, 10, 116).fillRect(376, 850, 10, 116).fillRect(202, 850, 184, 10).fillRect(202, 956, 184, 10)
+    // Garden rows beside the community.
+    g.fillStyle(0x6a9d52, 1).fillRect(1450, 780, 255, 7)
+    g.destroy()
+  }
+
+  private drawRoads() {
+    const g = this.add.graphics()
+    const road = (x: number, y: number, w: number, h: number) => {
+      // Sidewalk, curb, asphalt and dashed centre marks.
+      g.fillStyle(0x739c5b, 1).fillRect(x - 7, y - 7, w + 14, h + 14)
+      g.fillStyle(0xe8d9a8, 1).fillRect(x - 3, y - 3, w + 6, h + 6)
+      g.fillStyle(0xc5b99b, 1).fillRect(x, y, w, h)
+      g.fillStyle(0xd2c7ad, 1)
+      if (w > h) {
+        g.fillRect(x, y + 5, w, 3).fillRect(x, y + h - 8, w, 3)
+        for (let dx = x + 18; dx < x + w - 18; dx += 52) g.fillStyle(0xf4e7bd, 1).fillRect(dx, y + h / 2 - 2, 27, 4)
+      } else {
+        g.fillRect(x + 5, y, 3, h).fillRect(x + w - 8, y, 3, h)
+        for (let dy = y + 18; dy < y + h - 18; dy += 52) g.fillStyle(0xf4e7bd, 1).fillRect(x + w / 2 - 2, dy, 4, 27)
+      }
+    }
+    road(0, 600, WORLD_W, 84)
+    road(930, 0, 88, WORLD_H)
+    road(128, 300, 1664, 54)
+    road(128, 920, 1664, 54)
+    road(420, 128, 54, 1024)
+    road(1430, 128, 54, 1024)
+    // Sandy pedestrian lanes connect each block to the main streets.
+    g.fillStyle(0xe9d6a1, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236).fillRect(1018, 740, 210, 18).fillRect(474, 760, 240, 18)
+    g.fillStyle(0xf6e9c0, 1).fillRect(624, 354, 5, 246).fillRect(1224, 684, 5, 236)
+    // Crosswalks near the central junction.
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle(0xf7edcf, 0.95).fillRect(875 + i * 12, 585, 6, 25)
+      g.fillStyle(0xf7edcf, 0.95).fillRect(1000, 700 + i * 12, 25, 6)
+    }
+    g.destroy()
+  }
+
+  private drawDistricts() {
+    const districts = [
+      { x: 150, y: 135, w: 310, title: "01 · ย่านบ้านพักและร้านชำ", sub: "HOME & LOCAL SHOPS", color: 0x527d57 },
+      { x: 1050, y: 135, w: 420, title: "02 · ย่านบริการและอาชีพ", sub: "CLINIC · WORK · CAFE", color: 0x537b87 },
+      { x: 150, y: 700, w: 390, title: "03 · ย่านเรียนรู้และห้องเช่า", sub: "STUDENT LIFE", color: 0x8b7554 },
+      { x: 1050, y: 700, w: 440, title: "04 · ตลาดและพื้นที่ชุมชน", sub: "FRESH MARKET · COMMUNITY", color: 0x9a6550 },
+      { x: 660, y: 965, w: 570, title: "05 · โซนวัดและการเดินทาง", sub: "TEMPLE · SONGTHAEW STATION", color: 0x756894 },
+    ]
+    for (const district of districts) {
+      const plate = this.add.graphics().setDepth(140)
+      plate.fillStyle(0xf8efd8, 0.96).fillRect(district.x, district.y, district.w, 39)
+      plate.fillStyle(district.color, 1).fillRect(district.x, district.y, 7, 39)
+      plate.fillStyle(0xffffff, 0.45).fillRect(district.x + 8, district.y + 2, district.w - 10, 2)
+      plate.destroy()
+      this.add.text(district.x + 17, district.y + 4, district.title, {
+        fontFamily: "Tahoma, sans-serif", fontSize: "15px", fontStyle: "bold",
+        color: "#354a39", padding: { x: 2, y: 1 },
+      }).setDepth(142)
+      this.add.text(district.x + 18, district.y + 23, district.sub, {
+        fontFamily: "Tahoma, sans-serif", fontSize: "8px", color: "#77715e",
+        letterSpacing: 1,
+      }).setDepth(142)
+    }
+  }
+
+  private drawGreenery() {
+    const spots = [
+      [170, 180], [255, 410], [355, 510], [530, 210], [720, 420], [800, 1040],
+      [1110, 200], [1280, 430], [1600, 210], [1710, 450], [1650, 1070], [1340, 1070],
+      [270, 1060], [540, 1060], [810, 820], [1150, 1080], [1730, 820], [800, 480],
+    ]
+    for (const [x, y] of spots) this.drawTree(x, y)
+    for (let i = 0; i < 22; i++) {
+      const x = 170 + (i * 73) % 1550
+      const y = 170 + (i * 131) % 940
+      this.add.rectangle(x, y, 5, 5, i % 3 === 0 ? 0xf0c77d : 0xf0d9b5).setDepth(y)
+    }
+  }
+
+  private drawTree(x: number, y: number) {
+    const g = this.add.graphics().setDepth(y)
+    // A dark offset shadow gives the chunky canopy a clear top-down game silhouette.
+    g.fillStyle(0x456d43, 0.55).fillRect(x + 5, y + 24, 34, 13)
+    g.fillStyle(0x76533a, 1).fillRect(x + 15, y + 18, 10, 19)
+    g.fillStyle(0x356c45, 1).fillRect(x + 1, y + 8, 32, 22)
+    g.fillStyle(0x4a8b4f, 1).fillRect(x + 5, y + 1, 31, 24)
+    g.fillStyle(0x65a95a, 1).fillRect(x + 10, y - 2, 22, 20)
+    g.fillStyle(0x8bc66a, 1).fillRect(x + 12, y + 2, 8, 6).fillRect(x + 25, y + 12, 5, 5)
+    g.fillStyle(0x2f6942, 1).fillRect(x + 2, y + 17, 7, 8).fillRect(x + 28, y + 19, 7, 6)
+    g.fillStyle(0xafd47a, 1).fillRect(x + 16, y + 10, 4, 4)
+    g.destroy()
+  }
+
+  private building(x: number, y: number, w: number, h: number, wall: number, roof: number, name: string, sign: string) {
+    const g = this.add.graphics().setDepth(y + h)
+    // Cast shadow and front step.
+    g.fillStyle(0x375a3a, 0.32).fillRect(x + 9, y + h - 1, w + 2, 17)
+    g.fillStyle(0xdec99b, 1).fillRect(x - 8, y + h - 12, w + 16, 14)
+    g.fillStyle(0xf5e6bf, 1).fillRect(x - 5, y + h - 10, w + 10, 7)
+    // Front wall and side-wall shading create a little depth without losing pixel clarity.
+    g.fillStyle(wall, 1).fillRect(x, y + 22, w, h - 22)
+    g.fillStyle(0x000000, 0.10).fillRect(x + w - 10, y + 24, 10, h - 36)
+    g.fillStyle(0xffffff, 0.23).fillRect(x + 3, y + 24, w - 16, 5)
+    // Roof eaves, main roof and contrasting edge.
+    g.fillStyle(0x674c3b, 1).fillRect(x - 11, y + 15, w + 22, 17)
+    g.fillStyle(roof, 1).fillRect(x - 8, y + 4, w + 16, 22)
+    g.fillStyle(0xffffff, 0.22).fillRect(x - 5, y + 6, w + 10, 4)
+    g.fillStyle(0x000000, 0.14).fillRect(x - 8, y + 22, w + 16, 4)
+    // Roof tile stripes, like hand-drawn game sprites.
+    g.fillStyle(0x000000, 0.12)
+    for (let rx = x - 2; rx < x + w + 8; rx += 18) g.fillRect(rx, y + 10, 2, 13)
+    // Windows with dark frames, glass highlights and sill.
+    for (const wx of [x + 12, x + w - 31]) {
+      g.fillStyle(0x73543e, 1).fillRect(wx - 2, y + 39, 23, 21)
+      g.fillStyle(0x6bb7c6, 1).fillRect(wx, y + 41, 19, 15)
+      g.fillStyle(0xc8f0df, 1).fillRect(wx + 2, y + 42, 5, 4)
+      g.fillStyle(0x477e8c, 1).fillRect(wx + 8, y + 41, 2, 15).fillRect(wx, y + 48, 19, 2)
+      g.fillStyle(0xf2dfb6, 1).fillRect(wx - 3, y + 59, 25, 3)
+    }
+    // Door frame and warm door panel.
+    g.fillStyle(0x654832, 1).fillRect(x + w / 2 - 13, y + h - 39, 26, 39)
+    g.fillStyle(0xc58b55, 1).fillRect(x + w / 2 - 9, y + h - 35, 18, 35)
+    g.fillStyle(0xe5bd79, 1).fillRect(x + w / 2 - 7, y + h - 32, 3, 25)
+    g.fillStyle(0xf7d66f, 1).fillRect(x + w / 2 + 4, y + h - 19, 3, 3)
+    g.destroy()
+    const label = this.add.text(x + w / 2, y + h + 8, name, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", fontStyle: "bold", color: "#263f2d",
+      backgroundColor: "#fff5d5", padding: { x: 7, y: 4 }, align: "center",
+      stroke: "#fff5d5", strokeThickness: 2,
+    }).setOrigin(0.5, 0).setDepth(y + h + 20)
+    const signText = this.add.text(x + w / 2, y + 31, sign, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "10px", fontStyle: "bold",
+      color: "#fff9df", backgroundColor: "#8e4d42", padding: { x: 5, y: 3 },
+    }).setOrigin(0.5, 0).setDepth(y + h + 21)
+    return { label, signText }
+  }
+
+  private drawNeighbourhood() {
+    const buildings = [
+      [180, 200, 112, 96, 0xf0d4ad, 0xb9604f, "ร้านข้าวแกง", "ข้าวแกงป้า"],
+      [330, 205, 105, 91, 0xe4c9a2, 0x587e63, "ร้านชำ", "ของชุมชน"],
+      [540, 185, 120, 110, 0xd7c2a5, 0x9d554b, "ห้องเช่า A", "บ้านพลอย"],
+      [690, 185, 120, 110, 0xe4d6b6, 0x668b70, "หอพักนักศึกษา", "หอฟ้า"],
+      [1090, 190, 128, 105, 0xe7d3b0, 0x507d78, "คลินิกชุมชน", "สุขภาพดี"],
+      [1260, 190, 120, 105, 0xe3c4a2, 0xc17b54, "ร้านซ่อมมือถือ", "เจ โมบาย"],
+      [1535, 200, 118, 100, 0xe5d1aa, 0x78649b, "ร้านกาแฟ", "Slow Day"],
+      [180, 410, 125, 105, 0xe5d3b5, 0x9a574b, "บ้านลุงสมชาย", "บ้านสวน"],
+      [350, 420, 110, 92, 0xe6d7b9, 0x8c7150, "ร้านซักผ้า", "ซักสะอาด"],
+      [540, 420, 128, 105, 0xdcc9ab, 0x637eab, "สำนักงาน", "บัญชี"],
+      [1080, 415, 120, 105, 0xe8d5b5, 0x7e9e8d, "บ้านเมย์", "พักเวร"],
+      [1260, 420, 120, 95, 0xe5d0a7, 0x9b6b4b, "ร้านอาหารตามสั่ง", "ตามสั่ง"],
+      [1515, 410, 125, 105, 0xe3cfaa, 0xb45e4d, "ตลาดสด", "ตลาดเช้า"],
+      [180, 760, 118, 100, 0xe5d4b7, 0x657e9a, "ห้องเช่า B", "บ้านนนท์"],
+      [350, 765, 110, 95, 0xe8d9bc, 0xb56b4e, "ร้านยา", "เภสัชกร"],
+      [540, 760, 125, 100, 0xdac8a8, 0x6a9873, "ห้องสมุด", "อ่านเพลิน"],
+      [1080, 760, 130, 100, 0xe6d4b2, 0x9d5e50, "ศาลาชุมชน", "พบปะกัน"],
+      [1270, 765, 115, 95, 0xe2d0af, 0x658b9c, "ป้ายรถเมล์", "รถสองแถว"],
+      [1520, 765, 125, 100, 0xe4d2b2, 0x5b8466, "สวนสาธารณะ", "สวนชุมชน"],
+      [690, 1010, 125, 95, 0xe6d2af, 0xb85f4b, "ร้านหมูกระทะ", "ย่างกัน"],
+      [880, 1010, 130, 95, 0xe4d2b3, 0x6d8a9c, "สถานีรถ", "ไปต่อเมือง"],
+      [1090, 1010, 125, 95, 0xe2d0ae, 0x8b6a99, "วัดชุมชน", "วัดร่มเย็น"],
+    ] as const
+    buildings.forEach(([x, y, w, h, wall, roof, name, sign]) => this.building(x, y, w, h, wall, roof, name, sign))
+    // Temple roof and golden stupa make the neighbourhood distinctly Thai.
+    const temple = this.add.graphics().setDepth(1110)
+    temple.fillStyle(0xc29a43, 1).fillRect(1144, 1068, 24, 37)
+    temple.fillStyle(0xe3c56e, 1).fillRect(1137, 1060, 38, 8).fillRect(1149, 1051, 14, 9)
+    temple.fillStyle(0xb65c4c, 1).fillRect(1120, 1025, 74, 20)
+    temple.fillStyle(0xe7c77a, 1).fillRect(1127, 1030, 60, 5)
+    temple.destroy()
+    // Market awnings and produce stalls.
+    for (let i = 0; i < 5; i++) {
+      const x = 1538 + i * 24
+      const y = 530 + (i % 2) * 12
+      const g = this.add.graphics().setDepth(y + 25)
+      g.fillStyle(i % 2 ? 0x6b9d72 : 0xc96956, 1).fillRect(x, y, 22, 16)
+      g.fillStyle(0xf3e4be, 1).fillRect(x, y + 7, 22, 3)
+      g.fillStyle(0x9c7751, 1).fillRect(x + 3, y + 16, 3, 15).fillRect(x + 17, y + 16, 3, 15)
+      g.fillStyle(0xe7b55d, 1).fillRect(x + 3, y + 20, 6, 5).fillRect(x + 12, y + 20, 6, 5)
+      g.destroy()
+    }
+  }
+
+
+  private drawInteriorEntrances() {
+    const places = [
+      { x: 236, y: 258, w: 110, h: 62, name: "ร้านข้าวแกง", kind: "food" },
+      { x: 382, y: 262, w: 104, h: 58, name: "ร้านชำชุมชน", kind: "shop" },
+      { x: 600, y: 246, w: 120, h: 62, name: "ห้องเช่าของพลอย", kind: "home" },
+      { x: 750, y: 246, w: 120, h: 62, name: "หอพักนักศึกษา", kind: "home" },
+      { x: 1150, y: 250, w: 120, h: 62, name: "คลินิกชุมชน", kind: "clinic" },
+      { x: 1320, y: 252, w: 120, h: 62, name: "ร้านซ่อมมือถือ", kind: "workshop" },
+      { x: 1590, y: 260, w: 120, h: 60, name: "ร้านกาแฟ", kind: "cafe" },
+      { x: 240, y: 468, w: 125, h: 62, name: "บ้านลุงสมชาย", kind: "home" },
+      { x: 410, y: 472, w: 110, h: 58, name: "ร้านซักผ้า", kind: "laundry" },
+      { x: 600, y: 472, w: 125, h: 62, name: "สำนักงานบัญชี", kind: "office" },
+      { x: 1140, y: 466, w: 120, h: 62, name: "บ้านเมย์", kind: "home" },
+      { x: 1320, y: 470, w: 120, h: 58, name: "ร้านอาหารตามสั่ง", kind: "food" },
+      { x: 1580, y: 468, w: 125, h: 62, name: "ตลาดสด", kind: "market" },
+      { x: 240, y: 808, w: 115, h: 60, name: "ห้องเช่าของนนท์", kind: "home" },
+      { x: 405, y: 810, w: 105, h: 58, name: "ร้านยา", kind: "clinic" },
+      { x: 600, y: 808, w: 125, h: 60, name: "ห้องสมุด", kind: "study" },
+      { x: 1145, y: 808, w: 125, h: 60, name: "ศาลาชุมชน", kind: "community" },
+      { x: 1328, y: 812, w: 112, h: 58, name: "สถานีรถ", kind: "transit" },
+      { x: 1582, y: 812, w: 125, h: 60, name: "สวนสาธารณะ", kind: "park" },
+      { x: 752, y: 1055, w: 125, h: 60, name: "ร้านหมูกระทะ", kind: "food" },
+      { x: 945, y: 1055, w: 125, h: 60, name: "สถานีรถสองแถว", kind: "transit" },
+      { x: 1150, y: 1055, w: 125, h: 60, name: "วัดร่มเย็น", kind: "temple" },
+    ]
+    for (const place of places) {
+      this.add.zone(place.x, place.y, place.w, place.h).setOrigin(0.5, 0.5)
+        .setInteractive({ useHandCursor: true })
+        .on("pointerdown", () => this.showInterior(place.name, place.kind, place.x, place.y))
+        .on("pointerover", () => this.game.canvas.style.cursor = "pointer")
+        .on("pointerout", () => this.game.canvas.style.cursor = "default")
+    }
+  }
+
+  private showInterior(name: string, kind: string, worldX: number, worldY: number) {
+    this.interiorLayer?.destroy(true)
+    const layer = this.add.container(0, 0).setScrollFactor(0).setDepth(10000)
+    this.interiorLayer = layer
+    const width = this.scale.width
+    const height = this.scale.height
+    const panelW = Math.min(width - 36, 600)
+    const panelH = Math.min(height - 36, 410)
+    const x = (width - panelW) / 2
+    const y = (height - panelH) / 2
+    const add = (obj: Phaser.GameObjects.GameObject) => { layer.add(obj); return obj }
+    add(this.add.rectangle(width / 2, height / 2, width, height, 0x24382b, 0.68).setScrollFactor(0))
+    add(this.add.rectangle(width / 2 + 5, height / 2 + 7, panelW, panelH, 0x31432f, 0.28).setScrollFactor(0))
+    add(this.add.rectangle(width / 2, height / 2, panelW, panelH, 0xf2e7c9).setStrokeStyle(5, 0x725c42).setScrollFactor(0))
+    add(this.add.rectangle(width / 2, y + 31, panelW - 10, 52, 0x527553).setScrollFactor(0))
+    add(this.add.text(x + 22, y + 16, name, { fontFamily: "Tahoma, sans-serif", fontSize: "18px", color: "#fff3d2", fontStyle: "bold" }).setScrollFactor(0))
+    add(this.add.text(x + 22, y + 61, "INTERIOR VIEW · จำลองกิจกรรมภายในอาคาร", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#66715b" }).setScrollFactor(0))
+    const floorX = x + 24
+    const floorY = y + 92
+    const floorW = panelW - 48
+    const floorH = panelH - 142
+    add(this.add.rectangle(width / 2, floorY + floorH / 2, floorW, floorH, kind === "home" ? 0xd8bc91 : 0xd9d3b4).setStrokeStyle(2, 0xb5a37f).setScrollFactor(0))
+    for (let px = floorX + 8; px < floorX + floorW - 8; px += 32) {
+      add(this.add.rectangle(px, floorY + 2, 2, floorH - 4, 0xb8ad8b, 0.35).setScrollFactor(0))
+    }
+    const furniture = (fx: number, fy: number, fw: number, fh: number, color: number) => {
+      add(this.add.rectangle(fx, fy, fw, fh, color).setStrokeStyle(3, 0x77664d).setScrollFactor(0))
+      add(this.add.rectangle(fx, fy - fh / 2 + 5, fw - 8, 5, 0xf0e1bd).setScrollFactor(0))
+    }
+    if (kind === "home") {
+      furniture(x + 100, y + 210, 112, 58, 0x9a6d50)
+      furniture(x + panelW - 100, y + 200, 84, 92, 0x7b9c83)
+      add(this.add.rectangle(x + panelW / 2, y + panelH - 82, 76, 38, 0x6b8f9b).setStrokeStyle(3, 0x536e72).setScrollFactor(0))
+      add(this.add.text(x + panelW / 2, y + panelH - 90, "เตียง / พักผ่อน", { fontFamily: "Tahoma", fontSize: "11px", color: "#fff8df" }).setOrigin(0.5).setScrollFactor(0))
+    } else if (kind === "market" || kind === "shop" || kind === "cafe" || kind === "food") {
+      furniture(x + 105, y + 190, 140, 42, 0xa86648)
+      furniture(x + panelW - 112, y + 190, 100, 62, 0x759a6a)
+      for (let i = 0; i < 5; i++) add(this.add.rectangle(x + 68 + i * 25, y + 178, 12, 12, [0xd36c52,0xe4b44f,0x78a66e][i % 3]).setScrollFactor(0))
+      add(this.add.text(x + panelW / 2, y + panelH - 73, "เคาน์เตอร์ · วัตถุดิบ · พื้นที่ทำงาน", { fontFamily: "Tahoma", fontSize: "11px", color: "#53634d" }).setOrigin(0.5).setScrollFactor(0))
+    } else {
+      furniture(x + 112, y + 194, 112, 50, 0x6f8b9b)
+      furniture(x + panelW - 112, y + 194, 104, 50, 0x9a8b68)
+      add(this.add.text(x + panelW / 2, y + panelH - 73, "พื้นที่ใช้งาน · อุปกรณ์ · จุดพัก", { fontFamily: "Tahoma", fontSize: "11px", color: "#53634d" }).setOrigin(0.5).setScrollFactor(0))
+    }
+    const actionsByKind: Record<string, Array<[string, string]>> = {
+      home: [["sleep", "นอนพัก"], ["bathe", "อาบน้ำ"], ["cook", "ทำอาหาร"]],
+      food: [["eat", "กินข้าว"], ["cook", "ทำอาหาร"], ["socialize", "พูดคุย"]],
+      workshop: [["work", "ซ่อม/ทำงาน"], ["clean", "จัดร้าน"], ["use_phone", "ใช้โทรศัพท์"]],
+      laundry: [["clean", "ซักผ้า/ทำความสะอาด"], ["relax", "พัก"], ["socialize", "พูดคุย"]],
+      shop: [["shop", "ซื้อของ"], ["eat", "กินข้าว"], ["socialize", "พูดคุย"]],
+      cafe: [["eat", "กินข้าว"], ["shop", "ซื้อของ"], ["socialize", "พูดคุย"]],
+      market: [["shop", "ซื้อของ"], ["eat", "กินข้าว"], ["socialize", "พูดคุย"]],
+      office: [["work", "ทำงาน"], ["relax", "พักผ่อน"], ["use_phone", "ใช้โทรศัพท์"]],
+      study: [["study", "อ่านหนังสือ"], ["relax", "พักผ่อน"], ["use_phone", "ใช้โทรศัพท์"]],
+      clinic: [["relax", "พักผ่อน"], ["exercise", "ออกกำลัง"], ["socialize", "พบปะ"]],
+      community: [["socialize", "พบปะ"], ["relax", "พักผ่อน"], ["use_phone", "ใช้โทรศัพท์"]],
+      transit: [["travel", "เดินทาง"], ["commute", "ไปทำงาน"], ["relax", "พักผ่อน"]],
+      park: [["exercise", "ออกกำลัง"], ["relax", "พักผ่อน"], ["socialize", "พบปะ"]],
+      temple: [["relax", "พักใจ"], ["socialize", "พบปะ"], ["study", "อ่านหนังสือ"]],
+    }
+    const actions = actionsByKind[kind] ?? actionsByKind.community
+    const gap = 7
+    const buttonWidth = (panelW - 52 - gap * (actions.length - 1)) / actions.length
+    const buttonY = y + panelH - 51
+    actions.forEach(([action, label], index) => {
+      const buttonX = floorX + buttonWidth / 2 + index * (buttonWidth + gap)
+      const button = this.add.rectangle(buttonX, buttonY, buttonWidth, 25, 0x527553)
+        .setStrokeStyle(1, 0x3c6544).setScrollFactor(0).setInteractive({ useHandCursor: true })
+      add(button)
+      add(this.add.text(buttonX, buttonY, label, {
+        fontFamily: "Tahoma, sans-serif", fontSize: "10px", color: "#fff6d9",
+        fontStyle: "bold", align: "center",
+      }).setOrigin(0.5).setScrollFactor(0))
+      button.on("pointerdown", () => {
+        // Building zones sit over the roof/body for easy tapping. Route the resident
+        // to the front doorstep, just beyond the building collision rectangle.
+        const entranceY = Phaser.Math.Clamp(worldY + 70, 4, WORLD_H - 4)
+        this.issueAction(action, {
+          x: Number(((worldX / WORLD_W) * 100).toFixed(2)),
+          y: Number(((entranceY / WORLD_H) * 100).toFixed(2)),
+        })
+        this.interiorLayer?.destroy(true)
+        this.interiorLayer = undefined
+      })
+    })
+    add(this.add.text(x + 22, y + panelH - 32, "เลือกกิจกรรมเพื่อส่งตัวละครไปยังทางเข้าอาคาร", { fontFamily: "Tahoma, sans-serif", fontSize: "11px", color: "#64745a" }).setScrollFactor(0))
+    const closeButton = this.add.text(x + panelW - 18, y + 17, "× ปิด", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "14px", fontStyle: "bold", color: "#fff3d2",
+      backgroundColor: "#9b5848", padding: { x: 9, y: 5 },
+    }).setOrigin(1, 0).setScrollFactor(0).setInteractive({ useHandCursor: true })
+    closeButton.on("pointerdown", () => { this.interiorLayer?.destroy(true); this.interiorLayer = undefined })
+    layer.add(closeButton)
+  }
+
+  private drawResidentSprites() {
+    this.residents.forEach((resident, index) => this.addResident(resident, index))
+  }
+
+  private addResident(resident: PixelResident, index: number) {
+    const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
+    const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
+    const group = this.add.container(x, y).setDepth(y + 50)
+    const bodyColor = COLORS[resident.color] ?? 0x76bda0
+    const skin = index % 3 === 0 ? 0xf2c59a : index % 3 === 1 ? 0xe7b487 : 0xf5d0aa
+    const hairColor = index % 2 ? 0x393b37 : 0x5b4438
+    const shadow = this.add.ellipse(0, 20, 29, 10, 0x365c3a, 0.35)
+    const selection = this.add.ellipse(0, 17, 36, 14, 0xf5d66d, 0.45).setVisible(false)
+    const legs = this.add.rectangle(-5, 14, 7, 13, 0x4c5b70).setStrokeStyle(1, 0x2f4053)
+    const legs2 = this.add.rectangle(5, 14, 7, 13, 0x4c5b70).setStrokeStyle(1, 0x2f4053)
+    const shoes = this.add.rectangle(-5, 21, 9, 4, 0x57483c)
+    const shoes2 = this.add.rectangle(5, 21, 9, 4, 0x57483c)
+    const body = this.add.rectangle(0, 1, 20, 20, bodyColor).setStrokeStyle(2, 0x344c42)
+    const shirtHighlight = this.add.rectangle(-4, -4, 4, 7, 0xffffff, 0.45)
+    const armL = this.add.rectangle(-12, 2, 6, 15, bodyColor).setStrokeStyle(1, 0x344c42)
+    const armR = this.add.rectangle(12, 2, 6, 15, bodyColor).setStrokeStyle(1, 0x344c42)
+    const handL = this.add.rectangle(-12, 10, 5, 5, skin)
+    const handR = this.add.rectangle(12, 10, 5, 5, skin)
+    const head = this.add.rectangle(0, -14, 17, 17, skin).setStrokeStyle(2, 0x6e5547)
+    const hairCap = this.add.rectangle(0, -21, 19, 8, hairColor).setStrokeStyle(1, 0x2e302c)
+    const hairSide = this.add.rectangle(-7, -16, 5, 10, hairColor)
+    const fringe = this.add.rectangle(3, -19, 10, 4, hairColor)
+    const eyes = this.add.rectangle(-4, -13, 2, 3, 0x263b37)
+    const eye2 = this.add.rectangle(4, -13, 2, 3, 0x263b37)
+    const mouth = this.add.rectangle(1, -8, 4, 1, 0x9b5b50)
+    const outline = this.add.rectangle(0, 0, 36, 52).setStrokeStyle(3, 0xffe078, 0).setFillStyle(0xffffff, 0)
+    group.add([shadow, selection, legs, legs2, shoes, shoes2, body, armL, armR, handL, handR, shirtHighlight, head, hairCap, hairSide, fringe, eyes, eye2, mouth, outline])
+    group.setData("legs", legs)
+    group.setData("selectionRing", selection)
+    const name = this.add.text(0, 29, resident.name, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", fontStyle: "bold", color: "#203d2b",
+      backgroundColor: "#fff6d7", padding: { x: 6, y: 4 },
+      stroke: "#fff6d7", strokeThickness: 2,
+    }).setOrigin(0.5, 0)
+    group.add(name)
+    const activity = this.add.text(0, -43, resident.activity ?? "ใช้ชีวิตประจำวัน", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "10px", fontStyle: "bold", color: "#fffaf0",
+      backgroundColor: "#245b77", padding: { x: 5, y: 3 },
+    }).setOrigin(0.5, 0.5)
+    group.add(activity)
+    group.setData("activityLabel", activity)
+    group.setSize(40, 76).setInteractive(new Phaser.Geom.Rectangle(-20, -48, 40, 78), Phaser.Geom.Rectangle.Contains)
+    ;(group as Phaser.GameObjects.Container & { residentId?: string }).residentId = resident.id
+    group.on("pointerdown", () => this.selectResident(resident.id))
+    group.setData("outline", outline)
+    group.setData("residentId", resident.id)
+    this.residentSprites.set(resident.id, group)
+    this.paintSelection(resident.id)
+    const idleTween = this.tweens.add({ targets: group, y: y - 2, duration: 900 + index * 80, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+    group.setData("idleTween", idleTween)
+  }
+
+  private paintSelection(id: string) {
+    for (const [residentId, group] of this.residentSprites) {
+      const active = residentId === id
+      const outline = group.getData("outline") as Phaser.GameObjects.Rectangle | undefined
+      const ring = group.getData("selectionRing") as Phaser.GameObjects.Ellipse | undefined
+      outline?.setStrokeStyle(3, 0xffe078, active ? 1 : 0)
+      ring?.setVisible(active)
+    }
+  }
+
+  private refreshResidents() {
+    const seen = new Set<string>()
+    this.residents.forEach((resident, index) => {
+      seen.add(resident.id)
+      const group = this.residentSprites.get(resident.id)
+      if (!group || !group.active) {
+        this.addResident(resident, index)
+        return
+      }
+      const x = Math.max(150, Math.min(WORLD_W - 150, (resident.x / 100) * WORLD_W))
+      const y = Math.max(150, Math.min(WORLD_H - 150, (resident.y / 100) * WORLD_H))
+      const distanceToTarget = Phaser.Math.Distance.Between(group.x, group.y, x, y)
+      if (distanceToTarget > 24) {
+        const targetX = group.getData("moveTargetX") as number | undefined
+        const targetY = group.getData("moveTargetY") as number | undefined
+        const isWalking = Boolean(group.getData("isWalking"))
+        const targetUnchanged = targetX !== undefined && targetY !== undefined &&
+          Phaser.Math.Distance.Between(targetX, targetY, x, y) < 8
+        // Polling refreshes must not cancel an in-progress walk toward the same destination.
+        if (!isWalking || !targetUnchanged) {
+          const moveTween = group.getData("moveTween") as Phaser.Tweens.Tween | undefined
+          moveTween?.stop()
+          const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+          walkTween?.stop()
+          group.setData("isWalking", false)
+          group.setData("moveTargetX", x)
+          group.setData("moveTargetY", y)
+          const path = this.findWalkPath(group.x, group.y, x, y)
+          if (path.length > 0) {
+            this.animateAlongPath(group, path)
+            group.setData("navigationBlocked", false)
+          } else {
+            const walkTween = group.getData("walkTween") as Phaser.Tweens.Tween | undefined
+            walkTween?.stop()
+            group.setData("walkTween", undefined)
+            const legs = group.getData("legs") as Phaser.GameObjects.Rectangle | undefined
+            legs?.setAngle(0)
+            // Never cut through a building when the navigation grid has no route.
+            group.setData("navigationBlocked", true)
+          }
+        }
+      } else if (!group.getData("isWalking")) {
+        const idleTween = group.getData("idleTween") as Phaser.Tweens.Tween | undefined
+        if (!idleTween?.isPlaying()) {
+          const nextIdleTween = this.tweens.add({ targets: group, y: group.y - 2, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" })
+          group.setData("idleTween", nextIdleTween)
+        }
+      }
+      group.setDepth(y + 50)
+      const activity = group.getData("activityLabel") as Phaser.GameObjects.Text | undefined
+      activity?.setText(resident.activity ?? "ใช้ชีวิตประจำวัน")
+      group.setData("activity", resident.activity)
+      this.paintSelection(resident.id)
+    })
+    for (const [id, group] of this.residentSprites) {
+      if (!seen.has(id)) {
+        group.destroy()
+        this.residentSprites.delete(id)
+      }
+    }
+  }
+
+  private drawLabels() {
+    this.add.text(960, 42, "ชุมชนริมคลอง · RIM KHLONG COMMUNITY", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "17px", color: "#37563b",
+      backgroundColor: "#dce7c5", padding: { x: 12, y: 7 },
+    }).setOrigin(0.5, 0).setDepth(2000)
+    this.add.text(960, 1200, "ตลาด · บ้านเช่า · ร้านค้า · วัด · สวน · สถานีรถ", {
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", color: "#f9f0d5",
+      backgroundColor: "#496b4c", padding: { x: 10, y: 6 },
+    }).setOrigin(0.5, 0).setDepth(2000)
+    const isCompact = this.scale.width < 520
+    this.add.text(16, 16, isCompact ? "ลากเลื่อนเมือง · แตะอาคารเพื่อเข้า" : "ลากเพื่อเลื่อนเมือง · เลื่อนล้อเมาส์เพื่อซูม · แตะอาคารเพื่อเข้า", {
+      fontFamily: "Tahoma, sans-serif", fontSize: isCompact ? "9px" : "11px", color: "#fff7dc",
+      backgroundColor: "#496b4c", padding: { x: isCompact ? 5 : 8, y: 5 },
+    }).setScrollFactor(0).setDepth(3000)
+  }
+}
+
+export default function PixelCity({ residents, selectedId, onSelect, onAction, hour }: PixelCityProps) {
+  const host = useRef<HTMLDivElement>(null)
+  const game = useRef<Phaser.Game | null>(null)
+  const sceneRef = useRef<ThaiNeighbourhoodScene | null>(null)
+  const residentsRef = useRef(residents)
+  const selectedRef = useRef(selectedId)
+  const hourPropRef = useRef(hour)
+  const onSelectRef = useRef(onSelect)
+  const onActionRef = useRef(onAction)
+  residentsRef.current = residents
+  hourPropRef.current = hour
+  selectedRef.current = selectedId
+  onSelectRef.current = onSelect
+  onActionRef.current = onAction
+
+  useEffect(() => {
+    if (!host.current || game.current) return
+    const scene = new class extends ThaiNeighbourhoodScene {
+      constructor() { super() }
+      init() {
+        super.init({
+          residents: residentsRef.current,
+          selectedId: selectedRef.current,
+          onSelect: (id) => onSelectRef.current(id),
+          onAction: (action, target) => onActionRef.current(action, target),
+          hour: hourPropRef.current,
+        })
+      }
+    }()
+    sceneRef.current = scene
+    game.current = new Phaser.Game({
+      type: Phaser.AUTO,
+      parent: host.current,
+      width: host.current.clientWidth || 900,
+      height: host.current.clientHeight || 500,
+      backgroundColor: "#9fbd86",
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+      scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
+      scene: [scene],
+    })
+    return () => {
+      game.current?.destroy(true)
+      game.current = null
+      sceneRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    const active = sceneRef.current
+    if (active?.scene?.isActive()) active.events.emit("update-residents", residents, selectedId, hour)
+  }, [residents, selectedId, hour])
+
+  return <div className="pixel-city" ref={host} role="img" aria-label="แผนที่ชุมชนไทย Pixel Art แบบ top-down พร้อมร้านค้า บ้านเช่า วัด ตลาด สวน และตัวละครที่เลือกได้" />
+}

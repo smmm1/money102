@@ -15,7 +15,13 @@ export function AccountMenu() {
 }
 type LocalSnapshot = Record<string, string>
 const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
-const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
+const STAGING_HOSTS = new Set([
+  "money102-command-center-preview.onrender.com",
+  "money102-staging.onrender.com",
+  "money102-new-live.onrender.com",
+  "money102-life-simulation-staging.onrender.com",
+])
+const defaultApiUrl = STAGING_HOSTS.has(window.location.hostname.toLowerCase())
   ? "https://money102-api-staging.s2mtha16.workers.dev"
   : "https://money102-api.s2mtha16.workers.dev"
 const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
@@ -43,7 +49,7 @@ function installStorageShim() {
     if (this !== window.localStorage) return nativeRemove.call(this, key)
     const k = String(key)
     delete memorySnapshot[k]
-    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
+    scheduleCloudSave()
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
