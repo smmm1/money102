@@ -43,6 +43,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   private residentSprites = new Map<string, Phaser.GameObjects.Container>()
   private interiorLayer?: Phaser.GameObjects.Container
   private ambientOverlay?: Phaser.GameObjects.Rectangle
+  private cameraControlItems: Array<{ button: Phaser.GameObjects.Rectangle; text: Phaser.GameObjects.Text }> = []
   private worldHour = 7
 
   constructor() {
@@ -77,6 +78,9 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       this.cameras.main.setZoom(Math.min(size.width / 1120, size.height / 740, 0.78))
       this.cameras.main.centerOn(WORLD_W / 2, WORLD_H / 2)
       this.ambientOverlay?.setPosition(size.width / 2, size.height / 2).setSize(size.width, size.height)
+      this.interiorLayer?.destroy(true)
+      this.interiorLayer = undefined
+      this.drawCameraControls(size.width)
     })
     let dragStart: { x: number; y: number; scrollX: number; scrollY: number } | null = null
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
@@ -103,13 +107,16 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
   }
 
   private drawCameraControls(width: number) {
+    this.cameraControlItems.forEach(({ button, text }) => { button.destroy(); text.destroy() })
+    this.cameraControlItems = []
     const camera = this.cameras.main
-    const controls: Array<{ label: string; x: number; action: () => void; hint: string }> = [
-      { label: "⌖", x: width - 118, action: () => { camera.setZoom(Math.min(width / 1120, this.scale.height / 740, 0.78)); camera.centerOn(WORLD_W / 2, WORLD_H / 2) }, hint: "กลับไปกลางเมือง" },
-      { label: "−", x: width - 76, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom - 0.12, 0.35, 1.15)), hint: "ซูมออก" },
-      { label: "+", x: width - 34, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom + 0.12, 0.35, 1.15)), hint: "ซูมเข้า" },
+    const controls: Array<{ label: string; offset: number; action: () => void; hint: string }> = [
+      { label: "⌖", offset: 118, action: () => { camera.setZoom(Math.min(this.scale.width / 1120, this.scale.height / 740, 0.78)); camera.centerOn(WORLD_W / 2, WORLD_H / 2) }, hint: "กลับไปกลางเมือง" },
+      { label: "−", offset: 76, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom - 0.12, 0.35, 1.15)), hint: "ซูมออก" },
+      { label: "+", offset: 34, action: () => camera.setZoom(Phaser.Math.Clamp(camera.zoom + 0.12, 0.35, 1.15)), hint: "ซูมเข้า" },
     ]
-    controls.forEach(({ label, x, action, hint }) => {
+    controls.forEach(({ label, offset, action, hint }) => {
+      const x = width - offset
       const button = this.add.rectangle(x, 24, 34, 32, 0xf5edcf, 0.96)
         .setStrokeStyle(2, 0x55734e).setScrollFactor(0).setDepth(3000).setInteractive({ useHandCursor: true })
       const text = this.add.text(x, 24, label, {
@@ -119,6 +126,7 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
       button.setData("controlHint", hint)
       button.on("pointerdown", action)
       text.setInteractive({ useHandCursor: true }).on("pointerdown", action)
+      this.cameraControlItems.push({ button, text })
     })
   }
 
