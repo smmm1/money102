@@ -101,6 +101,40 @@ assert.equal(preflightResponse.headers.get("Access-Control-Allow-Origin"), previ
 const unauthorizedResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/state"), { DB: routeDb })
 assert.equal(unauthorizedResponse.status, 401, "simulator state must require an authenticated session")
 
+// Authenticated players can cancel an active one-hour order; the resident returns to their routine.
+let persistedOrderState = engine.starterSimulatorState()
+const orderedResident = persistedOrderState.residents.find((resident) => resident.id === "ploy")
+orderedResident.playerCommand = "cook"
+orderedResident.playerCommandUntil = (persistedOrderState.day - 1) * 1440 + persistedOrderState.minute + 60
+const authenticatedDb = {
+  prepare(sql) {
+    const statement = { sql, params: [], bind(...params) { this.params = params; return this } }
+    statement.run = async () => {
+      if (sql.startsWith("INSERT INTO simulator_worlds")) persistedOrderState = JSON.parse(statement.params[1])
+      return { success: true }
+    }
+    statement.all = async () => ({ results: [] })
+    statement.first = async () => {
+      if (sql.includes("JOIN app_users")) return { id: "smoke-user", email: "smoke@example.test" }
+      if (sql.includes("FROM simulator_worlds")) return { state_json: JSON.stringify(persistedOrderState), updated_at: new Date().toISOString() }
+      if (sql.includes("COUNT(*) AS count FROM simulator_memories")) return { count: 0 }
+      return null
+    }
+    return statement
+  },
+}
+const cancelResponse = await worker.fetch(new Request("https://money102-api-staging.s2mtha16.workers.dev/api/simulator/action", {
+  method: "POST",
+  headers: { Authorization: "Bearer " + "x".repeat(40), "Content-Type": "application/json" },
+  body: JSON.stringify({ action: "cancel_order", residentId: "ploy" }),
+}), { DB: authenticatedDb })
+assert.equal(cancelResponse.status, 200, "authenticated player should be able to cancel an order")
+const cancelBody = await cancelResponse.json()
+const cancelledResident = cancelBody.state.residents.find((resident) => resident.id === "ploy")
+assert.equal(cancelledResident.playerCommand, undefined, "cancelled order should be removed")
+assert.equal(cancelledResident.playerCommandUntil, undefined, "cancelled order expiry should be removed")
+assert.ok(cancelBody.state.events.some((event) => event.text.includes("ยกเลิกคำสั่ง")), "cancellation should be recorded in the event history")
+
 assert.equal(state.version, 1)
 assert.equal(state.residents.length, 6)
 assert.ok(state.residents.some((resident) => resident.id === "ploy"))
