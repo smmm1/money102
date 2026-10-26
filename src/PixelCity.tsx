@@ -236,34 +236,56 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
 
   private drawGround() {
     const g = this.add.graphics()
-    g.fillStyle(0x9fbd86, 1).fillRect(0, 0, WORLD_W, WORLD_H)
-    // Pixel-sized grass flecks make the base read as a hand-built tilemap.
-    for (let y = 8; y < WORLD_H; y += 24) {
-      for (let x = 7 + ((y / 24) % 2) * 11; x < WORLD_W; x += 37) {
-        const shade = ((x * 7 + y * 3) % 5) === 0 ? 0x88aa76 : 0xb1c991
-        g.fillStyle(shade, 0.8).fillRect(x, y, 3, 3)
+    // Rich, readable tile-based grass like a classic handheld RPG.
+    g.fillStyle(0x8fbd69, 1).fillRect(0, 0, WORLD_W, WORLD_H)
+    for (let ty = 0; ty < WORLD_H; ty += TILE) {
+      for (let tx = 0; tx < WORLD_W; tx += TILE) {
+        const variant = ((tx / TILE * 7 + ty / TILE * 11) % 9)
+        g.fillStyle(variant < 2 ? 0x9acb75 : variant < 4 ? 0x86b962 : 0x93c471, 1)
+        g.fillRect(tx + 1, ty + 1, TILE - 2, TILE - 2)
+        if (variant === 1 || variant === 5) {
+          g.fillStyle(0x659e55, 1).fillRect(tx + 7, ty + 9, 4, 4).fillRect(tx + 20, ty + 22, 3, 3)
+          g.fillStyle(0xb5d985, 1).fillRect(tx + 8, ty + 8, 3, 3)
+        }
       }
     }
-    g.fillStyle(0xe1d6b5, 1).fillRect(96, 96, 1728, 1088)
-    g.fillStyle(0xd7c99f, 1).fillRect(112, 112, 1696, 1056)
-    g.fillStyle(0x9fbd86, 1).fillRect(128, 128, 1664, 1024)
-    // Garden plots and small community green.
-    g.fillStyle(0x7ea96f, 1).fillRect(1450, 760, 260, 250)
-    g.fillStyle(0xc3d59a, 1).fillRect(1470, 780, 220, 210)
-    g.fillStyle(0x79a5ae, 1).fillRect(210, 850, 180, 112)
-    g.fillStyle(0x91c1c0, 1).fillRect(220, 860, 160, 92)
-    g.fillStyle(0xd4e3c0, 1).fillRect(232, 871, 17, 5).fillRect(300, 908, 23, 5).fillRect(352, 883, 11, 5)
+    // Soft park clearings and garden plots, edged with a contrasting tile border.
+    g.fillStyle(0x6fa65b, 1).fillRect(1440, 750, 280, 270)
+    g.fillStyle(0xb9d982, 1).fillRect(1452, 762, 256, 246)
+    g.fillStyle(0x8fc36b, 1).fillRect(1470, 780, 220, 210)
+    for (let y = 795; y < 980; y += 32) {
+      for (let x = 1485; x < 1685; x += 32) {
+        g.fillStyle(0x6da755, 1).fillRect(x, y, 5, 5)
+        g.fillStyle(0xd9e9a0, 1).fillRect(x + 2, y - 2, 3, 3)
+      }
+    }
+    // Small pond with stepped pixel banks, water highlights and reeds.
+    g.fillStyle(0x668f53, 1).fillRect(192, 842, 202, 132)
+    g.fillStyle(0xe3d6a3, 1).fillRect(202, 850, 184, 116)
+    g.fillStyle(0x55aeb9, 1).fillRect(212, 860, 164, 96)
+    g.fillStyle(0x80d3d0, 1).fillRect(220, 868, 55, 5).fillRect(286, 897, 40, 5).fillRect(330, 923, 29, 4)
+    g.fillStyle(0xe2f1c5, 1).fillRect(226, 878, 22, 3).fillRect(303, 886, 17, 3)
+    g.fillStyle(0x6d9d57, 1).fillRect(202, 850, 10, 116).fillRect(376, 850, 10, 116).fillRect(202, 850, 184, 10).fillRect(202, 956, 184, 10)
+    // Garden rows beside the community.
+    g.fillStyle(0x6a9d52, 1).fillRect(1450, 780, 255, 7)
     g.destroy()
   }
 
   private drawRoads() {
     const g = this.add.graphics()
     const road = (x: number, y: number, w: number, h: number) => {
-      g.fillStyle(0x9e9b8a, 1).fillRect(x, y, w, h)
-      g.fillStyle(0xe1d7b7, 1).fillRect(x, y, w, 6).fillRect(x, y + h - 6, w, 6)
-      g.fillStyle(0xf1e8ca, 0.8)
-      if (w > h) for (let dx = x + 18; dx < x + w - 18; dx += 48) g.fillRect(dx, y + h / 2 - 2, 23, 4)
-      else for (let dy = y + 18; dy < y + h - 18; dy += 48) g.fillRect(x + w / 2 - 2, dy, 4, 23)
+      // Sidewalk, curb, asphalt and dashed centre marks.
+      g.fillStyle(0x739c5b, 1).fillRect(x - 7, y - 7, w + 14, h + 14)
+      g.fillStyle(0xe8d9a8, 1).fillRect(x - 3, y - 3, w + 6, h + 6)
+      g.fillStyle(0xc5b99b, 1).fillRect(x, y, w, h)
+      g.fillStyle(0xd2c7ad, 1)
+      if (w > h) {
+        g.fillRect(x, y + 5, w, 3).fillRect(x, y + h - 8, w, 3)
+        for (let dx = x + 18; dx < x + w - 18; dx += 52) g.fillStyle(0xf4e7bd, 1).fillRect(dx, y + h / 2 - 2, 27, 4)
+      } else {
+        g.fillRect(x + 5, y, 3, h).fillRect(x + w - 8, y, 3, h)
+        for (let dy = y + 18; dy < y + h - 18; dy += 52) g.fillStyle(0xf4e7bd, 1).fillRect(x + w / 2 - 2, dy, 4, 27)
+      }
     }
     road(0, 600, WORLD_W, 84)
     road(930, 0, 88, WORLD_H)
@@ -271,9 +293,14 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
     road(128, 920, 1664, 54)
     road(420, 128, 54, 1024)
     road(1430, 128, 54, 1024)
-    // Alleys are intentionally narrower than the main roads.
-    g.fillStyle(0xbab39c, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236).fillRect(1018, 740, 210, 18).fillRect(474, 760, 240, 18)
-    g.fillStyle(0xd9d0b8, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236)
+    // Sandy pedestrian lanes connect each block to the main streets.
+    g.fillStyle(0xe9d6a1, 1).fillRect(620, 354, 18, 246).fillRect(1220, 684, 18, 236).fillRect(1018, 740, 210, 18).fillRect(474, 760, 240, 18)
+    g.fillStyle(0xf6e9c0, 1).fillRect(624, 354, 5, 246).fillRect(1224, 684, 5, 236)
+    // Crosswalks near the central junction.
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle(0xf7edcf, 0.95).fillRect(875 + i * 12, 585, 6, 25)
+      g.fillStyle(0xf7edcf, 0.95).fillRect(1000, 700 + i * 12, 25, 6)
+    }
     g.destroy()
   }
 
@@ -318,33 +345,58 @@ class ThaiNeighbourhoodScene extends Phaser.Scene {
 
   private drawTree(x: number, y: number) {
     const g = this.add.graphics().setDepth(y)
-    g.fillStyle(0x7d6449, 1).fillRect(x + 10, y + 16, 8, 16)
-    g.fillStyle(0x477b51, 1).fillRect(x, y + 5, 28, 19)
-    g.fillStyle(0x5d965e, 1).fillRect(x + 4, y, 22, 18)
-    g.fillStyle(0x7eaf6c, 1).fillRect(x + 9, y + 3, 7, 5)
-    g.fillStyle(0x3d7049, 1).fillRect(x + 2, y + 19, 8, 5)
+    // A dark offset shadow gives the chunky canopy a clear top-down game silhouette.
+    g.fillStyle(0x456d43, 0.55).fillRect(x + 5, y + 24, 34, 13)
+    g.fillStyle(0x76533a, 1).fillRect(x + 15, y + 18, 10, 19)
+    g.fillStyle(0x356c45, 1).fillRect(x + 1, y + 8, 32, 22)
+    g.fillStyle(0x4a8b4f, 1).fillRect(x + 5, y + 1, 31, 24)
+    g.fillStyle(0x65a95a, 1).fillRect(x + 10, y - 2, 22, 20)
+    g.fillStyle(0x8bc66a, 1).fillRect(x + 12, y + 2, 8, 6).fillRect(x + 25, y + 12, 5, 5)
+    g.fillStyle(0x2f6942, 1).fillRect(x + 2, y + 17, 7, 8).fillRect(x + 28, y + 19, 7, 6)
+    g.fillStyle(0xafd47a, 1).fillRect(x + 16, y + 10, 4, 4)
     g.destroy()
   }
 
   private building(x: number, y: number, w: number, h: number, wall: number, roof: number, name: string, sign: string) {
     const g = this.add.graphics().setDepth(y + h)
-    g.fillStyle(0x52604d, 0.18).fillRect(x + 9, y + h - 1, w, 15)
-    g.fillStyle(0xe5d9bd, 1).fillRect(x - 7, y + h - 12, w + 14, 13)
-    g.fillStyle(wall, 1).fillRect(x, y + 18, w, h - 18)
-    g.fillStyle(roof, 1).fillRect(x - 8, y, w + 16, 25)
-    g.fillStyle(0xffffff, 0.25).fillRect(x, y + 19, w, 4)
-    g.fillStyle(0x9a6d51, 1).fillRect(x + w / 2 - 10, y + h - 34, 20, 34)
-    g.fillStyle(0x83b5bc, 1).fillRect(x + 12, y + 35, 19, 17).fillRect(x + w - 31, y + 35, 19, 17)
-    g.fillStyle(0xe9d4a3, 1).fillRect(x + 13, y + 36, 17, 3).fillRect(x + w - 30, y + 36, 17, 3)
-    g.fillStyle(0x3d5542, 1).fillRect(x + 4, y + h - 14, w - 8, 5)
+    // Cast shadow and front step.
+    g.fillStyle(0x375a3a, 0.32).fillRect(x + 9, y + h - 1, w + 2, 17)
+    g.fillStyle(0xdec99b, 1).fillRect(x - 8, y + h - 12, w + 16, 14)
+    g.fillStyle(0xf5e6bf, 1).fillRect(x - 5, y + h - 10, w + 10, 7)
+    // Front wall and side-wall shading create a little depth without losing pixel clarity.
+    g.fillStyle(wall, 1).fillRect(x, y + 22, w, h - 22)
+    g.fillStyle(0x000000, 0.10).fillRect(x + w - 10, y + 24, 10, h - 36)
+    g.fillStyle(0xffffff, 0.23).fillRect(x + 3, y + 24, w - 16, 5)
+    // Roof eaves, main roof and contrasting edge.
+    g.fillStyle(0x674c3b, 1).fillRect(x - 11, y + 15, w + 22, 17)
+    g.fillStyle(roof, 1).fillRect(x - 8, y + 4, w + 16, 22)
+    g.fillStyle(0xffffff, 0.22).fillRect(x - 5, y + 6, w + 10, 4)
+    g.fillStyle(0x000000, 0.14).fillRect(x - 8, y + 22, w + 16, 4)
+    // Roof tile stripes, like hand-drawn game sprites.
+    g.fillStyle(0x000000, 0.12)
+    for (let rx = x - 2; rx < x + w + 8; rx += 18) g.fillRect(rx, y + 10, 2, 13)
+    // Windows with dark frames, glass highlights and sill.
+    for (const wx of [x + 12, x + w - 31]) {
+      g.fillStyle(0x73543e, 1).fillRect(wx - 2, y + 39, 23, 21)
+      g.fillStyle(0x6bb7c6, 1).fillRect(wx, y + 41, 19, 15)
+      g.fillStyle(0xc8f0df, 1).fillRect(wx + 2, y + 42, 5, 4)
+      g.fillStyle(0x477e8c, 1).fillRect(wx + 8, y + 41, 2, 15).fillRect(wx, y + 48, 19, 2)
+      g.fillStyle(0xf2dfb6, 1).fillRect(wx - 3, y + 59, 25, 3)
+    }
+    // Door frame and warm door panel.
+    g.fillStyle(0x654832, 1).fillRect(x + w / 2 - 13, y + h - 39, 26, 39)
+    g.fillStyle(0xc58b55, 1).fillRect(x + w / 2 - 9, y + h - 35, 18, 35)
+    g.fillStyle(0xe5bd79, 1).fillRect(x + w / 2 - 7, y + h - 32, 3, 25)
+    g.fillStyle(0xf7d66f, 1).fillRect(x + w / 2 + 4, y + h - 19, 3, 3)
     g.destroy()
     const label = this.add.text(x + w / 2, y + h + 8, name, {
-      fontFamily: "Tahoma, sans-serif", fontSize: "13px", color: "#334c39",
-      backgroundColor: "#f8f0d8", padding: { x: 6, y: 3 }, align: "center",
+      fontFamily: "Tahoma, sans-serif", fontSize: "13px", fontStyle: "bold", color: "#263f2d",
+      backgroundColor: "#fff5d5", padding: { x: 7, y: 4 }, align: "center",
+      stroke: "#fff5d5", strokeThickness: 2,
     }).setOrigin(0.5, 0).setDepth(y + h + 20)
-    const signText = this.add.text(x + w / 2, y + 29, sign, {
-      fontFamily: "Tahoma, sans-serif", fontSize: "11px", fontStyle: "bold",
-      color: "#fff7dc", backgroundColor: "#8e4d42", padding: { x: 5, y: 3 },
+    const signText = this.add.text(x + w / 2, y + 31, sign, {
+      fontFamily: "Tahoma, sans-serif", fontSize: "10px", fontStyle: "bold",
+      color: "#fff9df", backgroundColor: "#8e4d42", padding: { x: 5, y: 3 },
     }).setOrigin(0.5, 0).setDepth(y + h + 21)
     return { label, signText }
   }
