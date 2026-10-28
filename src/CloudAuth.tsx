@@ -85,7 +85,7 @@ async function api(path: string, init: RequestInit = {}) {
 
 function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | "error"; title: string; detail: string; onRetry?: () => void }) {
   return <main className="cc-auth-screen cc-auth-screen-status"><section className="cc-auth-frame cc-auth-frame-status">
-    <div className="cc-auth-brand-panel"><div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></strong></div>
+    <div className="cc-auth-brand-panel"><div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">DayTogether<small>พื้นที่ส่วนตัว</small></strong></div>
       <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
       <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div><div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
     </div>
@@ -176,7 +176,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   if (!user) return <main className="cc-auth-screen">
     <section className="cc-auth-frame">
       <div className="cc-auth-brand-panel">
-        <div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></strong></div>
+        <div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">DayTogether<small>พื้นที่ส่วนตัว</small></strong></div>
         <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
         <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div>
         <div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
