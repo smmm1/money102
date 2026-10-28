@@ -54,7 +54,7 @@ CREATE INDEX IF NOT EXISTS idx_savings_transactions_goal_date ON savings_transac
 
 CREATE TABLE IF NOT EXISTS health_preferences (
   user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
-  metric TEXT NOT NULL CHECK(metric IN ('weight','blood_pressure','sleep','water','symptom')),
+  metric TEXT NOT NULL CHECK(metric IN ('weight','blood_pressure','sleep','water','symptom','legacy')),
   enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1)),
   daily_goal INTEGER CHECK(daily_goal IS NULL OR daily_goal > 0),
   created_at TEXT NOT NULL,
