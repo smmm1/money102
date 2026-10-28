@@ -263,7 +263,7 @@ export default function DayTogether() {
       </div>
       <div className="dt-search"><span>⌕</span><input aria-label="ค้นหาประวัติมื้ออาหาร" placeholder="ค้นหาร้านหรือความทรงจำ" value={query} onChange={e => setQuery(e.target.value)} /></div>
       {editing && currentForm()}
-      {detail && "personalCents" in detail ? <div className="dt-panel-body">
+      {detail && "personalCents" in detail ? (<div className="dt-panel-body">
         <h2>{data.prefs.hidden ? "••••••" : detail.shop}</h2>
         <p>{data.prefs.hidden ? "••••••" : detail.title} · {dateText(detail.date)}</p>
         <p>ยอดรวมมื้อ: {detail.totalCents ? money(detail.totalCents, data.prefs.hidden) : "ยังไม่มีข้อมูล"}</p>
@@ -278,7 +278,7 @@ export default function DayTogether() {
           <Button kind="danger" onClick={() => askDelete("bbq", detail.id)}>ลบ</Button>
           {detail.billId ? <Button onClick={() => navigate("split", detail.billId!)}>เปิดบิลที่เชื่อม</Button> : <Button kind="primary" onClick={() => createBillFromVisit(detail)}>สร้างบิลหารตังจากมื้อนี้</Button>}
         </div>
-      </div> : null}
+      </div>) : null}
       {filteredBbq.length === 0 ? <Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={() => beginNew("bbq")}>เพิ่มมื้อแรก</Button>} /> : null}
       {filteredBbq.map(visit => <div className="dt-list-row" key={visit.id}>
         <div><strong>{data.prefs.hidden ? "••••••" : visit.shop}</strong><small>{dateText(visit.date)} · {data.prefs.hidden ? "••••••" : visit.title}</small><small>ค่าใช้จ่ายส่วนตัว: {visit.personalCents == null ? "ยังไม่ทราบ" : money(visit.personalCents, data.prefs.hidden)}</small></div>
