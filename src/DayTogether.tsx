@@ -11,7 +11,7 @@ type Note = { id: string; title: string; body: string; kind: "note" | "diary"; d
 type Participant = { id: string; name: string; paidCents: number; shareCents: number }
 type Bill = { id: string; title: string; date: string; shop: string; participants: Participant[]; totalCents: number; settled: boolean; notes: string; bbqId?: string; settlements: { id: string; fromId: string; toId: string; amountCents: number; date: string }[] }
 type Bbq = { id: string; shop: string; title: string; date: string; area: string; friends: string; people: number; totalCents: number; personalCents: number | null; rating: number | null; menu: string; memory: string; billId?: string }
-type State = { goals: Goal[]; savings: SavingEntry[]; health: HealthEntry[]; notes: Note[]; bills: Bill[]; bbq: Bbq[]; prefs: { timezone: string; theme: "light" | "dark" | "system"; hidden: boolean; healthTypes: string[]; dashboard: string[]; appName: string } }
+type State = { goals: Goal[]; savings: SavingEntry[]; health: HealthEntry[]; notes: Note[]; bills: Bill[]; bbq: Bbq[]; prefs: { timezone: string; theme: "light" | "dark" | "system"; hidden: boolean; healthTypes: string[]; dashboard: string[]; appName: string; legacyImported?: boolean } }
 const STORE = "lamoon-daytogether-v1"
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` }
 const id = () => crypto.randomUUID()
