@@ -23,7 +23,18 @@ function randomBytes(size) { return crypto.getRandomValues(new Uint8Array(size))
 async function sha256(value) { return toBase64Url(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)))); }
 async function passwordHash(password,salt) { const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]); return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt,iterations:PASSWORD_ITERATIONS},key,256)); }
 function constantTimeEqual(a,b) { if(a.length!==b.length)return false; let diff=0; for(let i=0;i<a.length;i++)diff|=a[i]^b[i]; return diff===0; }
-function isSnapshot(value) { if(!value||typeof value!=="object"||Array.isArray(value))return false; const entries=Object.entries(value); return entries.length<=500&&entries.every(([key,item])=>key.startsWith("lamoon-")&&typeof item==="string"); }
+function isSnapshot(value) {
+ if(!value||typeof value!=="object"||Array.isArray(value))return false;
+ const entries=Object.entries(value);
+ if(entries.length>500)return false;
+ let total=0;
+ for(const [key,item] of entries){
+  if(!key.startsWith("lamoon-")||key.length>200||typeof item!=="string")return false;
+  total+=key.length+item.length;
+  if(item.length>900000||total>900000)return false;
+ }
+ return true;
+}
 function validateDayTogetherSnapshot(snapshot) {
  const raw=snapshot["lamoon-daytogether-v1"];
  if(raw===undefined)return null;
@@ -79,13 +90,22 @@ function validateDayTogetherSnapshot(snapshot) {
  for(const bill of state.bills)if(bill.bbqId){const visit=state.bbq.find(x=>x.id===bill.bbqId);if(!visit||visit.billId!==bill.id)return "ความเชื่อมโยงบิลกับมื้ออาหารไม่ตรงกัน";}
  return null;
 }
-async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const v=await request.json(); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
+async function parseBody(request) {
+ const length=Number(request.headers.get("Content-Length")||0);
+ if(length>1000000)return null;
+ try {
+  const raw=await request.text();
+  if(raw.length>1000000)return null;
+  const value=JSON.parse(raw);
+  return value&&typeof value==="object"&&!Array.isArray(value)?value:null;
+ } catch { return null; }
+}
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
 export default { async fetch(request,env) {
  const url=new URL(request.url); if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(request,env)});
  try { await ensureSchema(env.DB);
-  if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api-staging",auth:"cloudflare-d1"});
+  if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api",auth:"cloudflare-d1"});
   if(url.pathname==="/api/auth/signup"&&request.method==="POST") {
    const body=await parseBody(request); const email=typeof body?.email==="string"?body.email.trim().toLowerCase():""; const password=typeof body?.password==="string"?body.password:"";
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลให้ถูกต้อง"},400);
@@ -115,3 +135,5 @@ export default { async fetch(request,env) {
   const updatedAt=new Date().toISOString(); await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run(); return json(request,env,{ok:true,updated_at:updatedAt});
  } catch (error) { console.error("money102-api-staging request failed", error); return json(request,env,{error:"Cloudflare D1 request failed",detail:error instanceof Error ? error.message : String(error)},500); }
 }};
+
+export { isSnapshot, validateDayTogetherSnapshot };
