@@ -42,3 +42,21 @@ test("all expense and settlement balances remain conserved", () => {
  assert.equal(Object.values(result.balances).reduce((a,b)=>a+b,0),0);
  assert.equal(result.transfers.reduce((sum,item)=>sum+item.amountSatang,0),Object.values(result.balances).filter(n=>n<0).reduce((sum,n)=>sum-n,0));
 });
+
+test("fixed allocations conserve the exact expense amount", () => {
+ const result=calculateSplit([{id:"x",amountSatang:10000,payerId:"a",participantIds:["a","b","c"],allocationMode:"fixed",allocations:{a:1000,b:2500,c:6500}}],people);
+ assert.deepEqual({...result.balances},{a:9000,b:-2500,c:-6500});
+ assert.equal(Object.values(result.balances).reduce((sum,n)=>sum+n,0),0);
+});
+test("percentage allocations use basis points and distribute rounding deterministically", () => {
+ const result=calculateSplit([{id:"x",amountSatang:10001,payerId:"a",participantIds:["a","b","c"],allocationMode:"percentage",allocations:{a:3334,b:3333,c:3333}}],people);
+ assert.deepEqual({...result.balances},{a:6667,b:-3334,c:-3333});
+ assert.equal(Object.values(result.balances).reduce((sum,n)=>sum+n,0),0);
+});
+test("invalid fixed or percentage allocations are ignored rather than creating money", () => {
+ const result=calculateSplit([
+  {id:"fixed",amountSatang:10000,payerId:"a",participantIds:["a","b"],allocationMode:"fixed",allocations:{a:1000,b:1000}},
+  {id:"percentage",amountSatang:10000,payerId:"a",participantIds:["a","b"],allocationMode:"percentage",allocations:{a:4000,b:4000}}
+ ],people);
+ assert.deepEqual({...result.balances},{a:0,b:0,c:0});
+});
