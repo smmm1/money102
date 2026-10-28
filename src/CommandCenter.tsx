@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react"
+import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { AccountMenu } from "./CloudAuth"
-import Simulator from "./Simulator"
 import "./command-center.css"
 
-type Page = "home" | "money" | "notes" | "health" | "split" | "pork" | "simulator"
+type Page = "home" | "money" | "notes" | "health" | "split" | "pork"
 type Transaction = { id: string; type: "income" | "expense"; amount: number; detail: string; date: string; createdAt: number }
 type Note = { id: string; title: string; body: string; tags?: string[]; mood?: string; pinned?: boolean; createdAt: string; updatedAt: string }
 type Profile = { id: string; name: string; height: number; age: number }
@@ -87,7 +86,7 @@ function MoneyTrend({ transactions }: { transactions: Transaction[] }) {
 }
 
 export default function CommandCenter() {
-  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split", "pork", "simulator"].includes(hash) ? hash as Page : "home") })
+  const [page, setPage] = useState<Page>(() => { const hash = location.hash.slice(1); return hash === "saving" ? "money" : (["money", "notes", "health", "split", "pork"].includes(hash) ? hash as Page : "home") })
   const [transactions, setTransactions] = useState<Transaction[]>(() => read(KEYS.money, []))
   const [goal, setGoal] = useState(() => Number(safeGet(KEYS.goal)) || 20000)
   const [goalTitle, setGoalTitle] = useState(() => safeGet(KEYS.goalTitle) || "เงินสำรองของฉัน")
@@ -333,19 +332,9 @@ export default function CommandCenter() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
-  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "pork", "simulator"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
+  useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "pork"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
-  const lastBrandTap = useRef(0)
-  const handleBrandTap = () => {
-    const now = Date.now()
-    if (now - lastBrandTap.current < 500) {
-      lastBrandTap.current = 0
-      go("simulator")
-    } else {
-      lastBrandTap.current = now
-      go("home")
-    }
-  }
+  const handleBrandTap = () => go("home")
   const go = (next: Page) => { setPage(next); history.replaceState(null, "", next === "home" ? location.pathname + location.search : "#" + next); window.scrollTo({ top: 0, behavior: "smooth" }) }
   const income = transactions.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
   const expense = transactions.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0)
@@ -432,12 +421,12 @@ export default function CommandCenter() {
     { id: "split", label: "หารค่าใช้จ่าย", icon: "split" },
     { id: "pork", label: "ประวัติหมูกระทะ", icon: "pork" }
   ]
-  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", pork: "ประวัติหมูกระทะ", simulator: "AI Simulator" }
+  const pageTitle: Record<Page, string> = { home: "ภาพรวมของคุณ", money: "การเงิน", notes: "โน้ตของฉัน", health: "สุขภาพ", split: "หารค่าใช้จ่าย", pork: "ประวัติหมูกระทะ" }
 
-  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold") + (page === "simulator" ? " game-mode" : "")}>
+  return <div className={"app-shell theme-" + theme + (motionLevel === "soft" ? " motion-soft" : " motion-bold")}>
     <main className="main-area">
       <header className="topbar">
-        <button className="brand" onClick={handleBrandTap} aria-label="แตะสองครั้งเพื่อเปิด AI Simulator" title="แตะสองครั้งเพื่อเปิด AI Simulator"><span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path className="brand-loop" d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" /><circle className="brand-spark" cx="30" cy="10" r="2.2" /></svg></span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
+        <button className="brand" onClick={handleBrandTap} aria-label="กลับหน้าภาพรวม" title="กลับหน้าภาพรวม"><span className="brand-symbol" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false"><path className="brand-loop" d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" /><circle className="brand-spark" cx="30" cy="10" r="2.2" /></svg></span><span className="brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></span></button>
         <nav className="top-nav" aria-label="เมนูหลัก">{nav.map(item => <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "top-nav-link active" : "top-nav-link"} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{item.label}</span></button>)}</nav>
         <div className="topbar-actions"><span className="today-label"><Icon name="calendar" />{dateLabel(today())}</span><div className="theme-studio-wrap"><button className={themeStudioOpen ? "theme-trigger active" : "theme-trigger"} onClick={() => setThemeStudioOpen(open => !open)} aria-label="ปรับธีมและการเคลื่อนไหว" aria-expanded={themeStudioOpen}><Icon name="sparkles"/><span>ธีม</span></button>{themeStudioOpen && <div className="theme-studio" role="dialog" aria-label="Theme Studio"><div className="theme-studio-heading"><div><strong>Theme Studio</strong><small>ปรับอารมณ์พื้นที่ส่วนตัว</small></div><button className="theme-close" onClick={() => setThemeStudioOpen(false)} aria-label="ปิด">×</button></div><div className="theme-swatches">{([{id:"lavender",label:"Lavender",color:"#e8ddf8"},{id:"matcha",label:"Matcha",color:"#dcebd7"},{id:"cream",label:"Cream",color:"#f6e8cf"},{id:"midnight",label:"Midnight",color:"#343047"}] as const).map(option => <button key={option.id} className={theme === option.id ? "theme-swatch selected" : "theme-swatch"} onClick={() => setTheme(option.id)} aria-pressed={theme === option.id}><i style={{background:option.color}}/><span>{option.label}</span></button>)}</div><div className="sound-choice"><span><strong>เสียง UI</strong><small>เสียงต่างกันตามปุ่มและธีม</small></span><button className={soundsEnabled ? "sound-switch enabled" : "sound-switch"} onClick={() => setSoundsEnabled(enabled => !enabled)} aria-label={soundsEnabled ? "ปิดเสียง" : "เปิดเสียง"} aria-pressed={soundsEnabled}><i/></button></div><div className="motion-choice"><span>Motion</span><button className={motionLevel === "bold" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("bold")} aria-pressed={motionLevel === "bold"}>Bold</button><button className={motionLevel === "soft" ? "motion-option selected" : "motion-option"} onClick={() => setMotionLevel("soft")} aria-pressed={motionLevel === "soft"}>Soft</button></div><p>บันทึกการตั้งค่าไว้ในเครื่องนี้เท่านั้น</p></div>}</div><div className="topbar-account"><AccountMenu /></div></div>
       </header>
@@ -447,7 +436,6 @@ export default function CommandCenter() {
         return <button key={item.id} onClick={() => go(item.id)} className={page === item.id ? "mobile-nav-link active" : "mobile-nav-link"} aria-label={item.label} aria-current={page === item.id ? "page" : undefined}><Icon name={item.icon}/><span>{mobileLabel[item.id]}</span></button>
       })}</nav>
 
-      {page === "simulator" && <Simulator onExit={() => go("home")} onNavigate={(next) => go(next)} portal={{ balance, income, expense, transactionCount: transactions.length, notesCount: notes.length, healthRecordCount: healthRecords.length, latestWeight: latestWeight ?? null, savingsGoal: goal }} />}
       {page === "home" && <section className="page-content">
         <div className="welcome-row"><div><span className="eyebrow">{greeting} · ยินดีต้อนรับกลับมา</span><h1>ค่อย ๆ จัดการ<br/><em>ทีละเรื่องก็พอ</em></h1><p className="intro-copy">พื้นที่เล็ก ๆ สำหรับดูแลเงิน ความคิด และตัวเอง โดยไม่ต้องทำให้ทุกอย่างยุ่งยาก</p></div><div className="date-card"><span>วันนี้</span><strong>{new Date().toLocaleDateString("th-TH", { day: "numeric" })}</strong><small>{new Date().toLocaleDateString("th-TH", { month: "long", year: "numeric" })}</small></div></div>
         <section className="balance-card"><div className="balance-copy"><span className="eyebrow light">ภาพรวมการเงิน</span><p>ยอดคงเหลือทั้งหมด</p><strong><AnimatedMoney value={balance} /></strong><div className="balance-detail"><span><i className="legend-dot income-dot" />รับเข้า {cash(income)}</span><span><i className="legend-dot expense-dot" />จ่ายออก {cash(expense)}</span></div></div><div className="balance-art" aria-hidden="true"><span className="art-ring ring-one"/><span className="art-ring ring-two"/><span className="art-core">฿</span></div><button className="balance-link" onClick={() => go("money")}>ดูรายละเอียด <Icon name="arrow"/></button></section>
