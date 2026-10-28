@@ -531,12 +531,12 @@ export default function CommandCenter() {
 
       {page === "health" && <section className="page-content health-mobile-page">
         <div className="health-mobile-top"><div><span className="eyebrow">MONEY102 · WELLNESS</span><h1>สุขภาพ</h1><p>ดูแลตัวเองทีละก้าว</p></div><button className="health-profile-pill" onClick={() => setShowProfile(true)}><span className="health-profile-dot">{(profile?.name || "ฉ").slice(0,1)}</span><span>{profile?.name || "ฉัน"}</span><Icon name="chevron-right"/></button></div>
-        <div className="health-date-strip"><span className="health-date-arrow">‹</span><div><strong>วันนี้</strong><small>พุธ 28 ต.ค. 2569</small></div><span className="health-date-arrow">›</span></div>
+        <div className="health-date-strip"><span className="health-date-arrow">‹</span><div><strong>วันนี้</strong><small>{new Date().toLocaleDateString("th-TH", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}</small></div><span className="health-date-arrow">›</span></div>
         <section className="health-step-card">
-          <div className="health-step-main"><div><strong>{(healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0)).toLocaleString("en-US") || "7,652"}</strong><span>ก้าว</span></div><div className="health-step-side"><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.distance||0),0).toFixed(2)} กม.</strong><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.calories||0),0)} แคล</strong></div></div>
-          <div className="health-progress-track"><span style={{width: Math.min(100, healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0) / 6000 * 100) + "%"}}/></div>
+          <div className="health-step-main"><div><strong>{(healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.steps||0),0)).toLocaleString("en-US") || "7,652"}</strong><span>ก้าว</span></div><div className="health-step-side"><strong>{healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.distance||0),0).toFixed(2)} กม.</strong><strong>{healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.calories||0),0)} แคล</strong></div></div>
+          <div className="health-progress-track"><span style={{width: Math.min(100, healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.steps||0),0) / 6000 * 100) + "%"}}/></div>
           <div className="health-progress-label"><span>0</span><strong>◎ 6,000</strong></div>
-          <div className="health-goal-note">เกินเป้าหมายแล้ว {Math.max(0,healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0)-6000).toLocaleString("en-US")} ก้าว</div>
+          <div className="health-goal-note">เกินเป้าหมายแล้ว {Math.max(0,healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.steps||0),0)-6000).toLocaleString("en-US")} ก้าว</div>
         </section>
         <section className="health-activity-card">
           <div className="health-card-heading"><div><h2>จำนวนก้าวตามเวลา</h2><p>ช่วงเวลาที่เคลื่อนไหวมากที่สุด: <strong>18:30 น. – 19:00 น.</strong></p></div><span className="health-heading-chevron">›</span></div>
@@ -544,9 +544,9 @@ export default function CommandCenter() {
           <div className="health-update-note">อัปเดต 19:15 น. · ข้อมูลที่นำเข้าจากภาพ</div>
         </section>
         <div className="health-metric-grid">
-          <section className="health-mini-card"><span className="health-mini-icon steps">↗</span><small>ก้าววันนี้</small><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0).toLocaleString("en-US")}</strong><span>เป้าหมาย 6,000</span></section>
-          <section className="health-mini-card"><span className="health-mini-icon distance">⌁</span><small>ระยะทาง</small><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.distance||0),0).toFixed(2)} <em>กม.</em></strong><span>จากการเคลื่อนไหว</span></section>
-          <section className="health-mini-card"><span className="health-mini-icon calories">✳</span><small>พลังงานที่ใช้</small><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.calories||0),0)} <em>แคล</em></strong><span>ค่าประมาณจากมือถือ</span></section>
+          <section className="health-mini-card"><span className="health-mini-icon steps">↗</span><small>ก้าววันนี้</small><strong>{healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.steps||0),0).toLocaleString("en-US")}</strong><span>เป้าหมาย 6,000</span></section>
+          <section className="health-mini-card"><span className="health-mini-icon distance">⌁</span><small>ระยะทาง</small><strong>{healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.distance||0),0).toFixed(2)} <em>กม.</em></strong><span>จากการเคลื่อนไหว</span></section>
+          <section className="health-mini-card"><span className="health-mini-icon calories">✳</span><small>พลังงานที่ใช้</small><strong>{healthRecords.filter(r => r.date === today()).reduce((sum,r)=>sum+(r.calories||0),0)} <em>แคล</em></strong><span>ค่าประมาณจากมือถือ</span></section>
           <section className="health-mini-card"><span className="health-mini-icon weight">＋</span><small>น้ำหนักล่าสุด</small><strong>{latestWeight ? latestWeight : "—"} <em>{latestWeight ? "กก." : ""}</em></strong><span>{bmi ? "BMI " + bmi.toFixed(1) : "เพิ่มบันทึกน้ำหนัก"}</span></section>
         </div>
         <section className="health-records-card">
