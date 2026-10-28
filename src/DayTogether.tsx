@@ -272,7 +272,7 @@ const setTheme = (theme: string) => setData(d => ({ ...d, prefs: { ...d.prefs, t
     if (page === "split") return splitPage();
     if (page === "bbq") return bbqPage();
     if (page === "settings") {
-      return <section className="dt-panel"><h2>การตั้งค่าส่วนตัว</h2><p>ธีม: {data.prefs.theme}</p><p>เขตเวลา: {data.prefs.timezone}</p><p>สถานะการจัดเก็บ: {savedStatus}</p></section>
+      return (<section className="dt-panel"><h2>การตั้งค่าส่วนตัว</h2><p>ธีม: {data.prefs.theme}</p><p>เขตเวลา: {data.prefs.timezone}</p><p>สถานะการจัดเก็บ: {savedStatus}</p></section>);
     }
     return (
       <section className="dt-panel">
@@ -288,7 +288,7 @@ const setTheme = (theme: string) => setData(d => ({ ...d, prefs: { ...d.prefs, t
         </div>
         <div className="dt-card-grid">{mainPages.filter(p => p !== "home").map(p => <button className="dt-shortcut" key={p} onClick={() => navigate(p)}><span className={"dt-shortcut-icon " + p}>{icons[p]}</span><strong>{labels[p]}</strong><small>เปิดหมวดนี้</small></button>)}</div>
       </section>
-    )
+    );
   }
 
   return <div className={`dt-app ${data.prefs.theme==="dark"?"dt-dark":""}`}>
