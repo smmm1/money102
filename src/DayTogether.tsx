@@ -23,7 +23,8 @@ const readState = (): State => {
     const saved = raw ? JSON.parse(raw) : defaults
     const state: State = { ...defaults, ...saved, prefs: { ...defaults.prefs, ...(saved.prefs || {}) } }
     if (state.prefs.legacyImported) return state
-    const oldNotes = JSON.parse(localStorage.getItem("lamoon-commonplace-notes-v1") || "[]")
+    let oldNotes: any[] = []
+    try { const parsed = JSON.parse(localStorage.getItem("lamoon-commonplace-notes-v1") || "[]"); if (Array.isArray(parsed)) oldNotes = parsed } catch { oldNotes = [] }
     if (Array.isArray(oldNotes)) {
       const imported: Note[] = oldNotes.filter(n => n && typeof n === "object").map(n => ({
         id: typeof n.id === "string" && n.id ? n.id : crypto.randomUUID(),
@@ -41,7 +42,8 @@ const readState = (): State => {
       const ids = new Set(state.notes.map(n => n.id))
       state.notes = [...state.notes, ...imported.filter(n => !ids.has(n.id))]
     }
-    const oldHealth = JSON.parse(localStorage.getItem("lamoon-health-dashboard-v1") || "null")
+    let oldHealth: any = null
+    try { oldHealth = JSON.parse(localStorage.getItem("lamoon-health-dashboard-v1") || "null") } catch { oldHealth = null }
     if (oldHealth && Array.isArray(oldHealth.records)) {
       const activeProfile = oldHealth.activeProfileId || oldHealth.profiles?.[0]?.id
       const records = oldHealth.records.filter((record: any) => !activeProfile || record.profileId === activeProfile)
