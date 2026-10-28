@@ -38,7 +38,7 @@ function installStorageShim() {
     if (this !== window.localStorage) return nativeSet.call(this, key, value)
     const k = String(key), v = String(value)
     memorySnapshot[k] = v
-    scheduleCloudSave()
+    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
   }
   proto.removeItem = function(key: string) {
     if (this !== window.localStorage) return nativeRemove.call(this, key)
@@ -48,21 +48,30 @@ function installStorageShim() {
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
-  return { ...memorySnapshot }
+  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
 function scheduleCloudSave() {
   if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+  const scheduledToken = getToken()
+  if (!scheduledToken) return
   saveTimer = window.setTimeout(() => {
+    saveTimer = undefined
     const payload = readLocalSnapshot()
-    saveChain = saveChain.then(() => api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) }))
-      .then(() => window.dispatchEvent(new CustomEvent("d1-persist-success")))
-      .catch((error: unknown) => window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) })))
+    // Never replay a queued snapshot after the account session has changed.
+    saveChain = saveChain.then(() => {
+      if (!scheduledToken || scheduledToken !== getToken()) return undefined
+      return api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) })
+    }).then((result) => {
+      if (result !== undefined && scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
+    }).catch((error: unknown) => {
+      if (scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) }))
+    })
   }, 250)
 }
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.length > 0 && typeof value === "string"))
+  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
 }
 const AUTH_TOKEN_KEY = "money102_auth_token"
 let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
@@ -195,6 +204,12 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
             {message && <p role="status" className="cc-auth-message">{message}</p>}
             <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>{authMode === "signup" ? "สมัครสมาชิก" : "เข้าสู่ระบบ"}<span aria-hidden="true">↗</span></>}</button>
           </form>
+          <div className="cc-auth-secondary-actions">
+            <span>{authMode === "signup" ? "มีบัญชีอยู่แล้ว?" : "ยังไม่มีบัญชี?"}</span>
+            <button type="button" className="cc-auth-switch" onClick={() => { setAuthMode(mode => mode === "signin" ? "signup" : "signin"); setMessage(""); setPassword("") }}>
+              {authMode === "signup" ? "กลับไปเข้าสู่ระบบ" : "สร้างบัญชีส่วนตัว"}
+            </button>
+          </div>
         </div>
         <div className="cc-auth-foot"><span><i/> SECURE SESSION</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
       </div>
