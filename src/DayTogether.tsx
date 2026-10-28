@@ -273,24 +273,7 @@ export default function DayTogether() {
     if (page === "split") return splitPage()
     if (page === "bbq") return bbqPage()
     if (page === "settings") {
-      return (
-        <section className="dt-panel">
-          <h2>การตั้งค่าส่วนตัว</h2>
-          <div className="dt-form">
-            <Field label="ชื่อแอป"><input maxLength={40} value={data.prefs.appName} onChange={e => setAppName(e.target.value)} /></Field>
-            <Field label="ธีม"><select value={data.prefs.theme} onChange={e => setTheme(e.target.value)}><option value="system">ตามระบบ</option><option value="light">สว่าง</option><option value="dark">มืด</option></select></Field>
-            <Field label="เขตเวลา"><select value={data.prefs.timezone} onChange={e => setTimezone(e.target.value)}><option value="Asia/Bangkok">กรุงเทพฯ (Asia/Bangkok)</option><option value="Asia/Tokyo">โตเกียว</option><option value="UTC">UTC</option></select></Field>
-            <label className="dt-toggle"><input type="checkbox" checked={data.prefs.hidden} onChange={e => setPrivacyHidden(e.target.checked)} /> ซ่อนยอดเงินและข้อความส่วนตัวชั่วคราว</label>
-            <Button kind="secondary" onClick={() => { const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "daytogether-export.json"; a.click(); URL.revokeObjectURL(url); setToast("ส่งออกข้อมูล JSON แล้ว") }}>ส่งออกข้อมูล JSON</Button>
-            <Button kind="secondary" onClick={() => { downloadCsv("daytogether-savings.csv", [["id","type","amount_baht","date","goal_id","note"], ...data.savings.map(x => [x.id,x.type,(x.amountCents/100).toFixed(2),x.date,x.goalId,x.note])]); setToast("ส่งออก CSV รายการออมแล้ว") }}>ส่งออก CSV · ออมเงิน</Button>
-            <Button kind="secondary" onClick={() => { downloadCsv("daytogether-health.csv", [["id","type","date","value","systolic","diastolic","pulse","note"], ...data.health.map(x => [x.id,x.type,x.date,x.value??"",x.systolic??"",x.diastolic??"",x.pulse??"",x.note??""])]); setToast("ส่งออก CSV สุขภาพแล้ว") }}>ส่งออก CSV · สุขภาพ</Button>
-            <Button kind="secondary" onClick={() => { downloadCsv("daytogether-notes.csv", [["id","title","kind","date","tags","body"], ...data.notes.map(x => [x.id,x.title,x.kind,x.date,x.tags.join("|"),x.body])]); setToast("ส่งออก CSV โน้ตแล้ว") }}>ส่งออก CSV · โน้ต</Button>
-          </div>
-          <p>ข้อมูลจัดเก็บผ่านบัญชีและ Cloudflare D1 เป็น snapshot JSON ในเวอร์ชันนี้</p>
-          <p>ยังไม่ได้ตั้งค่าการส่งอีเมลรีเซ็ตรหัสผ่าน และไม่มีการแชร์ข้อมูลสุขภาพหรือโน้ตไปยังบิลโดยอัตโนมัติ</p>
-          <p>สถานะการจัดเก็บ: {savedStatus === "saved" ? "บันทึกแล้ว" : savedStatus === "saving" ? "กำลังบันทึก" : "บันทึกไม่สำเร็จ"}</p>
-        </section>
-      )
+      return <section className="dt-panel"><h2>การตั้งค่าส่วนตัว</h2><p>ธีม: {data.prefs.theme}</p><p>เขตเวลา: {data.prefs.timezone}</p><p>สถานะการจัดเก็บ: {savedStatus}</p></section>
     }
     return (
       <section className="dt-panel">
