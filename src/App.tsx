@@ -1,6 +1,6 @@
 import CloudAuth from "./CloudAuth"
-import CommandCenter from "./CommandCenter"
+import DayTogether from "./DayTogether"
 
 export default function App() {
-  return <CloudAuth><CommandCenter /></CloudAuth>
+  return <CloudAuth><DayTogether /></CloudAuth>
 }
