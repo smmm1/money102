@@ -102,7 +102,13 @@ export default function DayTogether() {
     if (!confirmDelete) return
     const { kind, id: target } = confirmDelete
     if (kind === "goal") setData(d => ({ ...d, goals: d.goals.filter(x => x.id !== target), savings: d.savings.map(x => x.goalId === target ? { ...x, goalId: "" } : x) }))
-    if (kind === "saving") setData(d => ({ ...d, savings: d.savings.filter(x => x.id !== target) }))
+    if (kind === "saving") {
+      const projected = data.savings.filter(x => x.id !== target)
+      const balances = new Map<string, number>()
+      for (const entry of projected) balances.set(entry.goalId || "general", (balances.get(entry.goalId || "general") || 0) + (entry.type === "deposit" ? entry.amountCents : -entry.amountCents))
+      if ([...balances.values()].some(balance => balance < 0)) { setConfirmDelete(null); setToast("ลบไม่ได้ เพราะจะทำให้ยอดถอนมากกว่ายอดฝากในกองออม"); return }
+      setData(d => ({ ...d, savings: projected }))
+    }
     if (kind === "health") setData(d => ({ ...d, health: d.health.filter(x => x.id !== target) }))
     if (kind === "note") setData(d => ({ ...d, notes: d.notes.filter(x => x.id !== target) }))
     if (kind === "bill") setData(d => ({ ...d, bills: d.bills.filter(x => x.id !== target), bbq: d.bbq.map(x => x.billId === target ? { ...x, billId: undefined } : x) }))
@@ -138,10 +144,11 @@ export default function DayTogether() {
       const amountCents = cents(form.amount || "0")
       if (amountCents <= 0 || !form.date) { setFormError("ใส่ยอดเงินและวันที่ให้ถูกต้อง"); return }
       const goalId = form.goalId || ""
-      const scoped = data.savings.filter(x => x.goalId === goalId && x.id !== oldId)
-      const current = scoped.reduce((sum,x)=>sum+(x.type==="deposit"?x.amountCents:-x.amountCents),0)
-      if (form.type === "withdrawal" && amountCents > current) { setFormError("ยอดถอนมากกว่ายอดออมในกองนี้"); return }
       const item: SavingEntry = { id:newId, type: form.type === "withdrawal" ? "withdrawal" : "deposit", amountCents, date:form.date, goalId, note:form.note?.trim() || "", createdAt: oldId ? data.savings.find(x=>x.id===oldId)?.createdAt || now : now }
+      const projected = oldId ? data.savings.map(x => x.id === oldId ? item : x) : [item, ...data.savings]
+      const bucketBalances = new Map<string, number>()
+      for (const entry of projected) bucketBalances.set(entry.goalId || "general", (bucketBalances.get(entry.goalId || "general") || 0) + (entry.type === "deposit" ? entry.amountCents : -entry.amountCents))
+      if ([...bucketBalances.values()].some(balance => balance < 0)) { setFormError("ยอดถอนรวมมากกว่ายอดฝากในกองออมที่เลือก แก้ไขรายการอื่นก่อน"); return }
       setData(d=>({...d,savings:replace(d.savings,item)})); resetForm(); setToast("บันทึกรายการออมแล้ว"); return
     }
     if (page === "health") {
