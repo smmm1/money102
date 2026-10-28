@@ -7,7 +7,7 @@ type Page = "home" | "money" | "notes" | "health" | "split" | "pork" | "simulato
 type Transaction = { id: string; type: "income" | "expense"; amount: number; detail: string; date: string; createdAt: number }
 type Note = { id: string; title: string; body: string; tags?: string[]; mood?: string; pinned?: boolean; createdAt: string; updatedAt: string }
 type Profile = { id: string; name: string; height: number; age: number }
-type HealthRecord = { id: string; profileId: string; date: string; type: "weight" | "exercise" | "wellness"; weight?: number; distance?: number; duration?: number; reps?: number; sets?: number; exercise?: string; water?: number; sleep?: number; note?: string }
+type HealthRecord = { id: string; profileId: string; date: string; type: "weight" | "exercise" | "wellness"; weight?: number; distance?: number; duration?: number; reps?: number; sets?: number; exercise?: string; steps?: number; calories?: number; water?: number; sleep?: number; note?: string }
 type HealthData = { profiles: Profile[]; activeProfileId: string; records: HealthRecord[] }
 type DashboardWidget = "recent" | "goal" | "trend"
 
@@ -314,6 +314,15 @@ export default function CommandCenter() {
   }, [showNote, noteTitle, noteBody])
   useEffect(() => { safeSet(KEYS.notes, JSON.stringify(notes)) }, [notes])
   useEffect(() => { safeSet(KEYS.health, JSON.stringify(health)) }, [health])
+  useEffect(() => {
+    const profileId = health.profiles.find(p => p.id === health.activeProfileId)?.id || health.profiles[0]?.id || "profile-default"
+    const recordId = "money102-steps-2026-10-28"
+    if (health.records.some(record => record.id === recordId)) return
+    const record: HealthRecord = { id: recordId, profileId, date: "2026-10-28", type: "exercise", exercise: "เดิน", steps: 7652, distance: 6.09, calories: 295, note: "ข้อมูลจาก Samsung Health · ช่วงที่เคลื่อนไหวมากที่สุด 18:30–19:00 · เป้าหมาย 6,000 ก้าว" }
+    setHealth(old => old.records.some(item => item.id === recordId) ? old : { ...old, records: [...old.records, record] })
+  // One-time import of the activity shown in the user-provided screenshot.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   useEffect(() => { safeSet(KEYS.goal, String(goal)); safeSet(KEYS.goalTitle, goalTitle) }, [goal, goalTitle])
   useEffect(() => { const sync = () => { const next = location.hash.slice(1); if (next === "saving") setPage("money"); else if (["money", "notes", "health", "split", "pork", "simulator"].includes(next)) setPage(next as Page); else setPage("home") }; addEventListener("hashchange", sync); return () => removeEventListener("hashchange", sync) }, [])
 
@@ -511,12 +520,29 @@ export default function CommandCenter() {
         </section>
       </section>}
 
-      {page === "health" && <section className="page-content">
-        <div className="page-heading-row"><div><span className="eyebrow">ดูแลตัวเอง · WELLBEING</span><h1>สุขภาพ</h1><p>ติดตามความเปลี่ยนแปลง เพื่อเข้าใจตัวเอง ไม่ใช่กดดันตัวเอง</p></div><button className="button button-primary" onClick={() => setShowHealth(true)}><Icon name="plus"/>บันทึกสุขภาพ</button></div>
-        <section className="profile-bar"><span className="profile-avatar"><Icon name="health"/></span><div className="profile-info"><strong>{profile?.name || "ฉัน"}</strong><small>{profile?.height || 163} ซม. · อายุ {profile?.age || "—"} ปี</small></div><select aria-label="เลือกโปรไฟล์สุขภาพ" value={profile?.id || ""} onChange={e => setHealth(old => ({ ...old, activeProfileId: e.target.value }))}>{health.profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select><button className="button button-secondary" onClick={() => setShowProfile(true)}><Icon name="plus"/>เพิ่มโปรไฟล์</button></section>
-        <div className="health-stats"><div className="health-stat"><span>น้ำหนักล่าสุด</span><strong>{latestWeight ? <>{latestWeight} <small>กก.</small></> : "—"}</strong><small>{healthRecords.find(r => r.type === "weight")?.date ? dateLabel(healthRecords.find(r => r.type === "weight")!.date) : "ยังไม่มีบันทึก"}</small></div><div className="health-stat"><span>ดัชนีมวลกาย (BMI)</span><strong>{bmi ? bmi.toFixed(1) : "—"}</strong><small>{bmi ? bmi < 18.5 ? "ต่ำกว่าเกณฑ์ทั่วไป" : bmi < 25 ? "ช่วงเกณฑ์ทั่วไป" : "สูงกว่าเกณฑ์ทั่วไป" : "บันทึกน้ำหนักเพื่อคำนวณ"}</small></div><div className="health-stat"><span>เวลาออกกำลังกายสะสม</span><strong>{healthRecords.filter(r => r.type === "exercise").reduce((s, r) => s + (r.duration || 0), 0)} <small>นาที</small></strong><small>{healthRecords.filter(r => r.type === "exercise").length} กิจกรรม</small></div></div>
-        <section className="surface health-history"><div className="surface-heading"><div><span className="eyebrow">บันทึกล่าสุด</span><h3>ความคืบหน้าของคุณ</h3></div><span className="history-count">{healthRecords.length} รายการ</span></div>
-          {healthRecords.length ? <div className="health-list">{healthRecords.map(r => <div className="health-row" key={r.id}><span className={"health-record-symbol " + r.type}>{r.type === "weight" ? "กก." : r.type === "exercise" ? "↗" : "＋"}</span><span className="health-record-info"><strong>{r.type === "weight" ? "น้ำหนัก " + r.weight + " กก." : r.type === "exercise" ? r.exercise || "ออกกำลังกาย" : "น้ำดื่มและการนอน"}</strong><small>{dateLabel(r.date)}{r.type === "exercise" ? " · " + (r.duration || 0) + " นาที" + (r.distance ? " · " + r.distance + " กม." : "") + (r.reps ? " · " + r.reps + " ครั้ง × " + (r.sets || 1) + " เซต" : "") : r.type === "wellness" ? " · " + (r.water || 0) + " แก้ว · " + (r.sleep || 0) + " ชม." : ""}</small></span><button className="icon-button delete-button" aria-label="ลบบันทึก" onClick={() => { if (confirm("ลบบันทึกนี้หรือไม่?")) setHealth(old => ({ ...old, records: old.records.filter(x => x.id !== r.id) })) }}><Icon name="trash"/></button></div>)}</div> : <Empty title="เริ่มจากการบันทึกครั้งแรก" body="จะเป็นน้ำหนัก การเดิน หรือการพักผ่อนก็ได้ เลือกสิ่งที่ทำได้วันนี้" action="บันทึกสุขภาพ" onClick={() => setShowHealth(true)} />}
+      {page === "health" && <section className="page-content health-mobile-page">
+        <div className="health-mobile-top"><div><span className="eyebrow">MONEY102 · WELLNESS</span><h1>สุขภาพ</h1><p>ดูแลตัวเองทีละก้าว</p></div><button className="health-profile-pill" onClick={() => setShowProfile(true)}><span className="health-profile-dot">{(profile?.name || "ฉ").slice(0,1)}</span><span>{profile?.name || "ฉัน"}</span><Icon name="chevron-right"/></button></div>
+        <div className="health-date-strip"><span className="health-date-arrow">‹</span><div><strong>วันนี้</strong><small>พุธ 28 ต.ค. 2569</small></div><span className="health-date-arrow">›</span></div>
+        <section className="health-step-card">
+          <div className="health-step-main"><div><strong>{(healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0)).toLocaleString("en-US") || "7,652"}</strong><span>ก้าว</span></div><div className="health-step-side"><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.distance||0),0).toFixed(2)} กม.</strong><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.calories||0),0)} แคล</strong></div></div>
+          <div className="health-progress-track"><span style={{width: Math.min(100, healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0) / 6000 * 100) + "%"}}/></div>
+          <div className="health-progress-label"><span>0</span><strong>◎ 6,000</strong></div>
+          <div className="health-goal-note">เกินเป้าหมายแล้ว {Math.max(0,healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0)-6000).toLocaleString("en-US")} ก้าว</div>
+        </section>
+        <section className="health-activity-card">
+          <div className="health-card-heading"><div><h2>จำนวนก้าวตามเวลา</h2><p>ช่วงเวลาที่เคลื่อนไหวมากที่สุด: <strong>18:30 น. – 19:00 น.</strong></p></div><span className="health-heading-chevron">›</span></div>
+          <div className="health-hour-chart" role="img" aria-label="กราฟกิจกรรมรายชั่วโมง โดยมีจุดสูงสุดช่วง 18 นาฬิกา"><div className="health-hour-bars">{[0,0,0,0,0,0,0,12,12,40,9,14,52,21,26,18,13,11,10,9,8,8,9,11,15,0,0,0,0,0,0,0,9,16,48,205,26,15].map((height,index)=><i key={index} style={{height:height?Math.max(5,height*.96)+"px":"0px",opacity:height?1:0}}/>)}</div><div className="health-hour-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>(h)</span></div></div>
+          <div className="health-update-note">อัปเดต 19:15 น. · ข้อมูลที่นำเข้าจากภาพ</div>
+        </section>
+        <div className="health-metric-grid">
+          <section className="health-mini-card"><span className="health-mini-icon steps">↗</span><small>ก้าววันนี้</small><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.steps||0),0).toLocaleString("en-US")}</strong><span>เป้าหมาย 6,000</span></section>
+          <section className="health-mini-card"><span className="health-mini-icon distance">⌁</span><small>ระยะทาง</small><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.distance||0),0).toFixed(2)} <em>กม.</em></strong><span>จากการเคลื่อนไหว</span></section>
+          <section className="health-mini-card"><span className="health-mini-icon calories">✳</span><small>พลังงานที่ใช้</small><strong>{healthRecords.filter(r => r.date === "2026-10-28").reduce((sum,r)=>sum+(r.calories||0),0)} <em>แคล</em></strong><span>ค่าประมาณจากมือถือ</span></section>
+          <section className="health-mini-card"><span className="health-mini-icon weight">＋</span><small>น้ำหนักล่าสุด</small><strong>{latestWeight ? latestWeight : "—"} <em>{latestWeight ? "กก." : ""}</em></strong><span>{bmi ? "BMI " + bmi.toFixed(1) : "เพิ่มบันทึกน้ำหนัก"}</span></section>
+        </div>
+        <section className="health-records-card">
+          <div className="health-card-heading"><div><h2>บันทึกสุขภาพ</h2><p>ประวัติที่บันทึกไว้ใน Money102</p></div><button className="health-add-button" onClick={() => setShowHealth(true)}><Icon name="plus"/> เพิ่มบันทึก</button></div>
+          {healthRecords.length ? <div className="health-list">{healthRecords.map(r => <div className="health-row" key={r.id}><span className={"health-record-symbol "+r.type}>{r.type==="weight"?"กก.":r.type==="exercise"?"↗":"＋"}</span><span className="health-record-info"><strong>{r.type==="weight"?"น้ำหนัก "+r.weight+" กก.":r.type==="exercise"?(r.exercise||"กิจกรรม")+(r.steps?" · "+r.steps.toLocaleString("en-US")+" ก้าว":""):"น้ำดื่มและการนอน"}</strong><small>{dateLabel(r.date)}{r.type==="exercise"?" · "+(r.distance||0).toFixed(2)+" กม."+(r.duration?" · "+r.duration+" นาที":"")+(r.calories?" · "+r.calories+" แคล":"")+(r.note?" · "+r.note:""):r.type==="wellness"?" · "+(r.water||0)+" แก้ว · "+(r.sleep||0)+" ชม.":""}</small></span><button className="icon-button delete-button" aria-label="ลบบันทึก" onClick={() => { if(confirm("ลบบันทึกนี้หรือไม่?")) setHealth(old=>({...old,records:old.records.filter(x=>x.id!==r.id)})) }}><Icon name="trash"/></button></div>)}</div> : <Empty title="เริ่มจากการบันทึกครั้งแรก" body="บันทึกน้ำหนัก การเดิน หรือการพักผ่อนของคุณได้ที่นี่" action="บันทึกสุขภาพ" onClick={() => setShowHealth(true)}/>}
         </section>
       </section>}
     </main>
