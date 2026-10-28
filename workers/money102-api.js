@@ -44,11 +44,12 @@ function validateDayTogetherSnapshot(snapshot) {
  }
  for(const value of balances.values())if(value<0)return "ยอดถอนรวมมากกว่ายอดออมที่บันทึก";
  for(const entry of state.health){
-  if(!["weight","bloodPressure","sleep","water","symptom"].includes(entry.type)||typeof entry.date!=="string"||!entry.date)return "ข้อมูลสุขภาพมีชนิดหรือวันที่ไม่ถูกต้อง";
+  if(!["weight","bloodPressure","sleep","water","symptom","legacy"].includes(entry.type)||typeof entry.date!=="string"||!entry.date)return "ข้อมูลสุขภาพมีชนิดหรือวันที่ไม่ถูกต้อง";
   if(["weight","water"].includes(entry.type)&&!(typeof entry.value==="number"&&Number.isFinite(entry.value)&&entry.value>0))return "ค่าน้ำหนักหรือปริมาณน้ำต้องมากกว่า 0";
   if(entry.type==="bloodPressure"&&(!integer(entry.systolic,1)||!integer(entry.diastolic,1)||(entry.pulse!==undefined&&!integer(entry.pulse,1))))return "ข้อมูลความดันไม่ถูกต้อง";
   if(entry.type==="sleep"&&(!/^\d{2}:\d{2}$/.test(entry.bedtime||"")||!/^\d{2}:\d{2}$/.test(entry.wakeTime||"")))return "เวลาเข้านอนหรือตื่นไม่ถูกต้อง";
   if(entry.type==="symptom"&&(typeof entry.title!=="string"||!entry.title.trim()||(entry.severity!==undefined&&(!integer(entry.severity,1)||entry.severity>5))))return "ข้อมูลอาการไม่ถูกต้อง";
+  if(entry.type==="legacy"&&typeof entry.title!=="string")return "ข้อมูลสุขภาพเดิมไม่ถูกต้อง";
   if(typeof entry.note==="string"&&entry.note.length>4000)return "หมายเหตุสุขภาพยาวเกินกำหนด";
  }
  for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!Array.isArray(note.tags)||note.tags.some(t=>typeof t!=="string"||t.length>60)||!Number.isSafeInteger(note.version)||note.version<1)return "โน้ตมีข้อมูลไม่ถูกต้อง";
