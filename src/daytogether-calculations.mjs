@@ -9,9 +9,23 @@ export function calculateSplit(expenses = [], participants = [], settlements = [
     if (!expense || !Number.isSafeInteger(expense.amountSatang) || expense.amountSatang <= 0 || !hasId(expense.payerId) || !Array.isArray(expense.participantIds)) continue;
     const assigned = [...new Set(expense.participantIds)].filter(hasId);
     if (!assigned.length) continue;
-    const base = Math.floor(expense.amountSatang / assigned.length);
-    const remainder = expense.amountSatang % assigned.length;
-    assigned.forEach((id, index) => { balances[id] -= base + (index < remainder ? 1 : 0); });
+    let shares;
+    if (expense.allocationMode === "fixed") {
+      const values = assigned.map((id) => expense.allocations?.[id]);
+      if (values.some((value) => !Number.isSafeInteger(value) || value < 0) || values.reduce((sum, value) => sum + value, 0) !== expense.amountSatang) continue;
+      shares = values;
+    } else if (expense.allocationMode === "percentage") {
+      const points = assigned.map((id) => expense.allocations?.[id]);
+      if (points.some((value) => !Number.isSafeInteger(value) || value < 0 || value > 10000) || points.reduce((sum, value) => sum + value, 0) !== 10000) continue;
+      shares = points.map((value) => Math.floor(expense.amountSatang * value / 10000));
+      let remainder = expense.amountSatang - shares.reduce((sum, value) => sum + value, 0);
+      for (let index = 0; remainder > 0; index = (index + 1) % shares.length, remainder--) shares[index]++;
+    } else {
+      const base = Math.floor(expense.amountSatang / assigned.length);
+      const remainder = expense.amountSatang % assigned.length;
+      shares = assigned.map((_, index) => base + (index < remainder ? 1 : 0));
+    }
+    assigned.forEach((id, index) => { balances[id] -= shares[index]; });
     balances[expense.payerId] += expense.amountSatang;
   }
   for (const settlement of settlements) {
