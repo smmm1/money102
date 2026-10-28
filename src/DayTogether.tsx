@@ -270,9 +270,9 @@ export default function DayTogether() {
       {selectedVisit ? <div className="dt-panel-body">
         <h3>{data.prefs.hidden ? "••••••" : selectedVisit.shop}</h3>
         <p>{dateText(selectedVisit.date)} · {data.prefs.hidden ? "••••••" : selectedVisit.title}</p>
-        <Button onClick={() => startEdit("bbq", detail)}>แก้ไข</Button>
+        <Button onClick={() => startEdit("bbq", selectedVisit)}>แก้ไข</Button>
         <Button kind="danger" onClick={() => askDelete("bbq", selectedVisit.id)}>ลบ</Button>
-        <Button kind={selectedVisit.billId ? "secondary" : "primary"} onClick={() => openOrCreateBillForVisit(detail)}>{selectedVisit.billId ? "เปิดบิลที่เชื่อม" : "สร้างบิลหารตังจากมื้อนี้"}</Button>
+        <Button kind={selectedVisit.billId ? "secondary" : "primary"} onClick={() => openOrCreateBillForVisit(selectedVisit)}>{selectedVisit.billId ? "เปิดบิลที่เชื่อม" : "สร้างบิลหารตังจากมื้อนี้"}</Button>
       </div> : null}
       {filteredBbq.length === 0 ? <Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={() => beginNew("bbq")}>เพิ่มมื้อแรก</Button>} /> : null}
       {filteredBbq.map(visit => <div className="dt-list-row" key={visit.id}>
