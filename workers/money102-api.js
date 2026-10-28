@@ -17,7 +17,7 @@ async function ensureSchema(db) {
   await db.prepare("CREATE TABLE IF NOT EXISTS user_app_data (user_id TEXT NOT NULL,bucket TEXT NOT NULL CHECK(bucket='app_state'),payload TEXT NOT NULL CHECK(json_valid(payload)),updated_at TEXT NOT NULL,PRIMARY KEY(user_id,bucket))").run();
 }
 
-function toBase64Url(bytes) { let binary=""; for(const byte of bytes) binary+=String.fromCharCode(byte); return btoa(binary).replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/g,""); }
+function toBase64Url(bytes) { let binary=""; for(const byte of bytes) binary+=String.fromCharCode(byte); return btoa(binary).replaceAll("+","-").replaceAll("/","_").replace(/=+$/g,""); }
 function fromBase64Url(value) { const base64=value.replace(/-/g,"+").replace(/_/g,"/"); const binary=atob(base64+"=".repeat((4-base64.length%4)%4)); return Uint8Array.from(binary,c=>c.charCodeAt(0)); }
 function randomBytes(size) { return crypto.getRandomValues(new Uint8Array(size)); }
 async function sha256(value) { return toBase64Url(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)))); }
