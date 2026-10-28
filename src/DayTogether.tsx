@@ -259,18 +259,20 @@ export default function DayTogether() {
     setToast("เชื่อมบิลกับประวัติมื้ออาหารแล้ว")
   }
 
-  const bbqPage = () => (
+  const bbqPage = () => {
+    const selectedVisit = detailId ? data.bbq.find(visit => visit.id === detailId) : undefined
+    return (
     <section className="dt-panel">
       <h2>ประวัติมื้อหมูกระทะ</h2>
       <Button kind="primary" onClick={() => beginNew("bbq")}>＋ เพิ่มมื้อ</Button>
       <div className="dt-search"><span>⌕</span><input aria-label="ค้นหาประวัติมื้ออาหาร" placeholder="ค้นหาร้านหรือความทรงจำ" value={query} onChange={e => setQuery(e.target.value)} /></div>
       {editing ? currentForm() : null}
-      {detail && "personalCents" in detail ? <div className="dt-panel-body">
-        <h3>{data.prefs.hidden ? "••••••" : detail.shop}</h3>
-        <p>{dateText(detail.date)} · {data.prefs.hidden ? "••••••" : detail.title}</p>
+      {selectedVisit ? <div className="dt-panel-body">
+        <h3>{data.prefs.hidden ? "••••••" : selectedVisit.shop}</h3>
+        <p>{dateText(selectedVisit.date)} · {data.prefs.hidden ? "••••••" : selectedVisit.title}</p>
         <Button onClick={() => startEdit("bbq", detail)}>แก้ไข</Button>
-        <Button kind="danger" onClick={() => askDelete("bbq", detail.id)}>ลบ</Button>
-        <Button kind={detail.billId ? "secondary" : "primary"} onClick={() => openOrCreateBillForVisit(detail)}>{detail.billId ? "เปิดบิลที่เชื่อม" : "สร้างบิลหารตังจากมื้อนี้"}</Button>
+        <Button kind="danger" onClick={() => askDelete("bbq", selectedVisit.id)}>ลบ</Button>
+        <Button kind={selectedVisit.billId ? "secondary" : "primary"} onClick={() => openOrCreateBillForVisit(detail)}>{selectedVisit.billId ? "เปิดบิลที่เชื่อม" : "สร้างบิลหารตังจากมื้อนี้"}</Button>
       </div> : null}
       {filteredBbq.length === 0 ? <Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={() => beginNew("bbq")}>เพิ่มมื้อแรก</Button>} /> : null}
       {filteredBbq.map(visit => <div className="dt-list-row" key={visit.id}>
@@ -280,7 +282,8 @@ export default function DayTogether() {
         <Button kind="danger" onClick={() => askDelete("bbq", visit.id)}>ลบ</Button>
       </div>)}
     </section>
-  )
+    )
+  }
 
   const pageContent = () => {
     if(page==="savings")return savingsPage()
