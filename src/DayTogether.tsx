@@ -95,7 +95,7 @@ export default function DayTogether() {
     if (kind === "health") setData(d => ({ ...d, health: d.health.filter(x => x.id !== target) }))
     if (kind === "note") setData(d => ({ ...d, notes: d.notes.filter(x => x.id !== target) }))
     if (kind === "bill") setData(d => ({ ...d, bills: d.bills.filter(x => x.id !== target), bbq: d.bbq.map(x => x.billId === target ? { ...x, billId: undefined } : x) }))
-    if (kind === "bbq") setData(d => ({ ...d, bbq: d.bbq.filter(x => x.id !== target) }))
+    if (kind === "bbq") setData(d => ({ ...d, bbq: d.bbq.filter(x => x.id !== target), bills: d.bills.map(b => b.bbqId === target ? { ...b, bbqId: undefined } : b) }))
     setConfirmDelete(null); setToast("ลบรายการออกจากข้อมูลของคุณแล้ว"); if (detailId === target) navigate(page)
   }
 
