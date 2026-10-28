@@ -14,6 +14,7 @@ export function AccountMenu() {
   </div>
 }
 type LocalSnapshot = Record<string, string>
+const LOCAL_PREFIX = "lamoon-"
 const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
 const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
   ? "https://money102-api-staging.s2mtha16.workers.dev"
