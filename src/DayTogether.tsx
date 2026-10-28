@@ -262,9 +262,9 @@ export default function DayTogether() {
               </div>
             </div>
             <div className="dt-stats">
-              <div><span>ยอดรวมมื้อ</span><strong>{visit.totalCents ? money(visit.totalCents, data.prefs.hidden) : "ยังไม่มีข้อมูล"}</strong></div>
-              <div><span>ค่าใช้จ่ายส่วนตัว</span><strong>{visit.personalCents == null ? "ยังไม่ทราบ" : money(visit.personalCents, data.prefs.hidden)}</strong></div>
-              <div><span>คะแนน</span><strong>{visit.rating == null ? "ไม่ให้คะแนน" : "★".repeat(visit.rating)}</strong></div>
+              <div><span>ยอดรวมมื้อ <strong>{visit.totalCents ? money(visit.totalCents, data.prefs.hidden) : "ยังไม่มีข้อมูล"}</strong></span></div>
+              <div><span>ค่าใช้จ่ายส่วนตัว <strong>{visit.personalCents == null ? "ยังไม่ทราบ" : money(visit.personalCents, data.prefs.hidden)}</strong></span></div>
+              <div><span>คะแนน <strong>{visit.rating == null ? "ไม่ให้คะแนน" : "★".repeat(visit.rating)}</strong></span></div>
             </div>
             {visit.friends && <p>ไปกับ: {data.prefs.hidden ? "••••••" : visit.friends}</p>}
             {visit.area && <p>สาขา/ย่าน: {data.prefs.hidden ? "••••••" : visit.area}</p>}
