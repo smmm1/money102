@@ -14,6 +14,7 @@ export function AccountMenu() {
   </div>
 }
 type LocalSnapshot = Record<string, string>
+const LOCAL_PREFIX = "lamoon-"
 const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
 const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
   ? "https://money102-api-staging.s2mtha16.workers.dev"
@@ -85,7 +86,7 @@ async function api(path: string, init: RequestInit = {}) {
 
 function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | "error"; title: string; detail: string; onRetry?: () => void }) {
   return <main className="cc-auth-screen cc-auth-screen-status"><section className="cc-auth-frame cc-auth-frame-status">
-    <div className="cc-auth-brand-panel"><div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">moneyeep<small>พื้นที่ส่วนตัว</small></strong></div>
+    <div className="cc-auth-brand-panel"><div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">DayTogether<small>พื้นที่ส่วนตัว</small></strong></div>
       <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
       <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div><div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
     </div>
@@ -100,6 +101,8 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [checking] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">("signin")
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [cloudReady, setCloudReady] = useState(false)
@@ -147,15 +150,20 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     event.preventDefault()
     setBusy(true)
     setMessage("")
+    if (authMode === "forgot") { setMessage("ยังไม่ได้ตั้งค่าการส่งอีเมลรีเซ็ตรหัสผ่าน จึงยังส่งลิงก์รีเซ็ตไม่ได้"); return }
+    if (authMode === "signup" && password !== confirmPassword) { setMessage("รหัสผ่านทั้งสองช่องไม่ตรงกัน"); return }
+    setBusy(true)
     try {
-      const result = await api("/api/auth/signin", {
+      const result = await api(authMode === "signup" ? "/api/auth/signup" : "/api/auth/signin", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       }) as { token: string; user: AppUser }
       setSessionToken(result.token)
       setUser(result.user)
       setPassword("")
-      setMessage("เข้าสู่ระบบสำเร็จ")
+      setConfirmPassword("")
+      setMessage(authMode === "signup" ? "สร้างบัญชีสำเร็จ" : "เข้าสู่ระบบสำเร็จ")
+      setAuthMode("signin")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -166,6 +174,9 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   async function signOut() {
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
     setSessionToken("")
+    if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+    saveTimer = undefined
+    memorySnapshot = {}
     setUser(null)
     setCloudReady(false)
     setCloudError("")
@@ -184,13 +195,15 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       <div className="cc-auth-form-side">
         <div className="cc-auth-form-top"><span className="cc-overline">WELCOME BACK</span><span className="cc-auth-lock"><i/> PRIVATE ACCESS</span></div>
         <div className="cc-auth-form-content"><div className="cc-auth-mini-mark" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></div>
-          <h2>ยินดีที่ได้พบกันอีกครั้ง</h2><p className="cc-auth-intro">เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ</p>
-          <form onSubmit={submit} className="cc-auth-form">
+          <h2>{authMode==="signup"?"สร้างพื้นที่ส่วนตัวใหม่":authMode==="forgot"?"ลืมรหัสผ่าน?":"ยินดีที่ได้พบกันอีกครั้ง"}</h2><p className="cc-auth-intro">{authMode==="signup"?"สร้างบัญชีเพื่อเก็บข้อมูลส่วนตัวแยกจากผู้ใช้อื่น":authMode==="forgot"?"การรีเซ็ตรหัสผ่านผ่านอีเมลยังไม่ได้ตั้งค่าในระบบนี้":"เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ"}</p>
+          {authMode==="forgot" ? <div className="cc-auth-form"><p role="status" className="cc-auth-message">ยังไม่มีบริการส่งอีเมลรีเซ็ตรหัสผ่าน จึงไม่สามารถเปลี่ยนรหัสผ่านจากหน้านี้ได้</p><button type="button" className="cc-auth-submit" onClick={()=>{setAuthMode("signin");setMessage("")}}>กลับเข้าสู่ระบบ</button></div> : <form onSubmit={submit} className="cc-auth-form">
             <label>อีเมล<input type="email" required autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="อีเมลของคุณ" /></label>
-            <label>รหัสผ่าน<input type="password" required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="กรอกรหัสผ่าน" /></label>
+            <label>รหัสผ่าน<input type="password" required minLength={8} autoComplete={authMode==="signup"?"new-password":"current-password"} value={password} onChange={e => setPassword(e.target.value)} placeholder={authMode==="signup"?"อย่างน้อย 8 ตัวอักษร":"กรอกรหัสผ่าน"} /></label>
+            {authMode==="signup"&&<label>ยืนยันรหัสผ่าน<input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="กรอกรหัสผ่านอีกครั้ง" /></label>}
             {message && <p role="status" className="cc-auth-message">{message}</p>}
-            <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>เข้าสู่ระบบ<span aria-hidden="true">↗</span></>}</button>
-          </form>
+            <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>{authMode==="signup"?"สร้างบัญชี":"เข้าสู่ระบบ"}<span aria-hidden="true">↗</span></>}</button>
+            <div className="cc-auth-mode-links">{authMode==="signin"?<><button type="button" onClick={()=>{setAuthMode("signup");setMessage("")}}>สมัครสมาชิก</button><button type="button" onClick={()=>{setAuthMode("forgot");setMessage("")}}>ลืมรหัสผ่าน?</button></>:<button type="button" onClick={()=>{setAuthMode("signin");setMessage("");setConfirmPassword("")}}>มีบัญชีแล้ว? เข้าสู่ระบบ</button>}</div>
+          </form>}
         </div>
         <div className="cc-auth-foot"><span><i/> SECURE SESSION</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
       </div>
