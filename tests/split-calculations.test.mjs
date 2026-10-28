@@ -9,7 +9,7 @@ test("1000 baht divided among three keeps total correct", () => {
 });
 test("rounding remainder is assigned deterministically", () => {
  const result=calculateSplit([{id:"x",title:"meal",amountSatang:10001,payerId:"a",participantIds:["a","b","c"]}],people);
- assert.deepEqual(result.balances,{a:3334,b:-3334,c:-3333});
+ assert.deepEqual(result.balances,{a:6667,b:-3334,c:-3333});
 });
 test("only assigned participants share an expense", () => {
  const result=calculateSplit([{id:"x",title:"drink",amountSatang:9000,payerId:"a",participantIds:["a","c"]}],people);
