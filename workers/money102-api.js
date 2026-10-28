@@ -98,3 +98,5 @@ export default { async fetch(request,env) {
   const updatedAt=new Date().toISOString(); await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run(); return json(request,env,{ok:true,updated_at:updatedAt});
  } catch (error) { console.error("money102-api request failed", error); return json(request,env,{error:"Cloudflare D1 request failed"},500); }
 }};
+
+export { isSnapshot, validDayTogetherState };
