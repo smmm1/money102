@@ -162,3 +162,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   .health-stat { padding: 14px; }
   .health-stat > strong { font-size: 23px; }
 }
+
+
+.cc-auth-mode-links{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}.cc-auth-mode-links button{border:0;background:transparent;color:#123b7a;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:8px 0}.cc-auth-message{overflow-wrap:anywhere}
