@@ -317,6 +317,13 @@ export default function CommandCenter() {
   useEffect(() => { safeSet(KEYS.notes, JSON.stringify(notes)) }, [notes])
   useEffect(() => { safeSet(KEYS.health, JSON.stringify(health)) }, [health])
   useEffect(() => {
+    const saved = () => { setToast(current => current?.message.includes("กำลังบันทึก") ? { message: "บันทึกลง Cloudflare D1 แล้ว" } : current) }
+    const failed = (event: Event) => { const detail = (event as CustomEvent).detail; setToast({ message: "บันทึกไม่สำเร็จ: " + (detail || "เชื่อมต่อฐานข้อมูลไม่ได้") }); setDelightActive(false) }
+    window.addEventListener("d1-persist-success", saved)
+    window.addEventListener("d1-persist-error", failed)
+    return () => { window.removeEventListener("d1-persist-success", saved); window.removeEventListener("d1-persist-error", failed) }
+  }, [])
+  useEffect(() => {
     const profileId = health.profiles.find(p => p.id === health.activeProfileId)?.id || health.profiles[0]?.id || "profile-default"
     const recordId = "money102-steps-2026-10-28"
     if (health.records.some(record => record.id === recordId)) return
