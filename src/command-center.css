@@ -1527,3 +1527,162 @@ body { background:#faf8f5; color:#302b38; }
   .health-records-card { padding:18px 14px; border-radius:22px; }
   .health-records-card .health-card-heading { flex-wrap:wrap; }
 }
+
+
+
+/* MONEY102 unified mobile-first night dashboard */
+:root {
+  color-scheme: dark;
+  --ink:#f3f4f6; --muted:#a4a5ad; --line:#303035; --paper:#171719;
+  --green:#22a9f2; --green-dark:#bde8ff; --green-soft:#203744; --orange:#ff9d73;
+  font-family: "Noto Sans Thai", Tahoma, sans-serif; background:#08090b; color:#f3f4f6;
+}
+html,body,#root { min-height:100%; background:#08090b; }
+body { color:#f3f4f6; }
+.app-shell:not(.game-mode) { background:#08090b; color:#f3f4f6; }
+.main-area { margin-left:0; }
+.topbar { position:sticky; top:0; min-height:70px; gap:18px; padding:10px clamp(16px,3.5vw,40px); background:rgba(8,9,11,.91); border-bottom:1px solid #242428; backdrop-filter:blur(18px); }
+.brand { color:#f5f5f7; flex:0 0 auto; }
+.brand-symbol { background:#a9d7b3; color:#14271a; }
+.brand-name small { color:#a0a1a8; }
+.top-nav { display:flex; align-items:center; justify-content:center; gap:5px; flex:1; overflow-x:auto; scrollbar-width:none; }
+.top-nav::-webkit-scrollbar { display:none; }
+.top-nav-link { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:0 12px; border:1px solid transparent; border-radius:13px; background:transparent; color:#a4a5ad; font-size:13px; white-space:nowrap; transition:background .18s,border-color .18s,color .18s; }
+.top-nav-link:hover { color:#f5f5f7; background:#19191c; }
+.top-nav-link.active { color:#f7fbff; background:#1d3542; border-color:#294b5d; }
+.top-nav-link svg { width:17px; height:17px; }
+.topbar-actions { gap:9px; }
+.today-label { color:#a4a5ad; }
+.theme-trigger { border-color:#34343a!important; background:#171719!important; color:#ececf0!important; }
+.page-content { width:min(1180px,100%); padding:32px clamp(16px,3.5vw,40px) 90px; }
+.eyebrow { color:#83b9a0; letter-spacing:.045em; }
+.welcome-row h1,.page-heading-row h1,.split-simple-heading h1 { color:#f5f5f7; letter-spacing:-.045em; }
+.welcome-row h1 em { color:#91c9a2; }
+.intro-copy,.page-heading-row p,.split-simple-heading p { color:#a4a5ad; }
+.date-card,.surface,.tool-card,.health-mini-card,.note-card,.memory-card,.focus-surface,.recent-surface,.goal-settings,.ledger-surface,.health-history { background:#171719; border-color:#2b2b30; color:#f2f2f5; box-shadow:none; }
+.date-card strong { color:#8fc8a1; }
+.balance-card { min-height:190px; border:1px solid #294b3c; border-radius:24px; background:linear-gradient(115deg,#172820,#203a2b 65%,#1a2a23); }
+.balance-copy p,.balance-detail { color:#c4d5c9; }
+.art-ring { border-color:#d9f6e31c; }
+.art-core { border-color:#d9f6e326; color:#c9e7d2; }
+.section-heading h2,.surface-heading h3,.tool-card>strong,.note-card h3,.health-card-heading h2 { color:#f3f4f6; }
+.section-note,.tool-meta,.tool-card>p,.tool-bottom { color:#a4a5ad; }
+.tool-card { border-radius:21px; min-height:185px; }
+.tool-card:hover { border-color:#3c5e4a; box-shadow:0 10px 28px #0003; }
+.tool-icon { background:#20352a; color:#9bd0a9; }
+.tool-notes .tool-icon { background:#353022; color:#e9c889; }
+.tool-health .tool-icon { background:#3b2925; color:#ffad8b; }
+.tool-bottom { border-color:#2a2a2f; }
+.tool-bottom i { background:#28282d; color:#c4e4cc; }
+.home-lower { gap:16px; }
+.surface-heading { color:#f4f4f6; }
+.activity-row,.ledger-row,.health-row,.note-card-top,.notes-tools,.split-simple-person { border-color:#2c2c31!important; }
+.text-button { color:#91cba2; }
+.button,.button-primary,.button-secondary,.health-add-button { min-height:42px; border-radius:13px; transition:transform .15s,filter .15s,background .15s; }
+.button:active,.button-primary:active,.button-secondary:active,.health-add-button:active { transform:scale(.98); }
+.button-primary { background:#1d9fe8!important; color:#06131a!important; border-color:#1d9fe8!important; font-weight:700; }
+.button-primary:hover { filter:brightness(1.1); }
+.button-secondary { background:#242429!important; border:1px solid #393940!important; color:#f2f2f5!important; }
+.button-secondary:hover { background:#303036!important; }
+.icon-button { background:#242429!important; border:1px solid #38383e!important; color:#ededf0!important; }
+input,textarea,select,.search-field { background:#101013!important; color:#f3f4f6!important; border:1px solid #393940!important; border-radius:12px!important; }
+input::placeholder,textarea::placeholder { color:#777982!important; }
+label { color:#d4d4d9; }
+.progress-track,.health-progress-track { background:#303036; }
+.progress-track span { background:#23a8f0; }
+.goal-caption,.optional-label,.note-date,.notes-count,.ledger-date,.health-record-info small { color:#a0a1a9!important; }
+.money-summary,.money-total,.money-metric { background:#171719!important; border-color:#2d2d32!important; color:#f3f4f6!important; }
+.money-total span,.money-total small,.money-metric span { color:#a7a7af!important; }
+.positive { color:#8bd49a!important; }
+.negative { color:#ffab8c!important; }
+.goal-edit-grid input { background:#101013!important; }
+.note-card { border-radius:19px; }
+.note-card p { color:#c2c2c8; }
+.note-card-actions { border-color:#2d2d32!important; }
+.segmented { background:#101013!important; border-color:#34343a!important; }
+.segmented button { color:#c3c3ca!important; }
+.segmented button.selected { background:#243a2c!important; color:#a8e0b4!important; }
+.modal-backdrop { position:fixed; z-index:100; inset:0; display:flex; align-items:center; justify-content:center; padding:18px; background:rgba(0,0,0,.72); backdrop-filter:blur(9px); animation:money102FadeIn .16s ease-out; }
+.modal-card { width:min(520px,100%); max-height:min(88dvh,850px); overflow:auto; padding:24px; border:1px solid #3a3a40; border-radius:25px; background:#171719; color:#f4f4f6; box-shadow:0 24px 80px #0009; animation:money102ModalIn .2s ease-out; }
+.modal-heading { position:sticky; top:-24px; z-index:2; margin:-2px 0 18px; padding:2px 0 14px; background:#171719; border-bottom:1px solid #2d2d32; }
+.modal-heading h2 { color:#f5f5f7; }
+.form-stack { gap:15px; }
+.form-stack label { display:flex; flex-direction:column; gap:7px; font-size:13px; }
+.form-stack input,.form-stack select,.form-stack textarea { width:100%; min-height:45px; padding:11px 12px; }
+.form-two-col { gap:12px; }
+.button-full { width:100%; min-height:48px; }
+.quick-add-button { z-index:80; width:58px; height:58px; right:22px; bottom:22px; border:1px solid #72c6f4; background:#159de8; color:#06131a; box-shadow:0 10px 35px #0008; }
+.quick-add-button:hover { background:#39b1f5; transform:translateY(-2px); }
+.quick-add-menu { z-index:79; right:22px; bottom:91px; width:min(290px,calc(100vw - 32px)); padding:8px; border:1px solid #3a3a40; border-radius:20px; background:#171719; box-shadow:0 18px 55px #0009; }
+.quick-add-menu>button { width:100%; padding:12px; border-radius:13px; color:#f3f4f6; }
+.quick-add-menu>button:hover { background:#26262b; }
+.quick-add-menu small { color:#a1a2aa; }
+.quick-add-icon { background:#263b2c!important; color:#a9dcb5!important; }
+.app-toast { z-index:120; background:#202024; border:1px solid #3a3a40; color:#f4f4f6; box-shadow:0 14px 45px #0008; }
+.toast-check { background:#26402e!important; color:#9ee0ac!important; }
+.theme-studio,.command-palette,.command-panel { background:#171719!important; color:#f3f4f6!important; border-color:#38383e!important; }
+.theme-studio button,.theme-studio label { color:#eeeef1; }
+.empty-state,.empty-card { color:#f2f2f5; }
+.empty-state p,.empty-card p { color:#a4a5ad; }
+.health-mobile-page { color:#f3f4f6; }
+.health-mobile-page .health-records-card { background:#171719; color:#f3f4f6; border-color:#2b2b30; }
+.health-records-card .health-row { border-color:#2b2b30!important; }
+.health-records-card .health-card-heading p { color:#a4a5ad; }
+.health-records-card .health-record-info strong { color:#f4f4f6; }
+.health-records-card .health-record-symbol { background:#26382c; color:#9bd4a8; }
+.health-records-card .health-add-button { background:#1d9fe8; color:#06131a; }
+.health-mini-card { background:#171719; border-color:#2b2b30; color:#f4f4f6; }
+.health-mini-card>small,.health-mini-card>span:last-child { color:#a4a5ad; }
+.health-mini-icon.steps,.health-mini-icon.distance,.health-mini-icon.calories,.health-mini-icon.weight { background:#242429; color:#9bd4a8; }
+.health-progress-label strong { background:#45454d; }
+.health-goal-note { color:#9bd4a8; }
+.split-simple-result,.split-simple-form,.pork-form-surface,.pork-calendar,.split-history-card { background:#171719!important; border-color:#2b2b30!important; color:#f3f4f6!important; }
+.split-simple-result-top,.split-simple-total,.split-simple-person { border-color:#303036!important; }
+.split-simple-result strong,.split-simple-person-name,.split-simple-total strong { color:#f5f5f7!important; }
+.split-simple-count { background:#27392c!important; color:#a9d9b1!important; }
+.pork-page .surface,.pork-page .pork-form-surface { background:#171719; }
+.pork-total-badge { background:#242429!important; border-color:#38383e!important; color:#f4f4f6!important; }
+@keyframes money102FadeIn { from { opacity:0 } to { opacity:1 } }
+@keyframes money102ModalIn { from { opacity:0; transform:translateY(10px) scale(.985) } to { opacity:1; transform:translateY(0) scale(1) } }
+@media (max-width:900px) {
+  .main-area { margin-left:0; }
+  .topbar { flex-wrap:wrap; justify-content:space-between; padding:10px 16px; }
+  .top-nav { order:3; flex-basis:100%; justify-content:flex-start; padding:2px 0 3px; }
+  .top-nav-link { min-height:38px; padding:0 12px; }
+  .today-label { display:none; }
+  .page-content { padding:23px 16px 100px; }
+  .welcome-row h1 { font-size:clamp(29px,7vw,40px); }
+  .tool-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .home-lower { grid-template-columns:1fr; }
+  .modal-card { padding:20px; border-radius:22px; }
+}
+@media (max-width:560px) {
+  .topbar { gap:10px; }
+  .brand-symbol { width:33px; height:33px; }
+  .brand-name { font-size:15px; }
+  .top-nav { margin:0 -16px; padding:2px 16px 4px; }
+  .top-nav-link { flex:0 0 auto; font-size:12px; }
+  .top-nav-link span { display:inline; }
+  .page-content { padding:22px 14px 105px; }
+  .welcome-row { align-items:flex-start; gap:10px; }
+  .welcome-row h1 { font-size:30px; }
+  .intro-copy { max-width:260px; font-size:12px; }
+  .date-card { min-width:75px; min-height:88px; padding:9px; border-radius:17px; }
+  .date-card strong { font-size:27px; }
+  .balance-card { min-height:178px; padding:23px 20px; border-radius:23px; }
+  .balance-copy>strong { font-size:32px; }
+  .balance-art { right:-95px; opacity:.45; }
+  .balance-link { right:14px; bottom:13px; }
+  .tool-grid { gap:10px; }
+  .tool-card { min-height:166px; padding:15px 13px 13px; border-radius:18px; }
+  .tool-card>strong { font-size:14px; }
+  .tool-card>p { font-size:11px; }
+  .section-heading { margin-top:27px; }
+  .modal-backdrop { align-items:flex-end; padding:0; }
+  .modal-card { width:100%; max-height:90dvh; border-radius:25px 25px 0 0; padding:22px 18px max(24px,env(safe-area-inset-bottom)); border-bottom:0; }
+  .modal-heading { top:-22px; }
+  .quick-add-button { right:17px; bottom:max(17px,env(safe-area-inset-bottom)); width:54px; height:54px; }
+  .quick-add-menu { right:14px; bottom:82px; }
+  .form-two-col { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .health-mobile-page { margin:-12px -14px 0; padding:16px 14px 100px; }
+}
