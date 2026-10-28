@@ -30,7 +30,8 @@ function amountFrom(value: FormDataEntryValue | null) { const n = Number(value);
 function Button({ children, onClick, variant = "secondary", type = "button", disabled = false }: { children: ReactNode; onClick?: () => void; variant?: "primary"|"secondary"|"danger"|"ghost"; type?: "button"|"submit"; disabled?: boolean }) { return <button type={type} disabled={disabled} className={`dt-btn dt-btn-${variant}`} onClick={onClick}>{children}</button> }
 function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) { return <label className="dt-field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label> }
 function Empty({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) { return <div className="dt-empty"><span>✳</span><strong>{title}</strong><p>{detail}</p>{action}</div> }
-function responsibility(expenses: Expense[], participantId: string) { return expenses.reduce((sum,e)=>{ const ids=e.participantIds; const index=ids.indexOf(participantId); if(index<0||!ids.length)return sum; return sum+Math.floor(e.amountSatang/ids.length)+(index<e.amountSatang%ids.length?1:0) },0) }\nfunction escapeCsv(value: unknown) { const s = String(value ?? ""); return /^[=+@\-\t\r]/.test(s) ? "'" + s : s }
+function responsibility(expenses: Expense[], participantId: string) { return expenses.reduce((sum,e)=>{ const ids=e.participantIds; const index=ids.indexOf(participantId); if(index<0||!ids.length)return sum; return sum+Math.floor(e.amountSatang/ids.length)+(index<e.amountSatang%ids.length?1:0) },0) }
+function escapeCsv(value: unknown) { const s = String(value ?? ""); return /^[=+@\-\t\r]/.test(s) ? "'" + s : s }
 function download(name: string, content: string, type: string) { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([content],{type})); a.download=name; a.click(); URL.revokeObjectURL(a.href) }
 
 export default function DayTogether() {
