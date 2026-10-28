@@ -44,6 +44,8 @@ export default function DayTogether() {
   const [kindFilter,setKindFilter] = useState("all")
   const [notice,setNotice] = useState("")
   const [draftNote,setDraftNote] = useState({title:"",body:"",kind:"note" as "note"|"diary",date:today(),tags:"",mood:""})
+  const [billPeopleText,setBillPeopleText] = useState("")
+  const [billDraftExpenses,setBillDraftExpenses] = useState<BillExpenseDraft[]>([])
   const [noteSaving,setNoteSaving] = useState(false)
   const [theme,setTheme] = useState(state.settings.theme)
   const page = path === "/" ? "/" : (Object.keys(PAGE_LABEL).includes(path) ? path : path.startsWith("/savings/goals/") ? "/savings" : path.startsWith("/notes/") ? "/notes" : path.startsWith("/split/") ? "/split" : path.startsWith("/bbq/") ? "/bbq" : "/404")
@@ -67,7 +69,24 @@ export default function DayTogether() {
   const currentBill = state.bills.find(b=>b.id===routeId)
   const currentVisit = state.visits.find(v=>v.id===routeId)
   const latestHealth = (kind:HealthKind) => state.health.filter(h=>h.kind===kind).sort((a,b)=>b.date.localeCompare(a.date))[0]
-  const openModal = (m: NonNullable<typeof modal>, itemId = "") => { setEditId(itemId); setModal(m) }
+  const openModal = (m: NonNullable<typeof modal>, itemId = "") => {
+    setEditId(itemId)
+    if (m === "bill") {
+      const existing = state.bills.find(b => b.id === itemId)
+      setBillPeopleText(existing?.participants.filter(p => !p.isMe).map(p => p.name).join(", ") || "")
+      setBillDraftExpenses(existing?.expenses.length ? existing.expenses.map(expense => ({
+        key: expense.id, title: expense.title, amount: String(expense.amountSatang / 100),
+        payerName: existing.participants.find(p => p.id === expense.payerId)?.name || "ฉัน",
+        participantNames: expense.participantIds.map(pid => existing.participants.find(p => p.id === pid)?.name).filter((name): name is string => Boolean(name)),
+        allocationMode: expense.allocationMode || "equal",
+        allocations: Object.fromEntries(Object.entries(expense.allocations || {}).map(([pid, value]) => {
+          const name = existing.participants.find(p => p.id === pid)?.name || ""
+          return [name, String(value / 100)]
+        }))
+      })) : [{key:id(),title:"ค่าอาหาร",amount:"",payerName:"ฉัน",participantNames:null,allocationMode:"equal",allocations:{}}])
+    }
+    setModal(m)
+  }
   const closeModal = () => { setModal(null); setEditId("") }
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     if(!window.confirm("ต้องการลบรายการนี้หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้")) return
@@ -140,22 +159,38 @@ export default function DayTogether() {
     if(modal==="health") {const kind=(f.get("kind")||"weight") as HealthKind;const value=String(f.get("value")||"").trim();if(!value){setNotice("กรุณากรอกค่าที่ต้องการบันทึก");return}const item:Health={id:editId||id(),kind,date:String(f.get("date")||today()),value,extra:String(f.get("extra")||""),note:String(f.get("note")||"")};update("health",editId?state.health.map(h=>h.id===editId?item:h):[item,...state.health]);setNotice("กำลังบันทึกข้อมูล…")}
     if(modal==="visit") {const totalRaw=String(f.get("total")||""),personalRaw=String(f.get("personal")||"");const item:Visit={id:editId||id(),restaurant:String(f.get("restaurant")||"").trim(),title:String(f.get("title")||"").trim(),date:String(f.get("date")||today()),area:String(f.get("area")||""),friends:String(f.get("friends")||""),people:Math.max(1,Number(f.get("people")||1)),totalSatang:totalRaw===""?null:amountFrom(totalRaw),personalSatang:personalRaw===""?null:amountFrom(personalRaw),rating:f.get("rating")?Number(f.get("rating")):null,menu:String(f.get("menu")||""),memory:String(f.get("memory")||""),billId:state.visits.find(v=>v.id===editId)?.billId||""};update("visits",editId?state.visits.map(v=>v.id===editId?item:v):[item,...state.visits]);setNotice("กำลังบันทึกข้อมูล…")}
     if(modal==="bill") {
-      const title=String(f.get("title")||"").trim(),rawNames=String(f.get("people")||"").split(",").map(n=>n.trim()).filter(Boolean),meName=String(f.get("meName")||"ฉัน").trim()||"ฉัน",oldBill=state.bills.find(b=>b.id===editId);
+      const title=String(f.get("title")||"").trim(),rawNames=billPeopleText.split(",").map(n=>n.trim()).filter(Boolean),meName=String(f.get("meName")||"ฉัน").trim()||"ฉัน",oldBill=state.bills.find(b=>b.id===editId);
       if(!title){setNotice("กรุณาตั้งชื่อบิล");return}
+      if(oldBill?.settlements.length){setNotice("บิลนี้มีประวัติชำระแล้ว ไม่อนุญาตให้แก้ยอดจนกว่าจะยกเลิกการชำระ");return}
       const uniqueNames=rawNames.filter((name,index)=>name.toLocaleLowerCase()!==meName.toLocaleLowerCase()&&rawNames.findIndex(n=>n.toLocaleLowerCase()===name.toLocaleLowerCase())===index);
       const oldByName=new Map((oldBill?.participants||[]).map(p=>[p.name.trim().toLocaleLowerCase(),p]));
       const participants:Participant[]=[{id:oldBill?.participants.find(p=>p.isMe)?.id||id(),name:meName,isMe:true},...uniqueNames.map(name=>({id:oldByName.get(name.toLocaleLowerCase())?.id||id(),name,isMe:false}))];
-      const participantById=new Map(participants.map(p=>[p.id,p]));
-      const mapOldParticipant=(oldId:string)=>{const old=oldBill?.participants.find(p=>p.id===oldId);return participants.find(p=>p.isMe===Boolean(old?.isMe)&&p.name.trim().toLocaleLowerCase()===old?.name.trim().toLocaleLowerCase())?.id};
-      const amountField=String(f.get("amount")||"").trim(),total=amountField?amountFrom(amountField):0,expenseTitle=String(f.get("expenseTitle")||"ค่าใช้จ่าย").trim()||"ค่าใช้จ่าย";
-      const expenses:Expense[]=(oldBill?.expenses||[]).slice(1).map(expense=>({...expense,payerId:mapOldParticipant(expense.payerId)||participants[0].id,participantIds:expense.participantIds.map(mapOldParticipant).filter((value):value is string=>Boolean(value)&&participantById.has(value as string))})).filter(expense=>expense.participantIds.length>0);
-      if(total>0) {
-        const oldFirst=oldBill?.expenses[0];
-        const firstParticipants=oldFirst?.participantIds.map(mapOldParticipant).filter((value):value is string=>Boolean(value)&&participantById.has(value as string))||[];
-        expenses.unshift({id:oldFirst?.id||id(),title:expenseTitle,amountSatang:total,payerId:(oldFirst&&mapOldParticipant(oldFirst.payerId))||participants[0].id,participantIds:firstParticipants.length?firstParticipants:participants.map(p=>p.id),...(oldFirst?.allocationMode?{allocationMode:oldFirst.allocationMode}:{}),...(oldFirst?.allocations?{allocations:oldFirst.allocations}:{})});
+      const participantByName=new Map(participants.map(p=>[p.name.trim().toLocaleLowerCase(),p]));
+      const expenses:Expense[]=[];
+      for(const row of billDraftExpenses) {
+        const rowTitle=row.title.trim(),amountText=row.amount.trim();
+        if(!rowTitle&&!amountText) continue;
+        if(!rowTitle||!amountText){setNotice("กรุณากรอกทั้งชื่อและยอดเงินของทุกรายการ");return}
+        const amountSatang=amountFrom(amountText);
+        if(!Number.isSafeInteger(amountSatang)||amountSatang<=0){setNotice("ยอดเงินแต่ละรายการต้องมากกว่า 0 และอยู่ในช่วงที่รองรับ");return}
+        const selectedNames=row.participantNames===null?participants.map(p=>p.name):row.participantNames;
+        const selected=selectedNames.map(name=>participantByName.get(name.trim().toLocaleLowerCase())).filter((p):p is Participant=>Boolean(p));
+        if(!selected.length){setNotice("เลือกรายชื่อผู้ร่วมรับผิดชอบอย่างน้อยหนึ่งคนในทุกรายการ");return}
+        const payer=participantByName.get(row.payerName.trim().toLocaleLowerCase())||participants[0];
+        let allocations:Record<string,number>|undefined;
+        if(row.allocationMode==="fixed") {
+          allocations=Object.fromEntries(selected.map(person=>[person.id,amountFrom(row.allocations[person.name]||"")]));
+          if(Object.values(allocations).some(value=>!Number.isSafeInteger(value))||Object.values(allocations).reduce((sum,value)=>sum+value,0)!==amountSatang){setNotice("ยอดที่กำหนดให้แต่ละคนต้องรวมกันเท่ากับยอดรายการ");return}
+        } else if(row.allocationMode==="percentage") {
+          const percentValues=selected.map(person=>Number(row.allocations[person.name]||""));
+          if(percentValues.some(value=>!Number.isFinite(value)||value<0||value>100)){setNotice("เปอร์เซ็นต์ต้องอยู่ระหว่าง 0 ถึง 100");return}
+          allocations=Object.fromEntries(selected.map((person,index)=>[person.id,Math.round(percentValues[index]*100)]));
+          if(Object.values(allocations).reduce((sum,value)=>sum+value,0)!==10000){setNotice("เปอร์เซ็นต์ของผู้ร่วมรายการต้องรวมกันเท่ากับ 100%");return}
+        }
+        expenses.push({id:oldBill?.expenses.find(expense=>expense.id===row.key)?.id||id(),title:rowTitle,amountSatang,payerId:payer.id,participantIds:selected.map(person=>person.id),allocationMode:row.allocationMode,...(allocations?{allocations}:{})});
       }
+      if(!expenses.length){setNotice("เพิ่มรายการค่าใช้จ่ายอย่างน้อยหนึ่งรายการก่อนบันทึก");return}
       const item:Bill={id:editId||id(),title,date:String(f.get("date")||today()),restaurant:String(f.get("restaurant")||""),participants,expenses,settlements:oldBill?.settlements||[],note:String(f.get("note")||""),bbqId:oldBill?.bbqId||"",status:oldBill?.status||"draft"};
-      if(editId&&item.settlements.length){setNotice("บิลนี้มีประวัติชำระแล้ว ไม่อนุญาตให้แก้ยอดจนกว่าจะยกเลิกการชำระ");return}
       update("bills",editId?state.bills.map(b=>b.id===editId?item:b):[item,...state.bills]);setNotice("กำลังบันทึกข้อมูล…")
     }
     closeModal()
