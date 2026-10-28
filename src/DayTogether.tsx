@@ -6,7 +6,7 @@ import { distributeCents, parseMoneyCents, safeCsvCell, suggestSettlements } fro
 type Page = "home" | "savings" | "health" | "notes" | "split" | "bbq" | "settings"
 type Goal = { id: string; title: string; targetCents: number; dueDate: string; status: "active" | "done" | "archived"; createdAt: string }
 type SavingEntry = { id: string; type: "deposit" | "withdrawal"; amountCents: number; date: string; goalId: string; note: string; createdAt: string }
-type HealthEntry = { id: string; type: "weight" | "bloodPressure" | "sleep" | "water" | "symptom"; date: string; value?: number; systolic?: number; diastolic?: number; pulse?: number; bedtime?: string; wakeTime?: string; quality?: string; title?: string; severity?: number; note?: string }
+type HealthEntry = { id: string; type: "weight" | "bloodPressure" | "sleep" | "water" | "symptom" | "legacy"; date: string; value?: number; systolic?: number; diastolic?: number; pulse?: number; bedtime?: string; wakeTime?: string; quality?: string; title?: string; severity?: number; note?: string }
 type Note = { id: string; title: string; body: string; kind: "note" | "diary"; date: string; tags: string[]; mood: string; pinned: boolean; archived: boolean; updatedAt: string; version: number }
 type Participant = { id: string; name: string; paidCents: number; shareCents: number }
 type Bill = { id: string; title: string; date: string; shop: string; participants: Participant[]; totalCents: number; settled: boolean; notes: string; bbqId?: string; settlements: { id: string; fromId: string; toId: string; amountCents: number; date: string }[] }
@@ -16,7 +16,52 @@ const STORE = "lamoon-daytogether-v1"
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` }
 const id = () => crypto.randomUUID()
 const emptyState = (): State => ({ goals: [], savings: [], health: [], notes: [], bills: [], bbq: [], prefs: { timezone: "Asia/Bangkok", theme: "system", hidden: false, healthTypes: ["weight", "water", "sleep"], dashboard: ["savings", "health", "notes", "split", "bbq"], appName: "DayTogether" } })
-const readState = (): State => { try { const raw = localStorage.getItem(STORE); if (!raw) return emptyState(); const v = JSON.parse(raw); const e = emptyState(); return { ...e, ...v, prefs: { ...e.prefs, ...(v.prefs || {}) } } } catch { return emptyState() } }
+const readState = (): State => {
+  try {
+    const raw = localStorage.getItem(STORE)
+    const defaults = emptyState()
+    const saved = raw ? JSON.parse(raw) : defaults
+    const state: State = { ...defaults, ...saved, prefs: { ...defaults.prefs, ...(saved.prefs || {}) } }
+    if (state.prefs.legacyImported) return state
+    const oldNotes = JSON.parse(localStorage.getItem("lamoon-commonplace-notes-v1") || "[]")
+    if (Array.isArray(oldNotes)) {
+      const imported: Note[] = oldNotes.filter(n => n && typeof n === "object").map(n => ({
+        id: typeof n.id === "string" && n.id ? n.id : crypto.randomUUID(),
+        title: typeof n.title === "string" ? n.title : "",
+        body: typeof n.body === "string" ? n.body : "",
+        kind: n.mood && n.mood !== "neutral" ? "diary" as const : "note" as const,
+        date: String(n.createdAt || n.updatedAt || today()).slice(0, 10),
+        tags: Array.isArray(n.tags) ? n.tags.filter((tag: unknown): tag is string => typeof tag === "string") : [],
+        mood: typeof n.mood === "string" ? n.mood : "neutral",
+        pinned: Boolean(n.pinned),
+        archived: false,
+        updatedAt: typeof n.updatedAt === "string" ? n.updatedAt : typeof n.createdAt === "string" ? n.createdAt : new Date().toISOString(),
+        version: 1
+      }))
+      const ids = new Set(state.notes.map(n => n.id))
+      state.notes = [...state.notes, ...imported.filter(n => !ids.has(n.id))]
+    }
+    const oldHealth = JSON.parse(localStorage.getItem("lamoon-health-dashboard-v1") || "null")
+    if (oldHealth && Array.isArray(oldHealth.records)) {
+      const activeProfile = oldHealth.activeProfileId || oldHealth.profiles?.[0]?.id
+      const records = oldHealth.records.filter((record: any) => !activeProfile || record.profileId === activeProfile)
+      for (const record of records) {
+        if (!record || typeof record.date !== "string") continue
+        if (record.type === "weight" && typeof record.weight === "number" && Number.isFinite(record.weight) && record.weight > 0) {
+          if (!state.health.some(entry => entry.id === record.id)) state.health.push({ id: record.id || crypto.randomUUID(), type: "weight", date: record.date, value: record.weight, note: record.note || "" })
+        } else {
+          const title = record.type === "exercise" ? "ข้อมูลเดิม · ออกกำลังกาย" : "ข้อมูลเดิม · น้ำดื่มและการนอน"
+          const details = record.type === "exercise"
+            ? [record.exercise, record.distance != null ? record.distance + " กม." : "", record.duration != null ? record.duration + " นาที" : "", record.steps != null ? record.steps + " ก้าว" : "", record.calories != null ? record.calories + " แคลอรี" : "", record.reps != null ? record.reps + " ครั้ง" : "", record.sets != null ? record.sets + " เซ็ต" : "", record.note].filter(Boolean).join(" · ")
+            : ["น้ำดื่ม " + (record.water ?? "ไม่ระบุ") + " แก้ว", "นอน " + (record.sleep ?? "ไม่ระบุ") + " ชั่วโมง", record.note].filter(Boolean).join(" · ")
+          if (!state.health.some(entry => entry.id === record.id)) state.health.push({ id: record.id || crypto.randomUUID(), type: "legacy", date: record.date, title, note: details })
+        }
+      }
+    }
+    state.prefs.legacyImported = true
+    return state
+  } catch { return emptyState() }
+}
 const money = (cents: number, hidden = false) => hidden ? "••••••" : new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: cents % 100 ? 2 : 0, maximumFractionDigits: 2 }).format(cents / 100)
 const cents = (value: string) => parseMoneyCents(value) ?? 0
 const dateText = (value: string) => { if (!value) return "ยังไม่ระบุวันที่"; const d = new Date(value.length === 10 ? value + "T12:00:00" : value); return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" }) }
@@ -234,7 +279,7 @@ export default function DayTogether() {
   const healthPage = () => {
     const records = data.health.filter(x=>tab==="all"||x.type===tab).sort((a,b)=>b.date.localeCompare(a.date))
     const sleepHours = (x: HealthEntry) => { if(!x.bedtime||!x.wakeTime)return null; const [bh,bm]=x.bedtime.split(":").map(Number),[wh,wm]=x.wakeTime.split(":").map(Number); let mins=wh*60+wm-(bh*60+bm); if(mins<=0)mins+=1440;return mins/60 }
-    return <><div className="dt-section-title"><div><h2>ติดตามสิ่งที่คุณสนใจ</h2><p>เลือกบันทึกเฉพาะหมวดที่ต้องการ ไม่ใช่เครื่องมือวินิจฉัย</p></div><Button kind="primary" onClick={()=>beginNew("health")}>＋ บันทึกสุขภาพ</Button></div><div className="dt-filter-row dt-filter-wrap">{[["all","ทั้งหมด"],["weight","น้ำหนัก"],["bloodPressure","ความดัน"],["sleep","การนอน"],["water","ดื่มน้ำ"],["symptom","อาการ"]].map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</div>{latestWeight&&<Panel className="dt-health-highlight"><span>น้ำหนักล่าสุด · {dateText(latestWeight.date)}</span><strong>{data.prefs.hidden?"••••":latestWeight.value+" กก."}</strong><small>ค่าที่บันทึกครั้งล่าสุด ไม่ใช่ค่าของวันนี้หากวัดคนละวัน</small></Panel>}<Panel>{records.length?records.map(x=><div className="dt-list-row" key={x.id}><div><strong>{x.type==="weight"?"น้ำหนัก":x.type==="bloodPressure"?"ความดัน":x.type==="sleep"?"การนอน":x.type==="water"?"ดื่มน้ำ":"อาการ / บันทึก"}</strong><small>{dateText(x.date)} {x.note&&"· "+x.note}</small>{x.type==="sleep"&&<small>นอน {x.bedtime}–{x.wakeTime} · {sleepHours(x)?.toLocaleString("th-TH",{maximumFractionDigits:1})} ชม.</small>}</div><b>{data.prefs.hidden?"••••":x.type==="weight"?x.value+" กก.":x.type==="water"?x.value+" มล.":x.type==="bloodPressure"?x.systolic+"/"+x.diastolic+" mmHg":x.type==="sleep"?(sleepHours(x)?.toLocaleString("th-TH",{maximumFractionDigits:1})||"—")+" ชม.":x.title||"บันทึก"}</b><button onClick={()=>startEdit("health",x)}>แก้ไข</button><button onClick={()=>askDelete("health",x.id)}>ลบ</button></div>):<Empty title="ยังไม่มีข้อมูลสุขภาพ" detail="เลือกหมวดที่อยากติดตาม แล้วเริ่มบันทึกได้ตามสะดวก"/>}</Panel><p className="dt-disclaimer">ข้อมูลนี้เป็นบันทึกส่วนตัว ไม่ใช่การวินิจฉัยทางการแพทย์</p>{editing&&currentForm()}</>
+    return <><div className="dt-section-title"><div><h2>ติดตามสิ่งที่คุณสนใจ</h2><p>เลือกบันทึกเฉพาะหมวดที่ต้องการ ไม่ใช่เครื่องมือวินิจฉัย</p></div><Button kind="primary" onClick={()=>beginNew("health")}>＋ บันทึกสุขภาพ</Button></div><div className="dt-filter-row dt-filter-wrap">{[["all","ทั้งหมด"],["weight","น้ำหนัก"],["bloodPressure","ความดัน"],["sleep","การนอน"],["water","ดื่มน้ำ"],["symptom","อาการ"]].map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</div>{latestWeight&&<Panel className="dt-health-highlight"><span>น้ำหนักล่าสุด · {dateText(latestWeight.date)}</span><strong>{data.prefs.hidden?"••••":latestWeight.value+" กก."}</strong><small>ค่าที่บันทึกครั้งล่าสุด ไม่ใช่ค่าของวันนี้หากวัดคนละวัน</small></Panel>}<Panel>{records.length?records.map(x=><div className="dt-list-row" key={x.id}><div><strong>{x.type==="weight"?"น้ำหนัก":x.type==="bloodPressure"?"ความดัน":x.type==="sleep"?"การนอน":x.type==="water"?"ดื่มน้ำ":"อาการ / บันทึก"}</strong><small>{dateText(x.date)} {x.note&&"· "+x.note}</small>{x.type==="sleep"&&<small>นอน {x.bedtime}–{x.wakeTime} · {sleepHours(x)?.toLocaleString("th-TH",{maximumFractionDigits:1})} ชม.</small>}</div><b>{data.prefs.hidden?"••••":x.type==="weight"?x.value+" กก.":x.type==="water"?x.value+" มล.":x.type==="bloodPressure"?x.systolic+"/"+x.diastolic+" mmHg":x.type==="sleep"?(sleepHours(x)?.toLocaleString("th-TH",{maximumFractionDigits:1})||"—")+" ชม.":x.title||"บันทึก"}</b>{x.type!=="legacy"?<button onClick={()=>startEdit("health",x)}>แก้ไข</button>:null}<button onClick={()=>askDelete("health",x.id)}>ลบ</button></div>):<Empty title="ยังไม่มีข้อมูลสุขภาพ" detail="เลือกหมวดที่อยากติดตาม แล้วเริ่มบันทึกได้ตามสะดวก"/>}</Panel><p className="dt-disclaimer">ข้อมูลนี้เป็นบันทึกส่วนตัว ไม่ใช่การวินิจฉัยทางการแพทย์</p>{editing&&currentForm()}</>
   };
 
   const notesPage = () => <><div className="dt-notes-toolbar"><div className="dt-search"><span>⌕</span><input aria-label="ค้นหาโน้ต" placeholder="ค้นหาหัวข้อ เนื้อหา หรือแท็ก" value={query} onChange={e=>setQuery(e.target.value)}/></div><Button kind="primary" onClick={()=>beginNew("notes")}>＋ เขียนบันทึก</Button></div><div className="dt-filter-row">{[["all","ทั้งหมด"],["note","โน้ต"],["diary","ไดอารี"],["pinned","ปักหมุด"]].map(([key,label])=><button key={key} className={tab===key?"active":""} onClick={()=>setTab(key)}>{label}</button>)}</div>{editing&&currentForm()}{detail&&"body" in detail?<Panel className="dt-note-detail"><div className="dt-panel-head"><div><span className="dt-kicker">{detail.kind==="diary"?"ไดอารี":"โน้ต"} · {dateText(detail.date)}</span><h2>{data.prefs.hidden?"••••••":detail.title}</h2></div><div className="dt-item-actions"><Button onClick={()=>startEdit("note",detail)}>แก้ไข</Button><Button onClick={()=>setData(d=>({...d,notes:d.notes.map(n=>n.id===detail.id?{...n,pinned:!n.pinned}:n)}))}>{detail.pinned?"เลิกปักหมุด":"ปักหมุด"}</Button><Button onClick={()=>askDelete("note",detail.id)} kind="danger">ลบ</Button></div></div><p className="dt-note-body">{data.prefs.hidden?"••••••••••••••":detail.body||"ไม่มีเนื้อหา"}</p><div className="dt-tags">{detail.tags.map(t=><span key={t}>#{t}</span>)}</div><small>แก้ไขล่าสุด {dateText(detail.updatedAt)}</small></Panel>:<div className="dt-card-grid">{filteredNotes.map(n=><Panel key={n.id} className="dt-note-card"><div className="dt-item-head"><span className="dt-chip violet">{n.kind==="diary"?"ไดอารี":"โน้ต"}{n.pinned?" · ปักหมุด":""}</span><button aria-label="เปิดบันทึก" onClick={()=>navigate("notes",n.id)}>เปิด ↗</button></div><button className="dt-note-title" onClick={()=>navigate("notes",n.id)}>{data.prefs.hidden?"••••••":n.title}</button><p>{data.prefs.hidden?"••••••••••••••":n.body||"ไม่มีเนื้อหา"}</p><div className="dt-tags">{n.tags.map(t=><span key={t}>#{t}</span>)}</div><small>{dateText(n.date)} · แก้ไข {dateText(n.updatedAt)}</small><div className="dt-item-actions"><button onClick={()=>startEdit("note",n)}>แก้ไข</button><button onClick={()=>setData(d=>({...d,notes:d.notes.map(x=>x.id===n.id?{...x,pinned:!x.pinned}:x)}))}>{n.pinned?"เลิกปักหมุด":"ปักหมุด"}</button><button onClick={()=>askDelete("note",n.id)}>ลบ</button></div></Panel>)}{!filteredNotes.length&&<Empty title="ยังไม่มีบันทึก" detail="เก็บไอเดีย เรื่องที่อยากจำ หรือบันทึกประจำวันไว้ที่นี่" action={<Button kind="primary" onClick={()=>beginNew("notes")}>เขียนบันทึกแรก</Button>}/>}</div>}</>;
