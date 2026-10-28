@@ -19,6 +19,8 @@ npm run build
 npm test
 ```
 
+GitHub Actions runs the same test, typecheck, and production build checks for PRs and pushes to `feature/daytogether-rebuild`.
+
 ## Environment
 คัดลอก .env.example เป็น .env แล้วกำหนด VITE_CLOUDFLARE_API_URL ให้ชี้ไปยัง Worker API ห้ามใส่ secret หรือ service-role key ในตัวแปร VITE_* เพราะจะถูกส่งไป browser
 
