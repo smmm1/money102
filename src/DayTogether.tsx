@@ -261,9 +261,9 @@ const splitPage = () => {
   const bbqPage = () => <section className="dt-panel"><h2>ประวัติมื้อหมูกระทะ</h2></section>;
 
 const setTheme = (theme: string) => setData(d => ({ ...d, prefs: { ...d.prefs, theme: theme as State["prefs"]["theme"] } }))
-  const setAppName = (appName: string) => setData(d => ({ ...d, prefs: { ...d.prefs, appName: appName || "DayTogether" } }))
-  const setTimezone = (timezone: string) => setData(d => ({ ...d, prefs: { ...d.prefs, timezone } }))
-  const setPrivacyHidden = (hidden: boolean) => setData(d => ({ ...d, prefs: { ...d.prefs, hidden } }))
+  const setAppName = (appName: string) => setData(d => ({ ...d, prefs: { ...d.prefs, appName: appName || "DayTogether" } }));
+  const setTimezone = (timezone: string) => setData(d => ({ ...d, prefs: { ...d.prefs, timezone } }));
+  const setPrivacyHidden = (hidden: boolean) => setData(d => ({ ...d, prefs: { ...d.prefs, hidden } }));
 
   const pageContent = () => {
     if (page === "savings") return savingsPage();
