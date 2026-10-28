@@ -111,7 +111,8 @@ export default function DayTogether() {
   const saveForm = (event: FormEvent) => {
     event.preventDefault(); setFormError("")
     const now = new Date().toISOString()
-    const oldId = editing?.split(":")[1]
+    const editToken = editing?.split(":")[1]
+    const oldId = editToken && editToken !== "new" ? editToken : null
     const mode = editing?.split(":")[0]
     const newId = oldId || id()
     const replace = <T extends { id: string }>(list: T[], value: T) => oldId ? list.map(x => x.id === oldId ? value : x) : [value, ...list]
