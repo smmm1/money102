@@ -244,7 +244,70 @@ export default function DayTogether() {
     setToast("เชื่อมบิลกับประวัติมื้ออาหารแล้ว")
   }
 
-  const bbqPage = () => detail && "personalCents" in detail ? <><Panel><div className="dt-panel-head"><div><span className="dt-kicker">ประวัติมื้ออาหาร</span><h2>{detail.shop}</h2><p>{detail.title} · {dateText(detail.date)}</p></div><div className="dt-item-actions"><Button onClick={()=>startEdit("bbq",detail)}>แก้ไข</Button><Button onClick={()=>askDelete("bbq",detail.id)} kind="danger">ลบ</Button></div></div><div className="dt-stats"><div><span>ยอดรวมมื้อ</span><strong>{detail.totalCents?money(detail.totalCents,data.prefs.hidden):"ยังไม่มีข้อมูล"}</strong></div><div><span>ค่าใช้จ่ายส่วนตัว</span><strong>{detail.personalCents==null?"ยังไม่ทราบ":money(detail.personalCents,data.prefs.hidden)}</strong></div><div><span>คะแนน</span><strong>{detail.rating==null?"ไม่ให้คะแนน":"★".repeat(detail.rating)}</strong></div></div>{detail.friends&&<p>ไปกับ: {detail.friends}</p>}{detail.area&&<p>สาขา/ย่าน: {detail.area}</p>}{detail.menu&&<p>เมนูที่ชอบ: {detail.menu}</p>}{detail.memory&&<p className="dt-note-body">{data.prefs.hidden?"••••••••••••••":detail.memory}</p>}{detail.billId?<Button onClick={()=>navigate("split",detail.billId!)}>เปิดบิลที่เชื่อม ↗</Button>:<Button kind="primary" onClick={()=>createBillFromVisit(detail)}>สร้างบิลหารตังจากมื้อนี้</Button>}</Panel>{editing&&currentForm()}</> : <><div className="dt-notes-toolbar"><div className="dt-search"><span>⌕</span><input placeholder="ค้นหาร้านหรือความทรงจำ" value={query} onChange={e=>setQuery(e.target.value)}/></div><Button kind="primary" onClick={()=>beginNew("bbq")}>＋ เพิ่มมื้อ</Button></div>{editing&&currentForm()}<div className="dt-card-grid">{filteredBbq.map(x=><Panel key={x.id}><div className="dt-item-head"><span className="dt-chip orange">{x.rating? "★".repeat(x.rating):"มื้ออาหาร"}</span><small>{dateText(x.date)}</small></div><button className="dt-note-title" onClick={()=>navigate("bbq",x.id)}>{x.shop}</button><p>{x.title} {x.area&&"· "+x.area}</p><div className="dt-bbq-money"><div><small>ยอดรวมมื้อ</small><strong>{x.totalCents?money(x.totalCents,data.prefs.hidden):"ไม่ระบุ"}</strong></div><div><small>ค่าใช้จ่ายส่วนตัว</small><strong>{x.personalCents==null?"ยังไม่ทราบ":money(x.personalCents,data.prefs.hidden)}</strong></div></div>{x.memory&&<p>{data.prefs.hidden?"••••••••":x.memory}</p>}<div className="dt-item-actions"><button onClick={()=>navigate("bbq",x.id)}>รายละเอียด</button><button onClick={()=>startEdit("bbq",x)}>แก้ไข</button><button onClick={()=>askDelete("bbq",x.id)}>ลบ</button></div></Panel>)}{!filteredBbq.length&&<Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={()=>beginNew("bbq")}>เพิ่มมื้อแรก</Button>}/>}</div></>
+  const bbqPage = () => {
+    if (detail && "personalCents" in detail) {
+      const visit = detail
+      return (
+        <>
+          <Panel>
+            <div className="dt-panel-head">
+              <div>
+                <span className="dt-kicker">ประวัติมื้ออาหาร</span>
+                <h2>{data.prefs.hidden ? "••••••" : visit.shop}</h2>
+                <p>{data.prefs.hidden ? "••••••" : visit.title} · {dateText(visit.date)}</p>
+              </div>
+              <div className="dt-item-actions">
+                <Button onClick={() => startEdit("bbq", visit)}>แก้ไข</Button>
+                <Button onClick={() => askDelete("bbq", visit.id)} kind="danger">ลบ</Button>
+              </div>
+            </div>
+            <div className="dt-stats">
+              <div><span>ยอดรวมมื้อ</span><strong>{visit.totalCents ? money(visit.totalCents, data.prefs.hidden) : "ยังไม่มีข้อมูล"}</strong></div>
+              <div><span>ค่าใช้จ่ายส่วนตัว</span><strong>{visit.personalCents == null ? "ยังไม่ทราบ" : money(visit.personalCents, data.prefs.hidden)}</strong></div>
+              <div><span>คะแนน</span><strong>{visit.rating == null ? "ไม่ให้คะแนน" : "★".repeat(visit.rating)}</strong></div>
+            </div>
+            {visit.friends && <p>ไปกับ: {data.prefs.hidden ? "••••••" : visit.friends}</p>}
+            {visit.area && <p>สาขา/ย่าน: {data.prefs.hidden ? "••••••" : visit.area}</p>}
+            {visit.menu && <p>เมนูที่ชอบ: {data.prefs.hidden ? "••••••" : visit.menu}</p>}
+            {visit.memory && <p className="dt-note-body">{data.prefs.hidden ? "••••••••••••••" : visit.memory}</p>}
+            {visit.billId
+              ? <Button onClick={() => navigate("split", visit.billId!)}>เปิดบิลที่เชื่อม ↗</Button>
+              : <Button kind="primary" onClick={() => createBillFromVisit(visit)}>สร้างบิลหารตังจากมื้อนี้</Button>}
+          </Panel>
+          {editing && currentForm()}
+        </>
+      )
+    }
+    return (
+      <>
+        <div className="dt-notes-toolbar">
+          <div className="dt-search"><span>⌕</span><input aria-label="ค้นหาประวัติมื้ออาหาร" placeholder="ค้นหาร้านหรือความทรงจำ" value={query} onChange={e => setQuery(e.target.value)} /></div>
+          <Button kind="primary" onClick={() => beginNew("bbq")}>＋ เพิ่มมื้อ</Button>
+        </div>
+        {editing && currentForm()}
+        <div className="dt-card-grid">
+          {filteredBbq.map(visit => (
+            <Panel key={visit.id}>
+              <div className="dt-item-head"><span className="dt-chip orange">{visit.rating ? "★".repeat(visit.rating) : "มื้ออาหาร"}</span><small>{dateText(visit.date)}</small></div>
+              <button className="dt-note-title" onClick={() => navigate("bbq", visit.id)}>{data.prefs.hidden ? "••••••" : visit.shop}</button>
+              <p>{data.prefs.hidden ? "••••••" : visit.title} {visit.area && !data.prefs.hidden && "· " + visit.area}</p>
+              <div className="dt-bbq-money">
+                <div><small>ยอดรวมมื้อ</small><strong>{visit.totalCents ? money(visit.totalCents, data.prefs.hidden) : "ไม่ระบุ"}</strong></div>
+                <div><small>ค่าใช้จ่ายส่วนตัว</small><strong>{visit.personalCents == null ? "ยังไม่ทราบ" : money(visit.personalCents, data.prefs.hidden)}</strong></div>
+              </div>
+              {visit.memory && <p>{data.prefs.hidden ? "••••••••" : visit.memory}</p>}
+              <div className="dt-item-actions">
+                <button onClick={() => navigate("bbq", visit.id)}>รายละเอียด</button>
+                <button onClick={() => startEdit("bbq", visit)}>แก้ไข</button>
+                <button onClick={() => askDelete("bbq", visit.id)}>ลบ</button>
+              </div>
+            </Panel>
+          ))}
+          {!filteredBbq.length && <Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={() => beginNew("bbq")}>เพิ่มมื้อแรก</Button>} />}
+        </div>
+      </>
+    )
+  }
 
   const pageContent = () => {
     if(page==="savings")return savingsPage()
