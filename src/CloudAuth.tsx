@@ -117,6 +117,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
         if (!cancelled) setUser(result.user)
       } catch {
         setSessionToken("")
+        restoreSnapshot({})
         if (!cancelled) setUser(null)
       }
     })()
@@ -167,6 +168,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   async function signOut() {
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
     setSessionToken("")
+    restoreSnapshot({})
     setUser(null)
     setCloudReady(false)
     setCloudError("")
