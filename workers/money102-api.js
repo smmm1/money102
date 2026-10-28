@@ -24,6 +24,60 @@ async function sha256(value) { return toBase64Url(new Uint8Array(await crypto.su
 async function passwordHash(password,salt) { const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]); return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt,iterations:PASSWORD_ITERATIONS},key,256)); }
 function constantTimeEqual(a,b) { if(a.length!==b.length)return false; let diff=0; for(let i=0;i<a.length;i++)diff|=a[i]^b[i]; return diff===0; }
 function isSnapshot(value) { if(!value||typeof value!=="object"||Array.isArray(value))return false; const entries=Object.entries(value); return entries.length<=500&&entries.every(([key,item])=>key.startsWith("lamoon-")&&typeof item==="string"); }
+function validateDayTogetherSnapshot(snapshot) {
+ const raw=snapshot["lamoon-daytogether-v1"];
+ if(raw===undefined)return null;
+ let state;
+ try{state=JSON.parse(raw);}catch{return "รูปแบบข้อมูล DayTogether ไม่ถูกต้อง";}
+ if(!state||typeof state!=="object"||Array.isArray(state))return "โครงสร้างข้อมูลไม่ถูกต้อง";
+ for(const key of ["goals","savings","health","notes","bills","bbq"])if(!Array.isArray(state[key]))return "ข้อมูลบางหมวดไม่ถูกต้อง";
+ const uniqueIds=(items,label)=>{const ids=new Set();for(const item of items){if(!item||typeof item.id!=="string"||!item.id||ids.has(item.id))return label+" มีรหัสรายการซ้ำหรือไม่ถูกต้อง";ids.add(item.id);}return null;};
+ for(const [items,label] of [[state.goals,"เป้าหมายออมเงิน"],[state.savings,"รายการออม"],[state.health,"ข้อมูลสุขภาพ"],[state.notes,"โน้ต"],[state.bills,"บิล"],[state.bbq,"ประวัติมื้ออาหาร"]]){const error=uniqueIds(items,label);if(error)return error;}
+ const integer=(v,min=0)=>Number.isSafeInteger(v)&&v>=min;
+ const goalIds=new Set(state.goals.map(x=>x.id));
+ for(const goal of state.goals)if(typeof goal.title!=="string"||!goal.title.trim()||goal.title.length>120||!integer(goal.targetCents,1)||!["active","done","archived"].includes(goal.status))return "เป้าหมายออมเงินมีข้อมูลไม่ถูกต้อง";
+ const balances=new Map();
+ for(const entry of state.savings){
+  if(!["deposit","withdrawal"].includes(entry.type)||!integer(entry.amountCents,1)||typeof entry.date!=="string"||!/^\d{4}-\d{2}-\d{2}/.test(entry.date)||typeof entry.goalId!=="string")return "รายการออมมีข้อมูลไม่ถูกต้อง";
+  if(entry.goalId&&!goalIds.has(entry.goalId))return "รายการออมอ้างอิงเป้าหมายที่ไม่มีอยู่";
+  const key=entry.goalId||"general";balances.set(key,(balances.get(key)||0)+(entry.type==="deposit"?entry.amountCents:-entry.amountCents));
+ }
+ for(const value of balances.values())if(value<0)return "ยอดถอนรวมมากกว่ายอดออมที่บันทึก";
+ for(const entry of state.health){
+  if(!["weight","bloodPressure","sleep","water","symptom"].includes(entry.type)||typeof entry.date!=="string"||!entry.date)return "ข้อมูลสุขภาพมีชนิดหรือวันที่ไม่ถูกต้อง";
+  if(["weight","water"].includes(entry.type)&&!(typeof entry.value==="number"&&Number.isFinite(entry.value)&&entry.value>0))return "ค่าน้ำหนักหรือปริมาณน้ำต้องมากกว่า 0";
+  if(entry.type==="bloodPressure"&&(!integer(entry.systolic,1)||!integer(entry.diastolic,1)||(entry.pulse!==undefined&&!integer(entry.pulse,1))))return "ข้อมูลความดันไม่ถูกต้อง";
+  if(entry.type==="sleep"&&(!/^\d{2}:\d{2}$/.test(entry.bedtime||"")||!/^\d{2}:\d{2}$/.test(entry.wakeTime||"")))return "เวลาเข้านอนหรือตื่นไม่ถูกต้อง";
+  if(entry.type==="symptom"&&(typeof entry.title!=="string"||!entry.title.trim()||(entry.severity!==undefined&&(!integer(entry.severity,1)||entry.severity>5))))return "ข้อมูลอาการไม่ถูกต้อง";
+  if(typeof entry.note==="string"&&entry.note.length>4000)return "หมายเหตุสุขภาพยาวเกินกำหนด";
+ }
+ for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!Array.isArray(note.tags)||note.tags.some(t=>typeof t!=="string"||t.length>60)||!Number.isSafeInteger(note.version)||note.version<1)return "โน้ตมีข้อมูลไม่ถูกต้อง";
+ const billsById=new Map();
+ for(const bill of state.bills){
+  if(typeof bill.title!=="string"||!bill.title.trim()||bill.title.length>160||!integer(bill.totalCents,1)||!Array.isArray(bill.participants)||bill.participants.length<2||!Array.isArray(bill.settlements))return "บิลมีข้อมูลไม่ถูกต้อง";
+  const participantIds=new Set();let shares=0,paid=0;
+  for(const p of bill.participants){if(!p||typeof p.id!=="string"||!p.id||participantIds.has(p.id)||typeof p.name!=="string"||!p.name.trim()||!integer(p.shareCents)||!integer(p.paidCents))return "รายชื่อผู้ร่วมบิลหรือยอดแบ่งไม่ถูกต้อง";participantIds.add(p.id);shares+=p.shareCents;paid+=p.paidCents;}
+  if(shares!==bill.totalCents||paid!==bill.totalCents)return "ยอดส่วนแบ่งและยอดที่จ่ายของบิลต้องตรงกับยอดรวม";
+  const net=new Map(bill.participants.map(p=>[p.id,p.paidCents-p.shareCents]));const settlementIds=new Set();
+  for(const settlement of bill.settlements){
+   if(!settlement||typeof settlement.id!=="string"||settlementIds.has(settlement.id)||!participantIds.has(settlement.fromId)||!participantIds.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountCents,1))return "รายการชำระบิลไม่ถูกต้อง";
+   settlementIds.add(settlement.id);
+   const from=net.get(settlement.fromId),to=net.get(settlement.toId);
+   if(from>=0||settlement.amountCents>-from)return "รายการชำระเกินยอดที่ผู้โอนต้องจ่าย";
+   net.set(settlement.fromId,from+settlement.amountCents);net.set(settlement.toId,to-settlement.amountCents);
+  }
+  const isSettled=[...net.values()].every(v=>v===0);
+  if(Boolean(bill.settled)!==isSettled)return "สถานะเคลียร์บิลไม่ตรงกับยอดคงเหลือ";
+  billsById.set(bill.id,bill);
+ }
+ const linkedBills=new Set();
+ for(const visit of state.bbq){
+  if(typeof visit.shop!=="string"||!visit.shop.trim()||visit.shop.length>200||!/^\d{4}-\d{2}-\d{2}/.test(visit.date)||!integer(visit.people,1)||(visit.totalCents!==undefined&&!integer(visit.totalCents))||(visit.personalCents!==null&&visit.personalCents!==undefined&&!integer(visit.personalCents))||(visit.rating!==null&&visit.rating!==undefined&&(!integer(visit.rating,1)||visit.rating>5)))return "ประวัติมื้ออาหารมีข้อมูลไม่ถูกต้อง";
+  if(visit.billId){if(!billsById.has(visit.billId)||linkedBills.has(visit.billId))return "ลิงก์บิลกับมื้ออาหารไม่ถูกต้องหรือซ้ำ";linkedBills.add(visit.billId);}
+ }
+ for(const bill of state.bills)if(bill.bbqId){const visit=state.bbq.find(x=>x.id===bill.bbqId);if(!visit||visit.billId!==bill.id)return "ความเชื่อมโยงบิลกับมื้ออาหารไม่ตรงกัน";}
+ return null;
+}
 async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const v=await request.json(); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
@@ -55,6 +109,7 @@ export default { async fetch(request,env) {
   const user=await getAuthenticatedUser(request,env.DB); if(!user)return json(request,env,{error:"Unauthorized"},401);
   if(request.method==="GET") { const row=await env.DB.prepare("SELECT payload,updated_at FROM user_app_data WHERE user_id=? AND bucket=?").bind(user.id,"app_state").first(); if(!row)return json(request,env,{payload:null,updated_at:null}); try{return json(request,env,{payload:JSON.parse(row.payload),updated_at:row.updated_at});}catch{return json(request,env,{error:"Stored data is invalid JSON"},500);} }
   const body=await parseBody(request); if(!body||!isSnapshot(body.payload))return json(request,env,{error:"payload ต้องเป็น object ที่มีเฉพาะค่า string ของคีย์ lamoon-* (ไม่เกิน 500 รายการ)"},400);
+  const validationError=validateDayTogetherSnapshot(body.payload); if(validationError)return json(request,env,{error:validationError},400);
   const serialized=JSON.stringify(body.payload); if(serialized.length>900000)return json(request,env,{error:"Payload exceeds 900 KB limit"},413);
   const updatedAt=new Date().toISOString(); await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run(); return json(request,env,{ok:true,updated_at:updatedAt});
  } catch (error) { console.error("money102-api-staging request failed", error); return json(request,env,{error:"Cloudflare D1 request failed",detail:error instanceof Error ? error.message : String(error)},500); }
