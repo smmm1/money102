@@ -259,25 +259,7 @@ export default function DayTogether() {
     setToast("เชื่อมบิลกับประวัติมื้ออาหารแล้ว")
   }
 
-  const bbqPage = () => {
-    const selectedVisit = detailId ? data.bbq.find(visit => visit.id === detailId) : undefined
-    return (
-    <section className="dt-panel">
-      <h2>ประวัติมื้อหมูกระทะ</h2>
-      <Button kind="primary" onClick={() => beginNew("bbq")}>＋ เพิ่มมื้อ</Button>
-      <div className="dt-search"><span>⌕</span><input aria-label="ค้นหาประวัติมื้ออาหาร" placeholder="ค้นหาร้านหรือความทรงจำ" value={query} onChange={e => setQuery(e.target.value)} /></div>
-      {editing ? currentForm() : null}
-      {selectedVisit ? <p className="dt-note-body">{data.prefs.hidden ? "••••••" : selectedVisit.shop + " · " + selectedVisit.title} · {dateText(selectedVisit.date)} · {selectedVisit.personalCents == null ? "ยังไม่ทราบค่าใช้จ่ายส่วนตัว" : money(selectedVisit.personalCents, data.prefs.hidden)}</p> : null}
-      {filteredBbq.length === 0 ? <Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={() => beginNew("bbq")}>เพิ่มมื้อแรก</Button>} /> : null}
-      {filteredBbq.map(visit => <div className="dt-list-row" key={visit.id}>
-        <div><strong>{data.prefs.hidden ? "••••••" : visit.shop}</strong><small>{dateText(visit.date)}</small></div>
-        <Button onClick={() => navigate("bbq", visit.id)}>เปิด</Button>
-        <Button onClick={() => startEdit("bbq", visit)}>แก้ไข</Button>
-        <Button kind="danger" onClick={() => askDelete("bbq", visit.id)}>ลบ</Button>
-      </div>)}
-    </section>
-    )
-  }
+  const bbqPage = () => <section className="dt-panel"><h2>ประวัติมื้อหมูกระทะ</h2></section>
 
   const pageContent = () => {
     if(page==="savings")return savingsPage()
