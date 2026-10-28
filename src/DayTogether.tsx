@@ -247,6 +247,10 @@ export default function DayTogether() {
     const names = ["ฉัน", ...(visit.friends || "เพื่อน").split(",").map(name => name.trim()).filter(Boolean)]
     setForm({ title: visit.title + " · " + visit.shop, shop: visit.shop, date: visit.date, total: (visit.totalCents / 100).toFixed(2), people: names.join(", "), payer: "ฉัน", bbqId: visit.id, notes: "" })
   }
+  const openOrCreateBillForVisit = (visit: Bbq) => {
+    if (visit.billId) navigate("split", visit.billId)
+    else createBillFromVisit(visit)
+  }
   const createVisitFromBill = (bill: Bill) => {
     const visitId = id()
     const visit: Bbq = { id: visitId, shop: bill.shop || "ไม่ระบุร้าน", title: bill.title, date: bill.date, area: "", friends: bill.participants.filter(p => p.name !== "ฉัน").map(p => p.name).join(", "), people: bill.participants.length, totalCents: bill.totalCents, personalCents: bill.participants.find(p => p.name === "ฉัน")?.shareCents ?? null, rating: null, menu: "", memory: "", billId: bill.id }
@@ -266,7 +270,7 @@ export default function DayTogether() {
         <p>{dateText(detail.date)} · {data.prefs.hidden ? "••••••" : detail.title}</p>
         <Button onClick={() => startEdit("bbq", detail)}>แก้ไข</Button>
         <Button kind="danger" onClick={() => askDelete("bbq", detail.id)}>ลบ</Button>
-        {detail.billId ? <Button onClick={() => navigate("split", detail.billId!)}>เปิดบิลที่เชื่อม</Button> : <Button kind="primary" onClick={() => createBillFromVisit(detail)}>สร้างบิลหารตังจากมื้อนี้</Button>}
+        <Button kind={detail.billId ? "secondary" : "primary"} onClick={() => openOrCreateBillForVisit(detail)}>{detail.billId ? "เปิดบิลที่เชื่อม" : "สร้างบิลหารตังจากมื้อนี้"}</Button>
       </div> : null}
       {filteredBbq.length === 0 ? <Empty title="ยังไม่มีประวัติมื้อหมูกระทะ" detail="บันทึกร้าน ค่าใช้จ่าย และความทรงจำของแต่ละมื้อ" action={<Button kind="primary" onClick={() => beginNew("bbq")}>เพิ่มมื้อแรก</Button>} /> : null}
       {filteredBbq.map(visit => <div className="dt-list-row" key={visit.id}>
