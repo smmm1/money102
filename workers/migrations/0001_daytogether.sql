@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS savings_transactions (
   note TEXT NOT NULL DEFAULT '' CHECK(length(note) <= 2000),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
-  FOREIGN KEY(goal_id, user_id) REFERENCES savings_goals(id, user_id) ON DELETE SET NULL,
+  FOREIGN KEY(goal_id, user_id) REFERENCES savings_goals(id, user_id) ON DELETE RESTRICT,
   UNIQUE(id, user_id)
 );
 CREATE INDEX IF NOT EXISTS idx_savings_transactions_user_date ON savings_transactions(user_id, entry_date DESC);
