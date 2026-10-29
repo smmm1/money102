@@ -367,3 +367,38 @@ test("exact user input parsers preserve satang and percentage basis points", asy
   assert.equal(parsePercentageBasisPoints("100.01"), null);
   assert.equal(parsePercentageBasisPoints("1.005"), null);
 });
+
+
+test("integer satang parser rejects ambiguous precision and unsafe values", async () => {
+  const { parseMoneyToSatang } = await import("../src/daytogether-calculations.mjs");
+  assert.equal(parseMoneyToSatang("1,000"), null);
+  assert.equal(parseMoneyToSatang("-1"), null);
+  assert.equal(parseMoneyToSatang("12.345"), null);
+  assert.equal(parseMoneyToSatang("0.01"), 1);
+  assert.equal(parseMoneyToSatang("1000.5"), 100050);
+  assert.equal(parseMoneyToSatang("90071992547409.92"), null);
+});
+
+test("equal bill split conserves every satang and deterministically distributes the remainder", async () => {
+  const { divideSatang } = await import("../src/daytogether-calculations.mjs");
+  assert.deepEqual(divideSatang(120000, 4), { shares: [30000, 30000, 30000, 30000], remainder: 0, totalSatang: 120000 });
+  assert.deepEqual(divideSatang(100000, 3), { shares: [33334, 33333, 33333], remainder: 1, totalSatang: 100000 });
+  assert.equal(divideSatang(-1, 2), null);
+  assert.equal(divideSatang(100, 0), null);
+  assert.equal(divideSatang(Number.MAX_SAFE_INTEGER, 2)?.shares.reduce((sum, item) => sum + item, 0), Number.MAX_SAFE_INTEGER);
+});
+
+test("savings withdrawal validation respects each goal and allows edit without double counting", async () => {
+  const { validateSavingsEntry } = await import("../src/daytogether-calculations.mjs");
+  const goals = [{ id: "travel" }];
+  const entries = [
+    { id: "d1", kind: "deposit", amountSatang: 50000, goalId: "travel" },
+    { id: "d2", kind: "deposit", amountSatang: 10000, goalId: "" },
+    { id: "w1", kind: "withdraw", amountSatang: 5000, goalId: "travel" },
+  ];
+  assert.deepEqual(validateSavingsEntry(entries, { kind: "withdraw", amountSatang: 46000, goalId: "travel" }, goals),
+    { valid: false, error: "insufficient-balance", balanceSatang: 45000 });
+  assert.equal(validateSavingsEntry(entries, { id: "w1", kind: "withdraw", amountSatang: 45000, goalId: "travel" }, goals).valid, true);
+  assert.equal(validateSavingsEntry(entries, { kind: "withdraw", amountSatang: 1, goalId: "missing" }, goals).error, "unknown-goal");
+  assert.equal(validateSavingsEntry(entries, { kind: "deposit", amountSatang: 1.2, goalId: "" }, goals).valid, false);
+});
