@@ -69,7 +69,7 @@ function isBackupState(value: unknown): value is State {
           if (!person || typeof person !== "object" || Array.isArray(person)) return false
           const participant = person as Record<string, unknown>
           if (!isString(participant, ["id", "name"]) || !participant.id || !String(participant.name).trim() || typeof participant.isMe !== "boolean" || participants.has(String(participant.id))) return false
-          participants.add(participant.id)
+          participants.add(String(participant.id))
         }
         for (const expense of record.expenses) {
           if (!expense || typeof expense !== "object" || Array.isArray(expense)) return false
