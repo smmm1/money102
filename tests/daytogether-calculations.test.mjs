@@ -52,3 +52,15 @@ test("rejects duplicate participant IDs from being charged twice", () => {
   ], people);
   assert.deepEqual(plain(balances), { a: 50, b: -50, c: 0 });
 });
+
+test("supports multiple payers and requires their amounts to equal the expense", () => {
+  const valid = {
+    amountSatang: 10000,
+    payerId: "a",
+    payers: [{ participantId: "a", amountSatang: 6000 }, { participantId: "b", amountSatang: 4000 }],
+    participantIds: ["a", "b", "c"],
+  };
+  assert.deepEqual(plain(calculateSplit([valid], people).balances), { a: 2667, b: 667, c: -3334 });
+  const invalid = { ...valid, payers: [{ participantId: "a", amountSatang: 6000 }, { participantId: "b", amountSatang: 3000 }] };
+  assert.deepEqual(plain(calculateSplit([invalid], people).balances), { a: 0, b: 0, c: 0 });
+});
