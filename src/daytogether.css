@@ -717,3 +717,12 @@ html[data-dt-theme="dark"] .dt-btn-primary { color: #171A20; }
 @media (prefers-reduced-motion: reduce) {
  .dt-app *, .dt-app *::before, .dt-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Ensure every interactive control in the prototype meets the thumb target. */
+.dt-app button, .dt-app a, .dt-app input, .dt-app select { touch-action: manipulation; }
+.dt-icon-button { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+.dt-app .dt-between, .dt-app .dt-list-row, .dt-app .dt-bill-row { min-width: 0; }
+.dt-app .dt-stat-grid > *, .dt-app .dt-module-grid > *, .dt-app .dt-note-grid > *, .dt-app .dt-visit-grid > * { min-width: 0; }
+.dt-prototype-banner strong { letter-spacing: .01em; }
+.dt-prototype-banner button:hover { background: var(--dt-primary-soft); }
+@media (min-width: 761px) { .dt-modal { width: min(620px, calc(100vw - 140px)); } }
