@@ -260,7 +260,7 @@ export default { async fetch(request,env) {
    const body=await parseBody(request);
    const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
    const password=typeof body?.password==="string"?body.password:"";
-   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลที่ถูกต้อง"},400);
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลที่ถูกต้อง"},400);
    if(password.length<8||password.length>128)return json(request,env,{error:"รหัสผ่านต้องมีความยาว 8–128 ตัวอักษร"},400);
    const existing=await env.DB.prepare("SELECT id FROM app_users WHERE email=?").bind(email).first();
    if(existing)return json(request,env,{error:"อีเมลนี้มีบัญชีแล้ว"},409);
