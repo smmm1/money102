@@ -354,3 +354,16 @@ test("draft money and percentage parsing avoid binary floating-point rounding", 
   assert.equal(invalidFixed.invalidRows, 1);
   assert.equal(invalidFixed.baseTotalSatang, 0);
 });
+
+
+test("exact user input parsers preserve satang and percentage basis points", async () => {
+  const { parseMoneyToSatang, parsePercentageBasisPoints } = await import("../src/daytogether-calculations.mjs");
+  assert.equal(parseMoneyToSatang("0.29"), 29);
+  assert.equal(parseMoneyToSatang("1.005"), null);
+  assert.equal(parseMoneyToSatang("-1.00"), null);
+  assert.equal(parseMoneyToSatang("90071992547409.92"), null);
+  assert.equal(parsePercentageBasisPoints("1.25"), 125);
+  assert.equal(parsePercentageBasisPoints("100"), 10000);
+  assert.equal(parsePercentageBasisPoints("100.01"), null);
+  assert.equal(parsePercentageBasisPoints("1.005"), null);
+});
