@@ -23,6 +23,7 @@ export type DraftSplitPreview = { shares: Record<string, number>; invalidRows: n
 export function calculateSplit(expenses?: SplitExpense[], participants?: SplitParticipant[], settlements?: SplitSettlement[]): SplitResult;
 export function calculateDraftSplitPreview(rows?: DraftSplitPreviewRow[], participantNames?: string[]): DraftSplitPreview;
 export function calculateSleepDuration(start: string, end: string): { durationHours: number; normalizedEnd: string } | null;
+export function buildDailyTrend(entries: { date: string; value: number | string }[], startDate: string, endDate: string, aggregate?: "last" | "sum"): { date: string; value: number | null }[];
 
 export function calculateExpenseResponsibility(expenses: SplitExpense[], participantId: string): number | null;
 export type BbqPersonalCostSummary = { totalSatang: number | null; knownCount: number; unknownCount: number; averageSatang: number | null; complete: boolean };
