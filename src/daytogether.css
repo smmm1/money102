@@ -726,3 +726,12 @@ html[data-dt-theme="dark"] .dt-btn-primary { color: #171A20; }
 .dt-prototype-banner strong { letter-spacing: .01em; }
 .dt-prototype-banner button:hover { background: var(--dt-primary-soft); }
 @media (min-width: 761px) { .dt-modal { width: min(620px, calc(100vw - 140px)); } }
+
+
+/* Phase 2 persistence state: truthful, compact feedback without implying a save before D1 confirms it. */
+.dt-save-status{display:inline-flex;align-items:center;gap:6px;margin-left:12px;color:var(--dt-muted,#777);font-size:12px;white-space:nowrap}
+.dt-save-status::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.dt-save-status.is-saving{color:var(--dt-text-secondary,#7d7d7d)}
+.dt-save-status.is-saved{color:var(--dt-accent,#8a6a2f)}
+.dt-save-status.is-error{color:#b45345}
+@media(max-width:640px){.dt-save-status{margin-left:6px;font-size:11px}.dt-breadcrumb{flex-wrap:wrap;gap:5px}}
