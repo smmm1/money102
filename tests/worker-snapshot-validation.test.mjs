@@ -344,6 +344,7 @@ test("server validates typed health values and rejects impossible calendar dates
     state => { state.health[0] = { ...state.health[0], kind: "sleep", value: "24.1" }; },
     state => { state.health[0] = { ...state.health[0], kind: "symptom", value: "   " }; },
     state => { state.savings[0].date = "2026-02-30"; },
+    state => { state.notes[0].date = "2026-13-01"; },
     state => { state.health[0].date = "2026-01-01T25:00"; },
   ];
   for (const mutate of invalidCases) {
