@@ -285,7 +285,6 @@ export default function DayTogether() {
     }
     setPendingCloseAfterSave(false); setModal(null); setEditId("")
   }
-  const [undoAction,setUndoAction] = useState<null|(()=>void)>(null)
   const [openNoteId,setOpenNoteId] = useState("")
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     const snapshot = state
