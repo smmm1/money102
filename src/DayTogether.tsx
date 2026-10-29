@@ -165,7 +165,7 @@ export default function DayTogether() {
   useEffect(() => { setHeightDraft(state.settings.heightCm===null?"":String(state.settings.heightCm)) },[state.settings.heightCm])
   useEffect(() => { setWaterGoalDraft(String(state.settings.waterGoal)) },[state.settings.waterGoal])
   useEffect(() => { const applyTheme = () => { document.documentElement.dataset.dtTheme = theme }; applyTheme(); setState(s=>s.settings.theme===theme?s:{...s,settings:{...s.settings,theme}}) },[theme])
-  useEffect(() => { if(notice) { const t=window.setTimeout(()=>setNotice(""),3000); return ()=>clearTimeout(t) } },[notice])
+  useEffect(() => { if(notice) { const t=window.setTimeout(()=>{setNotice("");setUndoAction(null)},5000); return ()=>clearTimeout(t) } },[notice])
   useEffect(() => { if(!pendingCloseAfterSave)return; setPendingCloseAfterSave(false); setModal(null); setEditId("") },[pendingCloseAfterSave])
   useEffect(() => {
     if (modal !== "note" || !editId) return
@@ -285,15 +285,18 @@ export default function DayTogether() {
     }
     setPendingCloseAfterSave(false); setModal(null); setEditId("")
   }
+  const [undoAction,setUndoAction] = useState<null|(()=>void)>(null)
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
-    if(!window.confirm("ต้องการลบรายการนี้หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้")) return
+    const snapshot = state
+    if(!window.confirm("ลบรายการตัวอย่างนี้หรือไม่? สามารถกู้คืนได้ทันทีจากปุ่ม “เลิกทำ”")) return
     if(collection==="goals") { if(state.savings.some(t=>t.goalId===itemId)) { setNotice("ยังลบเป้าหมายนี้ไม่ได้ เพราะมีรายการออมเชื่อมอยู่"); return } update("goals",state.goals.filter(x=>x.id!==itemId)) }
     else if(collection==="savings") update("savings",state.savings.filter(x=>x.id!==itemId))
     else if(collection==="health") update("health",state.health.filter(x=>x.id!==itemId))
     else if(collection==="notes") update("notes",state.notes.filter(x=>x.id!==itemId))
     else if(collection==="bills") { const bill=state.bills.find(x=>x.id===itemId); if(bill?.settlements.length && !window.confirm("บิลนี้มีประวัติชำระแล้ว ต้องการลบบิลและประวัติชำระหรือไม่?")) return; const split=bill?calculateBillSplit(bill.expenses,bill.participants,bill.settlements,bill.adjustments):null;const me=bill?.participants.find(p=>p.isMe);update("bills",state.bills.filter(x=>x.id!==itemId)); update("visits",state.visits.map(v=>v.billId===itemId?{...v,billId:"",totalSatang:split?.totalSatang??v.totalSatang,personalSatang:split&&me?calculateExpenseResponsibility(split.adjustedExpenses,me.id):null}:v)) }
     else { const v=state.visits.find(x=>x.id===itemId); if(v?.billId && !window.confirm("มื้อนี้เชื่อมกับบิลอยู่ จะเก็บบิลไว้และยกเลิกการเชื่อมหรือไม่?")) return; update("visits",state.visits.filter(x=>x.id!==itemId)); if(v?.billId) update("bills",state.bills.map(b=>b.id===v.billId?{...b,bbqId:""}:b)) }
-    setNotice("บันทึกข้อมูลตัวอย่างแล้ว (ยังไม่บันทึกถาวร)")
+    setUndoAction(() => () => setState(snapshot))
+    setNotice("ลบรายการตัวอย่างแล้ว")
   }
   const addWater = (amount: number) => {
     if (!Number.isSafeInteger(amount) || amount <= 0 || amount > 5000) return
@@ -513,7 +516,7 @@ export default function DayTogether() {
     {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet"><div className="dt-sheet-handle"/><h3>เพิ่มเติม</h3>{["/split","/bbq","/settings"].map(href=><button key={href} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>↗</b></button>)}</section></>}
      {quickAddOpen&&<><button className="dt-sheet-dismiss" style={{display:"block",position:"fixed",inset:0,background:"transparent",zIndex:20}} aria-label="ปิดเมนูเพิ่มรายการ" onClick={()=>setQuickAddOpen(false)}/><section className="dt-quick-add-menu" aria-label="เลือกประเภทข้อมูลที่จะเพิ่ม"><div className="dt-sheet-handle"/><h3>เพิ่มรายการใหม่</h3><p>เลือกหมวดที่ต้องการบันทึก</p><button onClick={()=>{setQuickAddOpen(false);openModal("saving")}}><span>◒</span><span><strong>เงินออม</strong><small>ฝากออมหรือถอนเงิน</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("health")}}><span>♡</span><span><strong>สุขภาพ</strong><small>น้ำหนัก น้ำดื่ม การนอน หรืออาการ</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);startNote()}}><span>▤</span><span><strong>โน้ต / ไดอารี</strong><small>เก็บความคิดและความทรงจำ</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("bill")}}><span>⇄</span><span><strong>บิลหารตัง</strong><small>แบ่งค่าใช้จ่ายกับเพื่อน</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("visit")}}><span>♨</span><span><strong>มื้อหมูกระทะ</strong><small>บันทึกร้านและความทรงจำ</small></span><b>＋</b></button></section></>}
     {renderModal()}
-    {notice&&<div className="dt-toast" role="status"><span>✓</span>{notice}<button onClick={()=>setNotice("")} aria-label="ปิด">×</button></div>}
+    {notice&&<div className="dt-toast" role="status"><span aria-hidden="true">✓</span><span>{notice}</span>{undoAction&&<button type="button" onClick={()=>{undoAction();setUndoAction(null);setNotice("กู้คืนข้อมูลตัวอย่างแล้ว")}} aria-label="เลิกทำการลบ">เลิกทำ</button>}<button onClick={()=>{setNotice("");setUndoAction(null)}} aria-label="ปิด">×</button></div>}
   </div>
 }
 
