@@ -168,3 +168,15 @@ test("personal responsibility refuses to report a total when an allocation is in
     allocations: { a: 3333, b: 6666 },
   }], "a"), null);
 });
+
+
+test("personal share permits a payer who is not participating in that expense", () => {
+  assert.equal(calculateExpenseResponsibility([{
+    amountSatang: 1000, payerId: "c", participantIds: ["a", "b"], allocationMode: "equal",
+  }], "a"), 500);
+  assert.equal(calculateExpenseResponsibility([{
+    amountSatang: 1000, payerId: "c", payers: [
+      { participantId: "c", amountSatang: 600 }, { participantId: "d", amountSatang: 400 },
+    ], participantIds: ["a", "b"], allocationMode: "equal",
+  }], "b"), 500);
+});
