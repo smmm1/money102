@@ -270,7 +270,7 @@ export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
 /** Parse a user-entered baht amount to satang without binary float rounding. */
 export function parseMoneyToSatang(value) {
   const text = String(value ?? "").trim();
-  const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(text);
   if (!match) return null;
   const whole = Number(match[1]);
   const fraction = Number((match[2] ?? "").padEnd(2, "0"));
@@ -281,7 +281,7 @@ export function parseMoneyToSatang(value) {
 /** Parse a percentage with up to two decimal places into basis points. */
 export function parsePercentageBasisPoints(value) {
   const text = String(value ?? "").trim();
-  const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(text);
   if (!match) return null;
   const whole = Number(match[1]);
   const fraction = Number((match[2] ?? "").padEnd(2, "0"));
