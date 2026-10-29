@@ -117,8 +117,10 @@ function validDayTogetherState(raw) {
   const participants=new Map();
   for(const person of bill.participants){if(!person||typeof person.id!=="string"||!person.id||participants.has(person.id)||typeof person.name!=="string"||!person.name.trim()||typeof person.isMe!=="boolean")return false;participants.set(person.id,person);}
   let total=0;
+  const expenseIds=new Set();
   for(const expense of bill.expenses){
-   if(!expense||typeof expense.id!=="string"||!expense.id||typeof expense.title!=="string"||!expense.title.trim()||!integer(expense.amountSatang,1)||!participants.has(expense.payerId)||!Array.isArray(expense.participantIds)||!expense.participantIds.length)return false;
+   if(!expense||typeof expense.id!=="string"||!expense.id||expenseIds.has(expense.id)||typeof expense.title!=="string"||!expense.title.trim()||!integer(expense.amountSatang,1)||!participants.has(expense.payerId)||!Array.isArray(expense.participantIds)||!expense.participantIds.length)return false;
+   expenseIds.add(expense.id);
    const assigned=[...new Set(expense.participantIds)];
    if(assigned.length!==expense.participantIds.length||assigned.some(id=>!participants.has(id)))return false;
    if(expense.allocationMode==="fixed"){
@@ -175,8 +177,10 @@ function validDayTogetherState(raw) {
     expense.payers.forEach((payer,index)=>netBalances.set(payer.participantId,netBalances.get(payer.participantId)+contributions[index]));
    }else netBalances.set(expense.payerId,netBalances.get(expense.payerId)+amount);
   }
+  const settlementIds=new Set();
   for(const settlement of bill.settlements){
-   if(!settlement||typeof settlement.id!=="string"||!settlement.id||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
+   if(!settlement||typeof settlement.id!=="string"||!settlement.id||settlementIds.has(settlement.id)||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
+   settlementIds.add(settlement.id);
    const fromBalance=netBalances.get(settlement.fromId),toBalance=netBalances.get(settlement.toId);
    if(fromBalance>=0||toBalance<=0||settlement.amountSatang>-fromBalance||settlement.amountSatang>toBalance)return false;
    netBalances.set(settlement.fromId,fromBalance+settlement.amountSatang);
