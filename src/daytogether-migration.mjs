@@ -23,7 +23,7 @@ const uid = (prefix, value, index) => {
 export function migrateLegacyState(defaults, getItem) {
   const current = parse(getItem("lamoon-daytogether-v1"), null);
   if (current && typeof current === "object" && !Array.isArray(current)) {
-    return { ...defaults, ...current, settings: { ...defaults.settings, ...(current.settings || {}) } };
+    return { ...defaults, ...current, notes: Array.isArray(current.notes) ? current.notes.map(note => ({ ...note, version: note && Number.isSafeInteger(note.version) && note.version >= 1 ? note.version : 1 })) : defaults.notes, settings: { ...defaults.settings, ...(current.settings || {}) } };
   }
 
   const goals = [];
