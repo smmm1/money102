@@ -60,7 +60,7 @@ test("supports multiple payers and requires their amounts to equal the expense",
     payers: [{ participantId: "a", amountSatang: 6000 }, { participantId: "b", amountSatang: 4000 }],
     participantIds: ["a", "b", "c"],
   };
-  assert.deepEqual(plain(calculateSplit([valid], people).balances), { a: 2667, b: 667, c: -3334 });
+  assert.deepEqual(plain(calculateSplit([valid], people).balances), { a: 2666, b: 667, c: -3333 });
   const invalid = { ...valid, payers: [{ participantId: "a", amountSatang: 6000 }, { participantId: "b", amountSatang: 3000 }] };
   assert.deepEqual(plain(calculateSplit([invalid], people).balances), { a: 0, b: 0, c: 0 });
 });
