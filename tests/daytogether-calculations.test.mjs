@@ -91,3 +91,13 @@ test("percentage allocations stay exact for large safe-integer satang amounts", 
   assert.deepEqual(plain(result.balances), { a: bShare, b: -bShare, c: 0 });
   assert.equal(Object.values(result.balances).reduce((sum, value) => sum + value, 0), 0);
 });
+
+test("rejects unknown allocation modes instead of silently splitting equally", () => {
+  const invalid = {
+    amountSatang: 10000,
+    payerId: "a",
+    participantIds: ["a", "b"],
+    allocationMode: "mystery",
+  };
+  assert.deepEqual(plain(calculateSplit([invalid], people).balances), { a: 0, b: 0, c: 0 });
+});
