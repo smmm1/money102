@@ -23,7 +23,7 @@ test("only charges participants selected for an expense", () => {
   const { balances } = calculateSplit([
     { amountSatang: 9000, payerId: "a", participantIds: ["a", "b"] },
   ], people);
-  assert.deepEqual(balances, { a: 4500, b: -4500, c: 0 });
+  assert.deepEqual(plain(balances), { a: 4500, b: -4500, c: 0 });
 });
 
 test("validates fixed allocations and percentage totals", () => {
@@ -50,5 +50,5 @@ test("rejects duplicate participant IDs from being charged twice", () => {
   const { balances } = calculateSplit([
     { amountSatang: 101, payerId: "a", participantIds: ["a", "a", "b", "b"] },
   ], people);
-  assert.deepEqual(balances, { a: 50, b: -50, c: 0 });
+  assert.deepEqual(plain(balances), { a: 50, b: -50, c: 0 });
 });
