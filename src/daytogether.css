@@ -265,3 +265,11 @@ body{background:#e8e5db}
 .dt-bill-adjustment-summary .dt-list-row{min-height:42px}
 .dt-bill-adjustment-summary .dt-form-hint{margin:10px 0 0}
 @media(max-width:620px){.dt-bill-adjustments,.dt-bill-adjustment-summary{padding:12px}.dt-bill-adjustments .dt-form-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+.dt-bill-adjusted-preview{display:grid;gap:6px;padding:12px;margin:10px 0;border-radius:10px;background:var(--dt-surface);border:1px solid var(--dt-border)}
+.dt-bill-adjusted-preview>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.dt-bill-adjusted-preview>div span{color:var(--dt-muted)}
+.dt-bill-adjusted-preview>div strong{font-variant-numeric:tabular-nums;text-align:right}
+.dt-bill-adjusted-preview .dt-bill-adjusted-total{border-top:1px solid var(--dt-border);padding-top:9px;margin-top:3px;color:var(--dt-text)}
+.dt-bill-adjusted-preview .dt-bill-adjusted-total strong{font-size:1.12rem;color:var(--dt-primary)}
