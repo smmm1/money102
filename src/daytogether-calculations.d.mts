@@ -85,6 +85,5 @@ export function calculateDraftBillSplitPreview(rows?: DraftBillSplitRow[], parti
 export function parseMoneyToSatang(value: string | number): number | null;
 export function parsePercentageBasisPoints(value: string | number): number | null;
 
-export function parseMoneyToSatang(value: string | number): number | null;
 export function divideSatang(totalSatang: number, peopleCount: number): { shares: number[]; remainder: number; totalSatang: number } | null;
 export function validateSavingsEntry(entries: Array<{ id?: string; kind: "deposit" | "withdraw"; amountSatang: number; goalId: string }>, entry: { id?: string; kind: "deposit" | "withdraw"; amountSatang: number; goalId: string }, goals?: Array<{ id: string }>): { valid: boolean; error: string; balanceSatang: number };
