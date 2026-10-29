@@ -49,7 +49,8 @@ export function migrateLegacyState(defaults, getItem) {
     mood: text(item.mood),
     pinned: Boolean(item.pinned),
     archived: false,
-    updatedAt: text(item.updatedAt, text(item.createdAt, new Date().toISOString()))
+    updatedAt: text(item.updatedAt, text(item.createdAt, new Date().toISOString())),
+    version: 1
   })) : [];
 
   const oldHealth = parse(getItem("lamoon-health-dashboard-v1"), {});
@@ -97,7 +98,8 @@ export function migrateLegacyState(defaults, getItem) {
         mood: "",
         pinned: false,
         archived: false,
-        updatedAt: text(item.createdAt, new Date().toISOString())
+        updatedAt: text(item.createdAt, new Date().toISOString()),
+        version: 1
       });
     }
   }
