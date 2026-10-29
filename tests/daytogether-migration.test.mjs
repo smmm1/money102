@@ -26,6 +26,7 @@ test("migrates old Money102 health, notes, money, split and BBQ records", () => 
   assert.equal(state.notes.every(note => note.version === 1), true);
   assert.equal(state.notes.some(note => note.tags.includes("การเงิน")), true);
   assert.equal(state.health.length, 2);
+  assert.equal(state.health[1].kind, "exercise");
   assert.equal(state.bills[0].expenses[0].amountSatang, 30000);
   assert.equal(state.visits[0].restaurant, "ร้านเดิม");
   assert.equal(state.settings.timezone, "Asia/Bangkok");
@@ -37,6 +38,8 @@ test("prefers an existing DayTogether state and merges settings defaults", () =>
   assert.equal(state.notes[0].id, "new");
   assert.equal(state.settings.displayName, "Mark");
   assert.equal(state.settings.timezone, "Asia/Bangkok");
+  assert.equal(state.settings.heightCm, null);
+  assert.equal(state.settings.healthKinds.includes("exercise"), true);
 });
 
 test("ignores malformed legacy values safely", () => {
