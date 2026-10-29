@@ -198,7 +198,34 @@ export default function DayTogether() {
     e.preventDefault(); const f=new FormData(e.currentTarget)
     if(modal==="goal") { const item:Goal={id:editId||id(),name:String(f.get("name")||"").trim(),targetSatang:amountFrom(f.get("target")),due:String(f.get("due")||""),status:(f.get("status")||"active") as Goal["status"],color:String(f.get("color")||"green")};if(!item.name||item.targetSatang<=0){setNotice("กรุณาระบุชื่อและจำนวนเงินเป้าหมายที่มากกว่า 0");return}update("goals",editId?state.goals.map(g=>g.id===editId?item:g):[item,...state.goals]);setNotice("กำลังบันทึกข้อมูล…")}
     if(modal==="saving") {const amount=amountFrom(f.get("amount")),kind=(f.get("kind")||"deposit") as Saving["kind"],goalId=String(f.get("goalId")||"");const old=state.savings.find(t=>t.id===editId);const otherBalance=state.savings.filter(t=>t.id!==editId&&t.goalId===goalId).reduce((n,t)=>n+(t.kind==="deposit"?t.amountSatang:-t.amountSatang),0);if(!amount){setNotice("จำนวนเงินต้องมากกว่า 0");return}if(kind==="withdraw"&&amount>otherBalance){setNotice("ยอดถอนเกินยอดออมที่เลือก");return}const item:Saving={id:editId||id(),kind,amountSatang:amount,date:String(f.get("date")||today(state.settings.timezone)),goalId,note:String(f.get("note")||"")};update("savings",editId?state.savings.map(t=>t.id===editId?item:t):[item,...state.savings]);setNotice("กำลังบันทึกข้อมูล…")}
-    if(modal==="health") {const kind=(f.get("kind")||"weight") as HealthKind;const value=String(f.get("value")||"").trim();if(!value){setNotice("กรุณากรอกค่าที่ต้องการบันทึก");return}const item:Health={id:editId||id(),kind,date:String(f.get("date")||today(state.settings.timezone)),value,extra:String(f.get("extra")||""),note:String(f.get("note")||"")};update("health",editId?state.health.map(h=>h.id===editId?item:h):[item,...state.health]);setNotice("กำลังบันทึกข้อมูล…")}
+    if(modal==="health") {
+      const kind=(f.get("kind")||healthDraftKind) as HealthKind;
+      let date=String(f.get("date")||today(state.settings.timezone));
+      let value=String(f.get("value")||"").trim();
+      let extra=String(f.get("extra")||"").trim();
+      if(kind==="pressure") {
+        const systolic=Number(f.get("systolic")),diastolic=Number(f.get("diastolic")),pulseRaw=String(f.get("pulse")||"").trim();
+        if(!Number.isSafeInteger(systolic)||systolic<=0||!Number.isSafeInteger(diastolic)||diastolic<=0){setNotice("กรุณากรอกความดันตัวบนและตัวล่างเป็นจำนวนเต็มที่มากกว่า 0");return}
+        if(pulseRaw&&(!Number.isSafeInteger(Number(pulseRaw))||Number(pulseRaw)<=0||Number(pulseRaw)>250)){setNotice("ชีพจรต้องเป็นจำนวนเต็มระหว่าง 1–250 ครั้ง/นาที");return}
+        value=systolic+"/"+diastolic;
+        if(pulseRaw) extra=[extra,"ชีพจร "+pulseRaw+" ครั้ง/นาที"].filter(Boolean).join(" · ");
+      } else if(kind==="sleep") {
+        const start=String(f.get("sleepStart")||"");
+        const duration=calculateSleepDuration(start,date);
+        if(!duration){setNotice("กรุณาตรวจสอบเวลาเข้านอนและเวลาตื่นอีกครั้ง");return}
+        date=duration.normalizedEnd;
+        value=duration.durationHours.toFixed(1);
+        extra=["เข้านอน "+start.replace("T"," ")+" · ตื่น "+date.replace("T"," "),extra].filter(Boolean).join(" · ");
+      } else {
+        if(!value){setNotice("กรุณากรอกค่าที่ต้องการบันทึก");return}
+        if(kind==="weight"||kind==="water") {
+          const numeric=Number(value);
+          if(!Number.isFinite(numeric)||numeric<=0||(kind==="water"&&!Number.isSafeInteger(numeric))){setNotice(kind==="weight"?"น้ำหนักต้องเป็นตัวเลขมากกว่า 0":"ปริมาณน้ำต้องเป็นจำนวนเต็ม mL ที่มากกว่า 0");return}
+        }
+      }
+      const item:Health={id:editId||id(),kind,date,value,extra,note:String(f.get("note")||"")};
+      update("health",editId?state.health.map(h=>h.id===editId?item:h):[item,...state.health]);setNotice("กำลังบันทึกข้อมูล…")
+    }
     if(modal==="visit") {const totalRaw=String(f.get("total")||""),personalRaw=String(f.get("personal")||"");const item:Visit={id:editId||id(),restaurant:String(f.get("restaurant")||"").trim(),title:String(f.get("title")||"").trim(),date:String(f.get("date")||today(state.settings.timezone)),area:String(f.get("area")||""),friends:String(f.get("friends")||""),people:Math.max(1,Number(f.get("people")||1)),totalSatang:totalRaw===""?null:amountFrom(totalRaw),personalSatang:personalRaw===""?null:amountFrom(personalRaw),rating:f.get("rating")?Number(f.get("rating")):null,menu:String(f.get("menu")||""),memory:String(f.get("memory")||""),billId:state.visits.find(v=>v.id===editId)?.billId||""};update("visits",editId?state.visits.map(v=>v.id===editId?item:v):[item,...state.visits]);setNotice("กำลังบันทึกข้อมูล…")}
     if(modal==="bill") {
       const title=String(f.get("title")||"").trim(),rawNames=billPeopleText.split(",").map(n=>n.trim()).filter(Boolean),oldBill=state.bills.find(b=>b.id===editId),meName=oldBill?.participants.find(p=>p.isMe)?.name||"ฉัน";
