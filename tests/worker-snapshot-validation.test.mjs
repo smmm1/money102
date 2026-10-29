@@ -39,6 +39,8 @@ test("snapshot envelope accepts only namespaced string values and bounded payloa
   assert.equal(isSnapshot({ "lamoon-other": {} }), false);
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": "x".repeat(900001) }), false);
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(validState()), "lamoon-preferences": "ok" }), true);
+  assert.equal(isSnapshot({ "money102-pork-bbq-history-v1": "[]" }), true);
+  assert.equal(isSnapshot({ "money102-dashboard-order-v1": ["home"] }), false);
 });
 
 test("rejects malformed bill allocations before they can be persisted", () => {
