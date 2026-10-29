@@ -8,11 +8,11 @@ const satang = value => Math.max(0, Math.round(number(value) * 100));
 const dateOf = value => {
   const raw = text(value);
   if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
-  return "2026-01-01";
+  return new Date().toISOString().slice(0, 10);
 };
 const uid = (prefix, value, index) => {
   const source = text(value) || String(index);
-  return prefix + source.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 80);
+  return prefix + index + "-" + source.replace(/[^a-zA-Z0-9_-]/g, "-").slice(0, 80);
 };
 
 /**
