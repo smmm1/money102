@@ -44,6 +44,7 @@ export default function DayTogether() {
   const [editId,setEditId] = useState("")
   const [query,setQuery] = useState("")
   const [kindFilter,setKindFilter] = useState("all")
+  const [healthRange,setHealthRange] = useState<7 | 30 | 90>(30)
   const [notice,setNotice] = useState("")
   const [draftNote,setDraftNote] = useState({title:"",body:"",kind:"note" as "note"|"diary",date:today(),tags:"",mood:""})
   const [billPeopleText,setBillPeopleText] = useState("")
