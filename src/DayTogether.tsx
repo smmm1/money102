@@ -19,6 +19,7 @@ type Settings = { displayName: string; timezone: string; theme: "light" | "dark"
 type State = { goals: Goal[]; savings: Saving[]; health: Health[]; notes: Note[]; bills: Bill[]; visits: Visit[]; settings: Settings }
 const STORE = "lamoon-daytogether-v1"
 const today = (timezone = "Asia/Bangkok") => { const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()); const get = (type: string) => parts.find(part => part.type === type)?.value || "00"; return `${get("year")}-${get("month")}-${get("day")}` }
+const shiftDateKey = (dateKey: string, days: number) => { const [year, month, day] = dateKey.split("-").map(Number); const shifted = new Date(Date.UTC(year, month - 1, day + days)); return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}-${String(shifted.getUTCDate()).padStart(2, "0")}` }
 const dateTimeLocal = (timezone = "Asia/Bangkok") => { const parts = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()); const get = (type: string) => parts.find(part => part.type === type)?.value || "00"; return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}` }
 const sleepStartFromExtra = (value: string) => { const match = value.match(/เข้านอน (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})/); return match ? `${match[1]}T${match[2]}` : "" }
 const sleepDetailsFromExtra = (value: string) => value.replace(/เข้านอน \d{4}-\d{2}-\d{2} \d{2}:\d{2} · ตื่น \d{4}-\d{2}-\d{2} \d{2}:\d{2}/, "").replace(/^ · | · $/g, "")
@@ -252,8 +253,7 @@ export default function DayTogether() {
       const entries=state.health.filter(h=>(kindFilter==="all"||h.kind===kindFilter)&&(!query||(h.value+" "+h.note+" "+h.extra).toLowerCase().includes(query.toLowerCase()))).sort((a,b)=>b.date.localeCompare(a.date))
       const waterToday=state.health.filter(h=>h.kind==="water"&&h.date.slice(0,10)===today(state.settings.timezone)).reduce((n,h)=>n+Number(h.value||0),0)
       const trendKind:HealthKind=(["weight","water","sleep"].includes(kindFilter)?kindFilter:"weight") as HealthKind
-      const cutoff=new Date();cutoff.setDate(cutoff.getDate()-healthRange+1)
-      const cutoffKey=`${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,"0")}-${String(cutoff.getDate()).padStart(2,"0")}`
+      const cutoffKey=shiftDateKey(today(state.settings.timezone),-(healthRange-1))
       const trendRows=state.health.filter(h=>h.kind===trendKind&&h.date.slice(0,10)>=cutoffKey&&h.date.slice(0,10)<=today(state.settings.timezone)&&h.value.trim()!==""&&Number.isFinite(Number(h.value))).sort((a,b)=>a.date.localeCompare(b.date))
       const trendByDay=new Map<string,number>()
       for(const row of trendRows){const key=row.date.slice(0,10);const value=Number(row.value);trendByDay.set(key,trendKind==="water"?(trendByDay.get(key)||0)+value:value)}
