@@ -49,7 +49,18 @@ function isBackupState(value: unknown): value is State {
   if (settings.heightCm !== undefined && settings.heightCm !== null && (typeof settings.heightCm !== "number" || !Number.isFinite(settings.heightCm) || settings.heightCm < 50 || settings.heightCm > 300)) return false
   const isString = (record: Record<string, unknown>, keys: string[]) => keys.every(key => typeof record[key] === "string")
   const isMoney = (item: unknown) => Number.isSafeInteger(item) && Number(item) >= 0
-  const isDateText = (item: unknown) => typeof item === "string" && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.test(item)
+  const isDateText = (item: unknown) => {
+    if (typeof item !== "string") return false
+    const match = /^(\\d{4})-(\\d{2})-(\\d{2})(?:T(\\d{2}):(\\d{2})(?::(\\d{2})(?:\\.\\d{1,3})?)?(?:Z|[+-]\\d{2}:\\d{2})?)?$/.exec(item)
+    if (!match) return false
+    const [year, month, day] = match.slice(1, 4).map(Number)
+    const calendar = new Date(Date.UTC(year, month - 1, day))
+    if (calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== month - 1 || calendar.getUTCDate() !== day) return false
+    if (match[4] !== undefined && (Number(match[4]) > 23 || Number(match[5]) > 59 || Number(match[6] ?? 0) > 59)) return false
+    const offset = /(Z|([+-])(\\d{2}):(\\d{2}))$/.exec(item)
+    if (offset && offset[1] !== "Z" && (Number(offset[3]) > 14 || Number(offset[4]) > 59 || (Number(offset[3]) === 14 && Number(offset[4]) !== 0))) return false
+    return true
+  }
   for (const key of collections) {
     const items = candidate[key] as unknown[]
     const ids = new Set<string>()
