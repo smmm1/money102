@@ -66,7 +66,7 @@ function validDayTogetherState(raw) {
   }
   ids.set(key,seen);
  }
- for(const goal of state.goals)if(typeof goal.name!=="string"||!goal.name.trim()||goal.name.length>120||!integer(goal.targetSatang,1)||!["active","done","archived"].includes(goal.status))return false;
+ for(const goal of state.goals)if(typeof goal.name!=="string"||!goal.name.trim()||goal.name.length>120||!integer(goal.targetSatang,1)||!["active","done","archived"].includes(goal.status)||(goal.due!==undefined&&goal.due!==""&&!date(goal.due)))return false;
  const goalIds=ids.get("goals"),balances=new Map();
  for(const item of state.savings){
   if(!["deposit","withdraw"].includes(item.kind)||!integer(item.amountSatang,1)||!date(item.date)||typeof item.goalId!=="string"||typeof item.note!=="string"||item.note.length>4000)return false;
@@ -96,7 +96,7 @@ function validDayTogetherState(raw) {
    if(severity&&(Number(severity[1])<1||Number(severity[1])>5))return false;
   }
  }
- for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!Array.isArray(note.tags)||note.tags.length>100||note.tags.some(tag=>typeof tag!=="string"||tag.length>60)||typeof note.mood!=="string"||typeof note.updatedAt!=="string"||!integer(note.version,1))return false;
+ for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!date(note.date)||!Array.isArray(note.tags)||note.tags.length>100||note.tags.some(tag=>typeof tag!=="string"||tag.length>60)||typeof note.mood!=="string"||!date(note.updatedAt)||!integer(note.version,1))return false;
  for(const bill of state.bills){
   if(typeof bill.title!=="string"||!bill.title.trim()||bill.title.length>160||!date(bill.date)||!Array.isArray(bill.participants)||bill.participants.length<2||bill.participants.length>200||!Array.isArray(bill.expenses)||bill.expenses.length>1000||!Array.isArray(bill.settlements)||!["draft","settling","settled"].includes(bill.status))return false;
   const participants=new Map();
