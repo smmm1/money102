@@ -23,6 +23,8 @@ const sleepStartFromExtra = (value: string) => { const match = value.match(/เ�
 const sleepDetailsFromExtra = (value: string) => value.replace(/เข้านอน \d{4}-\d{2}-\d{2} \d{2}:\d{2} · ตื่น \d{4}-\d{2}-\d{2} \d{2}:\d{2}/, "").replace(/^ · | · $/g, "")
 const pulseFromExtra = (value: string) => value.match(/ชีพจร (\d+) ครั้ง\/นาที/)?.[1] || ""
 const pressureDetailsFromExtra = (value: string) => value.replace(/ชีพจร \d+ ครั้ง\/นาที/g, "").replace(/^ · | · $/g, "")
+const sleepQualityFromExtra = (value: string) => value.match(/คุณภาพการนอน: (ดีมาก|ดี|พอใช้|ไม่ดี)/)?.[1] || ""
+const sleepDetailsWithoutQuality = (value: string) => value.replace(/คุณภาพการนอน: (ดีมาก|ดี|พอใช้|ไม่ดี)/g, "").replace(/^ · | · $/g, "")
 const id = () => crypto.randomUUID()
 const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
 function readState(): State { try { return migrateLegacyState(defaults, key => localStorage.getItem(key)) } catch { return defaults } }
@@ -217,7 +219,7 @@ export default function DayTogether() {
         if(!duration){setNotice("กรุณาตรวจสอบเวลาเข้านอนและเวลาตื่นอีกครั้ง");return}
         date=duration.normalizedEnd;
         value=duration.durationHours.toFixed(1);
-        extra=["เข้านอน "+start.replace("T"," ")+" · ตื่น "+date.replace("T"," "),extra].filter(Boolean).join(" · ");
+        extra=["เข้านอน "+start.replace("T"," ")+" · ตื่น "+date.replace("T"," "),String(f.get("sleepQuality")||"")?"คุณภาพการนอน: "+String(f.get("sleepQuality")):"",extra].filter(Boolean).join(" · ");
       } else {
         if(!value){setNotice("กรุณากรอกค่าที่ต้องการบันทึก");return}
         if(kind==="weight"||kind==="water") {
@@ -295,13 +297,14 @@ export default function DayTogether() {
       </>:healthDraftKind==="sleep"?<>
         <Field label="เวลาเข้านอน"><input name="sleepStart" type="datetime-local" required defaultValue={(existing as Health|undefined)?.kind==="sleep"?sleepStartFromExtra((existing as Health).extra):""}/></Field>
         <Field label="เวลาตื่น"><input name="date" type="datetime-local" defaultValue={(existing as Health|undefined)?.date||dateTimeLocal(state.settings.timezone)} required/></Field>
+        <Field label="คุณภาพการนอน (ไม่บังคับ)"><select name="sleepQuality" defaultValue={(existing as Health|undefined)?.kind==="sleep"?sleepQualityFromExtra((existing as Health).extra):""}><option value="">ยังไม่ระบุ</option><option value="ดีมาก">ดีมาก</option><option value="ดี">ดี</option><option value="พอใช้">พอใช้</option><option value="ไม่ดี">ไม่ดี</option></select></Field>
       </>:<>
         <Field label={healthDraftKind==="weight"?"น้ำหนัก (กก.)":healthDraftKind==="water"?"ปริมาณน้ำดื่ม (mL)":healthDraftKind==="exercise"?"กิจกรรมออกกำลังกาย":"อาการหรือหัวข้อ"}>
           <input name="value" type={healthDraftKind==="weight"||healthDraftKind==="water"?"number":"text"} min={healthDraftKind==="weight"?"0.1":healthDraftKind==="water"?"1":undefined} step={healthDraftKind==="weight"?"0.1":healthDraftKind==="water"?"1":undefined} required defaultValue={(existing as Health|undefined)?.value||""} placeholder={healthDraftKind==="weight"?"เช่น 72.5":healthDraftKind==="water"?"เช่น 250":"พิมพ์รายละเอียดสั้น ๆ"}/>
         </Field>
         <Field label="วันที่และเวลา"><input name="date" type="datetime-local" defaultValue={(existing as Health|undefined)?.date||dateTimeLocal(state.settings.timezone)} required/></Field>
       </>}
-      <Field label="รายละเอียดเพิ่มเติม"><input name="extra" defaultValue={(existing as Health|undefined)?.kind==="sleep"?sleepDetailsFromExtra((existing as Health).extra):(existing as Health|undefined)?.kind==="pressure"?pressureDetailsFromExtra((existing as Health).extra):(existing as Health|undefined)?.extra||""} placeholder="รายละเอียดเสริม (ไม่บังคับ)"/></Field>
+      <Field label="รายละเอียดเพิ่มเติม"><input name="extra" defaultValue={(existing as Health|undefined)?.kind==="sleep"?sleepDetailsWithoutQuality(sleepDetailsFromExtra((existing as Health).extra)):(existing as Health|undefined)?.kind==="pressure"?pressureDetailsFromExtra((existing as Health).extra):(existing as Health|undefined)?.extra||""} placeholder="รายละเอียดเสริม (ไม่บังคับ)"/></Field>
       <Field label="หมายเหตุ"><textarea name="note" rows={3} defaultValue={(existing as Health|undefined)?.note||""}/></Field>
       {healthDraftKind==="water"&&<div className="dt-quick-water"><Button onClick={()=>{const el=document.querySelector<HTMLInputElement>('input[name="value"]');if(el)el.value="250"}}>＋ 250 mL</Button><Button onClick={()=>{const el=document.querySelector<HTMLInputElement>('input[name="value"]');if(el)el.value="500"}}>＋ 500 mL</Button></div>}
       </>}{modal==="visit"&&<><Field label="ชื่อร้าน"><input name="restaurant" defaultValue={(existing as Visit|undefined)?.restaurant||""} placeholder="ชื่อร้าน"/></Field><Field label="ชื่อมื้อ / โอกาส"><input name="title" defaultValue={(existing as Visit|undefined)?.title||""} placeholder="เช่น นัดเพื่อนวันศุกร์"/></Field><Field label="วันเวลา"><input name="date" type="date" required defaultValue={(existing as Visit|undefined)?.date||today(state.settings.timezone)}/></Field><Field label="สาขา / ย่าน"><input name="area" defaultValue={(existing as Visit|undefined)?.area||""}/></Field><Field label="เพื่อนที่ไปด้วย (คั่นด้วยจุลภาค)"><input name="friends" defaultValue={(existing as Visit|undefined)?.friends||""}/></Field><Field label="จำนวนคน"><input name="people" type="number" min="1" max="100" defaultValue={(existing as Visit|undefined)?.people||1}/></Field><Field label="ยอดรวมทั้งมื้อ (บาท)"><input name="total" type="number" min="0" step="0.01" defaultValue={(existing as Visit|undefined)?.totalSatang===null||!(existing as Visit|undefined)?.totalSatang?"":(existing as Visit).totalSatang!/100}/></Field><Field label="ค่าใช้จ่ายส่วนตัว (บาท)"><input name="personal" type="number" min="0" step="0.01" defaultValue={(existing as Visit|undefined)?.personalSatang===null||!(existing as Visit|undefined)?.personalSatang?"":(existing as Visit).personalSatang!/100}/></Field><Field label="คะแนน 1–5"><select name="rating" defaultValue={(existing as Visit|undefined)?.rating||""}><option value="">ไม่ให้คะแนน</option>{[5,4,3,2,1].map(n=><option key={n} value={n}>{n} ดาว</option>)}</select></Field><Field label="เมนูที่ชอบ"><input name="menu" defaultValue={(existing as Visit|undefined)?.menu||""}/></Field><Field label="ความทรงจำ"><textarea name="memory" rows={4} defaultValue={(existing as Visit|undefined)?.memory||""}/></Field></>}
