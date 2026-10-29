@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import "./daytogether.css"
 import { calculateSplit } from "./daytogether-calculations.mjs"
+import { migrateLegacyState } from "./daytogether-migration.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
 type Saving = { id: string; kind: "deposit" | "withdraw"; amountSatang: number; date: string; goalId: string; note: string }
 type HealthKind = "weight" | "pressure" | "sleep" | "water" | "symptom"
 type Health = { id: string; kind: HealthKind; date: string; value: string; extra: string; note: string }
-type Note = { id: string; title: string; body: string; kind: "note" | "diary"; date: string; tags: string[]; mood: string; pinned: boolean; archived: boolean; updatedAt: string }
+type Note = { id: string; title: string; body: string; kind: "note" | "diary"; date: string; tags: string[]; mood: string; pinned: boolean; archived: boolean; updatedAt: string; version: number }
 type Participant = { id: string; name: string; isMe: boolean }
 type Expense = { id: string; title: string; amountSatang: number; payerId: string; participantIds: string[]; allocationMode?: "equal" | "fixed" | "percentage"; allocations?: Record<string, number> }
 type Settlement = { id: string; fromId: string; toId: string; amountSatang: number; date: string; note: string }
@@ -19,7 +20,7 @@ const STORE = "lamoon-daytogether-v1"
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` }
 const id = () => crypto.randomUUID()
 const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom"], waterGoal: 2000 } }
-function readState(): State { try { const raw = localStorage.getItem(STORE); if (raw) { const v = JSON.parse(raw); return { ...defaults, ...v, settings: { ...defaults.settings, ...(v.settings || {}) } } } } catch {} return defaults }
+function readState(): State { try { return migrateLegacyState(defaults, key => localStorage.getItem(key)) } catch { return defaults } }
 const satang = (baht: number) => Math.round(baht * 100)
 const money = (value: number, hidden = false) => hidden ? "•••••" : new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value / 100)
 const dateText = (s: string) => s ? new Date(s.length > 10 ? s : s + "T12:00:00").toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) : "ไม่ระบุวันที่"
@@ -102,7 +103,7 @@ export default function DayTogether() {
     setNotice("กำลังบันทึกข้อมูล…")
   }
   const startNote = (note?: Note) => { setDraftNote(note?{title:note.title,body:note.body,kind:note.kind,date:note.date,tags:note.tags.join(", "),mood:note.mood}:{title:"",body:"",kind:"note",date:today(),tags:"",mood:""}); openModal("note",note?.id||"") }
-  const saveNote = (e:FormEvent<HTMLFormElement>) => { e.preventDefault(); const item:Note={id:editId||id(),title:draftNote.title.trim()||"ไม่มีชื่อ",body:draftNote.body,kind:draftNote.kind,date:draftNote.date,tags:draftNote.tags.split(",").map(s=>s.trim()).filter(Boolean),mood:draftNote.mood,pinned:state.notes.find(n=>n.id===editId)?.pinned||false,archived:state.notes.find(n=>n.id===editId)?.archived||false,updatedAt:new Date().toISOString()}; update("notes",editId?state.notes.map(n=>n.id===editId?item:n):[item,...state.notes]); closeModal(); setNotice("กำลังบันทึกข้อมูล…") }
+  const saveNote = (e:FormEvent<HTMLFormElement>) => { e.preventDefault(); const item:Note={id:editId||id(),title:draftNote.title.trim()||"ไม่มีชื่อ",body:draftNote.body,kind:draftNote.kind,date:draftNote.date,tags:draftNote.tags.split(",").map(s=>s.trim()).filter(Boolean),mood:draftNote.mood,pinned:state.notes.find(n=>n.id===editId)?.pinned||false,archived:state.notes.find(n=>n.id===editId)?.archived||false,updatedAt:new Date().toISOString(),version:(state.notes.find(n=>n.id===editId)?.version||0)+1}; update("notes",editId?state.notes.map(n=>n.id===editId?item:n):[item,...state.notes]); closeModal(); setNotice("กำลังบันทึกข้อมูล…") }
   const createBillFromVisit = (visit:Visit) => { if(visit.billId){go("/split/"+visit.billId);return} const b:Bill={id:id(),title:visit.title||"มื้อหมูกระทะ",date:visit.date,restaurant:visit.restaurant,participants:visit.friends.split(",").map(n=>n.trim()).filter(Boolean).map(name=>({id:id(),name,isMe:false})).concat([{id:id(),name:"ฉัน",isMe:true}]),expenses:visit.totalSatang? [{id:id(),title:"ค่าอาหาร",amountSatang:visit.totalSatang,payerId:"",participantIds:[]}]:[],settlements:[],note:"",bbqId:visit.id,status:"draft"}; b.expenses=b.expenses.map(x=>({...x,payerId:b.participants.find(p=>p.isMe)?.id||"",participantIds:b.participants.map(p=>p.id)})); update("bills",[b,...state.bills]); update("visits",state.visits.map(v=>v.id===visit.id?{...v,billId:b.id}:v)); go("/split/"+b.id); setNotice("กำลังบันทึกข้อมูล…") }
   const linkVisitFromBill = (bill:Bill) => { if(bill.bbqId){go("/bbq/"+bill.bbqId);return} const v:Visit={id:id(),restaurant:bill.restaurant,title:bill.title,date:bill.date,area:"",friends:bill.participants.filter(p=>!p.isMe).map(p=>p.name).join(", "),people:bill.participants.length,totalSatang:bill.expenses.reduce((n,e)=>n+e.amountSatang,0),personalSatang:bill.participants.find(p=>p.isMe)?responsibility(bill.expenses,bill.participants.find(p=>p.isMe)!.id):null,rating:null,menu:"",memory:"",billId:bill.id}; update("visits",[v,...state.visits]); update("bills",state.bills.map(b=>b.id===bill.id?{...b,bbqId:v.id}:b)); go("/bbq/"+v.id); setNotice("กำลังบันทึกข้อมูล…") }
   const pageTitle = page==="/404" ? "ไม่พบหน้า" : (path!==page ? (page==="/notes"?"รายละเอียดโน้ต":page==="/split"?"รายละเอียดบิล":page==="/bbq"?"รายละเอียดมื้อ":"รายละเอียดเป้าหมาย") : PAGE_LABEL[page])

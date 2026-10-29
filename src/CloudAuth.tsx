@@ -48,7 +48,7 @@ function installStorageShim() {
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
-  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
+  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string"))
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
@@ -70,7 +70,7 @@ function scheduleCloudSave() {
   }, 250)
 }
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
+  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string"))
 }
 const AUTH_TOKEN_KEY = "money102_auth_token"
 let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
