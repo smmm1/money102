@@ -38,6 +38,18 @@ function isBackupState(value: unknown): value is State {
   const collections = ["goals", "savings", "health", "notes", "bills", "visits"] as const
   if (!candidate.settings || typeof candidate.settings !== "object" || Array.isArray(candidate.settings)) return false
   if (collections.some(key => !Array.isArray(candidate[key]) || (candidate[key] as unknown[]).length > 10000)) return false
+  const settings = candidate.settings as Record<string, unknown>
+  if (settings.displayName !== undefined && typeof settings.displayName !== "string") return false
+  if (settings.timezone !== undefined && typeof settings.timezone !== "string") return false
+  if (settings.theme !== undefined && !["light", "dark", "system"].includes(String(settings.theme))) return false
+  if (settings.hidden !== undefined && typeof settings.hidden !== "boolean") return false
+  if (settings.cards !== undefined && (!Array.isArray(settings.cards) || settings.cards.some(item => typeof item !== "string"))) return false
+  if (settings.healthKinds !== undefined && (!Array.isArray(settings.healthKinds) || settings.healthKinds.some(item => typeof item !== "string"))) return false
+  if (settings.waterGoal !== undefined && (!Number.isSafeInteger(settings.waterGoal) || Number(settings.waterGoal) < 1 || Number(settings.waterGoal) > 20000)) return false
+  if (settings.heightCm !== undefined && settings.heightCm !== null && (typeof settings.heightCm !== "number" || !Number.isFinite(settings.heightCm) || settings.heightCm < 50 || settings.heightCm > 300)) return false
+  const isString = (record: Record<string, unknown>, keys: string[]) => keys.every(key => typeof record[key] === "string")
+  const isMoney = (item: unknown) => Number.isSafeInteger(item) && Number(item) >= 0
+  const isDateText = (item: unknown) => typeof item === "string" && /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.test(item)
   for (const key of collections) {
     const items = candidate[key] as unknown[]
     const ids = new Set<string>()
@@ -46,13 +58,52 @@ function isBackupState(value: unknown): value is State {
       const record = item as Record<string, unknown>
       if (typeof record.id !== "string" || !record.id.trim() || record.id.length > 200 || ids.has(record.id)) return false
       ids.add(record.id)
-      if (key === "notes" && (!Array.isArray(record.tags) || typeof record.title !== "string" || typeof record.body !== "string")) return false
-      if (key === "bills" && (!Array.isArray(record.participants) || !Array.isArray(record.expenses) || !Array.isArray(record.settlements))) return false
+      if (key === "goals" && (!isString(record, ["name", "status", "color"]) || !Number.isSafeInteger(record.targetSatang) || Number(record.targetSatang) < 1 || !["active", "done", "archived"].includes(String(record.status)) || (record.due !== undefined && typeof record.due !== "string"))) return false
+      if (key === "savings" && (!["deposit", "withdraw"].includes(String(record.kind)) || !isMoney(record.amountSatang) || Number(record.amountSatang) < 1 || !isDateText(record.date) || !isString(record, ["goalId", "note"]))) return false
+      if (key === "health" && (!["weight", "pressure", "sleep", "water", "symptom", "exercise"].includes(String(record.kind)) || !isDateText(record.date) || !isString(record, ["value", "extra", "note"]))) return false
+      if (key === "notes" && (!isString(record, ["title", "body", "kind", "mood", "updatedAt"]) || !["note", "diary"].includes(String(record.kind)) || !isDateText(record.date) || !isDateText(record.updatedAt) || !Array.isArray(record.tags) || record.tags.length > 100 || record.tags.some(tag => typeof tag !== "string" || tag.length > 60) || typeof record.pinned !== "boolean" || typeof record.archived !== "boolean" || !Number.isSafeInteger(record.version) || Number(record.version) < 1)) return false
+      if (key === "bills") {
+        if (!isString(record, ["title", "date", "restaurant", "note", "bbqId", "status"]) || !isDateText(record.date) || !["draft", "settling", "settled"].includes(String(record.status)) || !Array.isArray(record.participants) || record.participants.length < 2 || record.participants.length > 200 || !Array.isArray(record.expenses) || record.expenses.length > 1000 || !Array.isArray(record.settlements)) return false
+        const participants = new Set<string>()
+        for (const person of record.participants) {
+          if (!person || typeof person !== "object" || Array.isArray(person)) return false
+          const participant = person as Record<string, unknown>
+          if (!isString(participant, ["id", "name"]) || !participant.id || !String(participant.name).trim() || typeof participant.isMe !== "boolean" || participants.has(String(participant.id))) return false
+          participants.add(String(participant.id))
+        }
+        for (const expense of record.expenses) {
+          if (!expense || typeof expense !== "object" || Array.isArray(expense)) return false
+          const entry = expense as Record<string, unknown>
+          if (!isString(entry, ["id", "title", "payerId"]) || !entry.id || !String(entry.title).trim() || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !participants.has(String(entry.payerId)) || !Array.isArray(entry.participantIds) || !entry.participantIds.length || entry.participantIds.some(id => typeof id !== "string" || !participants.has(id))) return false
+          if (entry.allocationMode !== undefined && !["equal", "fixed", "percentage"].includes(String(entry.allocationMode))) return false
+          if (entry.allocations !== undefined && (!entry.allocations || typeof entry.allocations !== "object" || Array.isArray(entry.allocations) || Object.values(entry.allocations as Record<string, unknown>).some(amount => !isMoney(amount)))) return false
+          if (entry.allocationMode === "fixed" || entry.allocationMode === "percentage") {
+            const allocation = entry.allocations as Record<string, unknown> | undefined
+            if (!allocation || entry.participantIds.some(id => !Object.prototype.hasOwnProperty.call(allocation, id))) return false
+            const values = entry.participantIds.map(id => Number(allocation[id]))
+            if (entry.allocationMode === "fixed" && values.reduce((sum, amount) => sum + amount, 0) !== Number(entry.amountSatang)) return false
+            if (entry.allocationMode === "percentage" && (values.some(amount => amount > 10000) || values.reduce((sum, amount) => sum + amount, 0) !== 10000)) return false
+          }
+          if (entry.payers !== undefined) {
+            if (!Array.isArray(entry.payers) || entry.payers.some(payer => !payer || typeof payer !== "object" || Array.isArray(payer) || !isString(payer as Record<string, unknown>, ["participantId"]) || !participants.has(String((payer as Record<string, unknown>).participantId)) || !isMoney((payer as Record<string, unknown>).amountSatang))) return false
+            const payers = entry.payers as Record<string, unknown>[]
+            if (payers.reduce((sum, payer) => sum + Number(payer.amountSatang), 0) !== Number(entry.amountSatang) || new Set(payers.map(payer => String(payer.participantId))).size !== payers.length) return false
+          }
+        }
+        if (record.adjustments !== undefined) {
+          if (!record.adjustments || typeof record.adjustments !== "object" || Array.isArray(record.adjustments)) return false
+          const adjustment = record.adjustments as Record<string, unknown>
+          if (!isMoney(adjustment.serviceBasisPoints) || Number(adjustment.serviceBasisPoints) > 10000 || !isMoney(adjustment.taxBasisPoints) || Number(adjustment.taxBasisPoints) > 10000 || typeof adjustment.serviceIncluded !== "boolean" || typeof adjustment.taxIncluded !== "boolean" || !isMoney(adjustment.discountSatang)) return false
+        }
+        for (const settlement of record.settlements) {
+          if (!settlement || typeof settlement !== "object" || Array.isArray(settlement)) return false
+          const entry = settlement as Record<string, unknown>
+          if (!isString(entry, ["id", "fromId", "toId", "date", "note"]) || !participants.has(String(entry.fromId)) || !participants.has(String(entry.toId)) || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !isDateText(entry.date)) return false
+        }
+      }
+      if (key === "visits" && (!isString(record, ["restaurant", "title", "date", "area", "friends", "menu", "memory", "billId"]) || !isDateText(record.date) || !Number.isSafeInteger(record.people) || Number(record.people) < 1 || (record.totalSatang !== null && !isMoney(record.totalSatang)) || (record.personalSatang !== null && !isMoney(record.personalSatang)) || (record.rating !== null && (!Number.isFinite(record.rating) || Number(record.rating) < 1 || Number(record.rating) > 5)))) return false
     }
   }
-  const settings = candidate.settings as Record<string, unknown>
-  if (settings.theme !== undefined && !["light", "dark", "system"].includes(String(settings.theme))) return false
-  if (settings.timezone !== undefined && typeof settings.timezone !== "string") return false
   return true
 }
 const money = (value: number, hidden = false) => hidden ? "•••••" : new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value / 100)
