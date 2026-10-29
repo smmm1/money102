@@ -129,7 +129,7 @@ test("live bill preview handles participant subsets and incomplete rows safely",
   const result = calculateDraftSplitPreview([
     { title: "แชร์เฉพาะสองคน", amount: "12.00", allocationMode: "equal", participantNames: ["บี", "ซี"] },
     { title: "ยังไม่กรอกสัดส่วน", amount: "15.00", allocationMode: "fixed", participantNames: ["ฉัน", "บี"], allocations: { "ฉัน": "15", "บี": "" } },
-    { title: "แถวว่าง", amount: "", allocationMode: "equal", participantNames: null },
+    { title: "", amount: "", allocationMode: "equal", participantNames: null },
     { title: "ยอดติดลบ", amount: "-2", allocationMode: "equal", participantNames: null },
   ], ["ฉัน", "บี", "ซี"]);
   assert.deepEqual(plain(result.shares), { "ฉัน": 0, "บี": 600, "ซี": 600 });
