@@ -78,7 +78,10 @@ function scheduleCloudSave() {
     }).then((result) => {
       if (result !== undefined && scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
     }).catch((error: unknown) => {
-      if (scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) }))
+      if (scheduledToken === getToken()) {
+        const message = error instanceof Error ? error.message : String(error)
+        window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: { message, conflict: message.includes("ข้อมูลถูกแก้ไขจากอีกแท็บแล้ว") } }))
+      }
     })
   }, 250)
 }
@@ -132,6 +135,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState("")
   const [cloudReady, setCloudReady] = useState(false)
   const [cloudError, setCloudError] = useState("")
+  const [cloudConflict, setCloudConflict] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -167,8 +171,13 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }, [user?.id])
 
   useEffect(() => {
-    const handler = (event: Event) => setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + ((event as CustomEvent).detail || "ไม่ทราบสาเหตุ"))
-    const success = () => setCloudError("")
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { message?: unknown; conflict?: unknown } | string | undefined
+      const message = typeof detail === "string" ? detail : typeof detail?.message === "string" ? detail.message : "ไม่ทราบสาเหตุ"
+      setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + message)
+      setCloudConflict(typeof detail === "object" && detail !== null && detail.conflict === true)
+    }
+    const success = () => { setCloudError(""); setCloudConflict(false) }
     window.addEventListener("d1-persist-error", handler)
     window.addEventListener("d1-persist-success", success)
     return () => {
@@ -231,6 +240,23 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     await api("/api/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) })
   }
 
+  async function reloadLatestSnapshot() {
+    if (!window.confirm("การโหลดข้อมูลล่าสุดจะแทนที่การแก้ไขที่ยังไม่ได้บันทึกในแท็บนี้ ต้องการดำเนินการต่อหรือไม่?")) return
+    if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+    saveTimer = undefined
+    try {
+      await saveChain
+      const result = await api("/api/state") as { payload?: LocalSnapshot | null; updated_at?: string | null }
+      restoreSnapshot(result.payload && typeof result.payload === "object" ? result.payload : {})
+      lastCloudRevision = typeof result.updated_at === "string" ? result.updated_at : null
+      setCloudError("")
+      setCloudConflict(false)
+      window.dispatchEvent(new CustomEvent("d1-persist-success"))
+    } catch (error) {
+      setCloudError("โหลดข้อมูลล่าสุดไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
+    }
+  }
+
   if (checking) return <AuthExperience state="loading" title="กำลังตรวจสอบพื้นที่ของคุณ" detail="กำลังตรวจสอบเซสชันอย่างปลอดภัย" />
   if (!user) return <main className="cc-auth-screen">
     <section className="cc-auth-frame">
@@ -259,7 +285,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   </main>
   if (!cloudReady) return <AuthExperience state={cloudError ? "error" : "loading"} title={cloudError ? "ยังเชื่อมต่อไม่สำเร็จ" : "กำลังเตรียมพื้นที่ของคุณ"} detail={cloudError || "กำลังเชื่อมต่อพื้นที่จัดเก็บข้อมูลอย่างปลอดภัย"} onRetry={cloudError ? () => { void signOut() } : undefined} />
   return <AuthAccountContext.Provider value={{ user, signOut, deleteAccount, changePassword }}>
-    {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}
+    {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow"><p>{cloudError}</p>{cloudConflict && <button type="button" className="mt-2 rounded-lg border border-red-300 px-3 py-2 font-semibold" onClick={() => void reloadLatestSnapshot()}>โหลดข้อมูลล่าสุดจาก Cloudflare</button>}</div>}
     {children}
   </AuthAccountContext.Provider>
 }
