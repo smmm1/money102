@@ -45,7 +45,18 @@ function validDayTogetherState(raw) {
  const collections=["goals","savings","health","notes","bills","visits"];
  if(collections.some(key=>!Array.isArray(state[key])||state[key].length>10000)||!state.settings||typeof state.settings!=="object"||Array.isArray(state.settings))return false;
  const integer=(value,min=0)=>Number.isSafeInteger(value)&&value>=min;
- const date=(value)=>typeof value==="string"&&/^\d{4}-\d{2}-\d{2}/.test(value);
+ const date=(value)=>{
+  if(typeof value!=="string")return false;
+  const match=/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.exec(value);
+  if(!match)return false;
+  const [year,month,day]=match.slice(1,4).map(Number);
+  const calendar=new Date(Date.UTC(year,month-1,day));
+  if(calendar.getUTCFullYear()!==year||calendar.getUTCMonth()!==month-1||calendar.getUTCDate()!==day)return false;
+  if(match[4]!==undefined&&(Number(match[4])>23||Number(match[5])>59||Number(match[6]??0)>59))return false;
+  const offset=/(Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  if(offset&&offset[1]!=="Z"&&(Number(offset[3])>14||Number(offset[4])>59||(Number(offset[3])===14&&Number(offset[4])!==0)))return false;
+  return true;
+ };
  const ids=new Map();
  for(const key of collections){
   const seen=new Set();
@@ -55,7 +66,7 @@ function validDayTogetherState(raw) {
   }
   ids.set(key,seen);
  }
- for(const goal of state.goals)if(typeof goal.name!=="string"||!goal.name.trim()||goal.name.length>120||!integer(goal.targetSatang,1)||!["active","done","archived"].includes(goal.status))return false;
+ for(const goal of state.goals)if(typeof goal.name!=="string"||!goal.name.trim()||goal.name.length>120||!integer(goal.targetSatang,1)||!["active","done","archived"].includes(goal.status)||(goal.due!==undefined&&goal.due!==""&&!date(goal.due)))return false;
  const goalIds=ids.get("goals"),balances=new Map();
  for(const item of state.savings){
   if(!["deposit","withdraw"].includes(item.kind)||!integer(item.amountSatang,1)||!date(item.date)||typeof item.goalId!=="string"||typeof item.note!=="string"||item.note.length>4000)return false;
@@ -63,8 +74,29 @@ function validDayTogetherState(raw) {
   const key=item.goalId||"general";balances.set(key,(balances.get(key)||0)+(item.kind==="deposit"?item.amountSatang:-item.amountSatang));
  }
  if([...balances.values()].some(value=>value<0))return false;
- for(const item of state.health)if(!["weight","pressure","sleep","water","symptom","exercise"].includes(item.kind)||!date(item.date)||typeof item.value!=="string"||item.value.length>1000||typeof item.extra!=="string"||item.extra.length>2000||typeof item.note!=="string"||item.note.length>4000)return false;
- for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!Array.isArray(note.tags)||note.tags.length>100||note.tags.some(tag=>typeof tag!=="string"||tag.length>60)||typeof note.mood!=="string"||typeof note.updatedAt!=="string"||!integer(note.version,1))return false;
+ for(const item of state.health){
+  if(!["weight","pressure","sleep","water","symptom","exercise"].includes(item.kind)||!date(item.date)||typeof item.value!=="string"||item.value.length>1000||typeof item.extra!=="string"||item.extra.length>2000||typeof item.note!=="string"||item.note.length>4000)return false;
+  if(item.kind==="weight"){
+   const value=Number(item.value);
+   if(!/^\d+(?:\.\d{1,2})?$/.test(item.value)||!Number.isFinite(value)||value<=0||value>500)return false;
+  }else if(item.kind==="pressure"){
+   const match=/^(\d{1,3})\/(\d{1,3})$/.exec(item.value);
+   if(!match||Number(match[1])<1||Number(match[1])>300||Number(match[2])<1||Number(match[2])>250)return false;
+   const pulse=/(?:^|[ ·])ชีพจร\s+(\d+)\s+ครั้ง\/นาที/.exec(item.extra);
+   if(pulse&&(Number(pulse[1])<1||Number(pulse[1])>250))return false;
+  }else if(item.kind==="sleep"){
+   const hours=Number(item.value);
+   if(!/^\d+(?:\.\d{1,2})?$/.test(item.value)||!Number.isFinite(hours)||hours<=0||hours>24)return false;
+  }else if(item.kind==="water"){
+   const value=Number(item.value);
+   if(!/^\d+$/.test(item.value)||!Number.isSafeInteger(value)||value<1||value>20000)return false;
+  }else if((item.kind==="symptom"||item.kind==="exercise")&&!item.value.trim())return false;
+  if(item.kind==="symptom"){
+   const severity=/ระดับความรู้สึก:\s*(\d+)\/5/.exec(item.extra);
+   if(severity&&(Number(severity[1])<1||Number(severity[1])>5))return false;
+  }
+ }
+ for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!date(note.date)||!Array.isArray(note.tags)||note.tags.length>100||note.tags.some(tag=>typeof tag!=="string"||tag.length>60)||typeof note.mood!=="string"||!date(note.updatedAt)||!integer(note.version,1))return false;
  for(const bill of state.bills){
   if(typeof bill.title!=="string"||!bill.title.trim()||bill.title.length>160||!date(bill.date)||!Array.isArray(bill.participants)||bill.participants.length<2||bill.participants.length>200||!Array.isArray(bill.expenses)||bill.expenses.length>1000||!Array.isArray(bill.settlements)||!["draft","settling","settled"].includes(bill.status))return false;
   const participants=new Map();

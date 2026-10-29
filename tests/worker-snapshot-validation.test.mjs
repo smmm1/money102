@@ -332,3 +332,36 @@ test("validates bill adjustment rates and rejects discounts above the adjusted t
   bill.adjustments.taxBasisPoints = 10001;
   assert.equal(validDayTogetherState(JSON.stringify(state)), false);
 });
+
+
+test("server validates typed health values and rejects impossible calendar dates", () => {
+  const invalidCases = [
+    state => { state.health[0].value = "500.1"; },
+    state => { state.health[0] = { ...state.health[0], kind: "pressure", value: "301/80" }; },
+    state => { state.health[0] = { ...state.health[0], kind: "pressure", value: "120/80", extra: "ชีพจร 999 ครั้ง/นาที" }; },
+    state => { state.health[0] = { ...state.health[0], kind: "water", value: "20001" }; },
+    state => { state.health[0] = { ...state.health[0], kind: "water", value: "250.5" }; },
+    state => { state.health[0] = { ...state.health[0], kind: "sleep", value: "24.1" }; },
+    state => { state.health[0] = { ...state.health[0], kind: "symptom", value: "   " }; },
+    state => { state.savings[0].date = "2026-02-30"; },
+    state => { state.notes[0].date = "2026-13-01"; },
+    state => { state.health[0].date = "2026-01-01T25:00"; },
+  ];
+  for (const mutate of invalidCases) {
+    const state = validState();
+    mutate(state);
+    assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+  }
+});
+
+test("server accepts valid typed health entries and local measurement times", () => {
+  const state = validState();
+  state.health = [
+    { id: "weight-1", kind: "weight", date: "2026-01-01T08:30", value: "70.5", extra: "", note: "" },
+    { id: "pressure-1", kind: "pressure", date: "2026-01-01T08:35", value: "120/80", extra: "ชีพจร 72 ครั้ง/นาที", note: "" },
+    { id: "sleep-1", kind: "sleep", date: "2026-01-01T07:00", value: "7.5", extra: "เข้านอน 2025-12-31 23:30 · ตื่น 2026-01-01 07:00", note: "" },
+    { id: "water-1", kind: "water", date: "2026-01-01T09:00", value: "250", extra: "", note: "" },
+    { id: "symptom-1", kind: "symptom", date: "2026-01-01T09:15", value: "ปวดหัว", extra: "ระดับความรู้สึก: 3/5", note: "" },
+  ];
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+});
