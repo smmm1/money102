@@ -265,3 +265,82 @@ export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
     return format(instant, "Asia/Bangkok");
   }
 }
+
+
+function allocateProportionally(total, weights) {
+  if (!Number.isSafeInteger(total) || total < 0 || !Array.isArray(weights) ||
+      weights.some(weight => !Number.isSafeInteger(weight) || weight < 0)) return null;
+  const denominator = weights.reduce((sum, weight) => sum + weight, 0);
+  if (!Number.isSafeInteger(denominator)) return null;
+  if (denominator === 0) return total === 0 ? weights.map(() => 0) : null;
+  const divisor = BigInt(denominator);
+  const portions = weights.map(weight => Number((BigInt(total) * BigInt(weight)) / divisor));
+  let remainder = total - portions.reduce((sum, value) => sum + value, 0);
+  const order = weights.map((weight, index) => ({
+    index,
+    remainder: (BigInt(total) * BigInt(weight)) % divisor,
+  })).sort((a, b) => a.remainder === b.remainder ? a.index - b.index : a.remainder > b.remainder ? -1 : 1);
+  for (let index = 0; remainder > 0; index++, remainder--) portions[order[index % order.length].index]++;
+  return portions;
+}
+
+/**
+ * Calculates bill-wide service, tax, and discount in integer satang.
+ * Order: base item total -> service fee -> tax on base plus service -> discount.
+ */
+export function calculateBillAdjustmentSummary(baseTotalSatang, adjustments = {}) {
+  const serviceBasisPoints = adjustments.serviceBasisPoints ?? 0;
+  const taxBasisPoints = adjustments.taxBasisPoints ?? 0;
+  const serviceIncluded = adjustments.serviceIncluded ?? false;
+  const taxIncluded = adjustments.taxIncluded ?? false;
+  const discountSatang = adjustments.discountSatang ?? 0;
+  const validRate = value => Number.isSafeInteger(value) && value >= 0 && value <= 10000;
+  if (!Number.isSafeInteger(baseTotalSatang) || baseTotalSatang < 0 ||
+      !validRate(serviceBasisPoints) || !validRate(taxBasisPoints) ||
+      typeof serviceIncluded !== "boolean" || typeof taxIncluded !== "boolean" ||
+      !Number.isSafeInteger(discountSatang) || discountSatang < 0) {
+    return { valid: false, error: "invalid-adjustment", baseTotalSatang, serviceSatang: 0, taxSatang: 0, preDiscountSatang: 0, discountSatang, totalSatang: 0, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+  }
+  const serviceSatang = serviceIncluded ? 0 : Number((BigInt(baseTotalSatang) * BigInt(serviceBasisPoints) + 5000n) / 10000n);
+  const taxBaseSatang = baseTotalSatang + serviceSatang;
+  const taxSatang = taxIncluded ? 0 : Number((BigInt(taxBaseSatang) * BigInt(taxBasisPoints) + 5000n) / 10000n);
+  const preDiscountSatang = baseTotalSatang + serviceSatang + taxSatang;
+  if (![serviceSatang, taxSatang, preDiscountSatang].every(Number.isSafeInteger)) {
+    return { valid: false, error: "amount-overflow", baseTotalSatang, serviceSatang, taxSatang, preDiscountSatang, discountSatang, totalSatang: 0, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+  }
+  if (discountSatang > preDiscountSatang) {
+    return { valid: false, error: "discount-exceeds-total", baseTotalSatang, serviceSatang, taxSatang, preDiscountSatang, discountSatang, totalSatang: 0, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+  }
+  return { valid: true, error: "", baseTotalSatang, serviceSatang, taxSatang, preDiscountSatang, discountSatang, totalSatang: preDiscountSatang - discountSatang, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+}
+
+/**
+ * Calculates final balances after proportionally distributing bill-wide
+ * adjustments across expenses, payers, and fixed shares using largest remainders.
+ */
+export function calculateBillSplit(expenses = [], participants = [], settlements = [], adjustments = {}) {
+  const baseTotalSatang = expenses.reduce((sum, expense) => sum + (Number.isSafeInteger(expense?.amountSatang) && expense.amountSatang > 0 ? expense.amountSatang : 0), 0);
+  const adjustmentSummary = calculateBillAdjustmentSummary(baseTotalSatang, adjustments);
+  if (!adjustmentSummary.valid || !expenses.length) {
+    return { ...calculateSplit(expenses, participants, settlements), valid: adjustmentSummary.valid, adjustmentSummary, baseTotalSatang, totalSatang: adjustmentSummary.valid ? adjustmentSummary.totalSatang : baseTotalSatang, adjustedExpenses: expenses };
+  }
+  const adjustedAmounts = allocateProportionally(adjustmentSummary.totalSatang, expenses.map(expense => expense.amountSatang));
+  if (!adjustedAmounts) {
+    return { ...calculateSplit(expenses, participants, settlements), valid: false, adjustmentSummary: { ...adjustmentSummary, valid: false, error: "allocation-failed" }, baseTotalSatang, totalSatang: baseTotalSatang, adjustedExpenses: expenses };
+  }
+  const adjustedExpenses = expenses.map((expense, index) => {
+    const amountSatang = adjustedAmounts[index];
+    let payers = expense.payers;
+    if (Array.isArray(payers)) {
+      const amounts = allocateProportionally(amountSatang, payers.map(payer => payer.amountSatang));
+      if (amounts) payers = payers.map((payer, payerIndex) => ({ ...payer, amountSatang: amounts[payerIndex] }));
+    }
+    let allocations = expense.allocations;
+    if (expense.allocationMode === "fixed") {
+      const values = allocateProportionally(amountSatang, expense.participantIds.map(id => expense.allocations?.[id] ?? 0));
+      if (values) allocations = Object.fromEntries(expense.participantIds.map((id, participantIndex) => [id, values[participantIndex]]));
+    }
+    return { ...expense, amountSatang, ...(Array.isArray(expense.payers) ? { payers } : {}), ...(allocations ? { allocations } : {}) };
+  });
+  return { ...calculateSplit(adjustedExpenses, participants, settlements), valid: true, adjustmentSummary, baseTotalSatang, totalSatang: adjustmentSummary.totalSatang, adjustedExpenses };
+}
