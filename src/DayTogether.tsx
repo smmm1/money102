@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { useAccount } from "./CloudAuth"
 import "./daytogether.css"
-import { calculateSplit, calculateSleepDuration, calculateDraftSplitPreview, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone } from "./daytogether-calculations.mjs"
+import { calculateSplit, calculateSleepDuration, calculateDraftSplitPreview, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, type BillAdjustments } from "./daytogether-calculations.mjs"
 import { migrateLegacyState } from "./daytogether-migration.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
@@ -12,7 +12,7 @@ type Note = { id: string; title: string; body: string; kind: "note" | "diary"; d
 type Participant = { id: string; name: string; isMe: boolean }
 type Expense = { id: string; title: string; amountSatang: number; payerId: string; payers?: { participantId: string; amountSatang: number }[]; participantIds: string[]; allocationMode?: "equal" | "fixed" | "percentage"; allocations?: Record<string, number> }
 type Settlement = { id: string; fromId: string; toId: string; amountSatang: number; date: string; note: string }
-type Bill = { id: string; title: string; date: string; restaurant: string; participants: Participant[]; expenses: Expense[]; settlements: Settlement[]; note: string; bbqId: string; status: "draft" | "settling" | "settled" }
+type Bill = { id: string; title: string; date: string; restaurant: string; participants: Participant[]; expenses: Expense[]; settlements: Settlement[]; note: string; bbqId: string; status: "draft" | "settling" | "settled"; adjustments?: BillAdjustments }
 type BillExpenseDraft = { key: string; title: string; amount: string; payerName: string; multiplePayers: boolean; payerAmounts: Record<string, string>; participantNames: string[] | null; allocationMode: "equal" | "fixed" | "percentage"; allocations: Record<string, string> }
 type Visit = { id: string; restaurant: string; title: string; date: string; area: string; friends: string; people: number; totalSatang: number | null; personalSatang: number | null; rating: number | null; menu: string; memory: string; billId: string }
 type Settings = { displayName: string; timezone: string; theme: "light" | "dark" | "system"; hidden: boolean; cards: string[]; healthKinds: HealthKind[]; waterGoal: number; heightCm: number | null }
@@ -95,6 +95,7 @@ export default function DayTogether() {
   const [billPeopleText,setBillPeopleText] = useState("")
   const [billIncludesMe,setBillIncludesMe] = useState(true)
   const [billDraftExpenses,setBillDraftExpenses] = useState<BillExpenseDraft[]>([])
+  const [billAdjustmentsDraft,setBillAdjustmentsDraft] = useState({servicePercent:"0",taxPercent:"0",serviceIncluded:false,taxIncluded:false,discount:"0"})
   const [noteSaving,setNoteSaving] = useState(false)
   const [pendingCloseAfterSave,setPendingCloseAfterSave] = useState(false)
   const [theme,setTheme] = useState(state.settings.theme)
@@ -173,6 +174,7 @@ export default function DayTogether() {
       const existing = state.bills.find(b => b.id === itemId)
       setBillPeopleText(existing?.participants.filter(p => !p.isMe).map(p => p.name).join(", ") || "")
       setBillIncludesMe(existing ? existing.participants.some(p => p.isMe) : true)
+      setBillAdjustmentsDraft({servicePercent:String((existing?.adjustments?.serviceBasisPoints??0)/100),taxPercent:String((existing?.adjustments?.taxBasisPoints??0)/100),serviceIncluded:existing?.adjustments?.serviceIncluded??false,taxIncluded:existing?.adjustments?.taxIncluded??false,discount:String((existing?.adjustments?.discountSatang??0)/100)})
       setBillDraftExpenses(existing?.expenses.length ? existing.expenses.map(expense => ({
         key: expense.id, title: expense.title, amount: String(expense.amountSatang / 100),
         payerName: existing.participants.find(p => p.id === expense.payerId)?.name || "ฉัน",
