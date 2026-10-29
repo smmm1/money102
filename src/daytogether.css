@@ -141,3 +141,99 @@ body{background:#e8e5db}
 
 .cc-auth-forgot{display:block;margin:12px auto 0;border:0;background:transparent;color:var(--dt-primary,#315b43);text-decoration:underline;text-underline-offset:3px;padding:8px 12px;min-height:44px;cursor:pointer;font:inherit;font-size:14px}
 .cc-auth-forgot:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:3px}
+
+
+/* DayTogether UI/UX spec alignment — final layer overrides legacy styling */
+.dt-app {
+  font-family: "Noto Sans Thai", "Sarabun", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  background: var(--dt-bg);
+  color: var(--dt-text);
+}
+.dt-content { max-width: 1240px; padding: 28px 32px 64px; }
+.dt-page-heading { margin-bottom: 22px; }
+.dt-page-heading h1 { font-size: clamp(25px, 2vw, 30px); letter-spacing: -.025em; }
+.dt-page-body { gap: 20px; }
+.dt-topbar { box-shadow: 0 1px 0 rgba(15,23,42,.02); }
+.dt-sidebar { box-shadow: 1px 0 0 rgba(15,23,42,.015); }
+.dt-nav button, .dt-sidebar-bottom>button { min-height: 46px; transition: background-color .16s ease, color .16s ease; }
+.dt-nav button:hover, .dt-sidebar-bottom>button:hover { background: #f1f5f9; color: #0f172a; }
+.dt-nav button.active, .dt-sidebar-bottom>button.active { background: #ccfbf1; color: #115e59; }
+.dt-btn { min-height: 44px; border-radius: 10px; transition: background-color .16s ease, border-color .16s ease, transform .16s ease; }
+.dt-btn-primary { background: #0f766e; border-color: #0f766e; color: #fff; }
+.dt-btn-primary:hover { background: #115e59; border-color: #115e59; }
+.dt-btn-secondary:hover, .dt-icon-button:hover { background: #f8fafc; border-color: #cbd5e1; }
+.dt-btn-danger { color: #b91c1c; border-color: #fecaca; background: #fff; }
+.dt-btn-danger:hover { background: #fef2f2; }
+.dt-welcome, .dt-section, .dt-stat, .dt-goal-card, .dt-note-card, .dt-visit-card, .dt-detail-card, .dt-settings-card {
+  box-shadow: 0 1px 3px rgba(15,23,42,.035);
+}
+.dt-welcome { border-radius: 16px; padding: 24px 26px; }
+.dt-welcome h2 { line-height: 1.4; }
+.dt-section { border-radius: 14px; padding: 22px; }
+.dt-stat-grid:not(.three):not(.four) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dt-stat { border-radius: 14px; padding: 18px; gap: 7px; }
+.dt-stat-icon { border-radius: 10px; }
+.dt-stat strong { font-variant-numeric: tabular-nums; line-height: 1.4; }
+.dt-module-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dt-module-card { min-height: 76px; border-radius: 12px; padding: 14px; transition: border-color .16s ease, background-color .16s ease, transform .16s ease; }
+.dt-module-card:hover, .dt-stat:hover { border-color: #99f6e4; background-color: #fcfffe; }
+.dt-module-card:active, .dt-stat:active { transform: translateY(1px); }
+.dt-module-icon { border-radius: 11px; }
+.dt-accent-green .dt-stat-icon, .dt-accent-green .dt-module-icon { background: #dcfce7; color: #166534; }
+.dt-accent-blue .dt-stat-icon, .dt-accent-blue .dt-module-icon { background: #e0f2fe; color: #075985; }
+.dt-accent-purple .dt-stat-icon, .dt-accent-purple .dt-module-icon { background: #f3e8ff; color: #6b21a8; }
+.dt-accent-navy .dt-stat-icon, .dt-accent-navy .dt-module-icon { background: #dbeafe; color: #1d4ed8; }
+.dt-accent-orange .dt-stat-icon, .dt-accent-orange .dt-module-icon { background: #ffedd5; color: #9a3412; }
+.dt-field input, .dt-field textarea, .dt-field select, .dt-toolbar input, .dt-toolbar select {
+  min-height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+}
+.dt-field input:focus, .dt-field textarea:focus, .dt-field select:focus,
+.dt-toolbar input:focus, .dt-toolbar select:focus {
+  border-color: #0f766e;
+  outline: 3px solid rgba(13,148,136,.14);
+}
+.dt-list-row, .dt-recent, .dt-bill-row { min-height: 60px; }
+.dt-empty { padding: 28px 20px; }
+.dt-empty p { font-size: 14px; }
+.dt-toast { border-radius: 12px; }
+.dt-modal { border-radius: 16px; }
+.dt-mobile-nav { padding-top: 9px; }
+.dt-mobile-nav button { min-height: 46px; }
+.dt-mobile-nav button.active { color: #0f766e; }
+.dt-more-sheet { border-radius: 18px; }
+.dt-app :focus-visible { outline: 3px solid rgba(13,148,136,.55); outline-offset: 2px; }
+@media (min-width: 1201px) {
+  .dt-stat-grid:not(.three):not(.four) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dt-module-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 761px) and (max-width: 1020px) {
+  .dt-content { padding: 24px 20px 56px; }
+  .dt-stat-grid:not(.three):not(.four), .dt-stat-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dt-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .dt-content { padding: 20px 14px calc(104px + env(safe-area-inset-bottom)); }
+  .dt-page-heading { align-items: flex-start; }
+  .dt-page-heading h1 { font-size: 25px; }
+  .dt-welcome { padding: 19px; gap: 14px; }
+  .dt-stat-grid:not(.three):not(.four), .dt-stat-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dt-module-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dt-section { padding: 16px; }
+  .dt-stat { padding: 13px; }
+  .dt-stat strong { font-size: 18px; }
+  .dt-module-card { min-height: 72px; padding: 12px 10px; }
+  .dt-btn { min-height: 44px; }
+}
+@media (max-width: 380px) {
+  .dt-content { padding-left: 11px; padding-right: 11px; }
+  .dt-module-grid { grid-template-columns: 1fr; }
+  .dt-stat-grid:not(.three):not(.four), .dt-stat-grid.three { gap: 8px; }
+  .dt-stat { padding: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dt-app *, .dt-app *::before, .dt-app *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
