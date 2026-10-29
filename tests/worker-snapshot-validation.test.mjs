@@ -295,3 +295,19 @@ test("accepts a split bill for a group that does not include the current user", 
   assert.equal(validDayTogetherState(JSON.stringify(state)), true);
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(state) }), true);
 });
+
+
+
+test("CORS preflight allows authenticated account deletion from the web app", async () => {
+  const response = await worker.fetch(new Request("https://api.example.test/api/auth/account", {
+    method: "OPTIONS",
+    headers: {
+      Origin: "https://money102.onrender.com",
+      "Access-Control-Request-Method": "DELETE",
+      "Access-Control-Request-Headers": "authorization,content-type",
+    },
+  }), { DB: {}, APP_ORIGIN: "https://money102.onrender.com" });
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://money102.onrender.com");
+  assert.ok(response.headers.get("Access-Control-Allow-Methods")?.split(",").map(value => value.trim()).includes("DELETE"));
+});
