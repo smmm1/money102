@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react"
+import "./auth.css"
 
 type AppUser = { id: string; email: string }
 const AuthAccountContext = createContext<{ user: AppUser; signOut: () => Promise<void>; deleteAccount: () => Promise<void>; changePassword: (currentPassword: string, newPassword: string) => Promise<void> } | null>(null)
