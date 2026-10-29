@@ -103,7 +103,42 @@ function constantTimeEqual(a: Uint8Array, b: Uint8Array): boolean {
 function isSnapshot(value: unknown): value is Snapshot {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const entries = Object.entries(value as Record<string, unknown>);
-  return entries.length <= 500 && entries.every(([key, item]) => key.length > 0 && key.length <= 200 && typeof item === "string");
+  if (entries.length > 500 || !entries.every(([key, item]) => key.length > 0 && key.length <= 200 && typeof item === "string")) return false;
+  const rawState = (value as Record<string, unknown>)["lamoon-daytogether-v1"];
+  if (typeof rawState !== "string") return true;
+  let state: unknown;
+  try { state = JSON.parse(rawState) as unknown; } catch { return false; }
+  if (!state || typeof state !== "object" || Array.isArray(state)) return false;
+  const bills = (state as Record<string, unknown>).bills;
+  if (!Array.isArray(bills)) return true;
+  for (const rawBill of bills) {
+    if (!rawBill || typeof rawBill !== "object" || Array.isArray(rawBill)) return false;
+    const bill = rawBill as Record<string, unknown>;
+    const adjustments = bill.adjustments;
+    if (adjustments === undefined) continue;
+    if (!adjustments || typeof adjustments !== "object" || Array.isArray(adjustments)) return false;
+    const a = adjustments as Record<string, unknown>;
+    const rateIsValid = (rate: unknown) => Number.isSafeInteger(rate) && Number(rate) >= 0 && Number(rate) <= 10000;
+    if (!rateIsValid(a.serviceBasisPoints) || !rateIsValid(a.taxBasisPoints) ||
+        typeof a.serviceIncluded !== "boolean" || typeof a.taxIncluded !== "boolean" ||
+        !Number.isSafeInteger(a.discountSatang) || Number(a.discountSatang) < 0) return false;
+    const expenses = bill.expenses;
+    if (!Array.isArray(expenses)) return false;
+    let baseTotal = 0;
+    for (const rawExpense of expenses) {
+      if (!rawExpense || typeof rawExpense !== "object" || Array.isArray(rawExpense)) return false;
+      const amount = (rawExpense as Record<string, unknown>).amountSatang;
+      if (!Number.isSafeInteger(amount) || Number(amount) <= 0) return false;
+      baseTotal += Number(amount);
+      if (!Number.isSafeInteger(baseTotal)) return false;
+    }
+    const service = a.serviceIncluded ? 0 : Number((BigInt(baseTotal) * BigInt(Number(a.serviceBasisPoints)) + 5000n) / 10000n);
+    const taxBase = baseTotal + service;
+    const tax = a.taxIncluded ? 0 : Number((BigInt(taxBase) * BigInt(Number(a.taxBasisPoints)) + 5000n) / 10000n);
+    const gross = baseTotal + service + tax;
+    if (!Number.isSafeInteger(gross) || Number(a.discountSatang) > gross) return false;
+  }
+  return true;
 }
 
 async function parseBody(request: Request): Promise<Record<string, unknown> | null> {
