@@ -11,6 +11,7 @@ type Participant = { id: string; name: string; isMe: boolean }
 type Expense = { id: string; title: string; amountSatang: number; payerId: string; participantIds: string[]; allocationMode?: "equal" | "fixed" | "percentage"; allocations?: Record<string, number> }
 type Settlement = { id: string; fromId: string; toId: string; amountSatang: number; date: string; note: string }
 type Bill = { id: string; title: string; date: string; restaurant: string; participants: Participant[]; expenses: Expense[]; settlements: Settlement[]; note: string; bbqId: string; status: "draft" | "settling" | "settled" }
+type BillExpenseDraft = { key: string; title: string; amount: string; payerName: string; participantNames: string[] | null; allocationMode: "equal" | "fixed" | "percentage"; allocations: Record<string, string> }
 type Visit = { id: string; restaurant: string; title: string; date: string; area: string; friends: string; people: number; totalSatang: number | null; personalSatang: number | null; rating: number | null; menu: string; memory: string; billId: string }
 type Settings = { displayName: string; timezone: string; theme: "light" | "dark" | "system"; hidden: boolean; cards: string[]; healthKinds: HealthKind[]; waterGoal: number }
 type State = { goals: Goal[]; savings: Saving[]; health: Health[]; notes: Note[]; bills: Bill[]; visits: Visit[]; settings: Settings }
