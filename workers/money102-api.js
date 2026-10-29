@@ -23,7 +23,21 @@ function randomBytes(size) { return crypto.getRandomValues(new Uint8Array(size))
 async function sha256(value) { return toBase64Url(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value)))); }
 async function passwordHash(password,salt) { const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]); return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt,iterations:PASSWORD_ITERATIONS},key,256)); }
 function constantTimeEqual(a,b) { if(a.length!==b.length)return false; let diff=0; for(let i=0;i<a.length;i++)diff|=a[i]^b[i]; return diff===0; }
-function isSnapshot(value) { if(!value||typeof value!=="object"||Array.isArray(value))return false; const entries=Object.entries(value); return entries.length<=500&&entries.every(([key,item])=>key.startsWith("lamoon-")&&typeof item==="string"); }
+function isSnapshot(value) {
+ if(!value||typeof value!=="object"||Array.isArray(value))return false;
+ const entries=Object.entries(value);if(entries.length>500)return false;
+ let total=0;
+ for(const [key,item] of entries){
+  if(!key.startsWith("lamoon-")||key.length>200||typeof item!=="string"||item.length>900000)return false;
+  total+=key.length+item.length;if(total>900000)return false;
+  if(key==="lamoon-daytogether-v1"){
+   let parsed;try{parsed=JSON.parse(item)}catch{return false}
+   if(parsed&&Array.isArray(parsed.visits)){if(!validDayTogetherState(item))return false}
+   else if(validateDayTogetherSnapshot({[key]:item})!==null)return false;
+  }
+ }
+ return true;
+}
 function validDayTogetherState(raw) {
  let state;
  try { state=JSON.parse(raw); } catch { return false; }
@@ -132,7 +146,7 @@ function validateDayTogetherSnapshot(snapshot) {
  for(const bill of state.bills)if(bill.bbqId){const visit=state.bbq.find(x=>x.id===bill.bbqId);if(!visit||visit.billId!==bill.id)return "ความเชื่อมโยงบิลกับมื้ออาหารไม่ตรงกัน";}
  return null;
 }
-async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const v=await request.json(); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
+async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const raw=await request.text(); if(raw.length>1000000)return null; const v=JSON.parse(raw); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
 export { isSnapshot, validDayTogetherState };
