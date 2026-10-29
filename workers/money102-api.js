@@ -24,12 +24,65 @@ async function sha256(value) { return toBase64Url(new Uint8Array(await crypto.su
 async function passwordHash(password,salt) { const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]); return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt,iterations:PASSWORD_ITERATIONS},key,256)); }
 function constantTimeEqual(a,b) { if(a.length!==b.length)return false; let diff=0; for(let i=0;i<a.length;i++)diff|=a[i]^b[i]; return diff===0; }
 function isSnapshot(value) { if(!value||typeof value!=="object"||Array.isArray(value))return false; const entries=Object.entries(value); return entries.length<=500&&entries.every(([key,item])=>key.startsWith("lamoon-")&&typeof item==="string"); }
+function validDayTogetherState(raw) {
+ let state;
+ try { state=JSON.parse(raw); } catch { return false; }
+ if(!state||typeof state!=="object"||Array.isArray(state))return false;
+ const collections=["goals","savings","health","notes","bills","visits"];
+ if(collections.some(key=>!Array.isArray(state[key])||state[key].length>10000)||!state.settings||typeof state.settings!=="object"||Array.isArray(state.settings))return false;
+ const integer=(value,min=0)=>Number.isSafeInteger(value)&&value>=min;
+ const date=(value)=>typeof value==="string"&&/^\d{4}-\d{2}-\d{2}/.test(value);
+ const ids=new Map();
+ for(const key of collections){
+  const seen=new Set();
+  for(const item of state[key]){
+   if(!item||typeof item!=="object"||Array.isArray(item)||typeof item.id!=="string"||!item.id||item.id.length>200||seen.has(item.id))return false;
+   seen.add(item.id);
+  }
+  ids.set(key,seen);
+ }
+ for(const goal of state.goals)if(typeof goal.name!=="string"||!goal.name.trim()||goal.name.length>120||!integer(goal.targetSatang,1)||!["active","done","archived"].includes(goal.status))return false;
+ const goalIds=ids.get("goals"),balances=new Map();
+ for(const item of state.savings){
+  if(!["deposit","withdraw"].includes(item.kind)||!integer(item.amountSatang,1)||!date(item.date)||typeof item.goalId!=="string"||typeof item.note!=="string"||item.note.length>4000)return false;
+  if(item.goalId&&!goalIds.has(item.goalId))return false;
+  const key=item.goalId||"general";balances.set(key,(balances.get(key)||0)+(item.kind==="deposit"?item.amountSatang:-item.amountSatang));
+ }
+ if([...balances.values()].some(value=>value<0))return false;
+ for(const item of state.health)if(!["weight","pressure","sleep","water","symptom"].includes(item.kind)||!date(item.date)||typeof item.value!=="string"||item.value.length>1000||typeof item.extra!=="string"||item.extra.length>2000||typeof item.note!=="string"||item.note.length>4000)return false;
+ for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!Array.isArray(note.tags)||note.tags.length>100||note.tags.some(tag=>typeof tag!=="string"||tag.length>60)||typeof note.mood!=="string"||typeof note.updatedAt!=="string"||!integer(note.version,1))return false;
+ for(const bill of state.bills){
+  if(typeof bill.title!=="string"||!bill.title.trim()||bill.title.length>160||!date(bill.date)||!Array.isArray(bill.participants)||bill.participants.length<2||bill.participants.length>200||!Array.isArray(bill.expenses)||bill.expenses.length>1000||!Array.isArray(bill.settlements)||!["draft","settling","settled"].includes(bill.status))return false;
+  const participants=new Map();
+  for(const person of bill.participants){if(!person||typeof person.id!=="string"||!person.id||participants.has(person.id)||typeof person.name!=="string"||!person.name.trim()||typeof person.isMe!=="boolean")return false;participants.set(person.id,person);}
+  let total=0;
+  for(const expense of bill.expenses){
+   if(!expense||typeof expense.id!=="string"||!expense.id||typeof expense.title!=="string"||!expense.title.trim()||!integer(expense.amountSatang,1)||!participants.has(expense.payerId)||!Array.isArray(expense.participantIds)||!expense.participantIds.length)return false;
+   const assigned=[...new Set(expense.participantIds)];
+   if(assigned.length!==expense.participantIds.length||assigned.some(id=>!participants.has(id)))return false;
+   if(expense.allocationMode==="fixed"){
+    const values=assigned.map(id=>expense.allocations?.[id]);
+    if(values.some(value=>!integer(value))||values.reduce((sum,value)=>sum+value,0)!==expense.amountSatang)return false;
+   }else if(expense.allocationMode==="percentage"){
+    const values=assigned.map(id=>expense.allocations?.[id]);
+    if(values.some(value=>!integer(value)||value>10000)||values.reduce((sum,value)=>sum+value,0)!==10000)return false;
+   }else if(expense.allocationMode!==undefined&&expense.allocationMode!=="equal")return false;
+   total+=expense.amountSatang;if(!Number.isSafeInteger(total))return false;
+  }
+  for(const settlement of bill.settlements)if(!settlement||typeof settlement.id!=="string"||!settlement.id||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
+  if(typeof bill.restaurant!=="string"||bill.restaurant.length>200||typeof bill.note!=="string"||bill.note.length>4000)return false;
+ }
+ for(const visit of state.visits)if(typeof visit.restaurant!=="string"||visit.restaurant.length>200||typeof visit.title!=="string"||visit.title.length>200||!date(visit.date)||typeof visit.area!=="string"||visit.area.length>200||typeof visit.friends!=="string"||visit.friends.length>2000||!integer(visit.people,1)||!(visit.totalSatang===null||integer(visit.totalSatang))||!(visit.personalSatang===null||integer(visit.personalSatang))||!(visit.rating===null||(integer(visit.rating,1)&&visit.rating<=5))||typeof visit.menu!=="string"||visit.menu.length>2000||typeof visit.memory!=="string"||visit.memory.length>10000||typeof visit.billId!=="string")return false;
+ if(typeof state.settings.displayName!=="string"||state.settings.displayName.length>120||!["light","dark","system"].includes(state.settings.theme)||typeof state.settings.timezone!=="string"||!Array.isArray(state.settings.cards)||!Array.isArray(state.settings.healthKinds)||!integer(state.settings.waterGoal))return false;
+ return true;
+}
 function validateDayTogetherSnapshot(snapshot) {
  const raw=snapshot["lamoon-daytogether-v1"];
  if(raw===undefined)return null;
  let state;
  try{state=JSON.parse(raw);}catch{return "รูปแบบข้อมูล DayTogether ไม่ถูกต้อง";}
  if(!state||typeof state!=="object"||Array.isArray(state))return "โครงสร้างข้อมูลไม่ถูกต้อง";
+ if(Array.isArray(state.visits))return validDayTogetherState(raw)?null:"ข้อมูล DayTogether มีโครงสร้างหรือค่าที่ไม่ถูกต้อง";
  for(const key of ["goals","savings","health","notes","bills","bbq"])if(!Array.isArray(state[key]))return "ข้อมูลบางหมวดไม่ถูกต้อง";
  const uniqueIds=(items,label)=>{const ids=new Set();for(const item of items){if(!item||typeof item.id!=="string"||!item.id||ids.has(item.id))return label+" มีรหัสรายการซ้ำหรือไม่ถูกต้อง";ids.add(item.id);}return null;};
  for(const [items,label] of [[state.goals,"เป้าหมายออมเงิน"],[state.savings,"รายการออม"],[state.health,"ข้อมูลสุขภาพ"],[state.notes,"โน้ต"],[state.bills,"บิล"],[state.bbq,"ประวัติมื้ออาหาร"]]){const error=uniqueIds(items,label);if(error)return error;}
@@ -82,6 +135,7 @@ function validateDayTogetherSnapshot(snapshot) {
 async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const v=await request.json(); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
+export { isSnapshot, validDayTogetherState };
 export default { async fetch(request,env) {
  const url=new URL(request.url); if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(request,env)});
  try { await ensureSchema(env.DB);
