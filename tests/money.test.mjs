@@ -1,6 +1,6 @@
 import test from "node:test"
 import assert from "node:assert/strict"
-import { calculateNetBalances, distributeCents, parseMoneyCents, safeCsvCell, sleepDurationHours, suggestSettlements } from "../src/domain/money.mjs"
+import { calculateBillShares, calculateNetBalances, distributeCents, parseMoneyCents, safeCsvCell, sleepDurationHours, suggestSettlements } from "../src/domain/money.mjs"
 
 test("parses decimal currency into integer cents", () => {
   assert.equal(parseMoneyCents("1000"), 100000)
@@ -52,4 +52,19 @@ test("sleep duration supports crossing midnight", () => {
 test("CSV cells protect common spreadsheet formula prefixes", () => {
   assert.equal(safeCsvCell("=1+1"), "'=1+1")
   assert.equal(safeCsvCell("normal text"), "normal text")
+})
+
+test("fixed bill shares must sum exactly to the total", () => {
+  assert.deepEqual(calculateBillShares(10001, ["A", "B", "C"], "fixed", { A:"50", B:"25", C:"25.01" }), [5000, 2500, 2501])
+  assert.throws(() => calculateBillShares(10000, ["A", "B"], "fixed", { A:"20", B:"20" }), /add up/)
+})
+test("percentage bill shares sum to 100 and distribute rounding without losing cents", () => {
+  const shares = calculateBillShares(10001, ["A", "B", "C"], "percentage", { A:"33.34", B:"33.33", C:"33.33" })
+  assert.deepEqual(shares, [3335, 3333, 3333])
+  assert.equal(shares.reduce((sum, value) => sum + value, 0), 10001)
+  assert.throws(() => calculateBillShares(10000, ["A", "B"], "percentage", { A:"40", B:"40" }), /add up/)
+})
+test("bill allocation rejects duplicate participants and unsafe totals", () => {
+  assert.throws(() => calculateBillShares(10000, ["A", "a"], "equal"), /unique/)
+  assert.throws(() => calculateBillShares(Number.MAX_SAFE_INTEGER + 1, ["A", "B"], "equal"), /safe integer/)
 })
