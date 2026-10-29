@@ -28,3 +28,5 @@ export function buildDailyTrend(entries: { date: string; value: number | string 
 export function calculateExpenseResponsibility(expenses: SplitExpense[], participantId: string): number | null;
 export type BbqPersonalCostSummary = { totalSatang: number | null; knownCount: number; unknownCount: number; averageSatang: number | null; complete: boolean };
 export function summarizeBbqPersonalCosts(visits?: { personalSatang?: number | null }[]): BbqPersonalCostSummary;
+
+export function formatDateInTimezone(value: string, timezone?: string): string;
