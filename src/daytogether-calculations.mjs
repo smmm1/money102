@@ -403,9 +403,23 @@ export function calculateDraftBillSplitPreview(rows = [], participantNames = [],
     }
     const allocations = {};
     if (row.allocationMode === "fixed") {
-      for (const name of selectedNames) allocations[name] = parseSatang(row.allocations?.[name]);
+      const amounts = selectedNames.map(name => parseSatang(row.allocations?.[name]));
+      const totalShares = amounts.reduce((sum, amount) => sum + amount, 0);
+      if (amounts.some(amount => !Number.isSafeInteger(amount) || amount < 0) ||
+          !Number.isSafeInteger(totalShares) || totalShares !== amountSatang) {
+        invalidRows++;
+        continue;
+      }
+      selectedNames.forEach((name, index) => { allocations[name] = amounts[index]; });
     } else if (row.allocationMode === "percentage") {
-      for (const name of selectedNames) allocations[name] = parseBasisPoints(row.allocations?.[name]);
+      const points = selectedNames.map(name => parseBasisPoints(row.allocations?.[name]));
+      const totalPoints = points.reduce((sum, value) => sum + value, 0);
+      if (points.some(value => !Number.isSafeInteger(value) || value < 0 || value > 10000) ||
+          !Number.isSafeInteger(totalPoints) || totalPoints !== 10000) {
+        invalidRows++;
+        continue;
+      }
+      selectedNames.forEach((name, index) => { allocations[name] = points[index]; });
     }
     const expense = {
       id: String(row.key ?? "draft-" + validRows.length),
