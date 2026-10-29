@@ -344,3 +344,72 @@ export function calculateBillSplit(expenses = [], participants = [], settlements
   });
   return { ...calculateSplit(adjustedExpenses, participants, settlements), valid: true, adjustmentSummary, baseTotalSatang, totalSatang: adjustmentSummary.totalSatang, adjustedExpenses };
 }
+
+
+/**
+ * Builds a validated, adjusted live preview from the bill editor's draft rows.
+ * Invalid rows are excluded from the preview and counted for inline feedback.
+ */
+export function calculateDraftBillSplitPreview(rows = [], participantNames = [], adjustments = {}) {
+  const names = [...new Set(participantNames.filter(name => typeof name === "string" && name.trim()))];
+  const hasInput = row => Boolean(String(row?.title ?? "").trim() || String(row?.amount ?? "").trim());
+  const parseSatang = value => {
+    const text = String(value ?? "").trim();
+    const amount = Number(text);
+    return text !== "" && Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : NaN;
+  };
+  const validRows = [];
+  let invalidRows = 0;
+  for (const row of rows) {
+    if (!hasInput(row)) continue;
+    const amountSatang = parseSatang(row.amount);
+    if (!String(row.title ?? "").trim() || !Number.isSafeInteger(amountSatang) || amountSatang <= 0 ||
+        calculateDraftSplitPreview([row], names).invalidRows > 0) {
+      invalidRows++;
+      continue;
+    }
+    const selectedNames = [...new Set((row.participantNames == null ? names : row.participantNames).filter(name => names.includes(name)))];
+    const payerName = names.includes(row.payerName) ? row.payerName : names[0];
+    if (!payerName || !selectedNames.length) {
+      invalidRows++;
+      continue;
+    }
+    let payers;
+    if (row.multiplePayers) {
+      payers = names.map(name => ({
+        participantId: name,
+        amountSatang: parseSatang(row.payerAmounts?.[name] ?? (name === payerName ? row.amount : "")),
+      }));
+      if (payers.some(payer => !Number.isSafeInteger(payer.amountSatang)) ||
+          payers.reduce((sum, payer) => sum + payer.amountSatang, 0) !== amountSatang) {
+        invalidRows++;
+        continue;
+      }
+    }
+    const allocations = {};
+    if (row.allocationMode === "fixed") {
+      for (const name of selectedNames) allocations[name] = parseSatang(row.allocations?.[name]);
+    } else if (row.allocationMode === "percentage") {
+      for (const name of selectedNames) allocations[name] = Math.round(Number(row.allocations?.[name]) * 100);
+    }
+    const expense = {
+      id: String(row.key ?? "draft-" + validRows.length),
+      title: String(row.title).trim(),
+      amountSatang,
+      payerId: payerName,
+      ...(payers ? { payers } : {}),
+      participantIds: selectedNames,
+      allocationMode: row.allocationMode || "equal",
+      ...(row.allocationMode === "fixed" || row.allocationMode === "percentage" ? { allocations } : {}),
+    };
+    validRows.push(expense);
+  }
+  const split = calculateBillSplit(validRows, names.map(name => ({ id: name, name, isMe: name === "ฉัน" })), [], adjustments);
+  const paid = Object.fromEntries(names.map(name => [name, 0]));
+  for (const expense of split.adjustedExpenses) {
+    if (Array.isArray(expense.payers)) expense.payers.forEach(payer => { paid[payer.participantId] += payer.amountSatang; });
+    else if (Object.hasOwn(paid, expense.payerId)) paid[expense.payerId] += expense.amountSatang;
+  }
+  const shares = Object.fromEntries(names.map(name => [name, Math.max(0, paid[name] - (split.balances[name] || 0))]));
+  return { shares, invalidRows, baseTotalSatang: split.baseTotalSatang, totalSatang: split.totalSatang, adjustmentSummary: split.adjustmentSummary };
+}
