@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -63,4 +63,13 @@ test("supports multiple payers and requires their amounts to equal the expense",
   assert.deepEqual(plain(calculateSplit([valid], people).balances), { a: 2666, b: 667, c: -3333 });
   const invalid = { ...valid, payers: [{ participantId: "a", amountSatang: 6000 }, { participantId: "b", amountSatang: 3000 }] };
   assert.deepEqual(plain(calculateSplit([invalid], people).balances), { a: 0, b: 0, c: 0 });
+});
+
+test("sleep duration correctly crosses midnight and advances the wake date", () => {
+  assert.deepEqual(calculateSleepDuration("2026-10-28T23:30", "2026-10-28T07:00"), {
+    durationHours: 7.5,
+    normalizedEnd: "2026-10-29T07:00",
+  });
+  assert.equal(calculateSleepDuration("invalid", "2026-10-29T07:00"), null);
+  assert.equal(calculateSleepDuration("2026-10-28T07:00", "2026-10-28T06:00")?.durationHours, 23);
 });
