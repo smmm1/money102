@@ -27,7 +27,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
     "http://127.0.0.1:5173",
   ].filter(Boolean));
   const headers: Record<string, string> = {
-    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
