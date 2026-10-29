@@ -122,7 +122,7 @@ export default function DayTogether() {
     }
     setModal(m)
   }
-  const closeModal = () => { setModal(null); setEditId("") }
+  const closeModal = () => { setPendingCloseAfterSave(false); setModal(null); setEditId("") }
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     if(!window.confirm("ต้องการลบรายการนี้หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้")) return
     if(collection==="goals") { if(state.savings.some(t=>t.goalId===itemId)) { setNotice("ยังลบเป้าหมายนี้ไม่ได้ เพราะมีรายการออมเชื่อมอยู่"); return } update("goals",state.goals.filter(x=>x.id!==itemId)) }
