@@ -149,11 +149,11 @@ function validateDayTogetherSnapshot(snapshot) {
 async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const raw=await request.text(); if(raw.length>1000000)return null; const v=JSON.parse(raw); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
-export { isSnapshot, validDayTogetherState };
+export { isSnapshot, validDayTogetherState, validateDayTogetherSnapshot };
 export default { async fetch(request,env) {
  const url=new URL(request.url); if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(request,env)});
  try { await ensureSchema(env.DB);
-  if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api-staging",auth:"cloudflare-d1"});
+  if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api",auth:"cloudflare-d1"});
   if(url.pathname==="/api/auth/signup"&&request.method==="POST") {
    const body=await parseBody(request); const email=typeof body?.email==="string"?body.email.trim().toLowerCase():""; const password=typeof body?.password==="string"?body.password:"";
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลให้ถูกต้อง"},400);
