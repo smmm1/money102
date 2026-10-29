@@ -81,3 +81,6 @@ export type DraftBillSplitPreview = {
   adjustmentSummary: BillAdjustmentSummary;
 };
 export function calculateDraftBillSplitPreview(rows?: DraftBillSplitRow[], participantNames?: string[], adjustments?: BillAdjustments): DraftBillSplitPreview;
+
+export function parseMoneyToSatang(value: string | number): number | null;
+export function parsePercentageBasisPoints(value: string | number): number | null;
