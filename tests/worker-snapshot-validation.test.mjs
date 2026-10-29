@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { isSnapshot, validDayTogetherState } from "../workers/money102-api.js";
 
 const validState = () => ({
-  goals: [{ id: "goal-1", name: "trip" }],
-  savings: [{ id: "saving-1", amountSatang: 100 }],
-  health: [{ id: "health-1", kind: "weight" }],
-  notes: [{ id: "note-1", title: "today" }],
-  bills: [{ id: "bill-1", title: "dinner" }],
-  visits: [{ id: "visit-1", restaurant: "BBQ" }],
-  settings: { timezone: "Asia/Bangkok" }
+  goals: [{ id: "goal-1", name: "trip", targetSatang: 10000, status: "active", due: "", color: "green" }],
+  savings: [{ id: "saving-1", kind: "deposit", amountSatang: 100, date: "2026-01-01", goalId: "goal-1", note: "" }],
+  health: [{ id: "health-1", kind: "weight", date: "2026-01-01", value: "70", extra: "", note: "" }],
+  notes: [{ id: "note-1", title: "today", body: "text", kind: "note", date: "2026-01-01", tags: [], mood: "", pinned: false, archived: false, updatedAt: "2026-01-01T00:00:00.000Z", version: 1 }],
+  bills: [],
+  visits: [{ id: "visit-1", restaurant: "BBQ", title: "", date: "2026-01-01", area: "", friends: "", people: 2, totalSatang: null, personalSatang: null, rating: null, menu: "", memory: "", billId: "" }],
+  settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", cards: ["savings"], healthKinds: ["weight"], waterGoal: 2000 }
 });
 
 test("accepts a valid DayTogether state snapshot", () => {
