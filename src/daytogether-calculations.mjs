@@ -25,8 +25,16 @@ export function calculateSplit(expenses = [], participants = [], settlements = [
       const remainder = expense.amountSatang % assigned.length;
       shares = assigned.map((_, index) => base + (index < remainder ? 1 : 0));
     }
+    let payers;
+    if (Array.isArray(expense.payers)) {
+      payers = expense.payers;
+      if (!payers.length || payers.some(payer => !payer || !hasId(payer.participantId) || !Number.isSafeInteger(payer.amountSatang) || payer.amountSatang < 0) ||
+          new Set(payers.map(payer => payer.participantId)).size !== payers.length ||
+          payers.reduce((sum, payer) => sum + payer.amountSatang, 0) !== expense.amountSatang) continue;
+    }
     assigned.forEach((id, index) => { balances[id] -= shares[index]; });
-    balances[expense.payerId] += expense.amountSatang;
+    if (payers) payers.forEach(payer => { balances[payer.participantId] += payer.amountSatang; });
+    else balances[expense.payerId] += expense.amountSatang;
   }
   for (const settlement of settlements) {
     if (!settlement || !Number.isSafeInteger(settlement.amountSatang) || settlement.amountSatang <= 0 || !hasId(settlement.fromId) || !hasId(settlement.toId) || settlement.fromId === settlement.toId) continue;
