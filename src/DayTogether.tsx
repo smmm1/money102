@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import "./daytogether.css"
 import { calculateSplit } from "./daytogether-calculations.mjs"
+import { migrateLegacyState } from "./daytogether-migration.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
 type Saving = { id: string; kind: "deposit" | "withdraw"; amountSatang: number; date: string; goalId: string; note: string }
@@ -19,7 +20,7 @@ const STORE = "lamoon-daytogether-v1"
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` }
 const id = () => crypto.randomUUID()
 const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom"], waterGoal: 2000 } }
-function readState(): State { try { const raw = localStorage.getItem(STORE); if (raw) { const v = JSON.parse(raw); return { ...defaults, ...v, settings: { ...defaults.settings, ...(v.settings || {}) } } } } catch {} return defaults }
+function readState(): State { try { return migrateLegacyState(defaults, key => localStorage.getItem(key)) } catch { return defaults } }
 const satang = (baht: number) => Math.round(baht * 100)
 const money = (value: number, hidden = false) => hidden ? "•••••" : new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value / 100)
 const dateText = (s: string) => s ? new Date(s.length > 10 ? s : s + "T12:00:00").toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" }) : "ไม่ระบุวันที่"
