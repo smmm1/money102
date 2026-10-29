@@ -80,7 +80,7 @@ function scheduleCloudSave() {
     }).catch((error: unknown) => {
       if (scheduledToken === getToken()) {
         const message = error instanceof Error ? error.message : String(error)
-        window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: { message, conflict: message.includes("ข้อมูลถูกแก้ไขจากอีกแท็บแล้ว") } }))
+        window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: message }))
       }
     })
   }, 250)
@@ -175,7 +175,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       const detail = (event as CustomEvent).detail as { message?: unknown; conflict?: unknown } | string | undefined
       const message = typeof detail === "string" ? detail : typeof detail === "object" && detail !== null && typeof detail.message === "string" ? detail.message : "ไม่ทราบสาเหตุ"
       setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + message)
-      setCloudConflict(typeof detail === "object" && detail !== null && detail.conflict === true)
+      setCloudConflict(message.includes("ข้อมูลถูกแก้ไขจากอีกแท็บแล้ว"))
     }
     const success = () => { setCloudError(""); setCloudConflict(false) }
     window.addEventListener("d1-persist-error", handler)
@@ -251,6 +251,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       lastCloudRevision = typeof result.updated_at === "string" ? result.updated_at : null
       setCloudError("")
       setCloudConflict(false)
+      window.dispatchEvent(new CustomEvent("d1-snapshot-reloaded"))
       window.dispatchEvent(new CustomEvent("d1-persist-success"))
     } catch (error) {
       setCloudError("โหลดข้อมูลล่าสุดไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
