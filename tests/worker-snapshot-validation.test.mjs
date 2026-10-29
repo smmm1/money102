@@ -310,3 +310,64 @@ test("CORS preflight allows authenticated account deletion from the web app", as
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://money102.onrender.com");
   assert.ok(response.headers.get("Access-Control-Allow-Methods")?.split(",").map(value => value.trim()).includes("DELETE"));
 });
+
+
+const billWithAdjustments = (adjustments) => {
+  const state = validState();
+  state.bills.push({
+    id: "bill-adjustment-test", title: "Dinner", date: "2026-01-01", restaurant: "", note: "", bbqId: "",
+    status: "draft",
+    participants: [
+      { id: "person-a", name: "A", isMe: true },
+      { id: "person-b", name: "B", isMe: false },
+    ],
+    expenses: [{
+      id: "expense-a", title: "Food", amountSatang: 10000, payerId: "person-a",
+      participantIds: ["person-a", "person-b"], allocationMode: "equal",
+      payers: [{ participantId: "person-a", amountSatang: 6000 }, { participantId: "person-b", amountSatang: 4000 }],
+    }],
+    settlements: [],
+    adjustments,
+  });
+  return state;
+};
+
+test("server accepts valid fee, tax, and proportional discount settings", () => {
+  const state = billWithAdjustments({
+    serviceFeeRateBps: 1000, taxRateBps: 700,
+    serviceFeeIncluded: false, taxIncluded: false,
+    discountSatang: 500, adjustmentPayerId: "person-a",
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+});
+
+test("server rejects discounts beyond the final gross total", () => {
+  const state = billWithAdjustments({
+    serviceFeeRateBps: 0, taxRateBps: 0,
+    serviceFeeIncluded: false, taxIncluded: false,
+    discountSatang: 10001, adjustmentPayerId: "person-a",
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+});
+
+test("server rejects adjustment percentages and payer references outside supported values", () => {
+  const highRate = billWithAdjustments({
+    serviceFeeRateBps: 10001, taxRateBps: 0, serviceFeeIncluded: false,
+    taxIncluded: false, discountSatang: 0, adjustmentPayerId: "person-a",
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(highRate)), false);
+  const unknownPayer = billWithAdjustments({
+    serviceFeeRateBps: 1000, taxRateBps: 0, serviceFeeIncluded: false,
+    taxIncluded: false, discountSatang: 0, adjustmentPayerId: "not-a-participant",
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(unknownPayer)), false);
+});
+
+test("server rejects multi-payer totals that do not equal the expense", () => {
+  const state = billWithAdjustments({
+    serviceFeeRateBps: 0, taxRateBps: 0, serviceFeeIncluded: false,
+    taxIncluded: false, discountSatang: 0, adjustmentPayerId: "person-a",
+  });
+  state.bills[0].expenses[0].payers[0].amountSatang = 5000;
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+});
