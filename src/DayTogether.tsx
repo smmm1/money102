@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import "./daytogether.css"
-import { createMemoryDataAdapter } from "./daytogether-data-adapter"
+import { AccountMenu, useAccount } from "./CloudAuth"
 import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview, parseMoneyToSatang, parsePercentageBasisPoints, type BillAdjustments } from "./daytogether-calculations.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
@@ -29,8 +29,18 @@ const symptomSeverityFromExtra = (value: string) => value.match(/ระดับ
 const symptomDetailsFromExtra = (value: string) => value.replace(/ระดับความรู้สึก: [1-5]\/5/g, "").replace(/^ · | · $/g, "")
 const id = () => crypto.randomUUID()
 const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "light", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
-function readState(): State { return { ...defaults, goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { ...defaults.settings } } }
-const prototypeData = createMemoryDataAdapter<State>(defaults)
+function readState(): State {
+  try {
+    const raw = window.localStorage.getItem("lamoon-daytogether-v1")
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (isBackupState(parsed)) return { ...defaults, ...parsed, settings: { ...defaults.settings, ...parsed.settings } }
+    }
+  } catch {
+    // Ignore unavailable or malformed account snapshots.
+  }
+  return { ...defaults, goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { ...defaults.settings } }
+}
 function isBackupState(value: unknown): value is State {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
   const candidate = value as Record<string, unknown>
@@ -130,7 +140,12 @@ function csv(rows: unknown[][]) { return "\uFEFF" + rows.map(row => row.map(valu
 function download(name: string, content: string, type: string) { const a = document.createElement("a"); const url = URL.createObjectURL(new Blob([content],{type})); a.href = url; a.download=name; a.click(); window.setTimeout(()=>URL.revokeObjectURL(url),1000) }
 
 export default function DayTogether() {
-  const [state,setState] = useState<State>(() => ({ ...prototypeData.load(), settings: { ...prototypeData.load().settings, theme: "system" } }))
+  const [state,setState] = useState<State>(() => readState())
+  const account = useAccount()
+  const [passwordCurrent,setPasswordCurrent] = useState("")
+  const [passwordNext,setPasswordNext] = useState("")
+  const [accountBusy,setAccountBusy] = useState(false)
+  const [accountMessage,setAccountMessage] = useState("")
   const [path,setPath] = useState(window.location.pathname)
   const [moreOpen,setMoreOpen] = useState(false)
   const [quickAddOpen,setQuickAddOpen] = useState(false)
@@ -164,6 +179,10 @@ export default function DayTogether() {
   const page = path === "/" ? "/" : (Object.keys(PAGE_LABEL).includes(path) ? path : path.startsWith("/savings/goals/") ? "/savings" : path.startsWith("/notes/") ? "/notes" : path.startsWith("/split/") ? "/split" : path.startsWith("/bbq/") ? "/bbq" : "/404")
   const pathParts = path.split("/").filter(Boolean); const routeId = pathParts[pathParts.length - 1] || ""
   useEffect(() => { const pop = () => { setPath(window.location.pathname); const params=new URLSearchParams(window.location.search); setOpenNoteId(params.get("note")||""); }; window.addEventListener("popstate",pop); if(window.location.pathname==="/login"){window.history.replaceState({}, "", "/");setPath("/")} return () => window.removeEventListener("popstate",pop) },[])
+  useEffect(() => {
+    try { window.localStorage.setItem("lamoon-daytogether-v1", JSON.stringify(state)) }
+    catch { setNotice("บันทึกข้อมูลลงระบบไม่สำเร็จ กรุณาลองอีกครั้ง") }
+  }, [state])
   useEffect(() => { setHeightDraft(state.settings.heightCm===null?"":String(state.settings.heightCm)) },[state.settings.heightCm])
   useEffect(() => { setWaterGoalDraft(String(state.settings.waterGoal)) },[state.settings.waterGoal])
   useEffect(() => { const applyTheme = () => { document.documentElement.dataset.dtTheme = theme }; applyTheme(); setState(s=>s.settings.theme===theme?s:{...s,settings:{...s.settings,theme}}) },[theme])
@@ -195,13 +214,13 @@ export default function DayTogether() {
         if (unchanged) return current
         return { ...current, notes: previous ? current.notes.map(note => note.id === editId ? candidate : note) : [candidate, ...current.notes] }
       })
-      setNotice("บันทึกโน้ตตัวอย่างแล้ว (อยู่ในหน่วยความจำเท่านั้น)")
+      setNotice("บันทึกโน้ตแล้ว")
       window.setTimeout(() => setNoteSaving(false), 600)
     }, 900)
     return () => window.clearTimeout(timer)
   }, [modal, editId, draftNote])
   const go = (next: string) => { if (window.location.pathname !== next) window.history.pushState({}, "", next); setPath(next); setMoreOpen(false); setQuery(""); window.scrollTo({top:0,behavior:"smooth"}) }
-  const update = <K extends keyof State>(key: K, value: State[K]) => setState(s=>prototypeData.replace({...s,[key]:value}))
+  const update = <K extends keyof State>(key: K, value: State[K]) => setState(s=>({...s,[key]:value}))
   const clearCategory = (category: "savings" | "health" | "notes" | "split" | "bbq") => {
     const labels = { savings: "เป้าหมายและประวัติออมเงิน", health: "ประวัติสุขภาพ", notes: "โน้ตและไดอารี", split: "บิลหารตัง", bbq: "ประวัติมื้ออาหาร" };
     if (!window.confirm("ลบ" + labels[category] + "ทั้งหมดอย่างถาวรหรือไม่? การดำเนินการนี้ย้อนกลับไม่ได้")) return;
@@ -212,7 +231,7 @@ export default function DayTogether() {
       if (category === "split") return { ...current, bills: [], visits: current.visits.map(visit => ({ ...visit, billId: "" })) };
       return { ...current, visits: [], bills: current.bills.map(bill => ({ ...bill, bbqId: "" })) };
     });
-    setNotice("บันทึกในโหมดทดลองแล้ว (ยังไม่บันทึกถาวร)");
+    setNotice("บันทึกแล้ว");
   }
   const balance = state.savings.reduce((n,t)=>n+(t.kind==="deposit"?t.amountSatang:-t.amountSatang),0)
   const thisMonthSavings = state.savings.filter(t=>monthKey(t.date)===monthKey(today(state.settings.timezone)))
@@ -289,7 +308,7 @@ export default function DayTogether() {
   }
   const resetSampleData = () => {
     if (!window.confirm("รีเซ็ตข้อมูลตัวอย่างทั้งหมดในหน่วยความจำหรือไม่?")) return;
-    setState(prototypeData.reset()); setState(s=>({...s,settings:{...s.settings,theme}}));
+    setState({ ...defaults, settings: { ...defaults.settings, theme } });
     setNotice("รีเซ็ตข้อมูลตัวอย่างแล้ว (ไม่กระทบข้อมูลถาวร)");
     setModal(null);
     setEditId("");
@@ -316,7 +335,7 @@ export default function DayTogether() {
     setNotice("เพิ่มข้อมูลตัวอย่างแล้ว (อยู่ในหน่วยความจำเท่านั้น)")
   }
   const startNote = (note?: Note) => { const noteId = note?.id || id(); setDraftNote(note?{title:note.title,body:note.body,kind:note.kind,date:note.date,tags:note.tags.join(", "),mood:note.mood}:{title:"",body:"",kind:"note",date:today(state.settings.timezone),tags:"",mood:""}); openModal("note",noteId) }
-  const saveNote = (e:FormEvent<HTMLFormElement>) => { e.preventDefault(); const previous=state.notes.find(n=>n.id===editId); const item:Note={id:editId||id(),title:draftNote.title.trim()||"ไม่มีชื่อ",body:draftNote.body,kind:draftNote.kind,date:draftNote.date,tags:[...new Set(draftNote.tags.split(",").map(s=>s.trim()).filter(Boolean))],mood:draftNote.mood,pinned:previous?.pinned||false,archived:previous?.archived||false,updatedAt:new Date().toISOString(),version:(previous?.version||0)+1}; setEditId(item.id); update("notes",previous?state.notes.map(n=>n.id===item.id?item:n):[item,...state.notes]); setPendingCloseAfterSave(true); setNotice("บันทึกข้อมูลตัวอย่างแล้ว (ยังไม่บันทึกถาวร)") }
+  const saveNote = (e:FormEvent<HTMLFormElement>) => { e.preventDefault(); const previous=state.notes.find(n=>n.id===editId); const item:Note={id:editId||id(),title:draftNote.title.trim()||"ไม่มีชื่อ",body:draftNote.body,kind:draftNote.kind,date:draftNote.date,tags:[...new Set(draftNote.tags.split(",").map(s=>s.trim()).filter(Boolean))],mood:draftNote.mood,pinned:previous?.pinned||false,archived:previous?.archived||false,updatedAt:new Date().toISOString(),version:(previous?.version||0)+1}; setEditId(item.id); update("notes",previous?state.notes.map(n=>n.id===item.id?item:n):[item,...state.notes]); setPendingCloseAfterSave(true); setNotice("บันทึกแล้ว") }
   const createBillFromVisit = (visit:Visit) => { if(visit.billId){go("/split/"+visit.billId);return} const b:Bill={id:id(),title:visit.title||"มื้อหมูกระทะ",date:visit.date,restaurant:visit.restaurant,participants:visit.friends.split(",").map(n=>n.trim()).filter(Boolean).map(name=>({id:id(),name,isMe:false})).concat([{id:id(),name:"ฉัน",isMe:true}]),expenses:visit.totalSatang? [{id:id(),title:"ค่าอาหาร",amountSatang:visit.totalSatang,payerId:"",participantIds:[]}]:[],settlements:[],note:"",bbqId:visit.id,status:"draft"}; b.expenses=b.expenses.map(x=>({...x,payerId:b.participants.find(p=>p.isMe)?.id||"",participantIds:b.participants.map(p=>p.id)})); update("bills",[b,...state.bills]); update("visits",state.visits.map(v=>v.id===visit.id?{...v,billId:b.id}:v)); go("/split/"+b.id); setNotice("บันทึกข้อมูลตัวอย่างแล้ว (ยังไม่บันทึกถาวร)") }
   const linkVisitFromBill = (bill:Bill) => { if(bill.bbqId){go("/bbq/"+bill.bbqId);return} const v:Visit={id:id(),restaurant:bill.restaurant,title:bill.title,date:bill.date,area:"",friends:bill.participants.filter(p=>!p.isMe).map(p=>p.name).join(", "),people:bill.participants.length,totalSatang:calculateBillSplit(bill.expenses,bill.participants,bill.settlements,bill.adjustments).totalSatang,personalSatang:bill.participants.find(p=>p.isMe)?calculateExpenseResponsibility(calculateBillSplit(bill.expenses,bill.participants,bill.settlements,bill.adjustments).adjustedExpenses,bill.participants.find(p=>p.isMe)!.id):null,rating:null,menu:"",memory:"",billId:bill.id}; update("visits",[v,...state.visits]); update("bills",state.bills.map(b=>b.id===bill.id?{...b,bbqId:v.id}:b)); go("/bbq/"+v.id); setNotice("บันทึกข้อมูลตัวอย่างแล้ว (ยังไม่บันทึกถาวร)") }
   const pageTitle = page==="/404" ? "ไม่พบหน้า" : (path!==page ? (page==="/notes"?"รายละเอียดโน้ต":page==="/split"?"รายละเอียดบิล":page==="/bbq"?"รายละเอียดมื้อ":"รายละเอียดเป้าหมาย") : PAGE_LABEL[page])
@@ -523,13 +542,13 @@ export default function DayTogether() {
       <div className="dt-modal-actions"><Button onClick={closeModal}>ยกเลิก</Button><Button type="submit" variant="primary">บันทึก</Button></div></form>}
       </section></div>
   }
-  return <div className="dt-app"><div className="dt-prototype-banner" role="status"><strong>โหมดทดลอง — ข้อมูลไม่ถูกบันทึกถาวร</strong><span>อย่าใส่ข้อมูลส่วนตัวจริง · ใช้ข้อมูลตัวอย่างในหน่วยความจำเท่านั้น</span><button type="button" onClick={resetSampleData}>รีเซ็ตข้อมูลตัวอย่าง</button></div><aside className="dt-sidebar"><button className="dt-brand" onClick={()=>go("/")}><span className="dt-brand-mark">d.</span><span><strong>DayTogether</strong><small>พื้นที่ส่วนตัว</small></span></button><div className="dt-nav-label">เมนูหลัก</div><nav className="dt-nav">{navItems.map(href=><button key={href} className={page===href?"active":""} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}</button>)}</nav><div className="dt-sidebar-bottom"><button className={page==="/settings"?"active":""} onClick={()=>go("/settings")}><span>⚙</span>ตั้งค่า</button><div className="dt-private-note">ข้อมูลส่วนตัว<br/><strong>ตัวอย่างในหน่วยความจำเท่านั้น</strong></div></div></aside>
-    <main className="dt-main"><header className="dt-topbar"><div className="dt-breadcrumb"><span>DayTogether</span><b>/</b><strong>{pageTitle}</strong></div><div className="dt-top-actions"><button className={hidden?"dt-privacy active":"dt-privacy"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}>{hidden?"◉":"◎"}<span>{hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}</span></button><button className="dt-avatar" onClick={()=>go("/settings")} aria-label="เปิดตั้งค่า">{hidden?"•":(state.settings.displayName||"D").slice(0,1).toUpperCase()}</button></div></header><div className="dt-content"><div className="dt-page-heading"><div><span className="dt-eyebrow">YOUR PERSONAL SPACE</span><h1>{pageTitle}</h1></div>{null}</div>{pageBody()}</div></main>
+  return <div className="dt-app"><aside className="dt-sidebar"><button className="dt-brand" onClick={()=>go("/")}><span className="dt-brand-mark">d.</span><span><strong>DayTogether</strong><small>พื้นที่ส่วนตัว</small></span></button><div className="dt-nav-label">เมนูหลัก</div><nav className="dt-nav">{navItems.map(href=><button key={href} className={page===href?"active":""} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}</button>)}</nav><div className="dt-sidebar-bottom"><button className={page==="/settings"?"active":""} onClick={()=>go("/settings")}><span>⚙</span>ตั้งค่า</button><div className="dt-private-note">ข้อมูลส่วนตัว<br/><strong>บัญชีส่วนตัวของคุณ</strong></div></div></aside>
+    <main className="dt-main"><header className="dt-topbar"><div className="dt-breadcrumb"><span>DayTogether</span><b>/</b><strong>{pageTitle}</strong></div><div className="dt-top-actions"><button className={hidden?"dt-privacy active":"dt-privacy"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}>{hidden?"◉":"◎"}<span>{hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}</span></button><AccountMenu /></div></header><div className="dt-content"><div className="dt-page-heading"><div><span className="dt-eyebrow">YOUR PERSONAL SPACE</span><h1>{pageTitle}</h1></div>{null}</div>{pageBody()}</div></main>
     <nav className="dt-mobile-nav" aria-label="เมนูหลัก">{["/","/savings","/health","/notes","more"].map(href=><button key={href} className={(href==="more"?(moreOpen||page==="/split"||page==="/bbq"||page==="/settings"):page===href)?"active":""} onClick={()=>href==="more"?setMoreOpen(v=>!v):go(href)}><span>{href==="more"?"＋":ICON[href]}</span><small>{href==="more"?"เพิ่มเติม":PAGE_LABEL[href]}</small></button>)}</nav>
     {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet"><div className="dt-sheet-handle"/><h3>เพิ่มเติม</h3>{["/split","/bbq","/settings"].map(href=><button key={href} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>↗</b></button>)}</section></>}
      {quickAddOpen&&<><button className="dt-sheet-dismiss" style={{display:"block",position:"fixed",inset:0,background:"transparent",zIndex:20}} aria-label="ปิดเมนูเพิ่มรายการ" onClick={()=>setQuickAddOpen(false)}/><section className="dt-quick-add-menu" aria-label="เลือกประเภทข้อมูลที่จะเพิ่ม"><div className="dt-sheet-handle"/><h3>เพิ่มรายการใหม่</h3><p>เลือกหมวดที่ต้องการบันทึก</p><button onClick={()=>{setQuickAddOpen(false);openModal("saving")}}><span>◒</span><span><strong>เงินออม</strong><small>ฝากออมหรือถอนเงิน</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("health")}}><span>♡</span><span><strong>สุขภาพ</strong><small>น้ำหนัก น้ำดื่ม การนอน หรืออาการ</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);startNote()}}><span>▤</span><span><strong>โน้ต / ไดอารี</strong><small>เก็บความคิดและความทรงจำ</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("bill")}}><span>⇄</span><span><strong>บิลหารตัง</strong><small>แบ่งค่าใช้จ่ายกับเพื่อน</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("visit")}}><span>♨</span><span><strong>มื้อหมูกระทะ</strong><small>บันทึกร้านและความทรงจำ</small></span><b>＋</b></button></section></>}
     {renderModal()}
-    {notice&&<div className="dt-toast" role="status"><span aria-hidden="true">✓</span><span>{notice}</span>{undoAction&&<button type="button" onClick={()=>{undoAction();setUndoAction(null);setNotice("กู้คืนข้อมูลตัวอย่างแล้ว")}} aria-label="เลิกทำการลบ">เลิกทำ</button>}<button onClick={()=>{setNotice("");setUndoAction(null)}} aria-label="ปิด">×</button></div>}
+    {notice&&<div className="dt-toast" role="status"><span aria-hidden="true">✓</span><span>{notice}</span>{undoAction&&<button type="button" onClick={()=>{undoAction();setUndoAction(null);setNotice("เลิกทำสำเร็จ")}} aria-label="เลิกทำการลบ">เลิกทำ</button>}<button onClick={()=>{setNotice("");setUndoAction(null)}} aria-label="ปิด">×</button></div>}
   </div>
 }
 
