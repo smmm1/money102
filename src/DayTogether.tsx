@@ -153,7 +153,23 @@ export default function DayTogether() {
     }
     setModal(m)
   }
-  const closeModal = () => { setPendingCloseAfterSave(false); setModal(null); setEditId("") }
+  const closeModal = () => {
+    if (modal === "note" && editId) {
+      const previous = state.notes.find(note => note.id === editId)
+      const hasContent = Boolean(draftNote.title.trim() || draftNote.body.trim() || draftNote.tags.trim() || draftNote.mood || draftNote.kind === "diary")
+      if (previous || hasContent) {
+        const item: Note = {
+          id: editId, title: draftNote.title.trim() || "ไม่มีชื่อ", body: draftNote.body, kind: draftNote.kind,
+          date: draftNote.date, tags: [...new Set(draftNote.tags.split(",").map(tag => tag.trim()).filter(Boolean))],
+          mood: draftNote.mood, pinned: previous?.pinned ?? false, archived: previous?.archived ?? false,
+          updatedAt: new Date().toISOString(), version: previous ? previous.version + 1 : 1
+        }
+        const unchanged = previous && previous.title === item.title && previous.body === item.body && previous.kind === item.kind && previous.date === item.date && previous.mood === item.mood && previous.tags.length === item.tags.length && previous.tags.every((tag, index) => tag === item.tags[index])
+        if (!unchanged) update("notes", previous ? state.notes.map(note => note.id === item.id ? item : note) : [item, ...state.notes])
+      }
+    }
+    setPendingCloseAfterSave(false); setModal(null); setEditId("")
+  }
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     if(!window.confirm("ต้องการลบรายการนี้หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้")) return
     if(collection==="goals") { if(state.savings.some(t=>t.goalId===itemId)) { setNotice("ยังลบเป้าหมายนี้ไม่ได้ เพราะมีรายการออมเชื่อมอยู่"); return } update("goals",state.goals.filter(x=>x.id!==itemId)) }
