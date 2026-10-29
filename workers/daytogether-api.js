@@ -255,7 +255,7 @@ export { isSnapshot, validDayTogetherState, validateDayTogetherSnapshot };
 export default { async fetch(request,env) {
  const url=new URL(request.url); if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(request,env)});
  try { await ensureSchema(env.DB);
-  if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api",auth:"cloudflare-d1"});
+  if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"daytogether-cloudflare-api",auth:"cloudflare-d1"});
   if(url.pathname==="/api/auth/signup"&&request.method==="POST") {
    const body=await parseBody(request);
    const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
@@ -335,5 +335,5 @@ export default { async fetch(request,env) {
    await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run();
   }
   return json(request,env,{ok:true,updated_at:updatedAt});
- } catch (error) { console.error("money102-api request failed", error); return json(request,env,{error:"เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่ภายหลัง"},500); }
+ } catch (error) { console.error("daytogether-api request failed"); return json(request,env,{error:"เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่ภายหลัง"},500); }
 }};
