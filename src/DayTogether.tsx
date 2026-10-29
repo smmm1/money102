@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { useAccount } from "./CloudAuth"
 import "./daytogether.css"
-import { calculateSplit, calculateSleepDuration, calculateDraftSplitPreview, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend } from "./daytogether-calculations.mjs"
+import { calculateSplit, calculateSleepDuration, calculateDraftSplitPreview, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone } from "./daytogether-calculations.mjs"
 import { migrateLegacyState } from "./daytogether-migration.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
