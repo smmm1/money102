@@ -229,3 +229,39 @@ export function summarizeBbqPersonalCosts(visits = []) {
     complete: unknownCount === 0,
   };
 }
+
+
+/**
+ * Formats a date label using the user's selected timezone.
+ * Date-only values and local wall-clock datetimes keep their written calendar
+ * day; ISO instants are converted into the selected timezone.
+ */
+export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
+  if (typeof value !== "string" || !value.trim()) return "ไม่ระบุวันที่";
+  const input = value.trim();
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+  const localDateTimeMatch = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.exec(input);
+  const format = (date, zone) => new Intl.DateTimeFormat("th-TH", {
+    timeZone: zone, day: "numeric", month: "short", year: "numeric",
+  }).format(date);
+  const validCalendarDate = (match) => {
+    if (!match) return false;
+    const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  };
+  if (dateOnlyMatch || localDateTimeMatch) {
+    const match = dateOnlyMatch || localDateTimeMatch;
+    if (!validCalendarDate(match)) return "ไม่ระบุวันที่";
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12));
+    return format(date, "UTC");
+  }
+  const instant = new Date(input);
+  if (!Number.isFinite(instant.getTime())) return "ไม่ระบุวันที่";
+  try {
+    return format(instant, timezone);
+  } catch {
+    return format(instant, "Asia/Bangkok");
+  }
+}
