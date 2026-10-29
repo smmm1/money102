@@ -87,6 +87,37 @@ export default function DayTogether() {
   useEffect(() => { if(notice) { const t=window.setTimeout(()=>setNotice(""),3000); return ()=>clearTimeout(t) } },[notice])
   useEffect(() => { const ok=()=>setNotice("บันทึกข้อมูลลงระบบแล้ว"); const fail=(e:Event)=>setNotice("บันทึกไม่สำเร็จ กรุณาลองใหม่"); window.addEventListener("d1-persist-success",ok); window.addEventListener("d1-persist-error",fail); return ()=>{window.removeEventListener("d1-persist-success",ok);window.removeEventListener("d1-persist-error",fail)} },[])
   useEffect(() => { if(!pendingCloseAfterSave)return; const ok=()=>{setPendingCloseAfterSave(false);setModal(null);setEditId("")}; const fail=()=>setPendingCloseAfterSave(false); window.addEventListener("d1-persist-success",ok); window.addEventListener("d1-persist-error",fail); return ()=>{window.removeEventListener("d1-persist-success",ok);window.removeEventListener("d1-persist-error",fail)} },[pendingCloseAfterSave])
+  useEffect(() => {
+    if (modal !== "note" || !editId) return
+    const existing = state.notes.find(note => note.id === editId)
+    const hasContent = Boolean(draftNote.title.trim() || draftNote.body.trim() || draftNote.tags.trim() || draftNote.mood || draftNote.kind === "diary")
+    if (!existing && !hasContent) return
+    const timer = window.setTimeout(() => {
+      setNoteSaving(true)
+      setState(current => {
+        const previous = current.notes.find(note => note.id === editId)
+        const candidate: Note = {
+          id: editId,
+          title: draftNote.title.trim() || "ไม่มีชื่อ",
+          body: draftNote.body,
+          kind: draftNote.kind,
+          date: draftNote.date,
+          tags: [...new Set(draftNote.tags.split(",").map(tag => tag.trim()).filter(Boolean))],
+          mood: draftNote.mood,
+          pinned: previous?.pinned ?? false,
+          archived: previous?.archived ?? false,
+          updatedAt: new Date().toISOString(),
+          version: previous ? previous.version + 1 : 1
+        }
+        const unchanged = previous && previous.title === candidate.title && previous.body === candidate.body && previous.kind === candidate.kind && previous.date === candidate.date && previous.mood === candidate.mood && previous.tags.length === candidate.tags.length && previous.tags.every((tag, index) => tag === candidate.tags[index])
+        if (unchanged) return current
+        return { ...current, notes: previous ? current.notes.map(note => note.id === editId ? candidate : note) : [candidate, ...current.notes] }
+      })
+      setNotice("กำลังบันทึกโน้ต…")
+      window.setTimeout(() => setNoteSaving(false), 600)
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [modal, editId, draftNote])
   const go = (next: string) => { if (window.location.pathname !== next) window.history.pushState({}, "", next); setPath(next); setMoreOpen(false); setQuery(""); window.scrollTo({top:0,behavior:"smooth"}) }
   const update = <K extends keyof State>(key: K, value: State[K]) => setState(s=>({...s,[key]:value}))
   const balance = state.savings.reduce((n,t)=>n+(t.kind==="deposit"?t.amountSatang:-t.amountSatang),0)
@@ -122,7 +153,23 @@ export default function DayTogether() {
     }
     setModal(m)
   }
-  const closeModal = () => { setPendingCloseAfterSave(false); setModal(null); setEditId("") }
+  const closeModal = () => {
+    if (modal === "note" && editId) {
+      const previous = state.notes.find(note => note.id === editId)
+      const hasContent = Boolean(draftNote.title.trim() || draftNote.body.trim() || draftNote.tags.trim() || draftNote.mood || draftNote.kind === "diary")
+      if (previous || hasContent) {
+        const item: Note = {
+          id: editId, title: draftNote.title.trim() || "ไม่มีชื่อ", body: draftNote.body, kind: draftNote.kind,
+          date: draftNote.date, tags: [...new Set(draftNote.tags.split(",").map(tag => tag.trim()).filter(Boolean))],
+          mood: draftNote.mood, pinned: previous?.pinned ?? false, archived: previous?.archived ?? false,
+          updatedAt: new Date().toISOString(), version: previous ? previous.version + 1 : 1
+        }
+        const unchanged = previous && previous.title === item.title && previous.body === item.body && previous.kind === item.kind && previous.date === item.date && previous.mood === item.mood && previous.tags.length === item.tags.length && previous.tags.every((tag, index) => tag === item.tags[index])
+        if (!unchanged) update("notes", previous ? state.notes.map(note => note.id === item.id ? item : note) : [item, ...state.notes])
+      }
+    }
+    setPendingCloseAfterSave(false); setModal(null); setEditId("")
+  }
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     if(!window.confirm("ต้องการลบรายการนี้หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้")) return
     if(collection==="goals") { if(state.savings.some(t=>t.goalId===itemId)) { setNotice("ยังลบเป้าหมายนี้ไม่ได้ เพราะมีรายการออมเชื่อมอยู่"); return } update("goals",state.goals.filter(x=>x.id!==itemId)) }
@@ -133,8 +180,8 @@ export default function DayTogether() {
     else { const v=state.visits.find(x=>x.id===itemId); if(v?.billId && !window.confirm("มื้อนี้เชื่อมกับบิลอยู่ จะเก็บบิลไว้และยกเลิกการเชื่อมหรือไม่?")) return; update("visits",state.visits.filter(x=>x.id!==itemId)); if(v?.billId) update("bills",state.bills.map(b=>b.id===v.billId?{...b,bbqId:""}:b)) }
     setNotice("กำลังบันทึกข้อมูล…")
   }
-  const startNote = (note?: Note) => { setDraftNote(note?{title:note.title,body:note.body,kind:note.kind,date:note.date,tags:note.tags.join(", "),mood:note.mood}:{title:"",body:"",kind:"note",date:today(state.settings.timezone),tags:"",mood:""}); openModal("note",note?.id||"") }
-  const saveNote = (e:FormEvent<HTMLFormElement>) => { e.preventDefault(); const item:Note={id:editId||id(),title:draftNote.title.trim()||"ไม่มีชื่อ",body:draftNote.body,kind:draftNote.kind,date:draftNote.date,tags:draftNote.tags.split(",").map(s=>s.trim()).filter(Boolean),mood:draftNote.mood,pinned:state.notes.find(n=>n.id===editId)?.pinned||false,archived:state.notes.find(n=>n.id===editId)?.archived||false,updatedAt:new Date().toISOString(),version:(state.notes.find(n=>n.id===editId)?.version||0)+1}; setEditId(item.id); update("notes",editId?state.notes.map(n=>n.id===editId?item:n):[item,...state.notes]); setPendingCloseAfterSave(true); setNotice("กำลังบันทึกข้อมูล…") }
+  const startNote = (note?: Note) => { const noteId = note?.id || id(); setDraftNote(note?{title:note.title,body:note.body,kind:note.kind,date:note.date,tags:note.tags.join(", "),mood:note.mood}:{title:"",body:"",kind:"note",date:today(state.settings.timezone),tags:"",mood:""}); openModal("note",noteId) }
+  const saveNote = (e:FormEvent<HTMLFormElement>) => { e.preventDefault(); const previous=state.notes.find(n=>n.id===editId); const item:Note={id:editId||id(),title:draftNote.title.trim()||"ไม่มีชื่อ",body:draftNote.body,kind:draftNote.kind,date:draftNote.date,tags:[...new Set(draftNote.tags.split(",").map(s=>s.trim()).filter(Boolean))],mood:draftNote.mood,pinned:previous?.pinned||false,archived:previous?.archived||false,updatedAt:new Date().toISOString(),version:(previous?.version||0)+1}; setEditId(item.id); update("notes",previous?state.notes.map(n=>n.id===item.id?item:n):[item,...state.notes]); setPendingCloseAfterSave(true); setNotice("กำลังบันทึกข้อมูล…") }
   const createBillFromVisit = (visit:Visit) => { if(visit.billId){go("/split/"+visit.billId);return} const b:Bill={id:id(),title:visit.title||"มื้อหมูกระทะ",date:visit.date,restaurant:visit.restaurant,participants:visit.friends.split(",").map(n=>n.trim()).filter(Boolean).map(name=>({id:id(),name,isMe:false})).concat([{id:id(),name:"ฉัน",isMe:true}]),expenses:visit.totalSatang? [{id:id(),title:"ค่าอาหาร",amountSatang:visit.totalSatang,payerId:"",participantIds:[]}]:[],settlements:[],note:"",bbqId:visit.id,status:"draft"}; b.expenses=b.expenses.map(x=>({...x,payerId:b.participants.find(p=>p.isMe)?.id||"",participantIds:b.participants.map(p=>p.id)})); update("bills",[b,...state.bills]); update("visits",state.visits.map(v=>v.id===visit.id?{...v,billId:b.id}:v)); go("/split/"+b.id); setNotice("กำลังบันทึกข้อมูล…") }
   const linkVisitFromBill = (bill:Bill) => { if(bill.bbqId){go("/bbq/"+bill.bbqId);return} const v:Visit={id:id(),restaurant:bill.restaurant,title:bill.title,date:bill.date,area:"",friends:bill.participants.filter(p=>!p.isMe).map(p=>p.name).join(", "),people:bill.participants.length,totalSatang:bill.expenses.reduce((n,e)=>n+e.amountSatang,0),personalSatang:bill.participants.find(p=>p.isMe)?responsibility(bill.expenses,bill.participants.find(p=>p.isMe)!.id):null,rating:null,menu:"",memory:"",billId:bill.id}; update("visits",[v,...state.visits]); update("bills",state.bills.map(b=>b.id===bill.id?{...b,bbqId:v.id}:b)); go("/bbq/"+v.id); setNotice("กำลังบันทึกข้อมูล…") }
   const pageTitle = page==="/404" ? "ไม่พบหน้า" : (path!==page ? (page==="/notes"?"รายละเอียดโน้ต":page==="/split"?"รายละเอียดบิล":page==="/bbq"?"รายละเอียดมื้อ":"รายละเอียดเป้าหมาย") : PAGE_LABEL[page])
@@ -286,7 +333,7 @@ export default function DayTogether() {
     if(!modal)return null
     const existing=modal==="goal"?state.goals.find(x=>x.id===editId):modal==="saving"?state.savings.find(x=>x.id===editId):modal==="health"?state.health.find(x=>x.id===editId):modal==="visit"?state.visits.find(x=>x.id===editId):modal==="bill"?state.bills.find(x=>x.id===editId):undefined
     return <div className="dt-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)closeModal()}}><section className="dt-modal" role="dialog" aria-modal="true" aria-labelledby="dt-modal-title"><div className="dt-modal-head"><div><span className="dt-eyebrow">DAYTOGETHER</span><h2 id="dt-modal-title">{modal==="goal"?(editId?"แก้ไขเป้าหมาย":"สร้างเป้าหมายออมเงิน"):modal==="saving"?(editId?"แก้ไขรายการออม":"เพิ่มรายการออม"):modal==="health"?(editId?"แก้ไขบันทึกสุขภาพ":"บันทึกสุขภาพ"):modal==="note"?(editId?"แก้ไขบันทึก":"เขียนบันทึกใหม่"):modal==="bill"?(editId?"แก้ไขบิล":"สร้างบิลหารตัง"):(editId?"แก้ไขประวัติมื้อ":"เพิ่มมื้อหมูกระทะ")}</h2></div><button className="dt-icon-button" onClick={closeModal} aria-label="ปิดหน้าต่าง">×</button></div>
-      {modal==="note"?<form className="dt-form" onSubmit={saveNote}><Field label="ประเภท"><select value={draftNote.kind} onChange={e=>setDraftNote(s=>({...s,kind:e.target.value as "note"|"diary"}))}><option value="note">โน้ต</option><option value="diary">ไดอารี</option></select></Field><Field label="หัวข้อ"><input value={draftNote.title} onChange={e=>setDraftNote(s=>({...s,title:e.target.value}))} placeholder="ไม่มีชื่อ หากเว้นว่าง"/></Field><Field label="วันที่"><input type="date" value={draftNote.date} onChange={e=>setDraftNote(s=>({...s,date:e.target.value}))} required/></Field><Field label="เนื้อหา"><textarea rows={7} value={draftNote.body} onChange={e=>setDraftNote(s=>({...s,body:e.target.value}))} placeholder="จดสิ่งที่อยากจำ..." /></Field><Field label="แท็ก (คั่นด้วยจุลภาค)"><input value={draftNote.tags} onChange={e=>setDraftNote(s=>({...s,tags:e.target.value}))} placeholder="งาน, ไอเดีย, ส่วนตัว"/></Field>{draftNote.kind==="diary"&&<Field label="อารมณ์วันนี้"><select value={draftNote.mood} onChange={e=>setDraftNote(s=>({...s,mood:e.target.value}))}><option value="">ไม่ระบุ</option><option>ดีใจ</option><option>เฉยๆ</option><option>เศร้า</option></select></Field>}<div className="dt-modal-actions"><Button onClick={closeModal}>ยกเลิก</Button><Button type="submit" variant="primary">บันทึก</Button></div></form>:<form className="dt-form" onSubmit={submitModal}>
+      {modal==="note"?<form className="dt-form" onSubmit={saveNote}><Field label="ประเภท"><select value={draftNote.kind} onChange={e=>setDraftNote(s=>({...s,kind:e.target.value as "note"|"diary"}))}><option value="note">โน้ต</option><option value="diary">ไดอารี</option></select></Field><Field label="หัวข้อ"><input value={draftNote.title} onChange={e=>setDraftNote(s=>({...s,title:e.target.value}))} placeholder="ไม่มีชื่อ หากเว้นว่าง"/></Field><Field label="วันที่"><input type="date" value={draftNote.date} onChange={e=>setDraftNote(s=>({...s,date:e.target.value}))} required/></Field><Field label="เนื้อหา"><textarea rows={7} value={draftNote.body} onChange={e=>setDraftNote(s=>({...s,body:e.target.value}))} placeholder="จดสิ่งที่อยากจำ..." /></Field><Field label="แท็ก (คั่นด้วยจุลภาค)"><input value={draftNote.tags} onChange={e=>setDraftNote(s=>({...s,tags:e.target.value}))} placeholder="งาน, ไอเดีย, ส่วนตัว"/></Field>{draftNote.kind==="diary"&&<Field label="อารมณ์วันนี้"><select value={draftNote.mood} onChange={e=>setDraftNote(s=>({...s,mood:e.target.value}))}><option value="">ไม่ระบุ</option><option>ดีใจ</option><option>เฉยๆ</option><option>เศร้า</option></select></Field>}<div className="dt-modal-actions"><span className="dt-muted" role="status">{noteSaving ? "กำลังบันทึกฉบับร่าง…" : "บันทึกอัตโนมัติเมื่อหยุดพิมพ์"}</span><Button onClick={closeModal}>ปิด</Button><Button type="submit" variant="primary">บันทึกและปิด</Button></div></form>:<form className="dt-form" onSubmit={submitModal}>
       {modal==="goal"&&<><Field label="ชื่อเป้าหมาย"><input name="name" required defaultValue={(existing as Goal|undefined)?.name||""} placeholder="เช่น ทริปเที่ยว"/></Field><Field label="จำนวนเงินเป้าหมาย (บาท)"><input name="target" type="number" min="0.01" step="0.01" required defaultValue={(existing as Goal|undefined)?.targetSatang?((existing as Goal).targetSatang/100):""}/></Field><Field label="วันที่อยากสำเร็จ (ไม่บังคับ)"><input name="due" type="date" defaultValue={(existing as Goal|undefined)?.due||""}/></Field><Field label="สถานะ"><select name="status" defaultValue={(existing as Goal|undefined)?.status||"active"}><option value="active">กำลังออม</option><option value="done">สำเร็จ</option><option value="archived">เก็บถาวร</option></select></Field><Field label="สี"><select name="color" defaultValue={(existing as Goal|undefined)?.color||"green"}><option value="green">เขียว</option><option value="blue">ฟ้า</option><option value="orange">ส้ม</option><option value="purple">ม่วง</option></select></Field></>}
       {modal==="saving"&&<><Field label="ประเภท"><select name="kind" defaultValue={(existing as Saving|undefined)?.kind|| (kindFilter==="withdraw"?"withdraw":"deposit")}><option value="deposit">ฝากออม</option><option value="withdraw">ถอน</option></select></Field><Field label="จำนวนเงิน (บาท)"><input name="amount" type="number" min="0.01" step="0.01" required defaultValue={(existing as Saving|undefined)?.amountSatang?((existing as Saving).amountSatang/100):""}/></Field><Field label="วันที่"><input name="date" type="date" required defaultValue={(existing as Saving|undefined)?.date||today(state.settings.timezone)}/></Field><Field label="เป้าหมาย"><select name="goalId" defaultValue={(existing as Saving|undefined)?.goalId||""}><option value="">ออมทั่วไป</option>{state.goals.filter(g=>g.status!=="archived").map(g=><option value={g.id} key={g.id}>{g.name}</option>)}</select></Field><Field label="หมายเหตุ"><input name="note" defaultValue={(existing as Saving|undefined)?.note||""}/></Field></>}
       {modal==="health"&&<>
