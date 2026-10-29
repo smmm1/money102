@@ -40,3 +40,36 @@ test("snapshot envelope accepts only namespaced string values and bounded payloa
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": "x".repeat(900001) }), false);
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(validState()), "lamoon-preferences": "ok" }), true);
 });
+
+test("rejects malformed bill allocations before they can be persisted", () => {
+  const state = validState();
+  state.bills.push({
+    id: "bill-1", title: "Dinner", date: "2026-01-01", restaurant: "BBQ", note: "", bbqId: "",
+    status: "draft",
+    participants: [{ id: "me", name: "Me", isMe: true }, { id: "friend", name: "Friend", isMe: false }],
+    expenses: [{ id: "expense-1", title: "Food", amountSatang: 10000, payerId: "me", participantIds: ["me", "friend"], allocationMode: "fixed", allocations: { me: 3000, friend: 6000 } }],
+    settlements: []
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+});
+test("accepts valid bill allocation totals and rejects duplicate expense participants", () => {
+  const state = validState();
+  state.bills.push({
+    id: "bill-1", title: "Dinner", date: "2026-01-01", restaurant: "BBQ", note: "", bbqId: "",
+    status: "draft",
+    participants: [{ id: "me", name: "Me", isMe: true }, { id: "friend", name: "Friend", isMe: false }],
+    expenses: [{ id: "expense-1", title: "Food", amountSatang: 10001, payerId: "me", participantIds: ["me", "friend"], allocationMode: "percentage", allocations: { me: 5000, friend: 5000 } }],
+    settlements: []
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+  state.bills[0].expenses[0].participantIds = ["me", "me"];
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+});
+test("rejects snapshots with negative savings balance or invalid health values", () => {
+  const state = validState();
+  state.savings.push({ id: "saving-2", kind: "withdraw", amountSatang: 500, date: "2026-01-02", goalId: "goal-1", note: "" });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+  const invalidHealth = validState();
+  invalidHealth.health[0].value = "x".repeat(1001);
+  assert.equal(validDayTogetherState(JSON.stringify(invalidHealth)), false);
+});
