@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import "./daytogether.css"
 import { AccountMenu } from "./CloudAuth"
-import { distributeCents, parseMoneyCents, safeCsvCell, suggestSettlements } from "./domain/money.mjs"
+import { calculateBillShares, distributeCents, parseMoneyCents, safeCsvCell, suggestSettlements } from "./domain/money.mjs"
 
 type Page = "home" | "savings" | "health" | "notes" | "split" | "bbq" | "settings"
 type Goal = { id: string; title: string; targetCents: number; dueDate: string; status: "active" | "done" | "archived"; createdAt: string }
@@ -9,10 +9,11 @@ type SavingEntry = { id: string; type: "deposit" | "withdrawal"; amountCents: nu
 type HealthEntry = { id: string; type: "weight" | "bloodPressure" | "sleep" | "water" | "symptom" | "legacy"; date: string; value?: number; systolic?: number; diastolic?: number; pulse?: number; bedtime?: string; wakeTime?: string; quality?: string; title?: string; severity?: number; note?: string }
 type Note = { id: string; title: string; body: string; kind: "note" | "diary"; date: string; tags: string[]; mood: string; pinned: boolean; archived: boolean; updatedAt: string; version: number }
 type Participant = { id: string; name: string; paidCents: number; shareCents: number }
-type Bill = { id: string; title: string; date: string; shop: string; participants: Participant[]; totalCents: number; settled: boolean; notes: string; bbqId?: string; settlements: { id: string; fromId: string; toId: string; amountCents: number; date: string }[] }
+type Bill = { id: string; title: string; date: string; shop: string; participants: Participant[]; totalCents: number; settled: boolean; notes: string; bbqId?: string; allocationMode?: "equal" | "fixed" | "percentage"; settlements: { id: string; fromId: string; toId: string; amountCents: number; date: string }[] }
 type Bbq = { id: string; shop: string; title: string; date: string; area: string; friends: string; people: number; totalCents: number; personalCents: number | null; rating: number | null; menu: string; memory: string; billId?: string }
 type State = { goals: Goal[]; savings: SavingEntry[]; health: HealthEntry[]; notes: Note[]; bills: Bill[]; bbq: Bbq[]; prefs: { timezone: string; theme: "light" | "dark" | "system"; hidden: boolean; healthTypes: string[]; dashboard: string[]; appName: string; legacyImported?: boolean } }
 const STORE = "lamoon-daytogether-v1"
+function readStringMap(value?: string): Record<string, string> { try { const parsed = JSON.parse(value || "{}"); return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? Object.fromEntries(Object.entries(parsed).map(([key, item]) => [key, String(item ?? "")])) : {} } catch { return {} } }
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` }
 const id = () => crypto.randomUUID()
 const emptyState = (): State => ({ goals: [], savings: [], health: [], notes: [], bills: [], bbq: [], prefs: { timezone: "Asia/Bangkok", theme: "system", hidden: false, healthTypes: ["weight", "water", "sleep"], dashboard: ["savings", "health", "notes", "split", "bbq"], appName: "DayTogether" } })
@@ -139,7 +140,7 @@ export default function DayTogether() {
     else if (kind === "saving") next = { type:item.type, amount:String(item.amountCents/100), date:item.date, goalId:item.goalId||"", note:item.note||"" }
     else if (kind === "health") next = { ...item, date:item.date, value:item.value==null?"":String(item.value), systolic:item.systolic==null?"":String(item.systolic), diastolic:item.diastolic==null?"":String(item.diastolic), pulse:item.pulse==null?"":String(item.pulse) }
     else if (kind === "note") next = { title:item.title, body:item.body, kind:item.kind, date:item.date, tags:item.tags.join(", "), mood:item.mood||"", pinned:String(item.pinned), archived:String(item.archived) }
-    else if (kind === "bill") next = { title:item.title, date:item.date, shop:item.shop||"", total:String(item.totalCents/100), people:item.participants.map((p:Participant)=>p.name).join(", "), notes:item.notes||"" }
+    else if (kind === "bill") next = { title:item.title, date:item.date, shop:item.shop||"", total:String(item.totalCents/100), people:item.participants.map((p:Participant)=>p.name).join(", "), notes:item.notes||"", allocationMode:"fixed", allocations:JSON.stringify(Object.fromEntries(item.participants.map((p:Participant)=>[p.name,String(p.shareCents/100)]))), payments:JSON.stringify(Object.fromEntries(item.participants.map((p:Participant)=>[p.name,String(p.paidCents/100)]))) }
     else if (kind === "bbq") next = { shop:item.shop, title:item.title, date:item.date, area:item.area||"", friends:item.friends||"", people:String(item.people), total:String(item.totalCents/100), personal:item.personalCents==null?"":String(item.personalCents/100), rating:item.rating==null?"":String(item.rating), menu:item.menu||"", memory:item.memory||"", billId:item.billId||"" }
     if (kind === "bill") next.payer = item.participants.find((p:Participant)=>p.paidCents>0)?.name || item.participants[0]?.name || ""
     setForm(next); setFormError("")
@@ -173,6 +174,8 @@ export default function DayTogether() {
   const filteredNotes = data.notes.filter(n => !n.archived && (n.title + " " + n.body + " " + n.tags.join(" ")).toLocaleLowerCase("th").includes(query.toLocaleLowerCase("th")) && (tab === "all" || (tab === "note" ? n.kind === "note" : tab === "diary" ? n.kind === "diary" : n.pinned))).sort((a,b) => Number(b.pinned)-Number(a.pinned) || b.updatedAt.localeCompare(a.updatedAt))
   const filteredBbq = data.bbq.filter(x => (x.shop + " " + x.title + " " + x.memory).toLocaleLowerCase("th").includes(query.toLocaleLowerCase("th")) && (tab === "all" || x.date.startsWith(tab))).sort((a,b) => b.date.localeCompare(a.date))
   const detail = page === "notes" ? data.notes.find(x => x.id === detailId) : page === "split" ? data.bills.find(x => x.id === detailId) : page === "bbq" ? data.bbq.find(x => x.id === detailId) : page === "savings" ? data.goals.find(x => x.id === detailId) : null
+  const splitNames = Array.from(new Map((form.people || "ฉัน, เพื่อน").split(",").map(name=>name.trim()).filter(Boolean).map(name=>[name.toLocaleLowerCase(),name])).values())
+  const defaultSplitPayer = splitNames.includes(form.payer || "") ? form.payer : splitNames[0]
 
   const saveForm = (event: FormEvent) => {
     event.preventDefault(); setFormError("")
@@ -215,14 +218,22 @@ export default function DayTogether() {
       setData(d=>({...d,notes:replace(d.notes,item)})); resetForm(); navigate("notes",item.id); setToast("ส่งบันทึกให้ระบบจัดเก็บแล้ว"); return
     }
     if (page === "split") {
-      const people = (form.people||"").split(",").map(x=>x.trim()).filter(Boolean)
+      const rawPeople = (form.people||"").split(",").map(x=>x.trim()).filter(Boolean)
+      const people = rawPeople.filter((name,index)=>rawPeople.findIndex(other=>other.toLocaleLowerCase()===name.toLocaleLowerCase())===index)
       const totalCents = cents(form.total||"0")
       if (!form.title?.trim() || totalCents <= 0 || people.length < 2) { setFormError("ใส่ชื่อบิล ยอดรวม และชื่อผู้ร่วมอย่างน้อย 2 คน"); return }
-      const shares = distributeCents(totalCents, people)
-      const participants: Participant[] = people.map((name,index)=>{ const old = oldId ? data.bills.find(x=>x.id===oldId)?.participants.find(p=>p.name===name) : undefined; return { id: old?.id || id(), name, paidCents: old ? (name === (form.payer || people[0]) ? totalCents : 0) : name === (form.payer || people[0]) ? totalCents : 0, shareCents: shares[index] } })
+      let shares: number[]
+      const allocationMode = (form.allocationMode || "equal") as "equal" | "fixed" | "percentage"
+      try { shares = calculateBillShares(totalCents, people, allocationMode, readStringMap(form.allocations)) }
+      catch (error) { setFormError(error instanceof Error && error.message.includes("percentages") ? "เปอร์เซ็นต์ของทุกคนต้องรวมกันเท่ากับ 100%" : error instanceof Error && error.message.includes("fixed") ? "ยอดรับผิดชอบของทุกคนต้องรวมกันเท่ากับยอดบิล" : "ตรวจสอบวิธีแบ่งเงินและข้อมูลผู้ร่วมอีกครั้ง"); return }
+      const paymentValues = readStringMap(form.payments)
+      const defaultPayer = people.includes(form.payer || "") ? form.payer! : people[0]
+      const paidAmounts = people.map(name=>{ const raw = paymentValues[name] ?? (name === defaultPayer ? String(totalCents/100) : "0"); return raw.trim()==="" ? 0 : parseMoneyCents(raw) })
+      if (paidAmounts.some(value=>value===null||value<0)||paidAmounts.reduce<number>((sum,value)=>sum+(value??0),0)!==totalCents) { setFormError("ยอดที่แต่ละคนจ่ายต้องรวมกันเท่ากับยอดบิล"); return }
+      const participants: Participant[] = people.map((name,index)=>{ const old = oldId ? data.bills.find(x=>x.id===oldId)?.participants.find(p=>p.name.toLocaleLowerCase()===name.toLocaleLowerCase()) : undefined; return { id: old?.id || id(), name, paidCents: paidAmounts[index] ?? 0, shareCents: shares[index] } })
       const previous = oldId ? data.bills.find(x=>x.id===oldId) : undefined
       if (previous?.settlements.length && (previous.totalCents !== totalCents || previous.participants.some(p=>{const next=participants.find(n=>n.id===p.id);return !next||p.shareCents!==next.shareCents||p.paidCents!==next.paidCents}))) { setFormError("บิลมีประวัติชำระแล้ว กรุณายกเลิกรายการชำระก่อนแก้ยอด"); return }
-      const item: Bill = { id:newId,title:form.title.trim(),date:form.date||today(),shop:form.shop?.trim()||"",participants,totalCents,settled:previous?.settled||false,notes:form.notes?.trim()||"",bbqId:previous?.bbqId||form.bbqId||undefined,settlements:previous?.settlements||[] }
+      const item: Bill = { id:newId,title:form.title.trim(),date:form.date||today(),shop:form.shop?.trim()||"",participants,totalCents,settled:previous?.settled||false,notes:form.notes?.trim()||"",bbqId:previous?.bbqId||form.bbqId||undefined,allocationMode,settlements:previous?.settlements||[] }
       setData(d=>({...d,bills:replace(d.bills,item),bbq:item.bbqId?d.bbq.map(v=>v.id===item.bbqId?{...v,billId:item.id}:v):d.bbq})); resetForm(); navigate("split",item.id); setToast("บันทึกบิลแล้ว"); return
     }
     if (page === "bbq") {
