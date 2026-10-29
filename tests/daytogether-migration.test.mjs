@@ -4,7 +4,7 @@ import { migrateLegacyState } from "../src/daytogether-migration.mjs";
 
 const defaults = {
   goals: [], savings: [], health: [], notes: [], bills: [], visits: [],
-  settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings"], healthKinds: ["weight"], waterGoal: 2000 }
+  settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null }
 };
 function storage(values) { return key => values[key] ?? null; }
 
