@@ -30,6 +30,11 @@ export function calculateSplit(expenses = [], participants = [], settlements = [
   }
   for (const settlement of settlements) {
     if (!settlement || !Number.isSafeInteger(settlement.amountSatang) || settlement.amountSatang <= 0 || !hasId(settlement.fromId) || !hasId(settlement.toId) || settlement.fromId === settlement.toId) continue;
+    const outstandingFrom = -balances[settlement.fromId];
+    const outstandingTo = balances[settlement.toId];
+    // A settlement must move money from a current debtor to a current creditor,
+    // and must not exceed either outstanding balance.
+    if (outstandingFrom <= 0 || outstandingTo <= 0 || settlement.amountSatang > outstandingFrom || settlement.amountSatang > outstandingTo) continue;
     balances[settlement.fromId] += settlement.amountSatang;
     balances[settlement.toId] -= settlement.amountSatang;
   }
