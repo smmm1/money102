@@ -73,3 +73,9 @@ test("rejects snapshots with negative savings balance or invalid health values",
   invalidHealth.health[0].value = "x".repeat(1001);
   assert.equal(validDayTogetherState(JSON.stringify(invalidHealth)), false);
 });
+
+test("keeps accepting the legacy snapshot shape while validating the rebuilt app shape", () => {
+  const legacy = { goals: [], savings: [], health: [], notes: [], bills: [], bbq: [] };
+  assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(legacy) }), true);
+  assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify({ goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: {} }) }), false);
+});
