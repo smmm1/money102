@@ -1,78 +1,51 @@
 # DayTogether (ชื่อชั่วคราว)
 
-เว็บจัดการชีวิตส่วนตัวภาษาไทย พัฒนาต่อจาก Money102 โดยคง stack เดิมไว้: React + TypeScript + Vite, Cloudflare Worker API, Cloudflare D1 และ Render
+เว็บจดบันทึกชีวิตส่วนตัวภาษาไทย พัฒนาด้วย React + TypeScript + Vite, Cloudflare Worker API, Cloudflare D1 และ Render
 
-## สถานะสถาปัตยกรรมจริง
+## Phase 2 architecture
 
-- **Frontend:** React 19 + TypeScript + Vite; responsive styles อยู่ใน `src/daytogether.css`
-- **Authentication:** Cloudflare Worker มีสมัครสมาชิก/เข้าสู่ระบบ, session, เปลี่ยนรหัสผ่าน, ออกจากระบบ และลบบัญชี
-- **Persistence:** แอปส่ง snapshot JSON ของข้อมูลผู้ใช้ผ่าน `GET/PUT /api/state` ไปยังตาราง `user_app_data` ใน Cloudflare D1
-- **ป้องกันการเขียนทับข้ามแท็บ:** snapshot write รองรับ compare-and-set ด้วย `expected_updated_at`; การเขียนจาก revision เก่าจะถูกปฏิเสธแทนการเขียนทับเงียบ ๆ ขอบเขตนี้เป็นระดับ snapshot ไม่ใช่ versioning ราย record
-- **Schema แยกตาราง:** `workers/migrations/0001_daytogether.sql` เป็น migration ที่เตรียมไว้ แต่ยัง **ไม่ได้ apply กับ production D1** และ frontend/API ยังไม่ได้เปลี่ยนไปใช้ CRUD ผ่านตาราง normalized
-- **Hosting:** Render เป็นเป้าหมาย production ตามการตั้งค่าเดิม การแก้ GitHub หรือ merge PR ไม่ใช่หลักฐานว่า production deploy สำเร็จ
+- **Frontend:** React + TypeScript + Vite. Render serves the static app.
+- **Authentication:** Cloudflare Worker provides sign-up/sign-in, hashed sessions, password change, logout and account deletion. Passwords are hashed with PBKDF2-SHA-256; session tokens are stored hashed in D1.
+- **Persistence:** App state is validated on the server and stored in D1 by authenticated `user_id`. The browser storage bridge is memory-only; it does not use persistent browser localStorage.
+- **Isolation:** Cloudflare D1 does not provide PostgreSQL-style Row Level Security. Equivalent access isolation is enforced in the Worker: the user ID is derived only from a validated bearer session, and all snapshot reads/writes/deletes are scoped to that user ID. Never accept a client-supplied user ID as authority.
+- **Migrations:** `workers/migrations/0000_auth_snapshot.sql` creates the authentication/session/snapshot tables; `0001_daytogether.sql` defines normalized domain tables; `0002_migration_ledger.sql` records the applied schema set. The current UI writes a validated JSON snapshot; normalized domain tables are prepared but are not yet the active write path.
+- **Staging resources:** `wrangler.daytogether.toml` targets the isolated `daytogether-phase2-preview-data` D1 database and `daytogether-api-staging` Worker. The Phase 2 preview must use `VITE_CLOUDFLARE_API_URL=https://daytogether-api-staging.s2mtha16.workers.dev`.
+- **Production safety:** This Phase 2 branch/preview is isolated. It does not alter `money102.onrender.com`, the production Worker, or the production D1 database.
 
-## ติดตั้งและรัน
+## Development and checks
 
-ต้องใช้ Node.js 22 ขึ้นไป
+Requires Node.js 22+.
 
 ```sh
 npm install
-npm run dev
-```
-
-ตรวจสอบ tests, TypeScript และ production build:
-
-```sh
 npm test
 npm run check
 npm run build
 ```
 
-## Environment variables
+For the Worker, apply the SQL migrations to the configured staging database before deploying:
 
-คัดลอก `.env.example` เป็น `.env.local` เมื่อจำเป็น
+```sh
+npx wrangler d1 migrations apply daytogether-phase2-preview-data --config wrangler.daytogether.toml --remote
+npx wrangler deploy --config wrangler.daytogether.toml
+```
 
-- `VITE_CLOUDFLARE_API_URL`: URL ของ Cloudflare Worker API; หากเว้นว่าง frontend จะใช้ URL ที่กำหนดไว้ใน `src/CloudAuth.tsx`
+Do not run these commands against the production database without a reviewed backup and an explicit production deployment plan.
 
-ห้ามใส่ Cloudflare API token, database credentials, service-role key หรือ private key ลงใน `VITE_*` เพราะตัวแปรเหล่านี้ถูกส่งไปยัง browser ได้
+## Authentication and privacy
 
-Cloudflare Worker ต้องมี binding `DB` ชี้ไปยัง D1 database และตั้งค่า `APP_ORIGIN` ให้ตรงกับ origin ที่อนุญาตจริง การเปลี่ยน CORS allowlist ต้องตรวจสอบ origin ก่อนเสมอ
+- `POST /api/auth/signup`, `POST /api/auth/signin`, `GET /api/auth/me`
+- `POST /api/auth/password`, `POST /api/auth/logout`, `DELETE /api/auth/account`
+- `GET/PUT /api/state` (server validates payload shape and money constraints; compare-and-set revision prevents silent cross-tab overwrite)
+- Health and note content, password fields and request bodies must not be written to logs.
+- Logout clears the in-memory browser snapshot and session token.
+- JSON and CSV exports are generated locally on demand. CSV values are escaped against spreadsheet formula injection.
+- Email-based password reset is not implemented because no email provider or verification flow is configured.
+- Native RLS is not available in D1; ownership checks in the Worker are the enforcement boundary.
 
-## Authentication และข้อมูล
+## Current scope limits
 
-- สมัครสมาชิก: `POST /api/auth/signup`
-- เข้าสู่ระบบ: `POST /api/auth/signin`
-- ตรวจ session: `GET /api/auth/me`
-- เปลี่ยนรหัสผ่าน: `POST /api/auth/password`
-- ลบบัญชีและข้อมูลที่เก็บใน D1: `DELETE /api/auth/account`
-- ข้อมูลแอป: `GET/PUT /api/state`
-- ออกจากระบบล้าง snapshot ใน memory ของหน้าเว็บและ session token ฝั่ง client
-- การลบข้อมูลรายหมวดจะอัปเดต snapshot และยกเลิกการเชื่อมโยงบิลกับมื้ออาหารที่เกี่ยวข้อง
-- **ยังไม่มีอีเมลรีเซ็ตรหัสผ่าน** เพราะยังไม่ได้ตั้งค่า email provider และ token-verification flow
-
-## ฟีเจอร์ที่มีใน UI
-
-- **หน้าหลัก:** สรุปจากข้อมูลที่บันทึกจริง ทางลัดไปทุกหมวด เพิ่มรายการด่วน และโหมดซ่อนข้อมูลส่วนตัว
-- **ออมเงิน:** เป้าหมาย ฝาก/ถอน ประวัติ และคำนวณยอดเป็นสตางค์; การถอนตรวจยอดของกองที่เลือก
-- **สุขภาพ:** บันทึกน้ำหนัก ความดัน ชีพจร การนอนข้ามวัน น้ำดื่ม อาการ และออกกำลังกาย; แก้ไข/ลบได้; มีกราฟ 7/30/90 วันและคงช่องว่างในวันที่ไม่มีข้อมูล; วันเวลาแสดงตาม timezone ที่เลือก
-- **โน้ต/ไดอารี:** ค้นหา แท็ก ปักหมุด autosave แบบ debounce เก็บถาวร และกรองตามประเภท แท็ก และช่วงวันที่; การเขียน snapshot จาก revision เก่าจะไม่เขียนทับข้อมูลใหม่โดยเงียบ ๆ
-- **หารตัง:** หลายรายการต่อบิล ผู้จ่ายหนึ่งคนหรือหลายคน ผู้ร่วมแต่ละรายการ แบ่งเท่ากัน/ยอดกำหนดเอง/เปอร์เซ็นต์ พร้อมค่าบริการ ภาษี และส่วนลดทั้งบิลที่กระจายตามสัดส่วน; คำนวณเป็นสตางค์และตรวจยอดก่อนบันทึก; มีตัวอย่างส่วนแบ่งสด การบันทึก/ยกเลิกการชำระ และรองรับบิลที่ไม่ได้รวมผู้ใช้ปัจจุบัน
-- **หมูกระทะ:** ประวัติร้าน มื้อ เพื่อน ยอดส่วนตัว คะแนน และความทรงจำ; เชื่อมไปกลับกับบิล; แยกยอดที่ไม่ทราบออกจากยอดศูนย์
-- **ตั้งค่า:** ชื่อแสดงผล ธีม timezone หมวดสุขภาพ การ์ด Dashboard โหมดซ่อนข้อมูล ส่งออก JSON/CSV เปลี่ยนรหัสผ่าน ลบข้อมูลรายหมวด และลบบัญชี
-- **Responsive navigation:** sidebar บน desktop และ bottom navigation พร้อมเมนูเพิ่มเติมบน mobile
-
-## ข้อจำกัดที่ยังเหลือก่อนเรียกว่าพร้อมใช้งานเต็มตามสเปก
-
-1. ข้อมูลแอปยังเก็บเป็น JSON snapshot ใน D1 ไม่ใช่ CRUD ผ่าน normalized tables; migration ที่เตรียมไว้ยังไม่ถูก apply กับ production
-2. ยังไม่มีอีเมลรีเซ็ตรหัสผ่าน
-3. การคำนวณค่าบริการ ภาษี และส่วนลดทั้งบิลมีแล้วในตัวคำนวณและ UI แต่ยังต้องทำ browser E2E ตรวจ flow จริงและตรวจรายละเอียดกรณีธุรกิจเพิ่มเติมก่อนถือว่าครบตามสเปก
-4. ยังไม่มี private photo storage สำหรับรูปมื้ออาหาร จึงไม่มีปุ่มอัปโหลดรูปที่อ้างว่าใช้งานได้
-5. การป้องกันการเขียนทับทำงานระดับ snapshot ไม่ใช่ versioning ราย record; การแก้ไขโน้ตหลายแท็บจะตรวจ conflict ที่ระดับข้อมูลรวม ไม่ใช่ merge ราย field
-6. ยังต้องทำ browser E2E กับบัญชีจริงให้ครบ: CRUD ทุกหมวดหลัง refresh, responsive, session expiry, API/offline failure และการแยกสิทธิ์ผู้ใช้
-7. ยังไม่ได้ยืนยันสถานะ production deploy จาก Render ในการแก้ไข GitHub รอบล่าสุด
-
-## Tests
-
-GitHub Actions ตรวจ unit tests, TypeScript และ production build รวมถึง calculation tests สำหรับการหารยอด/เศษสตางค์ ผู้จ่ายหลายคน การแบ่งเฉพาะผู้ร่วมรายการ การชำระเกิน การนอนข้ามวัน ค่าใช้จ่ายส่วนตัวหมูกระทะ การกรองวันในกราฟสุขภาพ การจัดรูปแบบวันที่ตาม timezone การตรวจ snapshot/API และการป้องกัน CSV formula injection
-
-การผ่าน CI ไม่ทดแทนการทดสอบ end-to-end บน production จริง
+- Normalized domain tables are defined by migration but the frontend currently persists a single validated snapshot. CRUD over the normalized tables is a later migration step.
+- No private photo storage for BBQ visits yet.
+- E2E browser checks against separate user accounts, responsive widths and failure/expiry paths remain necessary before production release.
+- A passing CI run does not prove a production deploy. Render/Worker deploy status must be verified separately.
