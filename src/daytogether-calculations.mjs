@@ -450,12 +450,10 @@ export function calculateDraftBillSplitPreview(rows = [], participantNames = [],
 }
 
 
-/** Parse a baht amount into integer satang. Rejects ambiguous precision and unsafe integers. */
-
-
-/** Divides a non-negative satang amount into equal shares. Early people receive remainder satang. */
+/** Divide non-negative integer satang into equal shares with deterministic remainder distribution. */
 export function divideSatang(totalSatang, peopleCount) {
-  if (!Number.isSafeInteger(totalSatang) || totalSatang < 0 || !Number.isSafeInteger(peopleCount) || peopleCount < 1 || peopleCount > 10000) return null;
+  if (!Number.isSafeInteger(totalSatang) || totalSatang < 0 ||
+      !Number.isSafeInteger(peopleCount) || peopleCount < 1 || peopleCount > 10000) return null;
   const base = Math.floor(totalSatang / peopleCount);
   const remainder = totalSatang % peopleCount;
   const shares = Array.from({ length: peopleCount }, (_, index) => base + (index < remainder ? 1 : 0));
@@ -463,18 +461,30 @@ export function divideSatang(totalSatang, peopleCount) {
   return { shares, remainder, totalSatang };
 }
 
-/** Validates one savings entry against the selected goal's available balance. */
+/** Validate a sample savings entry against the available balance for its goal. */
 export function validateSavingsEntry(entries = [], entry, goals = []) {
-  if (!entry || !["deposit", "withdraw"].includes(entry.kind) || !Number.isSafeInteger(entry.amountSatang) || entry.amountSatang <= 0 || typeof entry.goalId !== "string") return { valid: false, error: "invalid-entry", balanceSatang: 0 };
-  const knownGoal = entry.goalId === "" || goals.some(goal => goal && goal.id === entry.goalId);
-  if (!knownGoal) return { valid: false, error: "unknown-goal", balanceSatang: 0 };
+  if (!entry || !["deposit", "withdraw"].includes(entry.kind) ||
+      !Number.isSafeInteger(entry.amountSatang) || entry.amountSatang <= 0 ||
+      typeof entry.goalId !== "string") {
+    return { valid: false, error: "invalid-entry", balanceSatang: 0 };
+  }
+  if (entry.goalId !== "" && !goals.some(goal => goal && goal.id === entry.goalId)) {
+    return { valid: false, error: "unknown-goal", balanceSatang: 0 };
+  }
   let balanceSatang = 0;
   for (const item of entries) {
     if (!item || item.id === entry.id || item.goalId !== entry.goalId) continue;
-    if (!["deposit", "withdraw"].includes(item.kind) || !Number.isSafeInteger(item.amountSatang) || item.amountSatang <= 0) return { valid: false, error: "invalid-history", balanceSatang: 0 };
+    if (!["deposit", "withdraw"].includes(item.kind) ||
+        !Number.isSafeInteger(item.amountSatang) || item.amountSatang <= 0) {
+      return { valid: false, error: "invalid-history", balanceSatang: 0 };
+    }
     balanceSatang += item.kind === "deposit" ? item.amountSatang : -item.amountSatang;
-    if (!Number.isSafeInteger(balanceSatang)) return { valid: false, error: "amount-overflow", balanceSatang: 0 };
+    if (!Number.isSafeInteger(balanceSatang)) {
+      return { valid: false, error: "amount-overflow", balanceSatang: 0 };
+    }
   }
-  if (entry.kind === "withdraw" && entry.amountSatang > balanceSatang) return { valid: false, error: "insufficient-balance", balanceSatang };
+  if (entry.kind === "withdraw" && entry.amountSatang > balanceSatang) {
+    return { valid: false, error: "insufficient-balance", balanceSatang };
+  }
   return { valid: true, error: "", balanceSatang };
 }
