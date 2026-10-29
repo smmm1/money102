@@ -28,3 +28,8 @@ html[data-dt-theme="dark"]{--dt-bg:#0f172a;--dt-surface:#172033;--dt-text:#f1f5f
 .dt-bill-allocation-grid>strong{grid-column:1/-1}
 .dt-bill-allocation-grid .dt-field{min-width:0}
 @media(max-width:760px){.dt-bill-expense-editor{padding:10px}.dt-bill-expense-editor>.dt-section-head{align-items:flex-start;flex-direction:column}.dt-bill-expense-row{padding:11px}.dt-bill-allocation-grid{grid-template-columns:1fr}}
+
+.dt-bill-total-preview{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px 14px;padding:14px 16px;border:1px solid var(--dt-border);border-radius:12px;background:var(--dt-bg)}
+.dt-bill-total-preview>span{font-size:13px;color:var(--dt-muted);font-weight:600}
+.dt-bill-total-preview>strong{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.dt-bill-total-preview>small{grid-column:1/-1;color:var(--dt-muted);font-size:11px;line-height:1.5}
