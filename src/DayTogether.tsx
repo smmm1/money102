@@ -253,8 +253,7 @@ export default function DayTogether() {
       const entries=state.health.filter(h=>(kindFilter==="all"||h.kind===kindFilter)&&(!query||(h.value+" "+h.note+" "+h.extra).toLowerCase().includes(query.toLowerCase()))).sort((a,b)=>b.date.localeCompare(a.date))
       const waterToday=state.health.filter(h=>h.kind==="water"&&h.date.slice(0,10)===today(state.settings.timezone)).reduce((n,h)=>n+Number(h.value||0),0)
       const trendKind:HealthKind=(["weight","water","sleep"].includes(kindFilter)?kindFilter:"weight") as HealthKind
-      const cutoff=new Date();cutoff.setDate(cutoff.getDate()-healthRange+1)
-      const cutoffKey=`${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,"0")}-${String(cutoff.getDate()).padStart(2,"0")}`
+      const cutoffKey=shiftDateKey(today(state.settings.timezone),-(healthRange-1))
       const trendRows=state.health.filter(h=>h.kind===trendKind&&h.date.slice(0,10)>=cutoffKey&&h.date.slice(0,10)<=today(state.settings.timezone)&&h.value.trim()!==""&&Number.isFinite(Number(h.value))).sort((a,b)=>a.date.localeCompare(b.date))
       const trendByDay=new Map<string,number>()
       for(const row of trendRows){const key=row.date.slice(0,10);const value=Number(row.value);trendByDay.set(key,trendKind==="water"?(trendByDay.get(key)||0)+value:value)}
