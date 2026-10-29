@@ -265,3 +265,186 @@ export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
     return format(instant, "Asia/Bangkok");
   }
 }
+
+
+/** Parse a user-entered baht amount to satang without binary float rounding. */
+export function parseMoneyToSatang(value) {
+  const text = String(value ?? "").trim();
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(text);
+  if (!match) return null;
+  const whole = Number(match[1]);
+  const fraction = Number((match[2] ?? "").padEnd(2, "0"));
+  const amount = whole * 100 + fraction;
+  return Number.isSafeInteger(whole) && Number.isSafeInteger(amount) ? amount : null;
+}
+
+/** Parse a percentage with up to two decimal places into basis points. */
+export function parsePercentageBasisPoints(value) {
+  const text = String(value ?? "").trim();
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(text);
+  if (!match) return null;
+  const whole = Number(match[1]);
+  const fraction = Number((match[2] ?? "").padEnd(2, "0"));
+  const points = whole * 100 + fraction;
+  return Number.isSafeInteger(whole) && Number.isSafeInteger(points) && points <= 10000 ? points : null;
+}
+
+function allocateProportionally(total, weights) {
+  if (!Number.isSafeInteger(total) || total < 0 || !Array.isArray(weights) ||
+      weights.some(weight => !Number.isSafeInteger(weight) || weight < 0)) return null;
+  const denominator = weights.reduce((sum, weight) => sum + weight, 0);
+  if (!Number.isSafeInteger(denominator)) return null;
+  if (denominator === 0) return total === 0 ? weights.map(() => 0) : null;
+  const divisor = BigInt(denominator);
+  const portions = weights.map(weight => Number((BigInt(total) * BigInt(weight)) / divisor));
+  let remainder = total - portions.reduce((sum, value) => sum + value, 0);
+  const order = weights.map((weight, index) => ({
+    index,
+    remainder: (BigInt(total) * BigInt(weight)) % divisor,
+  })).sort((a, b) => a.remainder === b.remainder ? a.index - b.index : a.remainder > b.remainder ? -1 : 1);
+  for (let index = 0; remainder > 0; index++, remainder--) portions[order[index % order.length].index]++;
+  return portions;
+}
+
+/**
+ * Calculates bill-wide service, tax, and discount in integer satang.
+ * Order: base item total -> service fee -> tax on base plus service -> discount.
+ */
+export function calculateBillAdjustmentSummary(baseTotalSatang, adjustments = {}) {
+  const serviceBasisPoints = adjustments.serviceBasisPoints ?? 0;
+  const taxBasisPoints = adjustments.taxBasisPoints ?? 0;
+  const serviceIncluded = adjustments.serviceIncluded ?? false;
+  const taxIncluded = adjustments.taxIncluded ?? false;
+  const discountSatang = adjustments.discountSatang ?? 0;
+  const validRate = value => Number.isSafeInteger(value) && value >= 0 && value <= 10000;
+  if (!Number.isSafeInteger(baseTotalSatang) || baseTotalSatang < 0 ||
+      !validRate(serviceBasisPoints) || !validRate(taxBasisPoints) ||
+      typeof serviceIncluded !== "boolean" || typeof taxIncluded !== "boolean" ||
+      !Number.isSafeInteger(discountSatang) || discountSatang < 0) {
+    return { valid: false, error: "invalid-adjustment", baseTotalSatang, serviceSatang: 0, taxSatang: 0, preDiscountSatang: 0, discountSatang, totalSatang: 0, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+  }
+  const serviceSatang = serviceIncluded ? 0 : Number((BigInt(baseTotalSatang) * BigInt(serviceBasisPoints) + 5000n) / 10000n);
+  const taxBaseSatang = baseTotalSatang + serviceSatang;
+  const taxSatang = taxIncluded ? 0 : Number((BigInt(taxBaseSatang) * BigInt(taxBasisPoints) + 5000n) / 10000n);
+  const preDiscountSatang = baseTotalSatang + serviceSatang + taxSatang;
+  if (![serviceSatang, taxSatang, preDiscountSatang].every(Number.isSafeInteger)) {
+    return { valid: false, error: "amount-overflow", baseTotalSatang, serviceSatang, taxSatang, preDiscountSatang, discountSatang, totalSatang: 0, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+  }
+  if (discountSatang > preDiscountSatang) {
+    return { valid: false, error: "discount-exceeds-total", baseTotalSatang, serviceSatang, taxSatang, preDiscountSatang, discountSatang, totalSatang: 0, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+  }
+  return { valid: true, error: "", baseTotalSatang, serviceSatang, taxSatang, preDiscountSatang, discountSatang, totalSatang: preDiscountSatang - discountSatang, serviceBasisPoints, taxBasisPoints, serviceIncluded, taxIncluded };
+}
+
+/**
+ * Calculates final balances after proportionally distributing bill-wide
+ * adjustments across expenses, payers, and fixed shares using largest remainders.
+ */
+export function calculateBillSplit(expenses = [], participants = [], settlements = [], adjustments = {}) {
+  const baseTotalSatang = expenses.reduce((sum, expense) => sum + (Number.isSafeInteger(expense?.amountSatang) && expense.amountSatang > 0 ? expense.amountSatang : 0), 0);
+  const adjustmentSummary = calculateBillAdjustmentSummary(baseTotalSatang, adjustments);
+  if (!adjustmentSummary.valid || !expenses.length) {
+    return { ...calculateSplit(expenses, participants, settlements), valid: adjustmentSummary.valid, adjustmentSummary, baseTotalSatang, totalSatang: adjustmentSummary.valid ? adjustmentSummary.totalSatang : baseTotalSatang, adjustedExpenses: expenses };
+  }
+  const adjustedAmounts = allocateProportionally(adjustmentSummary.totalSatang, expenses.map(expense => expense.amountSatang));
+  if (!adjustedAmounts) {
+    return { ...calculateSplit(expenses, participants, settlements), valid: false, adjustmentSummary: { ...adjustmentSummary, valid: false, error: "allocation-failed" }, baseTotalSatang, totalSatang: baseTotalSatang, adjustedExpenses: expenses };
+  }
+  const adjustedExpenses = expenses.map((expense, index) => {
+    const amountSatang = adjustedAmounts[index];
+    let payers = expense.payers;
+    if (Array.isArray(payers)) {
+      const amounts = allocateProportionally(amountSatang, payers.map(payer => payer.amountSatang));
+      if (amounts) payers = payers.map((payer, payerIndex) => ({ ...payer, amountSatang: amounts[payerIndex] }));
+    }
+    let allocations = expense.allocations;
+    if (expense.allocationMode === "fixed") {
+      const values = allocateProportionally(amountSatang, expense.participantIds.map(id => expense.allocations?.[id] ?? 0));
+      if (values) allocations = Object.fromEntries(expense.participantIds.map((id, participantIndex) => [id, values[participantIndex]]));
+    }
+    return { ...expense, amountSatang, ...(Array.isArray(expense.payers) ? { payers } : {}), ...(allocations ? { allocations } : {}) };
+  });
+  return { ...calculateSplit(adjustedExpenses, participants, settlements), valid: true, adjustmentSummary, baseTotalSatang, totalSatang: adjustmentSummary.totalSatang, adjustedExpenses };
+}
+
+
+/**
+ * Builds a validated, adjusted live preview from the bill editor's draft rows.
+ * Invalid rows are excluded from the preview and counted for inline feedback.
+ */
+export function calculateDraftBillSplitPreview(rows = [], participantNames = [], adjustments = {}) {
+  const names = [...new Set(participantNames.filter(name => typeof name === "string" && name.trim()))];
+  const hasInput = row => Boolean(String(row?.title ?? "").trim() || String(row?.amount ?? "").trim());
+  // Parse decimal strings without binary floating-point rounding. Currency inputs
+  // accept at most two decimal places; extra precision is rejected rather than rounded.
+  const parseSatang = value => parseMoneyToSatang(value) ?? NaN;
+  const parseBasisPoints = value => parsePercentageBasisPoints(value) ?? NaN;
+  const validRows = [];
+  let invalidRows = 0;
+  for (const row of rows) {
+    if (!hasInput(row)) continue;
+    const amountSatang = parseSatang(row.amount);
+    if (!String(row.title ?? "").trim() || !Number.isSafeInteger(amountSatang) || amountSatang <= 0 ||
+        calculateDraftSplitPreview([row], names).invalidRows > 0) {
+      invalidRows++;
+      continue;
+    }
+    const selectedNames = [...new Set((row.participantNames == null ? names : row.participantNames).filter(name => names.includes(name)))];
+    const payerName = names.includes(row.payerName) ? row.payerName : names[0];
+    if (!payerName || !selectedNames.length) {
+      invalidRows++;
+      continue;
+    }
+    let payers;
+    if (row.multiplePayers) {
+      payers = names.map(name => ({
+        participantId: name,
+        amountSatang: parseSatang(row.payerAmounts?.[name] ?? (name === payerName ? row.amount : "")),
+      }));
+      if (payers.some(payer => !Number.isSafeInteger(payer.amountSatang)) ||
+          payers.reduce((sum, payer) => sum + payer.amountSatang, 0) !== amountSatang) {
+        invalidRows++;
+        continue;
+      }
+    }
+    const allocations = {};
+    if (row.allocationMode === "fixed") {
+      const amounts = selectedNames.map(name => parseSatang(row.allocations?.[name]));
+      const totalShares = amounts.reduce((sum, amount) => sum + amount, 0);
+      if (amounts.some(amount => !Number.isSafeInteger(amount) || amount < 0) ||
+          !Number.isSafeInteger(totalShares) || totalShares !== amountSatang) {
+        invalidRows++;
+        continue;
+      }
+      selectedNames.forEach((name, index) => { allocations[name] = amounts[index]; });
+    } else if (row.allocationMode === "percentage") {
+      const points = selectedNames.map(name => parseBasisPoints(row.allocations?.[name]));
+      const totalPoints = points.reduce((sum, value) => sum + value, 0);
+      if (points.some(value => !Number.isSafeInteger(value) || value < 0 || value > 10000) ||
+          !Number.isSafeInteger(totalPoints) || totalPoints !== 10000) {
+        invalidRows++;
+        continue;
+      }
+      selectedNames.forEach((name, index) => { allocations[name] = points[index]; });
+    }
+    const expense = {
+      id: String(row.key ?? "draft-" + validRows.length),
+      title: String(row.title).trim(),
+      amountSatang,
+      payerId: payerName,
+      ...(payers ? { payers } : {}),
+      participantIds: selectedNames,
+      allocationMode: row.allocationMode || "equal",
+      ...(row.allocationMode === "fixed" || row.allocationMode === "percentage" ? { allocations } : {}),
+    };
+    validRows.push(expense);
+  }
+  const split = calculateBillSplit(validRows, names.map(name => ({ id: name, name, isMe: name === "ฉัน" })), [], adjustments);
+  const paid = Object.fromEntries(names.map(name => [name, 0]));
+  for (const expense of split.adjustedExpenses) {
+    if (Array.isArray(expense.payers)) expense.payers.forEach(payer => { paid[payer.participantId] += payer.amountSatang; });
+    else if (Object.hasOwn(paid, expense.payerId)) paid[expense.payerId] += expense.amountSatang;
+  }
+  const shares = Object.fromEntries(names.map(name => [name, Math.max(0, paid[name] - (split.balances[name] || 0))]));
+  return { shares, invalidRows, baseTotalSatang: split.baseTotalSatang, totalSatang: split.totalSatang, adjustmentSummary: split.adjustmentSummary };
+}
