@@ -215,7 +215,18 @@ export default function DayTogether() {
         const selectedNames=row.participantNames===null?participants.map(p=>p.name):row.participantNames;
         const selected=selectedNames.map(name=>participantByName.get(name.trim().toLocaleLowerCase())).filter((p):p is Participant=>Boolean(p));
         if(!selected.length){setNotice("เลือกรายชื่อผู้ร่วมรับผิดชอบอย่างน้อยหนึ่งคนในทุกรายการ");return}
-        const payer=participantByName.get(row.payerName.trim().toLocaleLowerCase())||participants[0];
+        let payers: { participantId: string; amountSatang: number }[] | undefined;
+        let payer=participantByName.get(row.payerName.trim().toLocaleLowerCase())||participants[0];
+        if (row.multiplePayers) {
+          payers = names.map(name => ({
+            participantId: participantByName.get(name.toLocaleLowerCase())?.id || "",
+            amountSatang: amountFrom(row.payerAmounts[name] ?? (name===row.payerName ? row.amount : ""))
+          })).filter(entry => entry.participantId && entry.amountSatang > 0);
+          if (!payers.length || payers.reduce((sum, entry) => sum + entry.amountSatang, 0) !== amountSatang) {
+            setNotice("ยอดที่ผู้จ่ายแต่ละคนออกต้องรวมกันเท่ากับยอดรายการ"); return;
+          }
+          payer = participants.find(person => person.id === payers![0].participantId) || payer;
+        }
         let allocations:Record<string,number>|undefined;
         if(row.allocationMode==="fixed") {
           allocations=Object.fromEntries(selected.map(person=>[person.id,amountFrom(row.allocations[person.name]||"")]));
@@ -226,7 +237,7 @@ export default function DayTogether() {
           allocations=Object.fromEntries(selected.map((person,index)=>[person.id,Math.round(percentValues[index]*100)]));
           if(Object.values(allocations).reduce((sum,value)=>sum+value,0)!==10000){setNotice("เปอร์เซ็นต์ของผู้ร่วมรายการต้องรวมกันเท่ากับ 100%");return}
         }
-        expenses.push({id:oldBill?.expenses.find(expense=>expense.id===row.key)?.id||id(),title:rowTitle,amountSatang,payerId:payer.id,participantIds:selected.map(person=>person.id),allocationMode:row.allocationMode,...(allocations?{allocations}:{})});
+        expenses.push({id:oldBill?.expenses.find(expense=>expense.id===row.key)?.id||id(),title:rowTitle,amountSatang,payerId:payer.id,...(payers?{payers}:{}),participantIds:selected.map(person=>person.id),allocationMode:row.allocationMode,...(allocations?{allocations}:{})});
       }
       if(!expenses.length){setNotice("เพิ่มรายการค่าใช้จ่ายอย่างน้อยหนึ่งรายการก่อนบันทึก");return}
       const item:Bill={id:editId||id(),title,date:String(f.get("date")||today(state.settings.timezone)),restaurant:String(f.get("restaurant")||""),participants,expenses,settlements:oldBill?.settlements||[],note:String(f.get("note")||""),bbqId:oldBill?.bbqId||"",status:oldBill?.status||"draft"};
