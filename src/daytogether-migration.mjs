@@ -71,7 +71,7 @@ export function migrateLegacyState(defaults, getItem) {
           number(record.steps) > 0 ? number(record.steps) + " ก้าว" : "",
           number(record.calories) > 0 ? number(record.calories) + " kcal" : ""
         ].filter(Boolean).join(" · ");
-        health.push({ ...base, kind: "symptom", value: "ออกกำลังกาย", extra: details });
+        health.push({ ...base, kind: "exercise", value: text(record.exercise, "ออกกำลังกาย"), extra: details });
       } else if (record.type === "wellness") {
         if (number(record.water) > 0) health.push({ ...base, id: base.id + "-water", kind: "water", value: String(record.water), extra: "ข้อมูลเดิม" });
         if (number(record.sleep) > 0) health.push({ ...base, id: base.id + "-sleep", kind: "sleep", value: String(record.sleep), extra: "ข้อมูลเดิม" });

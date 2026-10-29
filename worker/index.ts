@@ -150,28 +150,7 @@ export default {
       }
 
       if (url.pathname === "/api/auth/signup" && request.method === "POST") {
-        const body = await parseBody(request);
-        const email = typeof body?.email === "string" ? body.email.trim().toLowerCase() : "";
-        const password = typeof body?.password === "string" ? body.password : "";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-          return json(request, env, { error: "กรุณากรอกอีเมลให้ถูกต้อง" }, 400);
-        }
-        if (password.length < 8 || password.length > 256) {
-          return json(request, env, { error: "รหัสผ่านต้องมีความยาว 8–256 ตัวอักษร" }, 400);
-        }
-        const existing = await env.DB.prepare("SELECT id FROM app_users WHERE email = ?").bind(email).first<{ id: string }>();
-        if (existing) return json(request, env, { error: "อีเมลนี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบ" }, 409);
-        const id = crypto.randomUUID();
-        const salt = randomBytes(16);
-        const hash = await passwordHash(password, salt);
-        try {
-          await env.DB.prepare("INSERT INTO app_users (id, email, password_salt, password_hash, created_at) VALUES (?, ?, ?, ?, ?)")
-            .bind(id, email, toBase64Url(salt), toBase64Url(hash), new Date().toISOString()).run();
-        } catch {
-          return json(request, env, { error: "สร้างบัญชีไม่สำเร็จ บัญชีนี้อาจมีอยู่แล้ว" }, 409);
-        }
-        const session = await issueSession(env.DB, { id, email });
-        return json(request, env, session, 201);
+        return json(request, env, { error: "การสมัครสมาชิกถูกปิดใช้งาน กรุณาเข้าสู่ระบบด้วยบัญชีเดิม" }, 403);
       }
 
       if (url.pathname === "/api/auth/signin" && request.method === "POST") {
