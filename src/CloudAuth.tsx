@@ -131,7 +131,7 @@ function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | 
 }
 export default function CloudAuth({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
-  const [checking] = useState(false)
+  const [checking,setChecking] = useState(() => Boolean(sessionToken))
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -159,8 +159,9 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     installStorageShim()
-    if (!sessionToken) return
+    if (!sessionToken) { setChecking(false); return }
     let cancelled = false
+    setChecking(true)
     ;(async () => {
       try {
         const result = await api("/api/auth/me") as { user: AppUser }
@@ -168,6 +169,8 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       } catch {
         setSessionToken("")
         if (!cancelled) setUser(null)
+      } finally {
+        if (!cancelled) setChecking(false)
       }
     })()
     return () => { cancelled = true }
