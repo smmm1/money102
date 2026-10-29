@@ -275,3 +275,23 @@ test("state endpoint preserves legacy unconditional writes while clients roll fo
   assert.equal(response.status, 200);
   assert.ok(storedPayload.includes("lamoon-daytogether-v1"));
 });
+
+
+test("accepts a split bill for a group that does not include the current user", () => {
+  const state = validState();
+  state.bills.push({
+    id: "bill-no-me", title: "Dinner for friends", date: "2026-10-29", restaurant: "", note: "", bbqId: "",
+    status: "draft",
+    participants: [
+      { id: "friend-a", name: "เพื่อน A", isMe: false },
+      { id: "friend-b", name: "เพื่อน B", isMe: false },
+    ],
+    expenses: [{
+      id: "expense-no-me", title: "ค่าอาหาร", amountSatang: 10000, payerId: "friend-a",
+      participantIds: ["friend-a", "friend-b"], allocationMode: "equal",
+    }],
+    settlements: [],
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+  assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(state) }), true);
+});
