@@ -483,3 +483,38 @@ html[data-dt-theme="dark"] .dt-app .dt-btn-primary{color:#042f2e}
 .dt-app button:not(:disabled):active{transform:translateY(1px)}
 .dt-app button:focus-visible,.dt-app input:focus-visible,.dt-app textarea:focus-visible,.dt-app select:focus-visible{outline:3px solid var(--dt-primary);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.dt-app *,.dt-app *::before,.dt-app *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+/* Missing page-specific states discovered during the markup audit */
+.dt-app .dt-muted{color:var(--dt-muted);font-size:12px;line-height:1.65}
+.dt-app .dt-water-quick{gap:14px}
+.dt-app .dt-water-quick .dt-section-head{align-items:center}
+.dt-app .dt-water-quick .dt-section-head>strong{font-size:clamp(18px,2vw,25px);white-space:nowrap}
+.dt-app .dt-water-quick .dt-actions{margin-top:4px}
+.dt-app .dt-danger-zone{border-color:#fecaca}
+.dt-app .dt-danger-zone h3{color:#b91c1c}
+.dt-app .dt-danger-zone .dt-btn-danger,.dt-app .dt-danger-zone button[aria-label*="ลบ"]{border-color:#fecaca;color:#b91c1c}
+html[data-dt-theme="dark"] .dt-app .dt-danger-zone{border-color:#7f1d1d}
+html[data-dt-theme="dark"] .dt-app .dt-danger-zone h3{color:#fca5a5}
+html[data-dt-theme="dark"] .dt-app .dt-danger-zone .dt-btn-danger{border-color:#7f1d1d;color:#fca5a5}
+.dt-app .dt-range-tabs{justify-content:flex-end}
+.dt-app .dt-health-chart-wrap{width:100%;min-width:0;overflow:hidden}
+.dt-app .dt-health-chart{display:block;width:100%;height:auto;max-height:240px;overflow:visible}
+.dt-app .dt-filter-error{color:#b91c1c}
+html[data-dt-theme="dark"] .dt-app .dt-filter-error{color:#fca5a5}
+.dt-app .dt-bill-expense-row{min-width:0}
+.dt-app .dt-bill-total-preview strong{font-size:clamp(17px,2vw,23px);overflow-wrap:anywhere;text-align:right}
+.dt-app .dt-bill-participants>div{display:flex;flex-wrap:wrap;gap:7px}
+.dt-app .dt-bill-participants label{min-width:0}
+.dt-app .dt-bill-allocation-grid{min-width:0}
+.dt-app .dt-bill-allocation-grid .dt-field{min-width:0}
+.dt-app .dt-note-top,.dt-app .dt-goal-top{flex-wrap:wrap}
+@media(max-width:760px){
+ .dt-app .dt-water-quick .dt-section-head{align-items:flex-start;flex-direction:column}
+ .dt-app .dt-water-quick .dt-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dt-app .dt-water-quick .dt-actions .dt-btn{width:100%;white-space:normal}
+ .dt-app .dt-range-tabs{justify-content:flex-start}
+ .dt-app .dt-health-custom-range{grid-template-columns:1fr}
+ .dt-app .dt-bill-allocation-grid{grid-template-columns:1fr}
+ .dt-app .dt-bill-total-preview{grid-template-columns:minmax(0,1fr) auto}
+}
