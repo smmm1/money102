@@ -60,3 +60,12 @@ test("invalid fixed or percentage allocations are ignored rather than creating m
  ],people);
  assert.deepEqual({...result.balances},{a:0,b:0,c:0});
 });
+
+
+test("settlement above a participant's outstanding balance is ignored", () => {
+ const expense=[{id:"x",title:"meal",amountSatang:30000,payerId:"a",participantIds:["a","b","c"]}];
+ const result=calculateSplit(expense,people,[{id:"s",fromId:"b",toId:"a",amountSatang:10001,date:"2026-01-01",note:"overpayment"}]);
+ assert.deepEqual({...result.balances},{a:20000,b:-10000,c:-10000});
+ assert.equal(result.transfers.some(t=>t.fromId==="b"&&t.toId==="a"&&t.amountSatang===10001),false);
+ assert.equal(Object.values(result.balances).reduce((sum,value)=>sum+value,0),0);
+});
