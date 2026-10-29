@@ -146,6 +146,7 @@ export default function DayTogether() {
   const [passwordNext,setPasswordNext] = useState("")
   const [accountBusy,setAccountBusy] = useState(false)
   const [accountMessage,setAccountMessage] = useState("")
+  const [persistenceStatus,setPersistenceStatus] = useState<"saving"|"saved"|"error">("saved")
   const [path,setPath] = useState(window.location.pathname)
   const [moreOpen,setMoreOpen] = useState(false)
   const [quickAddOpen,setQuickAddOpen] = useState(false)
@@ -180,9 +181,20 @@ export default function DayTogether() {
   const pathParts = path.split("/").filter(Boolean); const routeId = pathParts[pathParts.length - 1] || ""
   useEffect(() => { const pop = () => { setPath(window.location.pathname); const params=new URLSearchParams(window.location.search); setOpenNoteId(params.get("note")||""); }; window.addEventListener("popstate",pop); if(window.location.pathname==="/login"){window.history.replaceState({}, "", "/");setPath("/")} return () => window.removeEventListener("popstate",pop) },[])
   useEffect(() => {
+    setPersistenceStatus("saving")
     try { window.localStorage.setItem("lamoon-daytogether-v1", JSON.stringify(state)) }
-    catch { setNotice("บันทึกข้อมูลลงระบบไม่สำเร็จ กรุณาลองอีกครั้ง") }
+    catch { setPersistenceStatus("error"); setNotice("บันทึกข้อมูลลงระบบไม่สำเร็จ กรุณาลองอีกครั้ง") }
   }, [state])
+  useEffect(() => {
+    const saved = () => setPersistenceStatus("saved")
+    const failed = () => setPersistenceStatus("error")
+    window.addEventListener("d1-persist-success", saved)
+    window.addEventListener("d1-persist-error", failed)
+    return () => {
+      window.removeEventListener("d1-persist-success", saved)
+      window.removeEventListener("d1-persist-error", failed)
+    }
+  }, [])
   useEffect(() => { setHeightDraft(state.settings.heightCm===null?"":String(state.settings.heightCm)) },[state.settings.heightCm])
   useEffect(() => { setWaterGoalDraft(String(state.settings.waterGoal)) },[state.settings.waterGoal])
   useEffect(() => { const applyTheme = () => { document.documentElement.dataset.dtTheme = theme }; applyTheme(); setState(s=>s.settings.theme===theme?s:{...s,settings:{...s.settings,theme}}) },[theme])
@@ -555,7 +567,7 @@ export default function DayTogether() {
       </section></div>
   }
   return <div className="dt-app"><aside className="dt-sidebar"><button className="dt-brand" onClick={()=>go("/")}><span className="dt-brand-mark">d.</span><span><strong>DayTogether</strong><small>พื้นที่ส่วนตัว</small></span></button><div className="dt-nav-label">เมนูหลัก</div><nav className="dt-nav">{navItems.map(href=><button key={href} className={page===href?"active":""} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}</button>)}</nav><div className="dt-sidebar-bottom"><button className={page==="/settings"?"active":""} onClick={()=>go("/settings")}><span>⚙</span>ตั้งค่า</button><div className="dt-private-note">ข้อมูลส่วนตัว<br/><strong>บัญชีส่วนตัวของคุณ</strong></div></div></aside>
-    <main className="dt-main"><header className="dt-topbar"><div className="dt-breadcrumb"><span>DayTogether</span><b>/</b><strong>{pageTitle}</strong></div><div className="dt-top-actions"><button className={hidden?"dt-privacy active":"dt-privacy"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}>{hidden?"◉":"◎"}<span>{hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}</span></button><AccountMenu /></div></header><div className="dt-content"><div className="dt-page-heading"><div><span className="dt-eyebrow">YOUR PERSONAL SPACE</span><h1>{pageTitle}</h1></div>{null}</div>{pageBody()}</div></main>
+    <main className="dt-main"><header className="dt-topbar"><div className="dt-breadcrumb"><span>DayTogether</span><b>/</b><strong>{pageTitle}</strong><span className={"dt-save-status is-"+persistenceStatus} role="status" aria-live="polite">{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span></div><div className="dt-top-actions"><button className={hidden?"dt-privacy active":"dt-privacy"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}>{hidden?"◉":"◎"}<span>{hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}</span></button><AccountMenu /></div></header><div className="dt-content"><div className="dt-page-heading"><div><span className="dt-eyebrow">YOUR PERSONAL SPACE</span><h1>{pageTitle}</h1></div>{null}</div>{pageBody()}</div></main>
     <nav className="dt-mobile-nav" aria-label="เมนูหลัก">{["/","/savings","/health","/notes","more"].map(href=><button key={href} className={(href==="more"?(moreOpen||page==="/split"||page==="/bbq"||page==="/settings"):page===href)?"active":""} onClick={()=>href==="more"?setMoreOpen(v=>!v):go(href)}><span>{href==="more"?"＋":ICON[href]}</span><small>{href==="more"?"เพิ่มเติม":PAGE_LABEL[href]}</small></button>)}</nav>
     {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet"><div className="dt-sheet-handle"/><h3>เพิ่มเติม</h3>{["/split","/bbq","/settings"].map(href=><button key={href} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>↗</b></button>)}</section></>}
      {quickAddOpen&&<><button className="dt-sheet-dismiss" style={{display:"block",position:"fixed",inset:0,background:"transparent",zIndex:20}} aria-label="ปิดเมนูเพิ่มรายการ" onClick={()=>setQuickAddOpen(false)}/><section className="dt-quick-add-menu" aria-label="เลือกประเภทข้อมูลที่จะเพิ่ม"><div className="dt-sheet-handle"/><h3>เพิ่มรายการใหม่</h3><p>เลือกหมวดที่ต้องการบันทึก</p><button onClick={()=>{setQuickAddOpen(false);openModal("saving")}}><span>◒</span><span><strong>เงินออม</strong><small>ฝากออมหรือถอนเงิน</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("health")}}><span>♡</span><span><strong>สุขภาพ</strong><small>น้ำหนัก น้ำดื่ม การนอน หรืออาการ</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);startNote()}}><span>▤</span><span><strong>โน้ต / ไดอารี</strong><small>เก็บความคิดและความทรงจำ</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("bill")}}><span>⇄</span><span><strong>บิลหารตัง</strong><small>แบ่งค่าใช้จ่ายกับเพื่อน</small></span><b>＋</b></button><button onClick={()=>{setQuickAddOpen(false);openModal("visit")}}><span>♨</span><span><strong>มื้อหมูกระทะ</strong><small>บันทึกร้านและความทรงจำ</small></span><b>＋</b></button></section></>}
