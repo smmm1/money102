@@ -69,4 +69,7 @@ Cloudflare Worker ต้องมี binding `DB` ชี้ไปยัง D1 da
 
 ## Unit tests
 
+GitHub Actions ใช้ `.github/workflows/daytogether-ci.yml` เพื่อตรวจ `npm test`, `npm run check` และ `npm run build` บน pull request และ branch `main`.
+
+
 ไฟล์ทดสอบปัจจุบันครอบคลุมการหารยอดและเศษสตางค์, การแบ่งเฉพาะผู้ร่วมรายการ, ยอดกำหนดเอง/เปอร์เซ็นต์, ผู้จ่ายหลายคน, การตรวจยอดชำระเกิน, การนอนข้ามวัน, CSV formula injection, การตรวจ snapshot/API และการย้ายข้อมูลเก่า การทดสอบการรวมข้อมูลตาม timezone และ browser E2E กับบัญชีจริงยังไม่ครบ
