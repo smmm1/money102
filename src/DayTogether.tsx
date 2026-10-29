@@ -68,19 +68,19 @@ function isBackupState(value: unknown): value is State {
         for (const person of record.participants) {
           if (!person || typeof person !== "object" || Array.isArray(person)) return false
           const participant = person as Record<string, unknown>
-          if (!isString(participant, ["id", "name"]) || !participant.id || !participant.name.trim() || typeof participant.isMe !== "boolean" || participants.has(participant.id)) return false
+          if (!isString(participant, ["id", "name"]) || !participant.id || !String(participant.name).trim() || typeof participant.isMe !== "boolean" || participants.has(String(participant.id))) return false
           participants.add(participant.id)
         }
         for (const expense of record.expenses) {
           if (!expense || typeof expense !== "object" || Array.isArray(expense)) return false
           const entry = expense as Record<string, unknown>
-          if (!isString(entry, ["id", "title", "payerId"]) || !entry.id || !entry.title.trim() || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !participants.has(entry.payerId) || !Array.isArray(entry.participantIds) || !entry.participantIds.length || entry.participantIds.some(id => typeof id !== "string" || !participants.has(id))) return false
-          if (entry.payers !== undefined && (!Array.isArray(entry.payers) || entry.payers.some(payer => !payer || typeof payer !== "object" || Array.isArray(payer) || !isString(payer as Record<string, unknown>, ["participantId"]) || !participants.has((payer as Record<string, unknown>).participantId as string) || !isMoney((payer as Record<string, unknown>).amountSatang)))) return false
+          if (!isString(entry, ["id", "title", "payerId"]) || !entry.id || !String(entry.title).trim() || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !participants.has(String(entry.payerId)) || !Array.isArray(entry.participantIds) || !entry.participantIds.length || entry.participantIds.some(id => typeof id !== "string" || !participants.has(id))) return false
+          if (entry.payers !== undefined && (!Array.isArray(entry.payers) || entry.payers.some(payer => !payer || typeof payer !== "object" || Array.isArray(payer) || !isString(payer as Record<string, unknown>, ["participantId"]) || !participants.has(String((payer as Record<string, unknown>).participantId)) || !isMoney((payer as Record<string, unknown>).amountSatang)))) return false
         }
         for (const settlement of record.settlements) {
           if (!settlement || typeof settlement !== "object" || Array.isArray(settlement)) return false
           const entry = settlement as Record<string, unknown>
-          if (!isString(entry, ["id", "fromId", "toId", "date", "note"]) || !participants.has(entry.fromId) || !participants.has(entry.toId) || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !isDateText(entry.date)) return false
+          if (!isString(entry, ["id", "fromId", "toId", "date", "note"]) || !participants.has(String(entry.fromId)) || !participants.has(String(entry.toId)) || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !isDateText(entry.date)) return false
         }
       }
       if (key === "visits" && (!isString(record, ["restaurant", "title", "date", "area", "friends", "menu", "memory", "billId"]) || !isDateText(record.date) || !Number.isSafeInteger(record.people) || Number(record.people) < 1 || (record.totalSatang !== null && !isMoney(record.totalSatang)) || (record.personalSatang !== null && !isMoney(record.personalSatang)) || (record.rating !== null && (!Number.isFinite(record.rating) || Number(record.rating) < 1 || Number(record.rating) > 5)))) return false
