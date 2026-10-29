@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -295,4 +295,26 @@ test("adjusted bill shares and multi-payer contributions sum to the final total"
   ], { serviceBasisPoints: 1000, taxBasisPoints: 700, discountSatang: 5000 });
   assert.equal(settled.transfers.length, 0);
   assert.equal(Object.values(settled.balances).every(balance => balance === 0), true);
+});
+
+
+test("adjusted live draft preview sums exactly to the adjusted bill total", () => {
+  const preview = calculateDraftBillSplitPreview([
+    { key: "draft-1", title: "อาหาร", amount: "1000.00", payerName: "ฉัน", multiplePayers: false, payerAmounts: {}, participantNames: null, allocationMode: "equal", allocations: {} },
+  ], ["ฉัน", "B"], { serviceBasisPoints: 1000, taxBasisPoints: 700, discountSatang: 5000 });
+  assert.equal(preview.invalidRows, 0);
+  assert.equal(preview.baseTotalSatang, 100000);
+  assert.equal(preview.totalSatang, 112700);
+  assert.equal(preview.shares["ฉัน"] + preview.shares.B, 112700);
+  assert.equal(preview.shares["ฉัน"], 56350);
+  assert.equal(preview.shares.B, 56350);
+});
+
+test("adjusted live draft preview excludes incomplete multi-payer rows", () => {
+  const preview = calculateDraftBillSplitPreview([
+    { key: "draft-1", title: "อาหาร", amount: "100.00", payerName: "ฉัน", multiplePayers: true, payerAmounts: { "ฉัน": "30.00", B: "" }, participantNames: null, allocationMode: "equal", allocations: {} },
+  ], ["ฉัน", "B"], { discountSatang: 0 });
+  assert.equal(preview.invalidRows, 1);
+  assert.equal(preview.baseTotalSatang, 0);
+  assert.equal(preview.totalSatang, 0);
 });
