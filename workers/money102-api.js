@@ -28,7 +28,7 @@ function isSnapshot(value) {
  const entries=Object.entries(value);if(entries.length>500)return false;
  let total=0;
  for(const [key,item] of entries){
-  if(!key.startsWith("lamoon-")||key.length>200||typeof item!=="string"||item.length>900000)return false;
+  if(!(key.startsWith("lamoon-")||key.startsWith("money102-"))||key.length>200||typeof item!=="string"||item.length>900000)return false;
   total+=key.length+item.length;if(total>900000)return false;
   if(key==="lamoon-daytogether-v1"){
    let parsed;try{parsed=JSON.parse(item)}catch{return false}
@@ -177,7 +177,7 @@ export default { async fetch(request,env) {
   if(url.pathname!=="/api/state"||!["GET","PUT"].includes(request.method))return json(request,env,{error:"Not found"},404);
   const user=await getAuthenticatedUser(request,env.DB); if(!user)return json(request,env,{error:"Unauthorized"},401);
   if(request.method==="GET") { const row=await env.DB.prepare("SELECT payload,updated_at FROM user_app_data WHERE user_id=? AND bucket=?").bind(user.id,"app_state").first(); if(!row)return json(request,env,{payload:null,updated_at:null}); try{return json(request,env,{payload:JSON.parse(row.payload),updated_at:row.updated_at});}catch{return json(request,env,{error:"Stored data is invalid JSON"},500);} }
-  const body=await parseBody(request); if(!body||!isSnapshot(body.payload))return json(request,env,{error:"payload ต้องเป็น object ที่มีเฉพาะค่า string ของคีย์ lamoon-* (ไม่เกิน 500 รายการ)"},400);
+  const body=await parseBody(request); if(!body||!isSnapshot(body.payload))return json(request,env,{error:"payload ต้องเป็น object ที่มีเฉพาะค่า string ของคีย์ lamoon-* หรือ money102-* (ไม่เกิน 500 รายการ)"},400);
   const validationError=validateDayTogetherSnapshot(body.payload); if(validationError)return json(request,env,{error:validationError},400);
   const serialized=JSON.stringify(body.payload); if(serialized.length>900000)return json(request,env,{error:"Payload exceeds 900 KB limit"},413);
   const updatedAt=new Date().toISOString(); await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run(); return json(request,env,{ok:true,updated_at:updatedAt});
