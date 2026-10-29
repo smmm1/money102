@@ -164,12 +164,18 @@ export default {
         const id = crypto.randomUUID();
         const salt = randomBytes(16);
         const hash = await passwordHash(password, salt);
+        let created: { id: string } | null = null;
         try {
-          await env.DB.prepare("INSERT INTO app_users (id, email, password_salt, password_hash, created_at) VALUES (?, ?, ?, ?, ?)")
-            .bind(id, email, toBase64Url(salt), toBase64Url(hash), new Date().toISOString()).run();
+          // Bootstrap-only signup: atomically allow the first account and reject every later account.
+          // This protects the private single-user app even if someone calls the API directly.
+          created = await env.DB.prepare(`INSERT INTO app_users (id, email, password_salt, password_hash, created_at)
+            SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM app_users) RETURNING id`)
+            .bind(id, email, toBase64Url(salt), toBase64Url(hash), new Date().toISOString())
+            .first<{ id: string }>();
         } catch {
           return json(request, env, { error: "สร้างบัญชีไม่สำเร็จ บัญชีนี้อาจมีอยู่แล้ว" }, 409);
         }
+        if (!created) return json(request, env, { error: "ระบบนี้ปิดการสร้างบัญชีแล้ว กรุณาเข้าสู่ระบบด้วยบัญชีเดิม" }, 403);
         const session = await issueSession(env.DB, { id, email });
         return json(request, env, session, 201);
       }
