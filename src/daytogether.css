@@ -254,6 +254,17 @@ body{background:#e8e5db}
 .dt-health-custom-range .dt-field{min-width:0}
 @media(max-width:620px){.dt-health-custom-range{grid-template-columns:1fr}}
 
+.dt-bill-adjustments{display:grid;gap:12px;padding:16px;border:1px solid var(--dt-border);border-radius:14px;background:var(--dt-surface)}
+.dt-bill-adjustments h3{margin:0}
+.dt-bill-adjustments>.dt-form-hint{margin:0}
+.dt-adjustment-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.dt-adjustment-summary>div{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--dt-border);border-radius:10px;min-width:0}
+.dt-adjustment-summary span{color:var(--dt-muted);font-size:13px}
+.dt-adjustment-summary strong{font-variant-numeric:tabular-nums;text-align:right}
+.dt-adjustment-summary .dt-adjustment-total{grid-column:1/-1;background:var(--dt-primary-soft);border-color:var(--dt-primary)}
+.dt-adjustment-summary .dt-adjustment-total span,.dt-adjustment-summary .dt-adjustment-total strong{color:var(--dt-primary);font-weight:700}
+@media(max-width:620px){.dt-adjustment-summary{grid-template-columns:1fr}.dt-adjustment-summary .dt-adjustment-total{grid-column:auto}}
+
 
 /* DayTogether UX refinement: clearer hierarchy, touch targets and responsive behavior */
 .dt-app{line-height:1.55;min-height:100dvh}
