@@ -165,6 +165,16 @@ export default { async fetch(request,env) {
   }
   if(url.pathname==="/api/auth/me"&&request.method==="GET") { const user=await getAuthenticatedUser(request,env.DB); return user?json(request,env,{user}):json(request,env,{error:"เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"},401); }
   if(url.pathname==="/api/auth/logout"&&request.method==="POST") { const auth=request.headers.get("Authorization")||""; if(auth.startsWith("Bearer "))await env.DB.prepare("DELETE FROM app_sessions WHERE token_hash=?").bind(await sha256(auth.slice(7).trim())).run(); return json(request,env,{ok:true}); }
+  if(url.pathname==="/api/auth/account"&&request.method==="DELETE") {
+   const user=await getAuthenticatedUser(request,env.DB);
+   if(!user)return json(request,env,{error:"Unauthorized"},401);
+   await env.DB.batch([
+    env.DB.prepare("DELETE FROM app_sessions WHERE user_id=?").bind(user.id),
+    env.DB.prepare("DELETE FROM user_app_data WHERE user_id=?").bind(user.id),
+    env.DB.prepare("DELETE FROM app_users WHERE id=?").bind(user.id)
+   ]);
+   return json(request,env,{ok:true});
+  }
 
   if(url.pathname!=="/api/state"||!["GET","PUT"].includes(request.method))return json(request,env,{error:"Not found"},404);
   const user=await getAuthenticatedUser(request,env.DB); if(!user)return json(request,env,{error:"Unauthorized"},401);

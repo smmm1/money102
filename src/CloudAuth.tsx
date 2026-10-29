@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react"
 
 type AppUser = { id: string; email: string }
-const AuthAccountContext = createContext<{ user: AppUser; signOut: () => Promise<void> } | null>(null)
+const AuthAccountContext = createContext<{ user: AppUser; signOut: () => Promise<void>; deleteAccount: () => Promise<void> } | null>(null)
+
+export function useAccount() { return useContext(AuthAccountContext) }
 
 export function AccountMenu() {
   const account = useContext(AuthAccountContext)
@@ -196,6 +198,19 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     setMessage("ออกจากระบบแล้ว")
   }
 
+  async function deleteAccount() {
+    await api("/api/auth/account", { method: "DELETE" })
+    setSessionToken("")
+    if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+    saveTimer = undefined
+    saveChain = Promise.resolve()
+    memorySnapshot = {}
+    setUser(null)
+    setCloudReady(false)
+    setCloudError("")
+    setMessage("ลบบัญชีและข้อมูลทั้งหมดแล้ว")
+  }
+
   if (checking) return <AuthExperience state="loading" title="กำลังตรวจสอบพื้นที่ของคุณ" detail="กำลังตรวจสอบเซสชันอย่างปลอดภัย" />
   if (!user) return <main className="cc-auth-screen">
     <section className="cc-auth-frame">
@@ -223,7 +238,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     </section>
   </main>
   if (!cloudReady) return <AuthExperience state={cloudError ? "error" : "loading"} title={cloudError ? "ยังเชื่อมต่อไม่สำเร็จ" : "กำลังเตรียมพื้นที่ของคุณ"} detail={cloudError || "กำลังเชื่อมต่อพื้นที่จัดเก็บข้อมูลอย่างปลอดภัย"} onRetry={cloudError ? () => { void signOut() } : undefined} />
-  return <AuthAccountContext.Provider value={{ user, signOut }}>
+  return <AuthAccountContext.Provider value={{ user, signOut, deleteAccount }}>
     {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow">{cloudError}</div>}
     {children}
   </AuthAccountContext.Provider>

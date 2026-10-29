@@ -109,3 +109,40 @@ test("does not expose internal D1 errors in API responses", async () => {
   assert.equal(body.error, "เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่ภายหลัง");
   assert.equal("detail" in body, false);
 });
+
+
+test("account deletion removes sessions, saved state, and the user only after authentication", async () => {
+  const batched = [];
+  const db = {
+    prepare(sql) {
+      return {
+        sql,
+        bind(...args) { this.args = args; return this; },
+        async run() { return { success: true }; },
+        async first() { return sql.includes("JOIN app_users") ? { id: "user-1", email: "user@example.com" } : null; }
+      };
+    },
+    async batch(statements) { batched.push(...statements); return statements.map(() => ({ success: true })); }
+  };
+  const response = await worker.fetch(new Request("https://api.example.test/api/auth/account", {
+    method: "DELETE", headers: { Authorization: "Bearer " + "t".repeat(40) }
+  }), { DB: db, APP_ORIGIN: "https://money102.onrender.com" });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true });
+  assert.equal(batched.length, 3);
+  assert.deepEqual(batched.map(statement => statement.sql), [
+    "DELETE FROM app_sessions WHERE user_id=?",
+    "DELETE FROM user_app_data WHERE user_id=?",
+    "DELETE FROM app_users WHERE id=?"
+  ]);
+  assert.ok(batched.every(statement => statement.args[0] === "user-1"));
+});
+
+test("account deletion requires an authenticated session", async () => {
+  const db = {
+    prepare(sql) { return { bind() { return this; }, async run() { return { success: true }; }, async first() { return null; } }; },
+    async batch() { throw new Error("must not delete unauthenticated data"); }
+  };
+  const response = await worker.fetch(new Request("https://api.example.test/api/auth/account", { method: "DELETE" }), { DB: db });
+  assert.equal(response.status, 401);
+});
