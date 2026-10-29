@@ -58,3 +58,30 @@ export function safeCsvCell(value) {
   const text = String(value ?? "")
   return /^[\s\u0000-\u001f]*[=+@-]/.test(text) ? "'" + text : text
 }
+
+export function calculateBillShares(totalCents, participantNames, mode = "equal", allocationValues = {}) {
+  if (!Number.isSafeInteger(totalCents) || totalCents <= 0) throw new RangeError("totalCents must be a positive safe integer")
+  if (!Array.isArray(participantNames) || participantNames.length < 2 || participantNames.some(name => typeof name !== "string" || !name.trim())) throw new RangeError("at least two named participants are required")
+  if (new Set(participantNames.map(name => name.trim().toLocaleLowerCase())).size !== participantNames.length) throw new RangeError("participant names must be unique")
+  if (mode === "equal") return distributeCents(totalCents, participantNames)
+  if (mode === "fixed") {
+    const shares = participantNames.map(name => parseMoneyCents(allocationValues[name]))
+    if (shares.some(value => value === null) || shares.some(value => value < 0) || shares.reduce((sum, value) => sum + value, 0) !== totalCents) throw new RangeError("fixed shares must add up to the bill total")
+    return shares
+  }
+  if (mode === "percentage") {
+    const basisPoints = participantNames.map(name => {
+      const value = String(allocationValues[name] ?? "").trim()
+      if (!/^\d+(?:\.\d{1,2})?$/.test(value)) return null
+      const percent = Number(value)
+      if (!Number.isFinite(percent) || percent < 0 || percent > 100) return null
+      return Math.round(percent * 100)
+    })
+    if (basisPoints.some(value => value === null) || basisPoints.reduce((sum, value) => sum + value, 0) !== 10000) throw new RangeError("percentages must add up to 100")
+    const shares = basisPoints.map(value => Number((BigInt(totalCents) * BigInt(value)) / 10000n))
+    let remainder = totalCents - shares.reduce((sum, value) => sum + value, 0)
+    for (let index = 0; remainder > 0; index = (index + 1) % shares.length, remainder--) shares[index]++
+    return shares
+  }
+  throw new RangeError("unknown allocation mode")
+}
