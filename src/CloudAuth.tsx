@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useState, type FormEvent, type Re
 type AppUser = { id: string; email: string }
 const AuthAccountContext = createContext<{ user: AppUser; signOut: () => Promise<void>; deleteAccount: () => Promise<void> } | null>(null)
 
+export function useAccount() { return useContext(AuthAccountContext) }
+
 export function AccountMenu() {
   const account = useContext(AuthAccountContext)
   const [open, setOpen] = useState(false)
