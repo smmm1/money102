@@ -48,7 +48,9 @@ function installStorageShim() {
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
-  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string"))
+  const current = Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string");
+  const legacy = Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith("money102-") && typeof value === "string").map(([key, value]) => ["lamoon-legacy-" + key, value]);
+  return Object.fromEntries([...current, ...legacy])
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
