@@ -154,16 +154,8 @@ export default { async fetch(request,env) {
  const url=new URL(request.url); if(request.method==="OPTIONS")return new Response(null,{status:204,headers:corsHeaders(request,env)});
  try { await ensureSchema(env.DB);
   if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"money102-cloudflare-api",auth:"cloudflare-d1"});
-  if(url.pathname==="/api/auth/signup"&&request.method==="POST") {
-   const body=await parseBody(request); const email=typeof body?.email==="string"?body.email.trim().toLowerCase():""; const password=typeof body?.password==="string"?body.password:"";
-   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลให้ถูกต้อง"},400);
-   if(password.length<8||password.length>256)return json(request,env,{error:"รหัสผ่านต้องมีความยาว 8–256 ตัวอักษร"},400);
-   if(await env.DB.prepare("SELECT id FROM app_users WHERE email=?").bind(email).first())return json(request,env,{error:"อีเมลนี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบ"},409);
-   const id=crypto.randomUUID(),salt=randomBytes(16),hash=await passwordHash(password,salt);
-   try { await env.DB.prepare("INSERT INTO app_users(id,email,password_salt,password_hash,created_at) VALUES(?,?,?,?,?)").bind(id,email,toBase64Url(salt),toBase64Url(hash),new Date().toISOString()).run(); } catch { return json(request,env,{error:"สร้างบัญชีไม่สำเร็จ บัญชีนี้อาจมีอยู่แล้ว"},409); }
-   return json(request,env,await issueSession(env.DB,{id,email}),201);
-  }
-  if(url.pathname==="/api/auth/signin"&&request.method==="POST") {
+  if(url.pathname==="/api/auth/signup"&&request.method==="POST") return json(request,env,{error:"การสมัครสมาชิกถูกปิดใช้งาน กรุณาเข้าสู่ระบบด้วยบัญชีเดิม"},403);
+   if(url.pathname==="/api/auth/signin"&&request.method==="POST") {
    const body=await parseBody(request); const email=typeof body?.email==="string"?body.email.trim().toLowerCase():""; const password=typeof body?.password==="string"?body.password:"";
    if(!email||!password)return json(request,env,{error:"กรุณากรอกอีเมลและรหัสผ่าน"},400);
    const row=await env.DB.prepare("SELECT id,email,password_salt,password_hash FROM app_users WHERE email=?").bind(email).first();
