@@ -123,3 +123,15 @@ test("live bill preview excludes invalid fixed/percentage allocations and report
   assert.deepEqual(plain(result.shares), { "ฉัน": 750, "บี": 2250 });
   assert.equal(result.invalidRows, 2);
 });
+
+test("live bill preview handles participant subsets and incomplete rows safely", async () => {
+  const { calculateDraftSplitPreview } = await import("../src/daytogether-calculations.mjs");
+  const result = calculateDraftSplitPreview([
+    { title: "แชร์เฉพาะสองคน", amount: "12.00", allocationMode: "equal", participantNames: ["บี", "ซี"] },
+    { title: "ยังไม่กรอกสัดส่วน", amount: "15.00", allocationMode: "fixed", participantNames: ["ฉัน", "บี"], allocations: { "ฉัน": "15", "บี": "" } },
+    { title: "", amount: "", allocationMode: "equal", participantNames: null },
+    { title: "ยอดติดลบ", amount: "-2", allocationMode: "equal", participantNames: null },
+  ], ["ฉัน", "บี", "ซี"]);
+  assert.deepEqual(plain(result.shares), { "ฉัน": 0, "บี": 600, "ซี": 600 });
+  assert.equal(result.invalidRows, 2);
+});
