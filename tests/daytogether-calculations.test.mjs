@@ -71,5 +71,8 @@ test("sleep duration correctly crosses midnight and advances the wake date", () 
     normalizedEnd: "2026-10-29T07:00",
   });
   assert.equal(calculateSleepDuration("invalid", "2026-10-29T07:00"), null);
+  assert.equal(calculateSleepDuration("2026-02-31T23:00", "2026-03-01T07:00"), null);
+  assert.equal(calculateSleepDuration("2026-10-29T23:00", "2026-10-28T07:00"), null);
+  assert.equal(calculateSleepDuration("2026-10-28T23:30", "2026-10-29T07:00")?.durationHours, 7.5);
   assert.equal(calculateSleepDuration("2026-10-28T07:00", "2026-10-28T06:00")?.durationHours, 23);
 });
