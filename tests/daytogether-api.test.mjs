@@ -39,7 +39,7 @@ function fakeDb() {
           } else if (sql.startsWith("INSERT INTO user_app_data")) {
             const [user_id,bucket,payload,updated_at,expected] = params;
             const current=snapshots.get(user_id);
-            if (expected !== undefined && current?.updated_at !== expected) return {meta:{changes:0}};
+            if (current && expected !== undefined && current.updated_at !== expected) return {meta:{changes:0}};
             snapshots.set(user_id,{bucket,payload,updated_at});
             return {meta:{changes:1}};
           } else if (sql.startsWith("DELETE FROM app_sessions WHERE token_hash")) {
