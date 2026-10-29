@@ -145,11 +145,11 @@ export function calculateExpenseResponsibility(expenses = [], participantId) {
     if (!expense || !Number.isSafeInteger(expense.amountSatang) || expense.amountSatang <= 0 ||
         typeof expense.payerId !== "string" || !Array.isArray(expense.participantIds)) return null;
     const ids = [...new Set(expense.participantIds.filter((id) => typeof id === "string" && id))];
-    if (!ids.length || !ids.includes(expense.payerId)) return null;
+    if (!ids.length) return null;
     if (Array.isArray(expense.payers)) {
       const payers = expense.payers;
       if (!payers.length ||
-          payers.some((payer) => !payer || !ids.includes(payer.participantId) ||
+          payers.some((payer) => !payer || typeof payer.participantId !== "string" || !payer.participantId ||
             !Number.isSafeInteger(payer.amountSatang) || payer.amountSatang <= 0) ||
           new Set(payers.map((payer) => payer.participantId)).size !== payers.length ||
           payers.reduce((sum, payer) => sum + BigInt(payer.amountSatang), 0n) !== BigInt(expense.amountSatang)) return null;
