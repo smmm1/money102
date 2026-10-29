@@ -84,3 +84,50 @@ export function calculateSleepDuration(start, end) {
   if (durationHours <= 0 || durationHours > 24) return null;
   return { durationHours, normalizedEnd: new Date(endMs).toISOString().slice(0, 16) };
 }
+
+/**
+ * Live, non-persistent preview for the bill editor. Invalid allocation rows are
+ * excluded from per-person shares and counted so the UI can explain the gap.
+ */
+export function calculateDraftSplitPreview(rows = [], participantNames = []) {
+  const names = [...new Set(participantNames.filter((name) => typeof name === "string" && name.trim()))];
+  const shares = Object.fromEntries(names.map((name) => [name, 0]));
+  let invalidRows = 0;
+  for (const row of rows) {
+    const amountText = String(row?.amount ?? "").trim();
+    if (!String(row?.title ?? "").trim() && !amountText) continue;
+    const amount = Number(amountText);
+    const amountSatang = Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : 0;
+    if (!Number.isSafeInteger(amountSatang) || amountSatang <= 0) { invalidRows++; continue; }
+    const selected = [...new Set((row.participantNames == null ? names : row.participantNames)
+      .filter((name) => names.includes(name)))];
+    if (!selected.length) { invalidRows++; continue; }
+    let values;
+    if (row.allocationMode === "fixed") {
+      values = selected.map((name) => {
+        const raw = String(row.allocations?.[name] ?? "").trim();
+        const value = Number(raw);
+        return raw !== "" && Number.isFinite(value) && value >= 0 ? Math.round(value * 100) : NaN;
+      });
+      if (values.some((value) => !Number.isSafeInteger(value)) ||
+          values.reduce((sum, value) => sum + value, 0) !== amountSatang) { invalidRows++; continue; }
+    } else if (row.allocationMode === "percentage") {
+      const points = selected.map((name) => {
+        const raw = String(row.allocations?.[name] ?? "").trim();
+        const value = Number(raw);
+        return raw !== "" && Number.isFinite(value) && value >= 0 && value <= 100 ? Math.round(value * 100) : NaN;
+      });
+      if (points.some((value) => !Number.isSafeInteger(value)) ||
+          points.reduce((sum, value) => sum + value, 0) !== 10000) { invalidRows++; continue; }
+      values = points.map((value) => Number((BigInt(amountSatang) * BigInt(value)) / 10000n));
+      let remainder = amountSatang - values.reduce((sum, value) => sum + value, 0);
+      for (let index = 0; remainder > 0; index = (index + 1) % values.length, remainder--) values[index]++;
+    } else {
+      const base = Math.floor(amountSatang / selected.length);
+      const remainder = amountSatang % selected.length;
+      values = selected.map((_, index) => base + (index < remainder ? 1 : 0));
+    }
+    selected.forEach((name, index) => { shares[name] += values[index]; });
+  }
+  return { shares, invalidRows };
+}

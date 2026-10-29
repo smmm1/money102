@@ -33,6 +33,13 @@ html[data-dt-theme="dark"]{--dt-bg:#0f172a;--dt-surface:#172033;--dt-text:#f1f5f
 .dt-bill-total-preview>span{font-size:13px;color:var(--dt-muted);font-weight:600}
 .dt-bill-total-preview>strong{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .dt-bill-total-preview>small{grid-column:1/-1;color:var(--dt-muted);font-size:11px;line-height:1.5}
+.dt-bill-live-shares{grid-column:1/-1;display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--dt-border)}
+.dt-bill-live-shares>strong{font-size:12px;color:var(--dt-muted)}
+.dt-bill-live-share-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:7px}
+.dt-bill-live-share-list>span{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--dt-border);border-radius:9px;background:var(--dt-card);font-size:12px}
+.dt-bill-live-share-list b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.dt-bill-total-preview .dt-bill-preview-warning{color:var(--dt-danger,#b45309);font-weight:600}
+
 
 .dt-health-trend .dt-section-head{align-items:center}
 .dt-range-tabs{display:flex;gap:6px;flex-wrap:wrap}

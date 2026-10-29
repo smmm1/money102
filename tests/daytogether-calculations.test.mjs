@@ -101,3 +101,25 @@ test("rejects unknown allocation modes instead of silently splitting equally", (
   };
   assert.deepEqual(plain(calculateSplit([invalid], people).balances), { a: 0, b: 0, c: 0 });
 });
+
+
+test("live bill preview divides equally and preserves every satang", async () => {
+  const { calculateDraftSplitPreview } = await import("../src/daytogether-calculations.mjs");
+  const result = calculateDraftSplitPreview([
+    { title: "อาหาร", amount: "10.01", allocationMode: "equal", participantNames: null },
+  ], ["ฉัน", "บี", "ซี"]);
+  assert.deepEqual(plain(result.shares), { "ฉัน": 334, "บี": 334, "ซี": 333 });
+  assert.equal(result.invalidRows, 0);
+  assert.equal(Object.values(result.shares).reduce((sum, value) => sum + value, 0), 1001);
+});
+
+test("live bill preview excludes invalid fixed/percentage allocations and reports them", async () => {
+  const { calculateDraftSplitPreview } = await import("../src/daytogether-calculations.mjs");
+  const result = calculateDraftSplitPreview([
+    { title: "อาหาร", amount: "100", allocationMode: "fixed", participantNames: ["ฉัน", "บี"], allocations: { "ฉัน": "40", "บี": "50" } },
+    { title: "เครื่องดื่ม", amount: "90", allocationMode: "percentage", participantNames: ["ฉัน", "บี"], allocations: { "ฉัน": "30", "บี": "60" } },
+    { title: "ขนม", amount: "30", allocationMode: "percentage", participantNames: ["ฉัน", "บี"], allocations: { "ฉัน": "25", "บี": "75" } },
+  ], ["ฉัน", "บี"]);
+  assert.deepEqual(plain(result.shares), { "ฉัน": 750, "บี": 2250 });
+  assert.equal(result.invalidRows, 2);
+});

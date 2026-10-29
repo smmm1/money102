@@ -12,5 +12,14 @@ export type SplitExpense = {
 };
 export type SplitSettlement = { id: string; fromId: string; toId: string; amountSatang: number; date: string; note: string };
 export type SplitResult = { balances: Record<string, number>; transfers: { fromId: string; toId: string; amountSatang: number }[] };
+export type DraftSplitPreviewRow = {
+  title: string;
+  amount: string;
+  participantNames: string[] | null;
+  allocationMode: "equal" | "fixed" | "percentage";
+  allocations: Record<string, string>;
+};
+export type DraftSplitPreview = { shares: Record<string, number>; invalidRows: number };
 export function calculateSplit(expenses?: SplitExpense[], participants?: SplitParticipant[], settlements?: SplitSettlement[]): SplitResult;
+export function calculateDraftSplitPreview(rows?: DraftSplitPreviewRow[], participantNames?: string[]): DraftSplitPreview;
 export function calculateSleepDuration(start: string, end: string): { durationHours: number; normalizedEnd: string } | null;
