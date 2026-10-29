@@ -1,0 +1,35 @@
+name: DayTogether CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "fix/daytogether-completion-audit"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: daytogether-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Unit tests, TypeScript, and production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run unit tests
+        run: npm test
+      - name: Type-check
+        run: npm run check
+      - name: Build production assets
+        run: npm run build
