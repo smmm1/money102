@@ -285,7 +285,6 @@ export default function DayTogether() {
     }
     setPendingCloseAfterSave(false); setModal(null); setEditId("")
   }
-  const [openNoteId,setOpenNoteId] = useState("")
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     const snapshot = state
     if(!window.confirm("ลบรายการตัวอย่างนี้หรือไม่? สามารถกู้คืนได้ทันทีจากปุ่ม “เลิกทำ”")) return
