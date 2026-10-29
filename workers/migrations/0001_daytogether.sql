@@ -1,6 +1,5 @@
 -- DayTogether normalized data model for Cloudflare D1.
 -- Apply only after backing up the database. Existing app_state snapshots are preserved.
-PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS profiles (
   id TEXT PRIMARY KEY,
