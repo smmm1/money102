@@ -210,8 +210,8 @@ export function summarizeBbqPersonalCosts(visits = []) {
 export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
   if (typeof value !== "string" || !value.trim()) return "ไม่ระบุวันที่";
   const input = value.trim();
-  const dateOnlyMatch = /^(\\d{4})-(\\d{2})-(\\d{2})$/.exec(input);
-  const localDateTimeMatch = /^(\\d{4})-(\\d{2})-(\\d{2})T\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d+)?)?$/.exec(input);
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input);
+  const localDateTimeMatch = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.exec(input);
   const format = (date, zone) => new Intl.DateTimeFormat("th-TH", {
     timeZone: zone, day: "numeric", month: "short", year: "numeric",
   }).format(date);
