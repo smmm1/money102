@@ -72,7 +72,11 @@ function scheduleCloudSave() {
   }, 250)
 }
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string"))
+  const entries = Object.entries(snapshot || {}).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string");
+  memorySnapshot = Object.fromEntries(entries);
+  for (const [key, value] of entries) {
+    if (key.startsWith("lamoon-legacy-money102-")) memorySnapshot[key.slice("lamoon-legacy-".length)] = value;
+  }
 }
 const AUTH_TOKEN_KEY = "money102_auth_token"
 let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
