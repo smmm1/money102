@@ -85,6 +85,35 @@ export function calculateSleepDuration(start, end) {
   return { durationHours, normalizedEnd: new Date(endMs).toISOString().slice(0, 16) };
 }
 
+
+/**
+ * Builds a calendar-complete daily series. Missing days remain null so charts
+ * can show gaps instead of implying that a measurement was taken.
+ */
+export function buildDailyTrend(entries = [], startDate, endDate, aggregate = "last") {
+  const validDate = (value) => {
+    if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  };
+  if (!validDate(startDate) || !validDate(endDate) || startDate > endDate || !["last", "sum"].includes(aggregate)) return [];
+  const values = new Map();
+  for (const entry of entries) {
+    const date = typeof entry?.date === "string" ? entry.date.slice(0, 10) : "";
+    const value = typeof entry?.value === "number" ? entry.value : Number(entry?.value);
+    if (!validDate(date) || date < startDate || date > endDate || !Number.isFinite(value) || entry?.value === "") continue;
+    values.set(date, aggregate === "sum" ? (values.get(date) ?? 0) + value : value);
+  }
+  const result = [];
+  const end = Date.parse(endDate + "T00:00:00.000Z");
+  for (let cursor = Date.parse(startDate + "T00:00:00.000Z"); cursor <= end; cursor += 86400000) {
+    const date = new Date(cursor).toISOString().slice(0, 10);
+    result.push({ date, value: values.has(date) ? values.get(date) : null });
+  }
+  return result;
+}
+
 /**
  * Live, non-persistent preview for the bill editor. Invalid allocation rows are
  * excluded from per-person shares and counted so the UI can explain the gap.
