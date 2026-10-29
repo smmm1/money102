@@ -48,7 +48,9 @@ function installStorageShim() {
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
-  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string"))
+  const current = Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string");
+  const legacy = Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith("money102-") && typeof value === "string").map(([key, value]) => ["lamoon-legacy-" + key, value]);
+  return Object.fromEntries([...current, ...legacy])
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
@@ -70,7 +72,11 @@ function scheduleCloudSave() {
   }, 250)
 }
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string"))
+  const entries = Object.entries(snapshot || {}).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string");
+  memorySnapshot = Object.fromEntries(entries);
+  for (const [key, value] of entries) {
+    if (key.startsWith("lamoon-legacy-money102-")) memorySnapshot[key.slice("lamoon-legacy-".length)] = value;
+  }
 }
 const AUTH_TOKEN_KEY = "money102_auth_token"
 let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
