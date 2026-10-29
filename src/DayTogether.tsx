@@ -29,7 +29,7 @@ const sleepDetailsWithoutQuality = (value: string) => value.replace(/คุณ�
 const symptomSeverityFromExtra = (value: string) => value.match(/ระดับความรู้สึก: ([1-5])\/5/)?.[1] || ""
 const symptomDetailsFromExtra = (value: string) => value.replace(/ระดับความรู้สึก: [1-5]\/5/g, "").replace(/^ · | · $/g, "")
 const id = () => crypto.randomUUID()
-const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "light", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
+const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
 const cloudDataAdapter = createCloudSnapshotAdapter<State>("lamoon-daytogether-v1", isBackupState, defaults)
 function readState(): State {
   const loaded = cloudDataAdapter.load()
