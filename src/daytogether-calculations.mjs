@@ -267,6 +267,28 @@ export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
 }
 
 
+/** Parse a user-entered baht amount to satang without binary float rounding. */
+export function parseMoneyToSatang(value) {
+  const text = String(value ?? "").trim();
+  const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
+  if (!match) return null;
+  const whole = Number(match[1]);
+  const fraction = Number((match[2] ?? "").padEnd(2, "0"));
+  const amount = whole * 100 + fraction;
+  return Number.isSafeInteger(whole) && Number.isSafeInteger(amount) ? amount : null;
+}
+
+/** Parse a percentage with up to two decimal places into basis points. */
+export function parsePercentageBasisPoints(value) {
+  const text = String(value ?? "").trim();
+  const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
+  if (!match) return null;
+  const whole = Number(match[1]);
+  const fraction = Number((match[2] ?? "").padEnd(2, "0"));
+  const points = whole * 100 + fraction;
+  return Number.isSafeInteger(whole) && Number.isSafeInteger(points) && points <= 10000 ? points : null;
+}
+
 function allocateProportionally(total, weights) {
   if (!Number.isSafeInteger(total) || total < 0 || !Array.isArray(weights) ||
       weights.some(weight => !Number.isSafeInteger(weight) || weight < 0)) return null;
@@ -355,24 +377,8 @@ export function calculateDraftBillSplitPreview(rows = [], participantNames = [],
   const hasInput = row => Boolean(String(row?.title ?? "").trim() || String(row?.amount ?? "").trim());
   // Parse decimal strings without binary floating-point rounding. Currency inputs
   // accept at most two decimal places; extra precision is rejected rather than rounded.
-  const parseSatang = value => {
-    const text = String(value ?? "").trim();
-    const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
-    if (!match) return NaN;
-    const whole = Number(match[1]);
-    const fraction = Number((match[2] ?? "").padEnd(2, "0"));
-    const amount = whole * 100 + fraction;
-    return Number.isSafeInteger(whole) && Number.isSafeInteger(amount) ? amount : NaN;
-  };
-  const parseBasisPoints = value => {
-    const text = String(value ?? "").trim();
-    const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
-    if (!match) return NaN;
-    const whole = Number(match[1]);
-    const fraction = Number((match[2] ?? "").padEnd(2, "0"));
-    const points = whole * 100 + fraction;
-    return Number.isSafeInteger(whole) && Number.isSafeInteger(points) && points <= 10000 ? points : NaN;
-  };
+  const parseSatang = value => parseMoneyToSatang(value) ?? NaN;
+  const parseBasisPoints = value => parsePercentageBasisPoints(value) ?? NaN;
   const validRows = [];
   let invalidRows = 0;
   for (const row of rows) {
