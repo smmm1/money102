@@ -60,3 +60,17 @@ export function calculateSplit(expenses = [], participants = [], settlements = [
   }
   return { balances, transfers };
 }
+
+export function calculateSleepDuration(start, end) {
+  const parseLocal = (value) => {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return NaN;
+    return Date.parse(value + ":00Z");
+  };
+  const startMs = parseLocal(start);
+  let endMs = parseLocal(end);
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
+  if (endMs <= startMs) endMs += 24 * 60 * 60 * 1000;
+  const durationHours = (endMs - startMs) / (60 * 60 * 1000);
+  if (durationHours <= 0 || durationHours > 24) return null;
+  return { durationHours, normalizedEnd: new Date(endMs).toISOString().slice(0, 16) };
+}
