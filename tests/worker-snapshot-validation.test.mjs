@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isSnapshot, validDayTogetherState } from "../workers/money102-api.js";
+import { isSnapshot, validDayTogetherState, validateDayTogetherSnapshot } from "../workers/money102-api.js";
 
 const validState = () => ({
   goals: [{ id: "goal-1", name: "trip", targetSatang: 10000, status: "active", due: "", color: "green" }],
@@ -78,4 +78,11 @@ test("keeps accepting the legacy snapshot shape while validating the rebuilt app
   const legacy = { goals: [], savings: [], health: [], notes: [], bills: [], bbq: [] };
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(legacy) }), true);
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify({ goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: {} }) }), false);
+});
+
+test("validates the legacy schema directly and rejects malformed legacy snapshots", () => {
+  const legacy = { goals: [], savings: [], health: [], notes: [], bills: [], bbq: [] };
+  assert.equal(validateDayTogetherSnapshot({ "lamoon-daytogether-v1": JSON.stringify(legacy) }), null);
+  assert.match(validateDayTogetherSnapshot({ "lamoon-daytogether-v1": "{" }), /ไม่ถูกต้อง/);
+  assert.equal(isSnapshot({ "lamoon-daytogether-v1": "x".repeat(900001) }), false);
 });
