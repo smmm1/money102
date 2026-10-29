@@ -55,13 +55,12 @@ function isBackupState(value: unknown): value is State {
   if (settings.timezone !== undefined && typeof settings.timezone !== "string") return false
   return true
 }
-const satang = (baht: number) => Math.round(baht * 100)
 const money = (value: number, hidden = false) => hidden ? "•••••" : new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value / 100)
 const monthKey = (s: string) => s.slice(0,7)
 const KIND_LABEL: Record<HealthKind,string> = { weight:"น้ำหนัก", pressure:"ความดัน", sleep:"การนอน", water:"ดื่มน้ำ", symptom:"อาการ / บันทึก", exercise:"ออกกำลังกาย" }
 const PAGE_LABEL: Record<string,string> = { "/":"หน้าหลัก","/savings":"ออมเงิน","/health":"สุขภาพ","/notes":"โน้ตและไดอารี","/split":"หารตัง","/bbq":"ประวัติกินหมูกระทะ","/settings":"ตั้งค่า" }
 const ICON: Record<string,string> = { "/":"⌂","/savings":"◒","/health":"♡","/notes":"▤","/split":"⇄","/bbq":"♨","/settings":"⚙" }
-function amountFrom(value: FormDataEntryValue | null) { const n = Number(value); return Number.isFinite(n) && n >= 0 ? satang(n) : 0 }
+function amountFrom(value: FormDataEntryValue | null): number | null { const raw=String(value??"").trim(); if(!raw)return 0; return parseMoneyToSatang(raw) }
 function Button({ children, onClick, variant = "secondary", type = "button", disabled = false }: { children: ReactNode; onClick?: () => void; variant?: "primary"|"secondary"|"danger"|"ghost"; type?: "button"|"submit"; disabled?: boolean }) { return <button type={type} disabled={disabled} className={`dt-btn dt-btn-${variant}`} onClick={onClick}>{children}</button> }
 function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) { return <label className="dt-field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label> }
 function Empty({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) { return <div className="dt-empty"><span>✳</span><strong>{title}</strong><p>{detail}</p>{action}</div> }
@@ -307,8 +306,8 @@ export default function DayTogether() {
   }
   const submitModal = (e:FormEvent<HTMLFormElement>) => {
     e.preventDefault(); const f=new FormData(e.currentTarget)
-    if(modal==="goal") { const item:Goal={id:editId||id(),name:String(f.get("name")||"").trim(),targetSatang:amountFrom(f.get("target")),due:String(f.get("due")||""),status:(f.get("status")||"active") as Goal["status"],color:String(f.get("color")||"green")};if(!item.name||item.targetSatang<=0){setNotice("กรุณาระบุชื่อและจำนวนเงินเป้าหมายที่มากกว่า 0");return}setEditId(item.id);update("goals",editId?state.goals.map(g=>g.id===editId?item:g):[item,...state.goals]);setNotice("กำลังบันทึกข้อมูล…")}
-    if(modal==="saving") {const amount=amountFrom(f.get("amount")),kind=(f.get("kind")||"deposit") as Saving["kind"],goalId=String(f.get("goalId")||"");const old=state.savings.find(t=>t.id===editId);const otherBalance=state.savings.filter(t=>t.id!==editId&&t.goalId===goalId).reduce((n,t)=>n+(t.kind==="deposit"?t.amountSatang:-t.amountSatang),0);if(!amount){setNotice("จำนวนเงินต้องมากกว่า 0");return}if(kind==="withdraw"&&amount>otherBalance){setNotice("ยอดถอนเกินยอดออมที่เลือก");return}const item:Saving={id:editId||id(),kind,amountSatang:amount,date:String(f.get("date")||today(state.settings.timezone)),goalId,note:String(f.get("note")||"")};setEditId(item.id);update("savings",editId?state.savings.map(t=>t.id===editId?item:t):[item,...state.savings]);setNotice("กำลังบันทึกข้อมูล…")}
+    if(modal==="goal") { const targetSatang=amountFrom(f.get("target"));if(targetSatang===null||targetSatang<=0){setNotice("กรุณาระบุจำนวนเงินเป้าหมายที่ถูกต้อง โดยใช้ทศนิยมไม่เกิน 2 ตำแหน่ง");return}const item:Goal={id:editId||id(),name:String(f.get("name")||"").trim(),targetSatang,due:String(f.get("due")||""),status:(f.get("status")||"active") as Goal["status"],color:String(f.get("color")||"green")};if(!item.name){setNotice("กรุณาระบุชื่อเป้าหมาย");return}setEditId(item.id);update("goals",editId?state.goals.map(g=>g.id===editId?item:g):[item,...state.goals]);setNotice("กำลังบันทึกข้อมูล…")}
+    if(modal==="saving") {const amount=amountFrom(f.get("amount")),kind=(f.get("kind")||"deposit") as Saving["kind"],goalId=String(f.get("goalId")||"");const otherBalance=state.savings.filter(t=>t.id!==editId&&t.goalId===goalId).reduce((n,t)=>n+(t.kind==="deposit"?t.amountSatang:-t.amountSatang),0);if(amount===null||amount<=0){setNotice("จำนวนเงินต้องมากกว่า 0 และใช้ทศนิยมไม่เกิน 2 ตำแหน่ง");return}if(kind==="withdraw"&&amount>otherBalance){setNotice("ยอดถอนเกินยอดออมที่เลือก");return}const item:Saving={id:editId||id(),kind,amountSatang:amount,date:String(f.get("date")||today(state.settings.timezone)),goalId,note:String(f.get("note")||"")};setEditId(item.id);update("savings",editId?state.savings.map(t=>t.id===editId?item:t):[item,...state.savings]);setNotice("กำลังบันทึกข้อมูล…")}
     if(modal==="health") {
       const kind=(f.get("kind")||healthDraftKind) as HealthKind;
       let date=String(f.get("date")||today(state.settings.timezone));
@@ -341,7 +340,7 @@ export default function DayTogether() {
       const item:Health={id:editId||id(),kind,date,value,extra,note:String(f.get("note")||"")};
       setEditId(item.id);update("health",editId?state.health.map(h=>h.id===editId?item:h):[item,...state.health]);setNotice("กำลังบันทึกข้อมูล…")
     }
-    if(modal==="visit") {const totalRaw=String(f.get("total")||""),personalRaw=String(f.get("personal")||"");const item:Visit={id:editId||id(),restaurant:String(f.get("restaurant")||"").trim(),title:String(f.get("title")||"").trim(),date:String(f.get("date")||today(state.settings.timezone)),area:String(f.get("area")||""),friends:String(f.get("friends")||""),people:Math.max(1,Number(f.get("people")||1)),totalSatang:totalRaw===""?null:amountFrom(totalRaw),personalSatang:personalRaw===""?null:amountFrom(personalRaw),rating:f.get("rating")?Number(f.get("rating")):null,menu:String(f.get("menu")||""),memory:String(f.get("memory")||""),billId:state.visits.find(v=>v.id===editId)?.billId||""};setEditId(item.id);update("visits",editId?state.visits.map(v=>v.id===editId?item:v):[item,...state.visits]);setNotice("กำลังบันทึกข้อมูล…")}
+    if(modal==="visit") {const totalRaw=String(f.get("total")||"").trim(),personalRaw=String(f.get("personal")||"").trim();const totalSatang=totalRaw===""?null:amountFrom(totalRaw),personalSatang=personalRaw===""?null:amountFrom(personalRaw);if((totalRaw!==""&&totalSatang===null)||(personalRaw!==""&&personalSatang===null)){setNotice("ยอดเงินต้องไม่ติดลบและใช้ทศนิยมไม่เกิน 2 ตำแหน่ง");return}const item:Visit={id:editId||id(),restaurant:String(f.get("restaurant")||"").trim(),title:String(f.get("title")||"").trim(),date:String(f.get("date")||today(state.settings.timezone)),area:String(f.get("area")||""),friends:String(f.get("friends")||""),people:Math.max(1,Number(f.get("people")||1)),totalSatang,personalSatang,rating:f.get("rating")?Number(f.get("rating")):null,menu:String(f.get("menu")||""),memory:String(f.get("memory")||""),billId:state.visits.find(v=>v.id===editId)?.billId||""};setEditId(item.id);update("visits",editId?state.visits.map(v=>v.id===editId?item:v):[item,...state.visits]);setNotice("กำลังบันทึกข้อมูล…")}
     if(modal==="bill") {
       const title=String(f.get("title")||"").trim(),rawNames=billPeopleText.split(",").map(n=>n.trim()).filter(Boolean),oldBill=state.bills.find(b=>b.id===editId),meName=oldBill?.participants.find(p=>p.isMe)?.name||"ฉัน";
       if(!title){setNotice("กรุณาตั้งชื่อบิล");return}
@@ -357,17 +356,16 @@ export default function DayTogether() {
         if(!rowTitle&&!amountText) continue;
         if(!rowTitle||!amountText){setNotice("กรุณากรอกทั้งชื่อและยอดเงินของทุกรายการ");return}
         const amountSatang=amountFrom(amountText);
-        if(!Number.isSafeInteger(amountSatang)||amountSatang<=0){setNotice("ยอดเงินแต่ละรายการต้องมากกว่า 0 และอยู่ในช่วงที่รองรับ");return}
+        if(amountSatang===null||!Number.isSafeInteger(amountSatang)||amountSatang<=0){setNotice("ยอดเงินแต่ละรายการต้องมากกว่า 0 และใช้ทศนิยมไม่เกิน 2 ตำแหน่ง");return}
         const selectedNames=row.participantNames===null?participants.map(p=>p.name):row.participantNames;
         const selected=selectedNames.map(name=>participantByName.get(name.trim().toLocaleLowerCase())).filter((p):p is Participant=>Boolean(p));
         if(!selected.length){setNotice("เลือกรายชื่อผู้ร่วมรับผิดชอบอย่างน้อยหนึ่งคนในทุกรายการ");return}
         let payers: { participantId: string; amountSatang: number }[] = [];
         let payer=participantByName.get(row.payerName.trim().toLocaleLowerCase())||participants[0];
         if (row.multiplePayers) {
-          payers = participants.map(person => ({
-            participantId: person.id,
-            amountSatang: amountFrom(row.payerAmounts[person.name] ?? (person.name===row.payerName ? row.amount : ""))
-          })).filter(entry => entry.amountSatang > 0);
+          const payerRows=participants.map(person=>{const raw=String(row.payerAmounts[person.name]??(person.name===row.payerName?row.amount:"")).trim();return {participantId:person.id,amountSatang:raw?parseMoneyToSatang(raw):0}});
+          if(payerRows.some(entry=>entry.amountSatang===null)) {setNotice("ยอดที่ผู้จ่ายแต่ละคนออกต้องเป็นจำนวนเงินที่มีทศนิยมไม่เกิน 2 ตำแหน่ง");return}
+          payers=payerRows.filter((entry):entry is {participantId:string;amountSatang:number}=>entry.amountSatang!==null&&entry.amountSatang>0);
           if (!payers.length || payers.reduce((sum, entry) => sum + entry.amountSatang, 0) !== amountSatang) {
             setNotice("ยอดที่ผู้จ่ายแต่ละคนออกต้องรวมกันเท่ากับยอดรายการ"); return;
           }
@@ -375,12 +373,14 @@ export default function DayTogether() {
         }
         let allocations:Record<string,number>|undefined;
         if(row.allocationMode==="fixed") {
-          allocations=Object.fromEntries(selected.map(person=>[person.id,amountFrom(row.allocations[person.name]||"")]));
-          if(Object.values(allocations).some(value=>!Number.isSafeInteger(value))||Object.values(allocations).reduce((sum,value)=>sum+value,0)!==amountSatang){setNotice("ยอดที่กำหนดให้แต่ละคนต้องรวมกันเท่ากับยอดรายการ");return}
+          const fixedRows=selected.map(person=>{const raw=(row.allocations[person.name]||"").trim();return {id:person.id,amountSatang:raw?parseMoneyToSatang(raw):0}});
+          if(fixedRows.some(row=>row.amountSatang===null)){setNotice("ยอดที่กำหนดให้แต่ละคนต้องเป็นจำนวนเงินที่มีทศนิยมไม่เกิน 2 ตำแหน่ง");return}
+          allocations=Object.fromEntries(fixedRows.map(row=>[row.id,row.amountSatang??0]));
+          if(Object.values(allocations).some(value=>!Number.isSafeInteger(value)||value<0)||Object.values(allocations).reduce((sum,value)=>sum+value,0)!==amountSatang){setNotice("ยอดที่กำหนดให้แต่ละคนต้องรวมกันเท่ากับยอดรายการ");return}
         } else if(row.allocationMode==="percentage") {
-          const percentValues=selected.map(person=>Number(row.allocations[person.name]||""));
-          if(percentValues.some(value=>!Number.isFinite(value)||value<0||value>100)){setNotice("เปอร์เซ็นต์ต้องอยู่ระหว่าง 0 ถึง 100");return}
-          allocations=Object.fromEntries(selected.map((person,index)=>[person.id,Math.round(percentValues[index]*100)]));
+          const percentValues=selected.map(person=>parsePercentageBasisPoints(row.allocations[person.name]||""));
+          if(percentValues.some(value=>value===null)){setNotice("เปอร์เซ็นต์ต้องอยู่ระหว่าง 0 ถึง 100 และมีทศนิยมไม่เกิน 2 ตำแหน่ง");return}
+          allocations=Object.fromEntries(selected.map((person,index)=>[person.id,percentValues[index]??0]));
           if(Object.values(allocations).reduce((sum,value)=>sum+value,0)!==10000){setNotice("เปอร์เซ็นต์ของผู้ร่วมรายการต้องรวมกันเท่ากับ 100%");return}
         }
         expenses.push({id:oldBill?.expenses.find(expense=>expense.id===row.key)?.id||id(),title:rowTitle,amountSatang,payerId:payer.id,...(payers.length?{payers}:{}),participantIds:selected.map(person=>person.id),allocationMode:row.allocationMode,...(allocations?{allocations}:{})});
@@ -401,7 +401,7 @@ export default function DayTogether() {
     if(!modal)return null
     const existing=modal==="goal"?state.goals.find(x=>x.id===editId):modal==="saving"?state.savings.find(x=>x.id===editId):modal==="health"?state.health.find(x=>x.id===editId):modal==="visit"?state.visits.find(x=>x.id===editId):modal==="bill"?state.bills.find(x=>x.id===editId):undefined
     const draftBillNames=[...(billIncludesMe?["ฉัน"]:[]),...billPeopleText.split(",").map(name=>name.trim()).filter(Boolean)].filter((name,index,all)=>all.findIndex(other=>other.toLocaleLowerCase()===name.toLocaleLowerCase())===index)
-    const draftBillAdjustments:BillAdjustments={serviceBasisPoints:Math.round(Number(billAdjustmentsDraft.servicePercent||"0")*100),taxBasisPoints:Math.round(Number(billAdjustmentsDraft.taxPercent||"0")*100),serviceIncluded:billAdjustmentsDraft.serviceIncluded,taxIncluded:billAdjustmentsDraft.taxIncluded,discountSatang:amountFrom(billAdjustmentsDraft.discount||"0")}
+    const draftBillAdjustments:BillAdjustments={serviceBasisPoints:parsePercentageBasisPoints(billAdjustmentsDraft.servicePercent||"0")??-1,taxBasisPoints:parsePercentageBasisPoints(billAdjustmentsDraft.taxPercent||"0")??-1,serviceIncluded:billAdjustmentsDraft.serviceIncluded,taxIncluded:billAdjustmentsDraft.taxIncluded,discountSatang:parseMoneyToSatang(billAdjustmentsDraft.discount||"0")??-1}
     const draftBillPreview=calculateDraftBillSplitPreview(billDraftExpenses,draftBillNames,draftBillAdjustments)
     return <div className="dt-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)closeModal()}}><section className="dt-modal" role="dialog" aria-modal="true" aria-labelledby="dt-modal-title"><div className="dt-modal-head"><div><span className="dt-eyebrow">DAYTOGETHER</span><h2 id="dt-modal-title">{modal==="goal"?(editId?"แก้ไขเป้าหมาย":"สร้างเป้าหมายออมเงิน"):modal==="saving"?(editId?"แก้ไขรายการออม":"เพิ่มรายการออม"):modal==="health"?(editId?"แก้ไขบันทึกสุขภาพ":"บันทึกสุขภาพ"):modal==="note"?(editId?"แก้ไขบันทึก":"เขียนบันทึกใหม่"):modal==="bill"?(editId?"แก้ไขบิล":"สร้างบิลหารตัง"):(editId?"แก้ไขประวัติมื้อ":"เพิ่มมื้อหมูกระทะ")}</h2></div><button className="dt-icon-button" onClick={closeModal} aria-label="ปิดหน้าต่าง">×</button></div>
       {modal==="note"?<form className="dt-form" onSubmit={saveNote}><Field label="ประเภท"><select value={draftNote.kind} onChange={e=>setDraftNote(s=>({...s,kind:e.target.value as "note"|"diary"}))}><option value="note">โน้ต</option><option value="diary">ไดอารี</option></select></Field><Field label="หัวข้อ"><input value={draftNote.title} onChange={e=>setDraftNote(s=>({...s,title:e.target.value}))} placeholder="ไม่มีชื่อ หากเว้นว่าง"/></Field><Field label="วันที่"><input type="date" value={draftNote.date} onChange={e=>setDraftNote(s=>({...s,date:e.target.value}))} required/></Field><Field label="เนื้อหา"><textarea rows={7} value={draftNote.body} onChange={e=>setDraftNote(s=>({...s,body:e.target.value}))} placeholder="จดสิ่งที่อยากจำ..." /></Field><Field label="แท็ก (คั่นด้วยจุลภาค)"><input value={draftNote.tags} onChange={e=>setDraftNote(s=>({...s,tags:e.target.value}))} placeholder="งาน, ไอเดีย, ส่วนตัว"/></Field>{draftNote.kind==="diary"&&<Field label="อารมณ์วันนี้"><select value={draftNote.mood} onChange={e=>setDraftNote(s=>({...s,mood:e.target.value}))}><option value="">ไม่ระบุ</option><option>ดีใจ</option><option>เฉยๆ</option><option>เศร้า</option></select></Field>}<div className="dt-modal-actions"><span className="dt-muted" role="status">{noteSaving ? "กำลังบันทึกฉบับร่าง…" : "บันทึกอัตโนมัติเมื่อหยุดพิมพ์"}</span><Button onClick={closeModal}>ปิด</Button><Button type="submit" variant="primary">บันทึกและปิด</Button></div></form>:<form className="dt-form" onSubmit={submitModal}>
