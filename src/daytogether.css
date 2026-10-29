@@ -33,3 +33,13 @@ html[data-dt-theme="dark"]{--dt-bg:#0f172a;--dt-surface:#172033;--dt-text:#f1f5f
 .dt-bill-total-preview>span{font-size:13px;color:var(--dt-muted);font-weight:600}
 .dt-bill-total-preview>strong{font-size:22px;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .dt-bill-total-preview>small{grid-column:1/-1;color:var(--dt-muted);font-size:11px;line-height:1.5}
+
+.dt-health-trend .dt-section-head{align-items:center}
+.dt-range-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.dt-range-tabs .dt-btn{min-height:34px;padding:6px 10px;font-size:12px}
+.dt-health-chart-wrap{width:100%;overflow:hidden;color:var(--dt-ink)}
+.dt-health-chart{display:block;width:100%;height:auto;max-height:220px;overflow:visible}
+.dt-trend-labels{align-items:center;gap:8px}
+.dt-trend-labels>strong{font-size:14px;font-variant-numeric:tabular-nums}
+.dt-trend-labels>small{color:var(--dt-muted);font-size:11px}
+@media(max-width:620px){.dt-health-trend .dt-section-head{align-items:flex-start;flex-direction:column}.dt-health-chart{min-height:120px}.dt-trend-labels>strong{font-size:12px}}
