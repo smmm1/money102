@@ -130,7 +130,7 @@ function csv(rows: unknown[][]) { return "\uFEFF" + rows.map(row => row.map(valu
 function download(name: string, content: string, type: string) { const a = document.createElement("a"); const url = URL.createObjectURL(new Blob([content],{type})); a.href = url; a.download=name; a.click(); window.setTimeout(()=>URL.revokeObjectURL(url),1000) }
 
 export default function DayTogether() {
-  const [state,setState] = useState<State>(() => ({ ...prototypeData.load(), ...readState(), settings: { ...readState().settings, theme: "system" } }))
+  const [state,setState] = useState<State>(() => ({ ...prototypeData.load(), settings: { ...prototypeData.load().settings, theme: "system" } }))
   const [path,setPath] = useState(window.location.pathname)
   const [moreOpen,setMoreOpen] = useState(false)
   const [quickAddOpen,setQuickAddOpen] = useState(false)
