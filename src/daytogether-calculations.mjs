@@ -332,7 +332,7 @@ export function calculateAdjustedSplit(expenses = [], participants = [], settlem
     if (!shares) return fail("คำนวณส่วนแบ่งค่าใช้จ่ายไม่สำเร็จ");
     assigned.forEach((id, index) => {
       const next = baseShares[id] + shares[index];
-      if (!Number.isSafeInteger(next)) throw new RangeError("bill share exceeds safe integer");
+      if (!Number.isSafeInteger(next)) return fail("ยอดส่วนแบ่งเกินช่วงที่รองรับ");
       baseShares[id] = next;
     });
     if (Array.isArray(expense.payers)) {
@@ -374,6 +374,7 @@ export function calculateAdjustedSplit(expenses = [], participants = [], settlem
   if (!Number.isSafeInteger(beforeDiscount)) return fail("ยอดรวมภาษีเกินช่วงที่รองรับ");
   if (discountSatang > beforeDiscount) return fail("ส่วนลดต้องไม่มากกว่ายอดรวมก่อนหักส่วนลด");
   const adjustmentPayerId = adjustments?.adjustmentPayerId || ids[0];
+  if (adjustments?.adjustmentPayerId && !hasId(adjustments.adjustmentPayerId)) return fail("ไม่พบผู้ที่จ่ายค่าบริการและภาษี");
   if ((serviceFeeSatang > 0 || taxSatang > 0) && !hasId(adjustmentPayerId)) return fail("เลือกผู้ที่จ่ายค่าบริการและภาษี");
   const serviceShares = apportionSatang(serviceFeeSatang, ids, ids.map(id => baseShares[id]));
   if (!serviceShares) return fail("กระจายค่าบริการตามส่วนรับผิดชอบไม่สำเร็จ");
