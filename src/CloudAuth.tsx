@@ -38,7 +38,7 @@ function installStorageShim() {
     if (this !== window.localStorage) return nativeSet.call(this, key, value)
     const k = String(key), v = String(value)
     memorySnapshot[k] = v
-    scheduleCloudSave()
+    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
   }
   proto.removeItem = function(key: string) {
     if (this !== window.localStorage) return nativeRemove.call(this, key)
@@ -48,21 +48,30 @@ function installStorageShim() {
   }
 }
 function readLocalSnapshot(): LocalSnapshot {
-  return { ...memorySnapshot }
+  return Object.fromEntries(Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
 function scheduleCloudSave() {
   if (saveTimer !== undefined) window.clearTimeout(saveTimer)
+  const scheduledToken = getToken()
+  if (!scheduledToken) return
   saveTimer = window.setTimeout(() => {
+    saveTimer = undefined
     const payload = readLocalSnapshot()
-    saveChain = saveChain.then(() => api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) }))
-      .then(() => window.dispatchEvent(new CustomEvent("d1-persist-success")))
-      .catch((error: unknown) => window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) })))
+    saveChain = saveChain.then(() => {
+      // A queued snapshot must never be written under a different account's session.
+      if (!scheduledToken || scheduledToken !== getToken()) return undefined
+      return api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) })
+    }).then((result) => {
+      if (result !== undefined && scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
+    }).catch((error: unknown) => {
+      if (scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: error instanceof Error ? error.message : String(error) }))
+    })
   }, 250)
 }
 function restoreSnapshot(snapshot: LocalSnapshot) {
-  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.length > 0 && typeof value === "string"))
+  memorySnapshot = Object.fromEntries(Object.entries(snapshot || {}).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string"))
 }
 const AUTH_TOKEN_KEY = "money102_auth_token"
 let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
