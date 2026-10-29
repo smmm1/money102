@@ -158,6 +158,7 @@ export default function DayTogether() {
   const [theme,setTheme] = useState<Settings["theme"]>("system")
   const [heightDraft,setHeightDraft] = useState(state.settings.heightCm===null?"":String(state.settings.heightCm))
   const [waterGoalDraft,setWaterGoalDraft] = useState(String(state.settings.waterGoal))
+  const [demoSeed,setDemoSeed] = useState(0)
   const dateTextInZone = (s: string) => formatDateInTimezone(s, state.settings.timezone)
   const page = path === "/" ? "/" : (Object.keys(PAGE_LABEL).includes(path) ? path : path.startsWith("/savings/goals/") ? "/savings" : path.startsWith("/notes/") ? "/notes" : path.startsWith("/split/") ? "/split" : path.startsWith("/bbq/") ? "/bbq" : "/404")
   const pathParts = path.split("/").filter(Boolean); const routeId = pathParts[pathParts.length - 1] || ""
