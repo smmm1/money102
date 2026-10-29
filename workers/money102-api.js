@@ -83,6 +83,19 @@ function validDayTogetherState(raw) {
    }else if(expense.allocationMode!==undefined&&expense.allocationMode!=="equal")return false;
    total+=expense.amountSatang;if(!Number.isSafeInteger(total))return false;
   }
+  if(bill.adjustments!==undefined){
+   const adjustment=bill.adjustments;
+   if(!adjustment||typeof adjustment!=="object"||Array.isArray(adjustment)||
+      !integer(adjustment.serviceBasisPoints)||adjustment.serviceBasisPoints>10000||
+      !integer(adjustment.taxBasisPoints)||adjustment.taxBasisPoints>10000||
+      typeof adjustment.serviceIncluded!=="boolean"||typeof adjustment.taxIncluded!=="boolean"||
+      !integer(adjustment.discountSatang))return false;
+   const service=adjustment.serviceIncluded?0:Number((BigInt(total)*BigInt(adjustment.serviceBasisPoints)+5000n)/10000n);
+   const taxBase=total+service;
+   const tax=adjustment.taxIncluded?0:Number((BigInt(taxBase)*BigInt(adjustment.taxBasisPoints)+5000n)/10000n);
+   const gross=total+service+tax;
+   if(!Number.isSafeInteger(gross)||adjustment.discountSatang>gross)return false;
+  }
   for(const settlement of bill.settlements)if(!settlement||typeof settlement.id!=="string"||!settlement.id||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
   if(typeof bill.restaurant!=="string"||bill.restaurant.length>200||typeof bill.note!=="string"||bill.note.length>4000)return false;
  }
