@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import { useAccount } from "./CloudAuth"
 import "./daytogether.css"
-import { calculateSleepDuration, calculateDraftSplitPreview, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, type BillAdjustments } from "./daytogether-calculations.mjs"
+import { calculateSleepDuration, calculateDraftSplitPreview, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview, type BillAdjustments } from "./daytogether-calculations.mjs"
 import { migrateLegacyState } from "./daytogether-migration.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
@@ -377,7 +377,12 @@ export default function DayTogether() {
         expenses.push({id:oldBill?.expenses.find(expense=>expense.id===row.key)?.id||id(),title:rowTitle,amountSatang,payerId:payer.id,...(payers.length?{payers}:{}),participantIds:selected.map(person=>person.id),allocationMode:row.allocationMode,...(allocations?{allocations}:{})});
       }
       if(!expenses.length){setNotice("เพิ่มรายการค่าใช้จ่ายอย่างน้อยหนึ่งรายการก่อนบันทึก");return}
-      const item:Bill={id:editId||id(),title,date:String(f.get("date")||today(state.settings.timezone)),restaurant:String(f.get("restaurant")||""),participants,expenses,settlements:oldBill?.settlements||[],note:String(f.get("note")||""),bbqId:oldBill?.bbqId||"",status:oldBill?.status||"draft"};
+      const servicePercent=Number(billAdjustmentsDraft.servicePercent||"0"),taxPercent=Number(billAdjustmentsDraft.taxPercent||"0");
+      if(!Number.isFinite(servicePercent)||servicePercent<0||servicePercent>100||!Number.isFinite(taxPercent)||taxPercent<0||taxPercent>100){setNotice("ค่าบริการและภาษีต้องอยู่ระหว่าง 0 ถึง 100 เปอร์เซ็นต์");return}
+      const adjustments:BillAdjustments={serviceBasisPoints:Math.round(servicePercent*100),taxBasisPoints:Math.round(taxPercent*100),serviceIncluded:billAdjustmentsDraft.serviceIncluded,taxIncluded:billAdjustmentsDraft.taxIncluded,discountSatang:amountFrom(billAdjustmentsDraft.discount||"0")};
+      const adjustmentSummary=calculateBillAdjustmentSummary(expenses.reduce((sum,expense)=>sum+expense.amountSatang,0),adjustments);
+      if(!adjustmentSummary.valid){setNotice(adjustmentSummary.error==="discount-exceeds-total"?"ส่วนลดต้องไม่เกินยอดรวมหลังค่าบริการและภาษี":"ตรวจสอบค่าภาษี ค่าบริการ และส่วนลดอีกครั้ง");return}
+      const item:Bill={id:editId||id(),title,date:String(f.get("date")||today(state.settings.timezone)),restaurant:String(f.get("restaurant")||""),participants,expenses,settlements:oldBill?.settlements||[],note:String(f.get("note")||""),bbqId:oldBill?.bbqId||"",status:oldBill?.status||"draft",adjustments};
       setEditId(item.id);update("bills",editId?state.bills.map(b=>b.id===editId?item:b):[item,...state.bills]);setNotice("กำลังบันทึกข้อมูล…")
     }
     setPendingCloseAfterSave(true)
