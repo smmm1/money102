@@ -88,7 +88,7 @@ function download(name: string, content: string, type: string) { const a = docum
 
 export default function DayTogether() {
   const account = useAccount()
-  const [state,setState = useState<State>(readState)
+  const [state,setState] = useState<State>(readState)
   const [path,setPath] = useState(window.location.pathname)
   const [moreOpen,setMoreOpen] = useState(false)
   const [modal,setModal] = useState<null|"saving"|"goal"|"health"|"note"|"bill"|"visit">(null)
