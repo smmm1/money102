@@ -215,7 +215,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
             {authMode==="signup"&&<label>ยืนยันรหัสผ่าน<input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="กรอกรหัสผ่านอีกครั้ง" /></label>}
             {message && <p role="status" className="cc-auth-message">{message}</p>}
             <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>{authMode==="signup"?"สร้างบัญชี":"เข้าสู่ระบบ"}<span aria-hidden="true">↗</span></>}</button>
-            <p className="cc-auth-private-note">พื้นที่ส่วนตัวสำหรับบัญชีที่ได้รับอนุญาตเท่านั้น</p>
+            <p className="cc-auth-private-note">พื้นที่ส่วนตัวสำหรับบัญชีที่ได้รับอนุญาตเท่านั้น</p><button type="button" className="cc-auth-forgot" onClick={() => { setAuthMode("forgot"); setMessage("") }}>ลืมรหัสผ่าน?</button>
           </form>}
         </div>
         <div className="cc-auth-foot"><span><i/> SECURE SESSION</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
