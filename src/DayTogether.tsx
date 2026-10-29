@@ -297,7 +297,7 @@ export default function DayTogether() {
         extra=[extra,severity?"ระดับความรู้สึก: "+severity+"/5":""].filter(Boolean).join(" · ");
       } else if(kind==="pressure") {
         const systolic=Number(f.get("systolic")),diastolic=Number(f.get("diastolic")),pulseRaw=String(f.get("pulse")||"").trim();
-        if(!Number.isSafeInteger(systolic)||systolic<=0||!Number.isSafeInteger(diastolic)||diastolic<=0){setNotice("กรุณากรอกความดันตัวบนและตัวล่างเป็นจำนวนเต็มที่มากกว่า 0");return}
+        if(!Number.isSafeInteger(systolic)||systolic<=0||systolic>300||!Number.isSafeInteger(diastolic)||diastolic<=0||diastolic>250){setNotice("ความดันตัวบนต้องอยู่ระหว่าง 1–300 และตัวล่าง 1–250 mmHg");return}
         if(pulseRaw&&(!Number.isSafeInteger(Number(pulseRaw))||Number(pulseRaw)<=0||Number(pulseRaw)>250)){setNotice("ชีพจรต้องเป็นจำนวนเต็มระหว่าง 1–250 ครั้ง/นาที");return}
         value=systolic+"/"+diastolic;
         if(pulseRaw) extra=[extra,"ชีพจร "+pulseRaw+" ครั้ง/นาที"].filter(Boolean).join(" · ");
@@ -312,7 +312,7 @@ export default function DayTogether() {
         if(!value){setNotice("กรุณากรอกค่าที่ต้องการบันทึก");return}
         if(kind==="weight"||kind==="water") {
           const numeric=Number(value);
-          if(!Number.isFinite(numeric)||numeric<=0||(kind==="water"&&!Number.isSafeInteger(numeric))){setNotice(kind==="weight"?"น้ำหนักต้องเป็นตัวเลขมากกว่า 0":"ปริมาณน้ำต้องเป็นจำนวนเต็ม mL ที่มากกว่า 0");return}
+          if(!Number.isFinite(numeric)||numeric<=0||(kind==="weight"&&numeric>500)||(kind==="water"&&(!Number.isSafeInteger(numeric)||numeric>20000))){setNotice(kind==="weight"?"น้ำหนักต้องอยู่ระหว่าง 0 ถึง 500 กก.":"ปริมาณน้ำต้องเป็นจำนวนเต็มระหว่าง 1–20,000 mL");return}
         }
       }
       const item:Health={id:editId||id(),kind,date,value,extra,note:String(f.get("note")||"")};
@@ -388,7 +388,7 @@ export default function DayTogether() {
         <Field label="คุณภาพการนอน (ไม่บังคับ)"><select name="sleepQuality" defaultValue={(existing as Health|undefined)?.kind==="sleep"?sleepQualityFromExtra((existing as Health).extra):""}><option value="">ยังไม่ระบุ</option><option value="ดีมาก">ดีมาก</option><option value="ดี">ดี</option><option value="พอใช้">พอใช้</option><option value="ไม่ดี">ไม่ดี</option></select></Field>
       </>:<>
         <Field label={healthDraftKind==="weight"?"น้ำหนัก (กก.)":healthDraftKind==="water"?"ปริมาณน้ำดื่ม (mL)":healthDraftKind==="exercise"?"กิจกรรมออกกำลังกาย":"อาการหรือหัวข้อ"}>
-          <input name="value" type={healthDraftKind==="weight"||healthDraftKind==="water"?"number":"text"} min={healthDraftKind==="weight"?"0.1":healthDraftKind==="water"?"1":undefined} step={healthDraftKind==="weight"?"0.1":healthDraftKind==="water"?"1":undefined} required defaultValue={(existing as Health|undefined)?.value||""} placeholder={healthDraftKind==="weight"?"เช่น 72.5":healthDraftKind==="water"?"เช่น 250":"พิมพ์รายละเอียดสั้น ๆ"}/>
+          <input name="value" type={healthDraftKind==="weight"||healthDraftKind==="water"?"number":"text"} min={healthDraftKind==="weight"?"0.1":healthDraftKind==="water"?"1":undefined} max={healthDraftKind==="weight"?"500":healthDraftKind==="water"?"20000":undefined} step={healthDraftKind==="weight"?"0.1":healthDraftKind==="water"?"1":undefined} required defaultValue={(existing as Health|undefined)?.value||""} placeholder={healthDraftKind==="weight"?"เช่น 72.5":healthDraftKind==="water"?"เช่น 250":"พิมพ์รายละเอียดสั้น ๆ"}/>
         </Field>
         <Field label="วันที่และเวลา"><input name="date" type="datetime-local" defaultValue={(existing as Health|undefined)?.date||dateTimeLocal(state.settings.timezone)} required/></Field>
       </>}
