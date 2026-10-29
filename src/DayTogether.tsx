@@ -30,7 +30,7 @@ const sleepDetailsWithoutQuality = (value: string) => value.replace(/คุณ�
 const symptomSeverityFromExtra = (value: string) => value.match(/ระดับความรู้สึก: ([1-5])\/5/)?.[1] || ""
 const symptomDetailsFromExtra = (value: string) => value.replace(/ระดับความรู้สึก: [1-5]\/5/g, "").replace(/^ · | · $/g, "")
 const id = () => crypto.randomUUID()
-const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "system", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
+const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "light", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
 function readState(): State { try { return migrateLegacyState(defaults, key => localStorage.getItem(key)) } catch { return defaults } }
 function isBackupState(value: unknown): value is State {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
@@ -170,7 +170,7 @@ export default function DayTogether() {
   useEffect(() => { setHeightDraft(state.settings.heightCm===null?"":String(state.settings.heightCm)) },[state.settings.heightCm])
   useEffect(() => { setWaterGoalDraft(String(state.settings.waterGoal)) },[state.settings.waterGoal])
   useEffect(() => { const reload = () => setState(readState()); window.addEventListener("d1-snapshot-reloaded", reload); return () => window.removeEventListener("d1-snapshot-reloaded", reload) },[])
-  useEffect(() => { const media = window.matchMedia("(prefers-color-scheme: dark)"); const applyTheme = () => { document.documentElement.dataset.dtTheme = theme === "system" ? (media.matches ? "dark" : "light") : theme }; applyTheme(); media.addEventListener("change", applyTheme); setState(s=>s.settings.theme===theme?s:{...s,settings:{...s.settings,theme}}); return () => media.removeEventListener("change", applyTheme) },[theme])
+  useEffect(() => { const applyTheme = () => { document.documentElement.dataset.dtTheme = theme === "dark" ? "dark" : "light" }; applyTheme(); setState(s=>s.settings.theme===theme?s:{...s,settings:{...s.settings,theme}}) },[theme])
   useEffect(() => { if(notice) { const t=window.setTimeout(()=>setNotice(""),3000); return ()=>clearTimeout(t) } },[notice])
   useEffect(() => { const ok=()=>setNotice("บันทึกข้อมูลลงระบบแล้ว"); const fail=(e:Event)=>{const detail=String((e as CustomEvent).detail||"");setNotice(detail.includes("อีกแท็บ")?"ข้อมูลเปลี่ยนจากอีกแท็บ จึงยังบันทึกไม่ได้ กรุณาส่งออกข้อมูลปัจจุบันก่อนโหลดข้อมูลล่าสุด": "บันทึกไม่สำเร็จ กรุณาลองใหม่") }; window.addEventListener("d1-persist-success",ok); window.addEventListener("d1-persist-error",fail); return ()=>{window.removeEventListener("d1-persist-success",ok);window.removeEventListener("d1-persist-error",fail)} },[])
   useEffect(() => { if(!pendingCloseAfterSave)return; const ok=()=>{setPendingCloseAfterSave(false);setModal(null);setEditId("")}; const fail=()=>setPendingCloseAfterSave(false); window.addEventListener("d1-persist-success",ok); window.addEventListener("d1-persist-error",fail); return ()=>{window.removeEventListener("d1-persist-success",ok);window.removeEventListener("d1-persist-error",fail)} },[pendingCloseAfterSave])
