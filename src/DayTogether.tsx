@@ -225,7 +225,7 @@ export default function DayTogether() {
           if (!payers.length || payers.reduce((sum, entry) => sum + entry.amountSatang, 0) !== amountSatang) {
             setNotice("ยอดที่ผู้จ่ายแต่ละคนออกต้องรวมกันเท่ากับยอดรายการ"); return;
           }
-          payer = participants.find(person => person.id === payers[0].participantId) || payer;
+          payer = participants.find(person => person.id === payers[0]?.participantId) || payer;
         }
         let allocations:Record<string,number>|undefined;
         if(row.allocationMode==="fixed") {
