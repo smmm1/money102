@@ -9,3 +9,22 @@ html[data-dt-theme="dark"]{--dt-bg:#0f172a;--dt-surface:#172033;--dt-text:#f1f5f
 .cc-auth-secondary-actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}.cc-auth-switch{border:0;background:transparent;color:var(--dt-primary,#0f766e);font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:5px 0}.cc-auth-switch:focus-visible{outline:3px solid #5eead4;outline-offset:3px}
 
 @media (prefers-color-scheme: dark){html[data-dt-theme="system"]{--dt-bg:#0f172a;--dt-surface:#172033;--dt-text:#f1f5f9;--dt-muted:#cbd5e1;--dt-border:#334155;--dt-primary:#5eead4;--dt-primary-soft:#134e4a;--dt-shadow:0 4px 18px rgba(0,0,0,.15)}}
+
+.dt-bill-expense-editor{display:grid;gap:14px;padding:15px;border:1px solid var(--dt-border);border-radius:14px;background:var(--dt-bg)}
+.dt-bill-expense-editor>.dt-section-head{align-items:center;margin:0}
+.dt-bill-expense-editor>.dt-section-head h3{margin:0;font-size:15px}
+.dt-bill-expense-editor>.dt-section-head p{margin:4px 0 0;font-size:12px;color:var(--dt-muted)}
+.dt-bill-expense-editor>.dt-section-head>.dt-btn{white-space:nowrap;flex-shrink:0}
+.dt-bill-expense-row{display:grid;gap:12px;padding:14px;border:1px solid var(--dt-border);border-radius:12px;background:var(--dt-surface)}
+.dt-bill-expense-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.dt-bill-expense-row-head>strong{font-size:13px}
+.dt-bill-expense-row .dt-form-grid{margin:0}
+.dt-bill-participants{display:grid;gap:8px}
+.dt-bill-participants>strong,.dt-bill-allocation-grid>strong{font-size:12px;color:var(--dt-muted)}
+.dt-bill-participants>div{display:flex;flex-wrap:wrap;gap:8px}
+.dt-bill-participants label{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--dt-border);border-radius:9px;font-size:13px;cursor:pointer}
+.dt-bill-participants input{accent-color:var(--dt-primary)}
+.dt-bill-allocation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dt-bill-allocation-grid>strong{grid-column:1/-1}
+.dt-bill-allocation-grid .dt-field{min-width:0}
+@media(max-width:760px){.dt-bill-expense-editor{padding:10px}.dt-bill-expense-editor>.dt-section-head{align-items:flex-start;flex-direction:column}.dt-bill-expense-row{padding:11px}.dt-bill-allocation-grid{grid-template-columns:1fr}}
