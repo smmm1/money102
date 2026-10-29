@@ -63,7 +63,7 @@ function validDayTogetherState(raw) {
   const key=item.goalId||"general";balances.set(key,(balances.get(key)||0)+(item.kind==="deposit"?item.amountSatang:-item.amountSatang));
  }
  if([...balances.values()].some(value=>value<0))return false;
- for(const item of state.health)if(!["weight","pressure","sleep","water","symptom"].includes(item.kind)||!date(item.date)||typeof item.value!=="string"||item.value.length>1000||typeof item.extra!=="string"||item.extra.length>2000||typeof item.note!=="string"||item.note.length>4000)return false;
+ for(const item of state.health)if(!["weight","pressure","sleep","water","symptom","exercise"].includes(item.kind)||!date(item.date)||typeof item.value!=="string"||item.value.length>1000||typeof item.extra!=="string"||item.extra.length>2000||typeof item.note!=="string"||item.note.length>4000)return false;
  for(const note of state.notes)if(typeof note.title!=="string"||note.title.length>240||typeof note.body!=="string"||note.body.length>100000||!["note","diary"].includes(note.kind)||!Array.isArray(note.tags)||note.tags.length>100||note.tags.some(tag=>typeof tag!=="string"||tag.length>60)||typeof note.mood!=="string"||typeof note.updatedAt!=="string"||!integer(note.version,1))return false;
  for(const bill of state.bills){
   if(typeof bill.title!=="string"||!bill.title.trim()||bill.title.length>160||!date(bill.date)||!Array.isArray(bill.participants)||bill.participants.length<2||bill.participants.length>200||!Array.isArray(bill.expenses)||bill.expenses.length>1000||!Array.isArray(bill.settlements)||!["draft","settling","settled"].includes(bill.status))return false;

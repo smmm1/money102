@@ -76,6 +76,14 @@ test("rejects snapshots with negative savings balance or invalid health values",
   assert.equal(validDayTogetherState(JSON.stringify(invalidHealth)), false);
 });
 
+
+test("accepts exercise records so the health module can persist workouts", () => {
+  const state = validState();
+  state.health.push({ id: "exercise-1", kind: "exercise", date: "2026-01-02", value: "เดินเร็ว 30 นาที", extra: "ระยะทาง 2 กม.", note: "ทดสอบการบันทึก" });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+  assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(state) }), true);
+});
+
 test("keeps accepting the legacy snapshot shape while validating the rebuilt app shape", () => {
   const legacy = { goals: [], savings: [], health: [], notes: [], bills: [], bbq: [] };
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": JSON.stringify(legacy) }), true);
