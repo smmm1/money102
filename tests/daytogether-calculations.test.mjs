@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { calculateSplit } from "../src/daytogether-calculations.mjs";
 
+const plain = (balances) => Object.fromEntries(Object.entries(balances));
+
 const people = [
   { id: "a", name: "ฉัน", isMe: true },
   { id: "b", name: "บี", isMe: false },
@@ -13,7 +15,7 @@ test("splits 1,000 baht evenly among three people without losing satang", () => 
     { amountSatang: 100000, payerId: "a", participantIds: ["a", "b", "c"] },
   ], people);
   assert.equal(Object.values(balances).reduce((sum, value) => sum + value, 0), 0);
-  assert.deepEqual(balances, { a: 66666, b: -33333, c: -33333 });
+  assert.deepEqual(plain(balances), { a: 66666, b: -33333, c: -33333 });
   assert.equal(transfers.reduce((sum, item) => sum + item.amountSatang, 0), 66666);
 });
 
@@ -29,19 +31,19 @@ test("validates fixed allocations and percentage totals", () => {
   const invalidFixed = { ...validFixed, allocations: { a: 5000, b: 5000 } };
   const validPercent = { amountSatang: 10001, payerId: "a", participantIds: ["a", "b"], allocationMode: "percentage", allocations: { a: 3333, b: 6667 } };
   const invalidPercent = { ...validPercent, allocations: { a: 3333, b: 6666 } };
-  assert.deepEqual(calculateSplit([validFixed], people).balances, { a: 5001, b: -5001, c: 0 });
-  assert.deepEqual(calculateSplit([invalidFixed], people).balances, { a: 0, b: 0, c: 0 });
+  assert.deepEqual(plain(calculateSplit([validFixed], people).balances), { a: 5001, b: -5001, c: 0 });
+  assert.deepEqual(plain(calculateSplit([invalidFixed], people).balances), { a: 0, b: 0, c: 0 });
   const percentage = calculateSplit([validPercent], people);
   assert.equal(Object.values(percentage.balances).reduce((sum, value) => sum + value, 0), 0);
-  assert.deepEqual(calculateSplit([invalidPercent], people).balances, { a: 0, b: 0, c: 0 });
+  assert.deepEqual(plain(calculateSplit([invalidPercent], people).balances), { a: 0, b: 0, c: 0 });
 });
 
-test("settlements reduce balances and canceled/invalid amounts cannot be applied", () => {
+test("settlements reduce balances and overpayments are ignored", () => {
   const expense = [{ amountSatang: 10000, payerId: "a", participantIds: ["a", "b"] }];
   const result = calculateSplit(expense, people, [{ amountSatang: 2500, fromId: "b", toId: "a" }]);
-  assert.deepEqual(result.balances, { a: 2500, b: -2500, c: 0 });
+  assert.deepEqual(plain(result.balances), { a: 2500, b: -2500, c: 0 });
   const invalid = calculateSplit(expense, people, [{ amountSatang: 50000, fromId: "b", toId: "a" }]);
-  assert.deepEqual(invalid.balances, { a: 5000, b: -5000, c: 0 });
+  assert.deepEqual(plain(invalid.balances), { a: 5000, b: -5000, c: 0 });
 });
 
 test("rejects duplicate participant IDs from being charged twice", () => {
