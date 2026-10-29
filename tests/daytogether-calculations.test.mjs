@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview, parseMoneyToSatang, divideSatang, validateSavingsEntry } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -369,8 +369,9 @@ test("exact user input parsers preserve satang and percentage basis points", asy
 });
 
 
-test("integer satang parser rejects ambiguous precision and unsafe values", async () => {
-  const { parseMoneyToSatang } = await import("../src/daytogether-calculations.mjs");
+
+
+test("integer satang parser rejects ambiguous precision and unsafe values", () => {
   assert.equal(parseMoneyToSatang("1,000"), null);
   assert.equal(parseMoneyToSatang("-1"), null);
   assert.equal(parseMoneyToSatang("12.345"), null);
@@ -379,8 +380,7 @@ test("integer satang parser rejects ambiguous precision and unsafe values", asyn
   assert.equal(parseMoneyToSatang("90071992547409.92"), null);
 });
 
-test("equal bill split conserves every satang and deterministically distributes the remainder", async () => {
-  const { divideSatang } = await import("../src/daytogether-calculations.mjs");
+test("equal bill split conserves every satang and deterministically distributes the remainder", () => {
   assert.deepEqual(divideSatang(120000, 4), { shares: [30000, 30000, 30000, 30000], remainder: 0, totalSatang: 120000 });
   assert.deepEqual(divideSatang(100000, 3), { shares: [33334, 33333, 33333], remainder: 1, totalSatang: 100000 });
   assert.equal(divideSatang(-1, 2), null);
@@ -388,8 +388,7 @@ test("equal bill split conserves every satang and deterministically distributes 
   assert.equal(divideSatang(Number.MAX_SAFE_INTEGER, 2)?.shares.reduce((sum, item) => sum + item, 0), Number.MAX_SAFE_INTEGER);
 });
 
-test("savings withdrawal validation respects each goal and allows edit without double counting", async () => {
-  const { validateSavingsEntry } = await import("../src/daytogether-calculations.mjs");
+test("savings withdrawal validation respects each goal and allows edit without double counting", () => {
   const goals = [{ id: "travel" }];
   const entries = [
     { id: "d1", kind: "deposit", amountSatang: 50000, goalId: "travel" },
