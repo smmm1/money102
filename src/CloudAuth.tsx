@@ -173,7 +173,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handler = (event: Event) => {
       const detail = (event as CustomEvent).detail as { message?: unknown; conflict?: unknown } | string | undefined
-      const message = typeof detail === "string" ? detail : typeof detail?.message === "string" ? detail.message : "ไม่ทราบสาเหตุ"
+      const message = typeof detail === "string" ? detail : typeof detail === "object" && detail !== null && typeof detail.message === "string" ? detail.message : "ไม่ทราบสาเหตุ"
       setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + message)
       setCloudConflict(typeof detail === "object" && detail !== null && detail.conflict === true)
     }
