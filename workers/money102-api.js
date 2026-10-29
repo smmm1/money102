@@ -202,6 +202,19 @@ export default { async fetch(request,env) {
   const body=await parseBody(request); if(!body||!isSnapshot(body.payload))return json(request,env,{error:"payload ต้องเป็น object ที่มีเฉพาะค่า string ของคีย์ lamoon-* หรือ money102-* (ไม่เกิน 500 รายการ)"},400);
   const validationError=validateDayTogetherSnapshot(body.payload); if(validationError)return json(request,env,{error:validationError},400);
   const serialized=JSON.stringify(body.payload); if(serialized.length>900000)return json(request,env,{error:"Payload exceeds 900 KB limit"},413);
-  const updatedAt=new Date().toISOString(); await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run(); return json(request,env,{ok:true,updated_at:updatedAt});
+  const hasExpectedRevision=Object.prototype.hasOwnProperty.call(body,"expected_updated_at");
+  const expectedRevision=body.expected_updated_at;
+  if(hasExpectedRevision && expectedRevision!==null && (typeof expectedRevision!=="string" || expectedRevision.length>64 || !Number.isFinite(Date.parse(expectedRevision)))) return json(request,env,{error:"รุ่นข้อมูลที่ส่งมาไม่ถูกต้อง"},400);
+  const now=Date.now();
+  const expectedMs=typeof expectedRevision==="string"?Date.parse(expectedRevision):NaN;
+  const updatedAt=new Date(hasExpectedRevision && Number.isFinite(expectedMs)?Math.max(now,expectedMs+1):now).toISOString();
+  if(hasExpectedRevision) {
+   const write=await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at WHERE user_app_data.updated_at = ?").bind(user.id,"app_state",serialized,updatedAt,expectedRevision).run();
+   if(write?.meta?.changes===0) return json(request,env,{error:"ข้อมูลถูกแก้ไขจากอีกแท็บแล้ว กรุณาส่งออกข้อมูลปัจจุบันก่อนโหลดข้อมูลล่าสุด",conflict:true},409);
+  } else {
+   // Backward compatibility for older clients during staged releases.
+   await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at").bind(user.id,"app_state",serialized,updatedAt).run();
+  }
+  return json(request,env,{ok:true,updated_at:updatedAt});
  } catch (error) { console.error("money102-api request failed", error); return json(request,env,{error:"เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่ภายหลัง"},500); }
 }};

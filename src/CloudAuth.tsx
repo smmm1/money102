@@ -56,6 +56,7 @@ function readLocalSnapshot(): LocalSnapshot {
 }
 let saveTimer: number | undefined
 let saveChain: Promise<unknown> = Promise.resolve()
+let lastCloudRevision: string | null = null
 function scheduleCloudSave() {
   if (saveTimer !== undefined) window.clearTimeout(saveTimer)
   const scheduledToken = getToken()
@@ -63,9 +64,16 @@ function scheduleCloudSave() {
   saveTimer = window.setTimeout(() => {
     saveTimer = undefined
     const payload = readLocalSnapshot()
-    saveChain = saveChain.then(() => {
+    saveChain = saveChain.then(async () => {
       if (!scheduledToken || scheduledToken !== getToken()) return undefined
-      return api("/api/state", { method: "PUT", body: JSON.stringify({ payload }) })
+      // Resolve the revision when this queued write actually starts. This lets
+      // sequential saves in one tab advance without masking writes from other tabs.
+      const result = await api("/api/state", {
+        method: "PUT",
+        body: JSON.stringify({ payload, expected_updated_at: lastCloudRevision })
+      }) as { updated_at?: unknown }
+      if (scheduledToken === getToken() && typeof result.updated_at === "string") lastCloudRevision = result.updated_at
+      return result
     }).then((result) => {
       if (result !== undefined && scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
     }).catch((error: unknown) => {
@@ -144,11 +152,12 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) { setCloudReady(false); setCloudError(""); return }
     let cancelled = false
-    setCloudReady(false); setCloudError("")
+    setCloudReady(false); setCloudError(""); lastCloudRevision = null
     ;(async () => {
-      const result = await api("/api/state") as { payload?: LocalSnapshot | null }
+      const result = await api("/api/state") as { payload?: LocalSnapshot | null; updated_at?: string | null }
       if (cancelled) return
       restoreSnapshot(result.payload && typeof result.payload === "object" ? result.payload : {})
+      lastCloudRevision = typeof result.updated_at === "string" ? result.updated_at : null
       setCloudReady(true)
     })().catch((error: unknown) => {
       if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
@@ -158,8 +167,13 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const handler = (event: Event) => setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + ((event as CustomEvent).detail || "ไม่ทราบสาเหตุ"))
+    const success = () => setCloudError("")
     window.addEventListener("d1-persist-error", handler)
-    return () => window.removeEventListener("d1-persist-error", handler)
+    window.addEventListener("d1-persist-success", success)
+    return () => {
+      window.removeEventListener("d1-persist-error", handler)
+      window.removeEventListener("d1-persist-success", success)
+    }
   }, [])
 
   async function submit(event: FormEvent) {
@@ -189,6 +203,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   async function signOut() {
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
     setSessionToken("")
+    lastCloudRevision = null
     if (saveTimer !== undefined) window.clearTimeout(saveTimer)
     saveTimer = undefined
     memorySnapshot = {}

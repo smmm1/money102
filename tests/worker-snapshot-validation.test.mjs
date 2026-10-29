@@ -201,3 +201,77 @@ test("password change updates the password hash and invalidates other sessions",
   assert.equal(batched[1].args[1].length, 43);
   assert.notEqual(batched[0].args[1], encode(hash));
 });
+
+
+test("state snapshot writes reject stale revisions instead of overwriting another tab", async () => {
+  let revision = "2026-10-29T00:00:00.000Z";
+  let storedPayload = JSON.stringify({ "lamoon-daytogether-v1": JSON.stringify(validState()) });
+  const db = {
+    prepare(sql) {
+      const statement = {
+        sql, args: [],
+        bind(...args) { this.args = args; return this; },
+        async first() {
+          if (sql.includes("JOIN app_users")) return { id: "user-1", email: "user@example.com" };
+          if (sql.includes("SELECT payload,updated_at FROM user_app_data")) return { payload: storedPayload, updated_at: revision };
+          return null;
+        },
+        async run() {
+          if (sql.includes("INSERT INTO user_app_data") && sql.includes("WHERE user_app_data.updated_at = ?")) {
+            const [, , payload, updatedAt, expected] = this.args;
+            if (revision !== expected) return { meta: { changes: 0 } };
+            storedPayload = payload;
+            revision = updatedAt;
+            return { meta: { changes: 1 } };
+          }
+          if (sql.includes("INSERT INTO user_app_data")) {
+            const [, , payload, updatedAt] = this.args;
+            storedPayload = payload;
+            revision = updatedAt;
+            return { meta: { changes: 1 } };
+          }
+          return { meta: { changes: 0 } };
+        }
+      };
+      return statement;
+    }
+  };
+  const write = async (expectedRevision, state) => worker.fetch(new Request("https://api.example.test/api/state", {
+    method: "PUT",
+    headers: { Authorization: "Bearer " + "t".repeat(40), "Content-Type": "application/json" },
+    body: JSON.stringify({ payload: { "lamoon-daytogether-v1": JSON.stringify(state) }, expected_updated_at: expectedRevision })
+  }), { DB: db });
+  const stateOne = { ...validState(), settings: { ...validState().settings, displayName: "A" } };
+  const stateTwo = { ...validState(), settings: { ...validState().settings, displayName: "B" } };
+  const initialRevision = revision;
+  const success = await write(initialRevision, stateOne);
+  assert.equal(success.status, 200);
+  const body = await success.json();
+  assert.ok(body.updated_at > initialRevision);
+  const latestPayload = storedPayload;
+  const stale = await write(initialRevision, stateTwo);
+  assert.equal(stale.status, 409);
+  assert.equal((await stale.json()).conflict, true);
+  assert.equal(storedPayload, latestPayload);
+});
+
+test("state endpoint preserves legacy unconditional writes while clients roll forward", async () => {
+  let storedPayload = "";
+  const db = {
+    prepare(sql) {
+      const statement = { sql, args: [], bind(...args) { this.args = args; return this; },
+        async first() { return sql.includes("JOIN app_users") ? { id: "user-1", email: "user@example.com" } : null; },
+        async run() {
+          if (sql.includes("INSERT INTO user_app_data")) { storedPayload = this.args[2]; return { meta: { changes: 1 } }; }
+          return { meta: { changes: 0 } };
+        } };
+      return statement;
+    }
+  };
+  const response = await worker.fetch(new Request("https://api.example.test/api/state", {
+    method: "PUT", headers: { Authorization: "Bearer " + "t".repeat(40), "Content-Type": "application/json" },
+    body: JSON.stringify({ payload: { "lamoon-daytogether-v1": JSON.stringify(validState()) } })
+  }), { DB: db });
+  assert.equal(response.status, 200);
+  assert.ok(storedPayload.includes("lamoon-daytogether-v1"));
+});
