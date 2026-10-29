@@ -3,7 +3,7 @@ main = "workers/daytogether-api.js"
 compatibility_date = "2026-10-29"
 
 [vars]
-APP_ORIGIN = "https://daytogether-phase1-preview.onrender.com"
+APP_ORIGIN = "https://daytogether-phase2-preview.onrender.com"
 
 [[d1_databases]]
 binding = "DB"
