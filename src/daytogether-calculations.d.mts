@@ -61,3 +61,23 @@ export type AdjustedSplitResult = SplitResult & {
 };
 export function calculateBillAdjustmentSummary(baseTotalSatang: number, adjustments?: BillAdjustments): BillAdjustmentSummary;
 export function calculateBillSplit(expenses?: SplitExpense[], participants?: SplitParticipant[], settlements?: SplitSettlement[], adjustments?: BillAdjustments): AdjustedSplitResult;
+
+export type DraftBillSplitRow = {
+  key?: string;
+  title: string;
+  amount: string;
+  payerName: string;
+  multiplePayers?: boolean;
+  payerAmounts?: Record<string, string>;
+  participantNames: string[] | null;
+  allocationMode: "equal" | "fixed" | "percentage";
+  allocations: Record<string, string>;
+};
+export type DraftBillSplitPreview = {
+  shares: Record<string, number>;
+  invalidRows: number;
+  baseTotalSatang: number;
+  totalSatang: number;
+  adjustmentSummary: BillAdjustmentSummary;
+};
+export function calculateDraftBillSplitPreview(rows?: DraftBillSplitRow[], participantNames?: string[], adjustments?: BillAdjustments): DraftBillSplitPreview;
