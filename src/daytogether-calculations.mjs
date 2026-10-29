@@ -64,12 +64,21 @@ export function calculateSplit(expenses = [], participants = [], settlements = [
 export function calculateSleepDuration(start, end) {
   const parseLocal = (value) => {
     if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return NaN;
-    return Date.parse(value + ":00Z");
+    const [date, time] = value.split("T");
+    const [year, month, day] = date.split("-").map(Number);
+    const [hour, minute] = time.split(":").map(Number);
+    if (month < 1 || month > 12 || hour > 23 || minute > 59) return NaN;
+    const calendar = new Date(Date.UTC(year, month - 1, day));
+    if (calendar.getUTCFullYear() !== year || calendar.getUTCMonth() !== month - 1 || calendar.getUTCDate() !== day) return NaN;
+    return Date.UTC(year, month - 1, day, hour, minute);
   };
   const startMs = parseLocal(start);
   let endMs = parseLocal(end);
   if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return null;
-  if (endMs <= startMs) endMs += 24 * 60 * 60 * 1000;
+  if (endMs <= startMs) {
+    if (String(start).slice(0, 10) !== String(end).slice(0, 10)) return null;
+    endMs += 24 * 60 * 60 * 1000;
+  }
   const durationHours = (endMs - startMs) / (60 * 60 * 1000);
   if (durationHours <= 0 || durationHours > 24) return null;
   return { durationHours, normalizedEnd: new Date(endMs).toISOString().slice(0, 16) };
