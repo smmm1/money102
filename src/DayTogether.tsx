@@ -327,9 +327,9 @@ export default function DayTogether() {
       if(!title){setNotice("กรุณาตั้งชื่อบิล");return}
       if(oldBill?.settlements.length){setNotice("บิลนี้มีประวัติชำระแล้ว ไม่อนุญาตให้แก้ยอดจนกว่าจะยกเลิกการชำระ");return}
       const uniqueNames=rawNames.filter((name,index)=>(!billIncludesMe||name.toLocaleLowerCase()!==meName.toLocaleLowerCase())&&rawNames.findIndex(n=>n.toLocaleLowerCase()===name.toLocaleLowerCase())===index);
-      if(!uniqueNames.length){setNotice("เพิ่มชื่อผู้ร่วมอย่างน้อยหนึ่งคนก่อนบันทึกบิล");return}
+      if((billIncludesMe&&uniqueNames.length<1)||(!billIncludesMe&&uniqueNames.length<2)){setNotice(billIncludesMe?"เพิ่มชื่อผู้ร่วมอย่างน้อยหนึ่งคนก่อนบันทึกบิล":"เมื่อไม่รวมฉัน ต้องมีผู้ร่วมบิลอย่างน้อยสองคน");return}
       const oldByName=new Map((oldBill?.participants||[]).map(p=>[p.name.trim().toLocaleLowerCase(),p]));
-      const participants:Participant[]=[...(billIncludesMe?[{id:oldBill?.participants.find(p=>p.isMe)?.id||id(),name:meName,isMe:true}]:[]),...uniqueNames.map(name=>({id:oldByName.get(name.toLocaleLowerCase())?.id||id(),name,isMe:false}))];
+      const participants:Participant[]=[...(billIncludesMe?[{id:oldBill?.participants.find(p=>p.isMe)?.id||id(),name:meName,isMe:true}]:[]),...uniqueNames.map(name=>{const oldPerson=oldByName.get(name.toLocaleLowerCase());return {id:oldPerson&&(!oldPerson.isMe||billIncludesMe)?oldPerson.id:id(),name,isMe:false}})];
       const participantByName=new Map(participants.map(p=>[p.name.trim().toLocaleLowerCase(),p]));
       const expenses:Expense[]=[];
       for(const row of billDraftExpenses) {
