@@ -57,7 +57,6 @@ function isBackupState(value: unknown): value is State {
 }
 const satang = (baht: number) => Math.round(baht * 100)
 const money = (value: number, hidden = false) => hidden ? "•••••" : new Intl.NumberFormat("th-TH", { style: "currency", currency: "THB", minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value / 100)
-const dateText = (s: string) => formatDateInTimezone(s, "Asia/Bangkok")
 const monthKey = (s: string) => s.slice(0,7)
 const KIND_LABEL: Record<HealthKind,string> = { weight:"น้ำหนัก", pressure:"ความดัน", sleep:"การนอน", water:"ดื่มน้ำ", symptom:"อาการ / บันทึก", exercise:"ออกกำลังกาย" }
 const PAGE_LABEL: Record<string,string> = { "/":"หน้าหลัก","/savings":"ออมเงิน","/health":"สุขภาพ","/notes":"โน้ตและไดอารี","/split":"หารตัง","/bbq":"ประวัติกินหมูกระทะ","/settings":"ตั้งค่า" }
