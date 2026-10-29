@@ -140,7 +140,7 @@ export default function DayTogether() {
       const trendKind:HealthKind=(["weight","water","sleep"].includes(kindFilter)?kindFilter:"weight") as HealthKind
       const cutoff=new Date();cutoff.setDate(cutoff.getDate()-healthRange+1)
       const cutoffKey=`${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,"0")}-${String(cutoff.getDate()).padStart(2,"0")}`
-      const trendRows=state.health.filter(h=>h.kind===trendKind&&h.date.slice(0,10)>=cutoffKey&&h.value.trim()!==""&&Number.isFinite(Number(h.value))).sort((a,b)=>a.date.localeCompare(b.date))
+      const trendRows=state.health.filter(h=>h.kind===trendKind&&h.date.slice(0,10)>=cutoffKey&&h.date.slice(0,10)<=today()&&h.value.trim()!==""&&Number.isFinite(Number(h.value))).sort((a,b)=>a.date.localeCompare(b.date))
       const trendByDay=new Map<string,number>()
       for(const row of trendRows){const key=row.date.slice(0,10);const value=Number(row.value);trendByDay.set(key,trendKind==="water"?(trendByDay.get(key)||0)+value:value)}
       const trendPoints=[...trendByDay.entries()].map(([date,value])=>({date,value})).sort((a,b)=>a.date.localeCompare(b.date))
