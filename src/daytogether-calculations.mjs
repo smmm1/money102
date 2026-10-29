@@ -265,3 +265,163 @@ export function formatDateInTimezone(value, timezone = "Asia/Bangkok") {
     return format(instant, "Asia/Bangkok");
   }
 }
+
+
+function apportionSatang(totalSatang, ids, weights) {
+  if (!Number.isSafeInteger(totalSatang) || totalSatang < 0 || ids.length !== weights.length) return null;
+  if (totalSatang === 0) return ids.map(() => 0);
+  const normalized = weights.map(value => Number.isSafeInteger(value) && value >= 0 ? BigInt(value) : -1n);
+  if (normalized.some(value => value < 0n)) return null;
+  const weightTotal = normalized.reduce((sum, value) => sum + value, 0n);
+  if (weightTotal <= 0n) return null;
+  const amount = BigInt(totalSatang);
+  const shares = normalized.map(weight => Number((amount * weight) / weightTotal));
+  const remainders = normalized.map(weight => (amount * weight) % weightTotal);
+  let remaining = totalSatang - shares.reduce((sum, value) => sum + value, 0);
+  const order = ids.map((_, index) => index).sort((a, b) =>
+    remainders[a] === remainders[b] ? a - b : (remainders[a] > remainders[b] ? -1 : 1)
+  );
+  for (let index = 0; remaining > 0; index++, remaining--) shares[order[index]]++;
+  return shares;
+}
+
+function roundedBasisPointAmount(amountSatang, basisPoints) {
+  return Number((BigInt(amountSatang) * BigInt(basisPoints) + 5000n) / 10000n);
+}
+
+/**
+ * Calculates the final bill, service fee, tax, discount, personal shares,
+ * actual contributions, settlements and transfer plan in integer satang.
+ * Fees are paid by adjustmentPayerId; a bill-level discount reduces both
+ * responsibility and contribution proportionally so all net balances sum to 0.
+ */
+export function calculateAdjustedSplit(expenses = [], participants = [], settlements = [], adjustments = {}) {
+  const fail = (error) => ({
+    valid: false, error, subtotalSatang: null, serviceFeeSatang: null, taxSatang: null,
+    discountSatang: null, totalSatang: null, responsibilityByParticipant: {}, paidByParticipant: {},
+    balances: {}, transfers: [],
+  });
+  if (!Array.isArray(participants) || participants.length < 2 || !Array.isArray(expenses) || expenses.length === 0 || !Array.isArray(settlements)) {
+    return fail("บิลต้องมีผู้ร่วมอย่างน้อยสองคนและมีรายการค่าใช้จ่าย");
+  }
+  const ids = participants.map(person => person?.id);
+  if (ids.some(id => typeof id !== "string" || !id) || new Set(ids).size !== ids.length) return fail("รายชื่อผู้ร่วมบิลมีรหัสซ้ำหรือไม่ถูกต้อง");
+  const hasId = id => ids.includes(id);
+  const baseShares = Object.fromEntries(ids.map(id => [id, 0]));
+  const basePaid = Object.fromEntries(ids.map(id => [id, 0]));
+  let subtotalSatang = 0;
+  for (const expense of expenses) {
+    if (!expense || typeof expense.title !== "string" || !expense.title.trim() ||
+      !Number.isSafeInteger(expense.amountSatang) || expense.amountSatang <= 0 ||
+      !Array.isArray(expense.participantIds) || !expense.participantIds.length) return fail("รายการค่าใช้จ่ายมีข้อมูลไม่ถูกต้อง");
+    const assigned = [...expense.participantIds];
+    if (new Set(assigned).size !== assigned.length || assigned.some(id => !hasId(id))) return fail("รายชื่อผู้ร่วมรับผิดชอบมีข้อมูลซ้ำหรือไม่ถูกต้อง");
+    let shares;
+    if (expense.allocationMode === "fixed") {
+      shares = assigned.map(id => expense.allocations?.[id]);
+      if (shares.some(value => !Number.isSafeInteger(value) || value < 0) ||
+        shares.reduce((sum, value) => sum + BigInt(value), 0n) !== BigInt(expense.amountSatang)) return fail("ยอดแบ่งที่กำหนดเองต้องรวมเท่ากับยอดรายการ");
+    } else if (expense.allocationMode === "percentage") {
+      const points = assigned.map(id => expense.allocations?.[id]);
+      if (points.some(value => !Number.isSafeInteger(value) || value < 0 || value > 10000) ||
+        points.reduce((sum, value) => sum + value, 0) !== 10000) return fail("เปอร์เซ็นต์ของผู้ร่วมรายการต้องรวมกันเท่ากับ 100%");
+      shares = apportionSatang(expense.amountSatang, assigned, points);
+    } else if (expense.allocationMode === undefined || expense.allocationMode === "equal") {
+      shares = apportionSatang(expense.amountSatang, assigned, assigned.map(() => 1));
+    } else return fail("วิธีแบ่งค่าใช้จ่ายไม่ถูกต้อง");
+    if (!shares) return fail("คำนวณส่วนแบ่งค่าใช้จ่ายไม่สำเร็จ");
+    assigned.forEach((id, index) => {
+      const next = baseShares[id] + shares[index];
+      if (!Number.isSafeInteger(next)) throw new RangeError("bill share exceeds safe integer");
+      baseShares[id] = next;
+    });
+    if (Array.isArray(expense.payers)) {
+      const payers = expense.payers;
+      if (!payers.length || payers.some(payer => !payer || !hasId(payer.participantId) ||
+        !Number.isSafeInteger(payer.amountSatang) || payer.amountSatang < 0) ||
+        new Set(payers.map(payer => payer.participantId)).size !== payers.length ||
+        payers.reduce((sum, payer) => sum + BigInt(payer.amountSatang), 0n) !== BigInt(expense.amountSatang)) {
+        return fail("ยอดที่ผู้จ่ายแต่ละคนออกต้องรวมเท่ากับยอดรายการ");
+      }
+      for (const payer of payers) {
+        const next = basePaid[payer.participantId] + payer.amountSatang;
+        if (!Number.isSafeInteger(next)) return fail("ยอดที่จ่ายรวมเกินช่วงที่รองรับ");
+        basePaid[payer.participantId] = next;
+      }
+    } else {
+      if (!hasId(expense.payerId)) return fail("ไม่พบผู้จ่ายเงินของรายการ");
+      const next = basePaid[expense.payerId] + expense.amountSatang;
+      if (!Number.isSafeInteger(next)) return fail("ยอดที่จ่ายรวมเกินช่วงที่รองรับ");
+      basePaid[expense.payerId] = next;
+    }
+    subtotalSatang += expense.amountSatang;
+    if (!Number.isSafeInteger(subtotalSatang)) return fail("ยอดรวมเกินช่วงที่รองรับ");
+  }
+  if (subtotalSatang <= 0) return fail("ยอดรวมต้องมากกว่า 0");
+  const serviceFeeRateBps = adjustments?.serviceFeeRateBps ?? 0;
+  const taxRateBps = adjustments?.taxRateBps ?? 0;
+  const serviceFeeIncluded = adjustments?.serviceFeeIncluded ?? false;
+  const taxIncluded = adjustments?.taxIncluded ?? false;
+  const discountSatang = adjustments?.discountSatang ?? 0;
+  if (![serviceFeeRateBps, taxRateBps].every(value => Number.isSafeInteger(value) && value >= 0 && value <= 10000) ||
+    typeof serviceFeeIncluded !== "boolean" || typeof taxIncluded !== "boolean" ||
+    !Number.isSafeInteger(discountSatang) || discountSatang < 0) return fail("ค่าบริการ ภาษี หรือส่วนลดมีรูปแบบไม่ถูกต้อง");
+  const serviceFeeSatang = serviceFeeIncluded ? 0 : roundedBasisPointAmount(subtotalSatang, serviceFeeRateBps);
+  const afterService = subtotalSatang + serviceFeeSatang;
+  if (!Number.isSafeInteger(afterService)) return fail("ยอดรวมค่าบริการเกินช่วงที่รองรับ");
+  const taxSatang = taxIncluded ? 0 : roundedBasisPointAmount(afterService, taxRateBps);
+  const beforeDiscount = afterService + taxSatang;
+  if (!Number.isSafeInteger(beforeDiscount)) return fail("ยอดรวมภาษีเกินช่วงที่รองรับ");
+  if (discountSatang > beforeDiscount) return fail("ส่วนลดต้องไม่มากกว่ายอดรวมก่อนหักส่วนลด");
+  const adjustmentPayerId = adjustments?.adjustmentPayerId || ids[0];
+  if ((serviceFeeSatang > 0 || taxSatang > 0) && !hasId(adjustmentPayerId)) return fail("เลือกผู้ที่จ่ายค่าบริการและภาษี");
+  const serviceShares = apportionSatang(serviceFeeSatang, ids, ids.map(id => baseShares[id]));
+  if (!serviceShares) return fail("กระจายค่าบริการตามส่วนรับผิดชอบไม่สำเร็จ");
+  const sharesAfterService = Object.fromEntries(ids.map((id, index) => [id, baseShares[id] + serviceShares[index]]));
+  const taxShares = apportionSatang(taxSatang, ids, ids.map(id => sharesAfterService[id]));
+  if (!taxShares) return fail("กระจายภาษีตามส่วนรับผิดชอบไม่สำเร็จ");
+  const grossShares = Object.fromEntries(ids.map((id, index) => [id, sharesAfterService[id] + taxShares[index]]));
+  const paidBeforeDiscount = { ...basePaid };
+  if (serviceFeeSatang + taxSatang > 0) {
+    if (!hasId(adjustmentPayerId)) return fail("เลือกผู้ที่จ่ายค่าบริการและภาษี");
+    const paid = paidBeforeDiscount[adjustmentPayerId] + serviceFeeSatang + taxSatang;
+    if (!Number.isSafeInteger(paid)) return fail("ยอดที่จ่ายรวมเกินช่วงที่รองรับ");
+    paidBeforeDiscount[adjustmentPayerId] = paid;
+  }
+  const discountShares = apportionSatang(discountSatang, ids, ids.map(id => grossShares[id]));
+  if (!discountShares) return fail("กระจายส่วนลดตามสัดส่วนไม่สำเร็จ");
+  const paidWeights = ids.map(id => paidBeforeDiscount[id]);
+  const discountPaid = apportionSatang(discountSatang, ids, paidWeights);
+  if (!discountPaid) return fail("กระจายส่วนลดให้ผู้จ่ายไม่สำเร็จ");
+  const responsibilityByParticipant = Object.fromEntries(ids.map((id, index) => [id, grossShares[id] - discountShares[index]]));
+  const paidByParticipant = Object.fromEntries(ids.map((id, index) => [id, paidBeforeDiscount[id] - discountPaid[index]]));
+  const totalSatang = beforeDiscount - discountSatang;
+  if (Object.values(responsibilityByParticipant).reduce((sum, value) => sum + BigInt(value), 0n) !== BigInt(totalSatang) ||
+    Object.values(paidByParticipant).reduce((sum, value) => sum + BigInt(value), 0n) !== BigInt(totalSatang)) return fail("ยอดส่วนรับผิดชอบและยอดที่จ่ายรวมกันไม่ตรงกับยอดสุทธิ");
+  const balances = Object.fromEntries(ids.map(id => [id, paidByParticipant[id] - responsibilityByParticipant[id]]));
+  for (const settlement of settlements) {
+    if (!settlement || !Number.isSafeInteger(settlement.amountSatang) || settlement.amountSatang <= 0 ||
+      !hasId(settlement.fromId) || !hasId(settlement.toId) || settlement.fromId === settlement.toId) return fail("รายการชำระบิลไม่ถูกต้อง");
+    const from = balances[settlement.fromId], to = balances[settlement.toId];
+    if (from >= 0 || to <= 0 || settlement.amountSatang > -from || settlement.amountSatang > to) return fail("รายการชำระเกินยอดที่ต้องเคลียร์");
+    balances[settlement.fromId] += settlement.amountSatang;
+    balances[settlement.toId] -= settlement.amountSatang;
+  }
+  const creditors = ids.map(id => ({ id, amount: balances[id] })).filter(person => person.amount > 0).sort((a, b) => b.amount - a.amount || a.id.localeCompare(b.id));
+  const debtors = ids.map(id => ({ id, amount: -balances[id] })).filter(person => person.amount > 0).sort((a, b) => b.amount - a.amount || a.id.localeCompare(b.id));
+  const transfers = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    const amount = Math.min(debtors[i].amount, creditors[j].amount);
+    if (amount > 0) transfers.push({ fromId: debtors[i].id, toId: creditors[j].id, amountSatang: amount });
+    debtors[i].amount -= amount; creditors[j].amount -= amount;
+    if (debtors[i].amount === 0) i++;
+    if (creditors[j].amount === 0) j++;
+  }
+  if (Object.values(balances).reduce((sum, value) => sum + BigInt(value), 0n) !== 0n) return fail("ยอดสุทธิของผู้ร่วมบิลไม่รวมเป็นศูนย์");
+  return {
+    valid: true, error: null, subtotalSatang, serviceFeeSatang, taxSatang, discountSatang, totalSatang,
+    serviceFeeRateBps, taxRateBps, serviceFeeIncluded, taxIncluded,
+    responsibilityByParticipant, paidByParticipant, balances, transfers,
+  };
+}
