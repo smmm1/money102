@@ -1,5 +1,6 @@
+import CloudAuth from "./CloudAuth"
 import DayTogether from "./DayTogether"
 
 export default function App() {
-  return <DayTogether />
+  return <CloudAuth><DayTogether /></CloudAuth>
 }
