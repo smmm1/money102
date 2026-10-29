@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, formatDateInTimezone } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -179,6 +179,43 @@ test("personal share permits a payer who is not participating in that expense", 
       { participantId: "c", amountSatang: 600 }, { participantId: "d", amountSatang: 400 },
     ], participantIds: ["a", "b"], allocationMode: "equal",
   }], "b"), 500);
+});
+
+
+test("health trends preserve missing calendar days as gaps", () => {
+  assert.deepEqual(buildDailyTrend([
+    { date: "2026-10-27", value: "70" },
+    { date: "2026-10-29", value: "69.5" },
+  ], "2026-10-27", "2026-10-30"), [
+    { date: "2026-10-27", value: 70 },
+    { date: "2026-10-28", value: null },
+    { date: "2026-10-29", value: 69.5 },
+    { date: "2026-10-30", value: null },
+  ]);
+});
+
+test("water trend sums multiple entries on a day and keeps other days empty", () => {
+  assert.deepEqual(buildDailyTrend([
+    { date: "2026-10-28T08:00", value: "250" },
+    { date: "2026-10-28T12:00", value: "500" },
+    { date: "2026-10-30", value: "300" },
+  ], "2026-10-28", "2026-10-30", "sum"), [
+    { date: "2026-10-28", value: 750 },
+    { date: "2026-10-29", value: null },
+    { date: "2026-10-30", value: 300 },
+  ]);
+});
+
+test("health trend helper rejects invalid date ranges and ignores invalid values", () => {
+  assert.deepEqual(buildDailyTrend([], "2026-02-30", "2026-03-01"), []);
+  assert.deepEqual(buildDailyTrend([], "2026-03-02", "2026-03-01"), []);
+  assert.deepEqual(buildDailyTrend([
+    { date: "2026-03-01", value: "not-a-number" },
+    { date: "2026-03-02", value: "" },
+  ], "2026-03-01", "2026-03-02"), [
+    { date: "2026-03-01", value: null },
+    { date: "2026-03-02", value: null },
+  ]);
 });
 
 
