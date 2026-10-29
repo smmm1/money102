@@ -76,12 +76,34 @@ function validDayTogetherState(raw) {
    if(assigned.length!==expense.participantIds.length||assigned.some(id=>!participants.has(id)))return false;
    if(expense.allocationMode==="fixed"){
     const values=assigned.map(id=>expense.allocations?.[id]);
-    if(values.some(value=>!integer(value))||values.reduce((sum,value)=>sum+value,0)!==expense.amountSatang)return false;
+    if(values.some(value=>!integer(value))||values.reduce((sum,value)=>sum+BigInt(value),0n)!==BigInt(expense.amountSatang))return false;
    }else if(expense.allocationMode==="percentage"){
     const values=assigned.map(id=>expense.allocations?.[id]);
     if(values.some(value=>!integer(value)||value>10000)||values.reduce((sum,value)=>sum+value,0)!==10000)return false;
    }else if(expense.allocationMode!==undefined&&expense.allocationMode!=="equal")return false;
+   if(expense.payers!==undefined){
+    if(!Array.isArray(expense.payers)||!expense.payers.length||expense.payers.some(payer=>!payer||!participants.has(payer.participantId)||!integer(payer.amountSatang))||
+      new Set(expense.payers.map(payer=>payer.participantId)).size!==expense.payers.length||
+      expense.payers.reduce((sum,payer)=>sum+BigInt(payer.amountSatang),0n)!==BigInt(expense.amountSatang))return false;
+   }
    total+=expense.amountSatang;if(!Number.isSafeInteger(total))return false;
+  }
+  if(bill.adjustments!==undefined){
+   const adjustment=bill.adjustments;
+   if(!adjustment||typeof adjustment!=="object"||Array.isArray(adjustment))return false;
+   const feeRate=adjustment.serviceFeeRateBps??0,taxRate=adjustment.taxRateBps??0;
+   const feeIncluded=adjustment.serviceFeeIncluded??false,taxIncluded=adjustment.taxIncluded??false;
+   const discount=adjustment.discountSatang??0;
+   if(!integer(feeRate)||feeRate>10000||!integer(taxRate)||taxRate>10000||
+      typeof feeIncluded!=="boolean"||typeof taxIncluded!=="boolean"||!integer(discount))return false;
+   const fee=feeIncluded?0:Number((BigInt(total)*BigInt(feeRate)+5000n)/10000n);
+   const afterFee=total+fee;if(!Number.isSafeInteger(afterFee))return false;
+   const tax=taxIncluded?0:Number((BigInt(afterFee)*BigInt(taxRate)+5000n)/10000n);
+   const beforeDiscount=afterFee+tax;
+   if(!Number.isSafeInteger(beforeDiscount)||discount>beforeDiscount)return false;
+   if(adjustment.adjustmentPayerId!==undefined&&adjustment.adjustmentPayerId!==""&&
+      (typeof adjustment.adjustmentPayerId!=="string"||!participants.has(adjustment.adjustmentPayerId)))return false;
+   if((fee>0||tax>0)&&(!adjustment.adjustmentPayerId||!participants.has(adjustment.adjustmentPayerId)))return false;
   }
   for(const settlement of bill.settlements)if(!settlement||typeof settlement.id!=="string"||!settlement.id||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
   if(typeof bill.restaurant!=="string"||bill.restaurant.length>200||typeof bill.note!=="string"||bill.note.length>4000)return false;
