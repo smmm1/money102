@@ -341,4 +341,16 @@ test("draft money and percentage parsing avoid binary floating-point rounding", 
   assert.equal(percentages.invalidRows, 0);
   assert.equal(percentages.baseTotalSatang, 3);
   assert.equal(percentages.shares["ฉัน"] + percentages.shares["บี"], 3);
+
+  const invalidPercent = calculateDraftBillSplitPreview([
+    row("1.00", "percentage", { "ฉัน": "33.335", "บี": "66.665" }),
+  ], ["ฉัน", "บี"]);
+  assert.equal(invalidPercent.invalidRows, 1);
+  assert.equal(invalidPercent.baseTotalSatang, 0);
+
+  const invalidFixed = calculateDraftBillSplitPreview([
+    row("1.00", "fixed", { "ฉัน": "0.505", "บี": "0.495" }),
+  ], ["ฉัน", "บี"]);
+  assert.equal(invalidFixed.invalidRows, 1);
+  assert.equal(invalidFixed.baseTotalSatang, 0);
 });
