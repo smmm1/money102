@@ -105,15 +105,17 @@ export function calculateDraftSplitPreview(rows = [], participantNames = []) {
     let values;
     if (row.allocationMode === "fixed") {
       values = selected.map((name) => {
-        const value = Number(String(row.allocations?.[name] ?? "").trim());
-        return Number.isFinite(value) && value >= 0 ? Math.round(value * 100) : NaN;
+        const raw = String(row.allocations?.[name] ?? "").trim();
+        const value = Number(raw);
+        return raw !== "" && Number.isFinite(value) && value >= 0 ? Math.round(value * 100) : NaN;
       });
       if (values.some((value) => !Number.isSafeInteger(value)) ||
           values.reduce((sum, value) => sum + value, 0) !== amountSatang) { invalidRows++; continue; }
     } else if (row.allocationMode === "percentage") {
       const points = selected.map((name) => {
-        const value = Number(String(row.allocations?.[name] ?? "").trim());
-        return Number.isFinite(value) && value >= 0 && value <= 100 ? Math.round(value * 100) : NaN;
+        const raw = String(row.allocations?.[name] ?? "").trim();
+        const value = Number(raw);
+        return raw !== "" && Number.isFinite(value) && value >= 0 && value <= 100 ? Math.round(value * 100) : NaN;
       });
       if (points.some((value) => !Number.isSafeInteger(value)) ||
           points.reduce((sum, value) => sum + value, 0) !== 10000) { invalidRows++; continue; }
