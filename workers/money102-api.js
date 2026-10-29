@@ -164,6 +164,26 @@ export default { async fetch(request,env) {
    return json(request,env,await issueSession(env.DB,{id:row.id,email:row.email}));
   }
   if(url.pathname==="/api/auth/me"&&request.method==="GET") { const user=await getAuthenticatedUser(request,env.DB); return user?json(request,env,{user}):json(request,env,{error:"เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"},401); }
+  if(url.pathname==="/api/auth/password"&&request.method==="POST") {
+   const user=await getAuthenticatedUser(request,env.DB);
+   if(!user)return json(request,env,{error:"Unauthorized"},401);
+   const body=await parseBody(request);
+   const currentPassword=typeof body?.currentPassword==="string"?body.currentPassword:"";
+   const newPassword=typeof body?.newPassword==="string"?body.newPassword:"";
+   if(newPassword.length<8||newPassword.length>128)return json(request,env,{error:"รหัสผ่านใหม่ต้องมีความยาว 8–128 ตัวอักษร"},400);
+   if(!currentPassword||currentPassword.length>128)return json(request,env,{error:"กรุณากรอกรหัสผ่านปัจจุบัน"},400);
+   const row=await env.DB.prepare("SELECT password_salt,password_hash FROM app_users WHERE id=?").bind(user.id).first();
+   if(!row||!constantTimeEqual(await passwordHash(currentPassword,fromBase64Url(row.password_salt)),fromBase64Url(row.password_hash)))return json(request,env,{error:"รหัสผ่านปัจจุบันไม่ถูกต้อง"},401);
+   const salt=randomBytes(16);
+   const hash=await passwordHash(newPassword,salt);
+   const authorization=request.headers.get("Authorization")||"";
+   const tokenHash=await sha256(authorization.slice(7).trim());
+   await env.DB.batch([
+    env.DB.prepare("UPDATE app_users SET password_salt=?,password_hash=? WHERE id=?").bind(toBase64Url(salt),toBase64Url(hash),user.id),
+    env.DB.prepare("DELETE FROM app_sessions WHERE user_id=? AND token_hash<>?").bind(user.id,tokenHash)
+   ]);
+   return json(request,env,{ok:true});
+  }
   if(url.pathname==="/api/auth/logout"&&request.method==="POST") { const auth=request.headers.get("Authorization")||""; if(auth.startsWith("Bearer "))await env.DB.prepare("DELETE FROM app_sessions WHERE token_hash=?").bind(await sha256(auth.slice(7).trim())).run(); return json(request,env,{ok:true}); }
   if(url.pathname==="/api/auth/account"&&request.method==="DELETE") {
    const user=await getAuthenticatedUser(request,env.DB);
