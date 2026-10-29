@@ -131,3 +131,72 @@ export function calculateDraftSplitPreview(rows = [], participantNames = []) {
   }
   return { shares, invalidRows };
 }
+
+
+/**
+ * Returns the exact personal share of a participant across an expense list.
+ * A null result means the stored allocation is incomplete or invalid, so the
+ * caller must not present a partial total as if it were authoritative.
+ */
+export function calculateExpenseResponsibility(expenses = [], participantId) {
+  if (typeof participantId !== "string" || !participantId) return null;
+  let total = 0;
+  for (const expense of expenses) {
+    if (!expense || !Number.isSafeInteger(expense.amountSatang) || expense.amountSatang <= 0 ||
+        typeof expense.payerId !== "string" || !Array.isArray(expense.participantIds)) return null;
+    const ids = [...new Set(expense.participantIds.filter((id) => typeof id === "string" && id))];
+    if (!ids.length) return null;
+    if (Array.isArray(expense.payers)) {
+      const payers = expense.payers;
+      if (!payers.length ||
+          payers.some((payer) => !payer || typeof payer.participantId !== "string" || !payer.participantId ||
+            !Number.isSafeInteger(payer.amountSatang) || payer.amountSatang <= 0) ||
+          new Set(payers.map((payer) => payer.participantId)).size !== payers.length ||
+          payers.reduce((sum, payer) => sum + BigInt(payer.amountSatang), 0n) !== BigInt(expense.amountSatang)) return null;
+    }
+    const participantIndex = ids.indexOf(participantId);
+    if (participantIndex < 0) continue;
+    let share = 0;
+    if (expense.allocationMode === "fixed") {
+      const values = ids.map((id) => expense.allocations?.[id]);
+      if (values.some((value) => !Number.isSafeInteger(value) || value < 0) ||
+          values.reduce((sum, value) => sum + BigInt(value), 0n) !== BigInt(expense.amountSatang)) return null;
+      share = values[participantIndex];
+    } else if (expense.allocationMode === "percentage") {
+      const points = ids.map((id) => expense.allocations?.[id]);
+      if (points.some((value) => !Number.isSafeInteger(value) || value < 0 || value > 10000) ||
+          points.reduce((sum, value) => sum + value, 0) !== 10000) return null;
+      const shares = points.map((value) => Number((BigInt(expense.amountSatang) * BigInt(value)) / 10000n));
+      const remainder = expense.amountSatang - shares.reduce((sum, value) => sum + value, 0);
+      for (let index = 0; index < remainder; index++) shares[index % shares.length]++;
+      share = shares[participantIndex];
+    } else if (expense.allocationMode === undefined || expense.allocationMode === "equal") {
+      const base = Math.floor(expense.amountSatang / ids.length);
+      const remainder = expense.amountSatang % ids.length;
+      share = base + (participantIndex < remainder ? 1 : 0);
+    } else {
+      return null;
+    }
+    if (!Number.isSafeInteger(total + share)) return null;
+    total += share;
+  }
+  return total;
+}
+
+/** Summarizes known personal costs without treating missing values as zero. */
+export function summarizeBbqPersonalCosts(visits = []) {
+  const rows = Array.isArray(visits) ? visits : [];
+  const known = rows.filter((visit) => Number.isSafeInteger(visit?.personalSatang) && visit.personalSatang >= 0);
+  const totalSatang = known.reduce((sum, visit) => sum + visit.personalSatang, 0);
+  if (!Number.isSafeInteger(totalSatang)) {
+    return { totalSatang: null, knownCount: known.length, unknownCount: rows.length - known.length, averageSatang: null, complete: false };
+  }
+  const unknownCount = rows.length - known.length;
+  return {
+    totalSatang: known.length ? totalSatang : null,
+    knownCount: known.length,
+    unknownCount,
+    averageSatang: known.length ? Math.round(totalSatang / known.length) : null,
+    complete: unknownCount === 0,
+  };
+}

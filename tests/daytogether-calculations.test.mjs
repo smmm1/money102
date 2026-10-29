@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -134,4 +134,49 @@ test("live bill preview handles participant subsets and incomplete rows safely",
   ], ["ฉัน", "บี", "ซี"]);
   assert.deepEqual(plain(result.shares), { "ฉัน": 0, "บี": 600, "ซี": 600 });
   assert.equal(result.invalidRows, 2);
+});
+
+
+test("BBQ personal-cost summary keeps unknown values separate from zero", () => {
+  assert.deepEqual(summarizeBbqPersonalCosts([
+    { personalSatang: 1250 }, { personalSatang: null }, { personalSatang: 0 }, {},
+  ]), { totalSatang: 1250, knownCount: 2, unknownCount: 2, averageSatang: 625, complete: false });
+  assert.deepEqual(summarizeBbqPersonalCosts([{ personalSatang: null }, {}]), {
+    totalSatang: null, knownCount: 0, unknownCount: 2, averageSatang: null, complete: false,
+  });
+  assert.deepEqual(summarizeBbqPersonalCosts([]), {
+    totalSatang: null, knownCount: 0, unknownCount: 0, averageSatang: null, complete: true,
+  });
+});
+
+test("personal responsibility uses exact integer arithmetic for percentage allocations", () => {
+  const amountSatang = 9007199254740000;
+  const firstShare = Number((BigInt(amountSatang) * 3333n) / 10000n);
+  const secondShare = amountSatang - firstShare;
+  const expense = {
+    amountSatang, payerId: "a", participantIds: ["a", "b"], allocationMode: "percentage",
+    allocations: { a: 3333, b: 6667 },
+  };
+  assert.equal(calculateExpenseResponsibility([expense], "a"), firstShare);
+  assert.equal(calculateExpenseResponsibility([expense], "b"), secondShare);
+  assert.equal(calculateExpenseResponsibility([expense], "c"), 0);
+});
+
+test("personal responsibility refuses to report a total when an allocation is invalid", () => {
+  assert.equal(calculateExpenseResponsibility([{
+    amountSatang: 10001, payerId: "a", participantIds: ["a", "b"], allocationMode: "percentage",
+    allocations: { a: 3333, b: 6666 },
+  }], "a"), null);
+});
+
+
+test("personal share permits a payer who is not participating in that expense", () => {
+  assert.equal(calculateExpenseResponsibility([{
+    amountSatang: 1000, payerId: "c", participantIds: ["a", "b"], allocationMode: "equal",
+  }], "a"), 500);
+  assert.equal(calculateExpenseResponsibility([{
+    amountSatang: 1000, payerId: "c", payers: [
+      { participantId: "c", amountSatang: 600 }, { participantId: "d", amountSatang: 400 },
+    ], participantIds: ["a", "b"], allocationMode: "equal",
+  }], "b"), 500);
 });
