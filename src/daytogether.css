@@ -19,3 +19,13 @@
 
 .cc-account{position:relative;display:flex;align-items:center}.cc-account-trigger{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--dt-border);border-radius:50%;background:var(--dt-surface);color:var(--dt-primary);font-weight:700}.cc-account-dismiss{position:fixed;inset:0;z-index:30;border:0;background:transparent;cursor:default}.cc-account-menu{position:absolute;right:0;top:46px;z-index:32;width:min(270px,calc(100vw - 28px));padding:15px;border:1px solid var(--dt-border);border-radius:12px;background:var(--dt-surface);box-shadow:0 12px 35px #0f172a20}.cc-account-menu small,.cc-account-menu strong,.cc-account-connected{display:block;overflow-wrap:anywhere}.cc-account-menu small{color:var(--dt-muted);font-size:11px}.cc-account-menu strong{margin:7px 0;font-size:13px}.cc-account-connected{color:var(--dt-muted);font-size:12px;margin:10px 0}.cc-account-connected i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin-right:5px}.cc-account-menu>button{width:100%;display:flex;justify-content:space-between;padding:10px 0 0;border:0;border-top:1px solid var(--dt-border);background:transparent;color:#b91c1c;font-size:13px}
 @media(max-width:760px){.dt-top-actions .cc-account-trigger{width:36px;height:36px}.cc-account-menu{position:fixed;top:80px;right:12px}}
+
+.dt-split-share-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:14px;border:1px solid var(--dt-border);border-radius:12px;background:var(--dt-bg)}
+.dt-split-share-grid>strong{grid-column:1/-1;font-size:13px}
+.dt-split-payment-editor{display:grid;gap:8px;padding:14px;border:1px solid var(--dt-border);border-radius:12px;background:var(--dt-bg)}
+.dt-split-payment-editor>strong{font-size:14px}
+.dt-split-payment-editor>p{margin:0;color:var(--dt-muted);font-size:12px}
+.dt-split-payment-editor>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dt-split-payment-editor label{display:grid;gap:6px;font-size:12px;color:var(--dt-muted)}
+.dt-split-payment-editor input{width:100%;min-width:0}
+@media(max-width:760px){.dt-split-share-grid,.dt-split-payment-editor>div{grid-template-columns:1fr}}
