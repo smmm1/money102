@@ -285,6 +285,16 @@ export default function DayTogether() {
     }
     setPendingCloseAfterSave(false); setModal(null); setEditId("")
   }
+  const resetSampleData = () => {
+    if (!window.confirm("รีเซ็ตข้อมูลตัวอย่างทั้งหมดในหน่วยความจำหรือไม่?")) return;
+    setState({ ...defaults, settings: { ...defaults.settings, theme } });
+    setNotice("รีเซ็ตข้อมูลตัวอย่างแล้ว (ไม่กระทบข้อมูลถาวร)");
+    setModal(null);
+    setEditId("");
+    setQuickAddOpen(false);
+    setOpenNoteId("");
+    setUndoAction(null);
+  };
   const deleteItem = (collection: "goals"|"savings"|"health"|"notes"|"bills"|"visits", itemId: string) => {
     const snapshot = state
     if(!window.confirm("ลบรายการตัวอย่างนี้หรือไม่? สามารถกู้คืนได้ทันทีจากปุ่ม “เลิกทำ”")) return
