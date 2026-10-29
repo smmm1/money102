@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateAdjustedSplit } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -243,4 +243,63 @@ test("invalid timezone labels return a safe fallback instead of throwing", () =>
   assert.equal(formatDateInTimezone("2026-02-31", "UTC"), "ไม่ระบุวันที่");
   assert.equal(formatDateInTimezone("2026-01-01T12:00:00.000Z", "Not/A_Timezone"),
     formatDateInTimezone("2026-01-01T12:00:00.000Z", "Asia/Bangkok"));
+});
+
+
+test("bill adjustments apply service fee then tax, then a proportional discount in satang", () => {
+  const participants = [
+    { id: "a", name: "A" }, { id: "b", name: "B" }, { id: "c", name: "C" },
+  ];
+  const result = calculateAdjustedSplit([{
+    id: "food", title: "อาหาร", amountSatang: 10000, payerId: "a",
+    participantIds: ["a", "b", "c"], allocationMode: "equal",
+  }], participants, [], {
+    serviceFeeRateBps: 1000, taxRateBps: 700, discountSatang: 500,
+    adjustmentPayerId: "b",
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.subtotalSatang, 10000);
+  assert.equal(result.serviceFeeSatang, 1000);
+  assert.equal(result.taxSatang, 770);
+  assert.equal(result.discountSatang, 500);
+  assert.equal(result.totalSatang, 11270);
+  assert.equal(Object.values(result.responsibilityByParticipant).reduce((sum, value) => sum + value, 0), 11270);
+  assert.equal(Object.values(result.paidByParticipant).reduce((sum, value) => sum + value, 0), 11270);
+  assert.equal(Object.values(result.balances).reduce((sum, value) => sum + value, 0), 0);
+});
+
+test("bill adjustments do not double-add fee or tax marked as included", () => {
+  const result = calculateAdjustedSplit([{
+    id: "food", title: "อาหาร", amountSatang: 10001, payerId: "a",
+    participantIds: ["a", "b", "c"], allocationMode: "equal",
+  }], [{ id: "a" }, { id: "b" }, { id: "c" }], [], {
+    serviceFeeRateBps: 1000, taxRateBps: 700,
+    serviceFeeIncluded: true, taxIncluded: true, discountSatang: 1,
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.serviceFeeSatang, 0);
+  assert.equal(result.taxSatang, 0);
+  assert.equal(result.totalSatang, 10000);
+  assert.equal(Object.values(result.responsibilityByParticipant).reduce((sum, value) => sum + value, 0), 10000);
+});
+
+test("bill discounts cannot exceed total and percent settings are bounded", () => {
+  const expenses = [{ id: "f", title: "food", amountSatang: 1000, payerId: "a", participantIds: ["a", "b"] }];
+  const participants = [{ id: "a" }, { id: "b" }];
+  assert.equal(calculateAdjustedSplit(expenses, participants, [], { discountSatang: 1001 }).valid, false);
+  assert.equal(calculateAdjustedSplit(expenses, participants, [], { taxRateBps: 10001 }).valid, false);
+});
+
+test("bill percentage shares and every adjustment keep exact totals", () => {
+  const result = calculateAdjustedSplit([{
+    id: "f", title: "food", amountSatang: 101, payerId: "a", participantIds: ["a", "b", "c"],
+    allocationMode: "percentage", allocations: { a: 3333, b: 3333, c: 3334 },
+    payers: [{ participantId: "a", amountSatang: 40 }, { participantId: "b", amountSatang: 30 }, { participantId: "c", amountSatang: 31 }],
+  }], [{ id: "a" }, { id: "b" }, { id: "c" }], [], {
+    serviceFeeRateBps: 333, taxRateBps: 777, discountSatang: 5, adjustmentPayerId: "b",
+  });
+  assert.equal(result.valid, true);
+  assert.equal(Object.values(result.responsibilityByParticipant).reduce((sum, value) => sum + value, 0), result.totalSatang);
+  assert.equal(Object.values(result.paidByParticipant).reduce((sum, value) => sum + value, 0), result.totalSatang);
+  assert.equal(Object.values(result.balances).reduce((sum, value) => sum + value, 0), 0);
 });
