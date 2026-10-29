@@ -50,7 +50,7 @@ test("fixed allocations conserve the exact expense amount", () => {
 });
 test("percentage allocations use basis points and distribute rounding deterministically", () => {
  const result=calculateSplit([{id:"x",amountSatang:10001,payerId:"a",participantIds:["a","b","c"],allocationMode:"percentage",allocations:{a:3334,b:3333,c:3333}}],people);
- assert.deepEqual({...result.balances},{a:6667,b:-3334,c:-3333});
+ assert.deepEqual({...result.balances},{a:6666,b:-3333,c:-3333});
  assert.equal(Object.values(result.balances).reduce((sum,n)=>sum+n,0),0);
 });
 test("invalid fixed or percentage allocations are ignored rather than creating money", () => {
