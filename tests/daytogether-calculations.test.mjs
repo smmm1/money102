@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -243,4 +243,127 @@ test("invalid timezone labels return a safe fallback instead of throwing", () =>
   assert.equal(formatDateInTimezone("2026-02-31", "UTC"), "ไม่ระบุวันที่");
   assert.equal(formatDateInTimezone("2026-01-01T12:00:00.000Z", "Not/A_Timezone"),
     formatDateInTimezone("2026-01-01T12:00:00.000Z", "Asia/Bangkok"));
+});
+
+
+test("bill adjustments calculate service, tax-on-service, then discount in satang", () => {
+  const result = calculateBillAdjustmentSummary(100000, {
+    serviceBasisPoints: 1000,
+    taxBasisPoints: 700,
+    discountSatang: 5000,
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.serviceSatang, 10000);
+  assert.equal(result.taxSatang, 7700);
+  assert.equal(result.preDiscountSatang, 117700);
+  assert.equal(result.totalSatang, 112700);
+});
+
+test("included fees are not added again and discounts cannot make a bill negative", () => {
+  const included = calculateBillAdjustmentSummary(10000, {
+    serviceBasisPoints: 1000, taxBasisPoints: 700,
+    serviceIncluded: true, taxIncluded: true, discountSatang: 0,
+  });
+  assert.equal(included.totalSatang, 10000);
+  const invalid = calculateBillAdjustmentSummary(10000, { discountSatang: 10001 });
+  assert.equal(invalid.valid, false);
+  assert.equal(invalid.error, "discount-exceeds-total");
+});
+
+test("adjusted bill shares and multi-payer contributions sum to the final total", () => {
+  const participants = [
+    { id: "a", name: "A", isMe: true },
+    { id: "b", name: "B", isMe: false },
+  ];
+  const expenses = [
+    { id: "e1", title: "Food", amountSatang: 30000, payerId: "a", participantIds: ["a", "b"], allocationMode: "fixed", allocations: { a: 10000, b: 20000 } },
+    { id: "e2", title: "Drinks", amountSatang: 70000, payerId: "a", payers: [{ participantId: "a", amountSatang: 20000 }, { participantId: "b", amountSatang: 50000 }], participantIds: ["a", "b"], allocationMode: "fixed", allocations: { a: 20000, b: 50000 } },
+  ];
+  const result = calculateBillSplit(expenses, participants, [], {
+    serviceBasisPoints: 1000, taxBasisPoints: 700, discountSatang: 5000,
+  });
+  assert.equal(result.valid, true);
+  assert.equal(result.baseTotalSatang, 100000);
+  assert.equal(result.totalSatang, 112700);
+  assert.equal(result.adjustedExpenses.reduce((sum, expense) => sum + expense.amountSatang, 0), 112700);
+  assert.equal(result.adjustedExpenses.reduce((sum, expense) => sum + expense.allocations.a, 0), 33810);
+  assert.equal(result.adjustedExpenses.reduce((sum, expense) => sum + expense.allocations.b, 0), 78890);
+  assert.equal(Object.values(result.balances).reduce((sum, balance) => sum + balance, 0), 0);
+  assert.deepEqual(result.transfers, [{ fromId: "b", toId: "a", amountSatang: 22540 }]);
+  const settled = calculateBillSplit(expenses, participants, [
+    { id: "s1", fromId: "b", toId: "a", amountSatang: 22540, date: "2026-10-29", note: "" },
+  ], { serviceBasisPoints: 1000, taxBasisPoints: 700, discountSatang: 5000 });
+  assert.equal(settled.transfers.length, 0);
+  assert.equal(Object.values(settled.balances).every(balance => balance === 0), true);
+});
+
+
+test("adjusted live draft preview sums exactly to the adjusted bill total", () => {
+  const preview = calculateDraftBillSplitPreview([
+    { key: "draft-1", title: "อาหาร", amount: "1000.00", payerName: "ฉัน", multiplePayers: false, payerAmounts: {}, participantNames: null, allocationMode: "equal", allocations: {} },
+  ], ["ฉัน", "B"], { serviceBasisPoints: 1000, taxBasisPoints: 700, discountSatang: 5000 });
+  assert.equal(preview.invalidRows, 0);
+  assert.equal(preview.baseTotalSatang, 100000);
+  assert.equal(preview.totalSatang, 112700);
+  assert.equal(preview.shares["ฉัน"] + preview.shares.B, 112700);
+  assert.equal(preview.shares["ฉัน"], 56350);
+  assert.equal(preview.shares.B, 56350);
+});
+
+test("adjusted live draft preview excludes incomplete multi-payer rows", () => {
+  const preview = calculateDraftBillSplitPreview([
+    { key: "draft-1", title: "อาหาร", amount: "100.00", payerName: "ฉัน", multiplePayers: true, payerAmounts: { "ฉัน": "30.00", B: "" }, participantNames: null, allocationMode: "equal", allocations: {} },
+  ], ["ฉัน", "B"], { discountSatang: 0 });
+  assert.equal(preview.invalidRows, 1);
+  assert.equal(preview.baseTotalSatang, 0);
+  assert.equal(preview.totalSatang, 0);
+});
+
+
+test("draft money and percentage parsing avoid binary floating-point rounding", () => {
+  const row = (amount, mode = "equal", allocations = {}) => ({
+    key: "decimal", title: "ของกิน", amount, payerName: "ฉัน",
+    multiplePayers: false, payerAmounts: {}, participantNames: null,
+    allocationMode: mode, allocations,
+  });
+  const valid = calculateDraftBillSplitPreview([row("0.29")], ["ฉัน", "บี"]);
+  assert.equal(valid.invalidRows, 0);
+  assert.equal(valid.baseTotalSatang, 29);
+  assert.equal(valid.shares["ฉัน"] + valid.shares["บี"], 29);
+
+  const overPrecision = calculateDraftBillSplitPreview([row("1.005")], ["ฉัน", "บี"]);
+  assert.equal(overPrecision.invalidRows, 1);
+  assert.equal(overPrecision.baseTotalSatang, 0);
+
+  const percentages = calculateDraftBillSplitPreview([
+    row("0.03", "percentage", { "ฉัน": "33.33", "บี": "66.67" }),
+  ], ["ฉัน", "บี"]);
+  assert.equal(percentages.invalidRows, 0);
+  assert.equal(percentages.baseTotalSatang, 3);
+  assert.equal(percentages.shares["ฉัน"] + percentages.shares["บี"], 3);
+
+  const invalidPercent = calculateDraftBillSplitPreview([
+    row("1.00", "percentage", { "ฉัน": "33.335", "บี": "66.665" }),
+  ], ["ฉัน", "บี"]);
+  assert.equal(invalidPercent.invalidRows, 1);
+  assert.equal(invalidPercent.baseTotalSatang, 0);
+
+  const invalidFixed = calculateDraftBillSplitPreview([
+    row("1.00", "fixed", { "ฉัน": "0.505", "บี": "0.495" }),
+  ], ["ฉัน", "บี"]);
+  assert.equal(invalidFixed.invalidRows, 1);
+  assert.equal(invalidFixed.baseTotalSatang, 0);
+});
+
+
+test("exact user input parsers preserve satang and percentage basis points", async () => {
+  const { parseMoneyToSatang, parsePercentageBasisPoints } = await import("../src/daytogether-calculations.mjs");
+  assert.equal(parseMoneyToSatang("0.29"), 29);
+  assert.equal(parseMoneyToSatang("1.005"), null);
+  assert.equal(parseMoneyToSatang("-1.00"), null);
+  assert.equal(parseMoneyToSatang("90071992547409.92"), null);
+  assert.equal(parsePercentageBasisPoints("1.25"), 125);
+  assert.equal(parsePercentageBasisPoints("100"), 10000);
+  assert.equal(parsePercentageBasisPoints("100.01"), null);
+  assert.equal(parsePercentageBasisPoints("1.005"), null);
 });
