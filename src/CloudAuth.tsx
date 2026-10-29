@@ -211,6 +211,34 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
+    // Flush a debounced snapshot before invalidating the session so a quick
+    // logout cannot discard the user's last edit.
+    if (saveTimer !== undefined) {
+      window.clearTimeout(saveTimer)
+      saveTimer = undefined
+      const tokenToFlush = getToken()
+      const payload = readLocalSnapshot()
+      if (tokenToFlush) {
+        saveChain = saveChain.then(async () => {
+          if (tokenToFlush !== getToken()) return undefined
+          const result = await api("/api/state", {
+            method: "PUT",
+            body: JSON.stringify({ payload, expected_updated_at: lastCloudRevision })
+          }) as { updated_at?: unknown }
+          if (tokenToFlush === getToken() && typeof result.updated_at === "string") lastCloudRevision = result.updated_at
+          return result
+        }).then(result => {
+          if (result !== undefined && tokenToFlush === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
+        }).catch((error: unknown) => {
+          if (tokenToFlush === getToken()) {
+            const detail = error instanceof Error ? error.message : String(error)
+            window.dispatchEvent(new CustomEvent("d1-persist-error", { detail }))
+          }
+        })
+      }
+    }
+    // Wait for any write already in flight before logging out.
+    await saveChain
     try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
     setSessionToken("")
     lastCloudRevision = null
@@ -224,11 +252,13 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }
 
   async function deleteAccount() {
-    await api("/api/auth/account", { method: "DELETE" })
-    setSessionToken("")
+    // A pending save must not run after account deletion and recreate its snapshot.
     if (saveTimer !== undefined) window.clearTimeout(saveTimer)
     saveTimer = undefined
-    saveChain = Promise.resolve()
+    await saveChain
+    await api("/api/auth/account", { method: "DELETE" })
+    setSessionToken("")
+    lastCloudRevision = null
     memorySnapshot = {}
     setUser(null)
     setCloudReady(false)
