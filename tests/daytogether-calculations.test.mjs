@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, formatDateInTimezone } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -179,4 +179,31 @@ test("personal share permits a payer who is not participating in that expense", 
       { participantId: "c", amountSatang: 600 }, { participantId: "d", amountSatang: 400 },
     ], participantIds: ["a", "b"], allocationMode: "equal",
   }], "b"), 500);
+});
+
+
+test("timezone date labels preserve date-only values in every selected timezone", () => {
+  const expected = formatDateInTimezone("2026-01-01", "UTC");
+  assert.equal(formatDateInTimezone("2026-01-01", "Asia/Bangkok"), expected);
+  assert.equal(formatDateInTimezone("2026-01-01", "Asia/Tokyo"), expected);
+  assert.equal(formatDateInTimezone("2026-01-01", "America/Los_Angeles"), expected);
+  assert.notEqual(expected, "ไม่ระบุวันที่");
+});
+
+test("timezone date labels preserve the calendar day of local wall-clock datetime values", () => {
+  const expected = formatDateInTimezone("2026-01-01T00:30", "UTC");
+  assert.equal(formatDateInTimezone("2026-01-01T00:30", "America/Los_Angeles"), expected);
+});
+
+test("timezone date labels convert ISO instants into the selected timezone", () => {
+  const instant = "2026-01-01T01:30:00.000Z";
+  assert.notEqual(formatDateInTimezone(instant, "UTC"), formatDateInTimezone(instant, "America/Los_Angeles"));
+  assert.equal(formatDateInTimezone(instant, "America/Los_Angeles"), formatDateInTimezone("2025-12-31", "UTC"));
+});
+
+test("invalid timezone labels return a safe fallback instead of throwing", () => {
+  assert.equal(formatDateInTimezone("invalid"), "ไม่ระบุวันที่");
+  assert.equal(formatDateInTimezone("2026-02-31", "UTC"), "ไม่ระบุวันที่");
+  assert.equal(formatDateInTimezone("2026-01-01T12:00:00.000Z", "Not/A_Timezone"),
+    formatDateInTimezone("2026-01-01T12:00:00.000Z", "Asia/Bangkok"));
 });
