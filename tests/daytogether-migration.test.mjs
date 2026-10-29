@@ -23,6 +23,7 @@ test("migrates old Money102 health, notes, money, split and BBQ records", () => 
   }));
   assert.equal(state.goals[0].targetSatang, 2000000);
   assert.equal(state.notes.length, 2);
+  assert.equal(state.notes.every(note => note.version === 1), true);
   assert.equal(state.notes.some(note => note.tags.includes("การเงิน")), true);
   assert.equal(state.health.length, 2);
   assert.equal(state.bills[0].expenses[0].amountSatang, 30000);
