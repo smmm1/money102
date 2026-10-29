@@ -1,0 +1,12 @@
+name = "daytogether-api-staging"
+main = "workers/daytogether-api.js"
+compatibility_date = "2026-10-29"
+
+[vars]
+APP_ORIGIN = "https://daytogether-phase1-preview.onrender.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "daytogether-phase2-preview-data"
+database_id = "15906930-9966-45b8-a193-58ef994f26c0"
+migrations_dir = "workers/migrations"
