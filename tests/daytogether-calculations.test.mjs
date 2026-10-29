@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend } from "../src/daytogether-calculations.mjs";
+import { calculateSplit, calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone } from "../src/daytogether-calculations.mjs";
 
 const plain = (balances) => Object.fromEntries(Object.entries(balances));
 
@@ -216,4 +216,31 @@ test("health trend helper rejects invalid date ranges and ignores invalid values
     { date: "2026-03-01", value: null },
     { date: "2026-03-02", value: null },
   ]);
+});
+
+
+test("timezone date labels preserve date-only values in every selected timezone", () => {
+  const expected = formatDateInTimezone("2026-01-01", "UTC");
+  assert.equal(formatDateInTimezone("2026-01-01", "Asia/Bangkok"), expected);
+  assert.equal(formatDateInTimezone("2026-01-01", "Asia/Tokyo"), expected);
+  assert.equal(formatDateInTimezone("2026-01-01", "America/Los_Angeles"), expected);
+  assert.notEqual(expected, "ไม่ระบุวันที่");
+});
+
+test("timezone date labels preserve local wall-clock calendar days", () => {
+  const expected = formatDateInTimezone("2026-01-01T00:30", "UTC");
+  assert.equal(formatDateInTimezone("2026-01-01T00:30", "America/Los_Angeles"), expected);
+});
+
+test("timezone date labels convert ISO instants into the selected timezone", () => {
+  const instant = "2026-01-01T01:30:00.000Z";
+  assert.notEqual(formatDateInTimezone(instant, "UTC"), formatDateInTimezone(instant, "America/Los_Angeles"));
+  assert.equal(formatDateInTimezone(instant, "America/Los_Angeles"), formatDateInTimezone("2025-12-31", "UTC"));
+});
+
+test("invalid timezone labels fall back safely", () => {
+  assert.equal(formatDateInTimezone("invalid"), "ไม่ระบุวันที่");
+  assert.equal(formatDateInTimezone("2026-02-31", "UTC"), "ไม่ระบุวันที่");
+  assert.equal(formatDateInTimezone("2026-01-01T12:00:00.000Z", "Not/A_Timezone"),
+    formatDateInTimezone("2026-01-01T12:00:00.000Z", "Asia/Bangkok"));
 });
