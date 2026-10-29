@@ -9,6 +9,7 @@ export function calculateSplit(expenses = [], participants = [], settlements = [
     if (!expense || !Number.isSafeInteger(expense.amountSatang) || expense.amountSatang <= 0 || !hasId(expense.payerId) || !Array.isArray(expense.participantIds)) continue;
     const assigned = [...new Set(expense.participantIds)].filter(hasId);
     if (!assigned.length) continue;
+    if (expense.allocationMode && !["equal", "fixed", "percentage"].includes(expense.allocationMode)) continue;
     let shares;
     if (expense.allocationMode === "fixed") {
       const values = assigned.map((id) => expense.allocations?.[id]);
