@@ -353,10 +353,25 @@ export function calculateBillSplit(expenses = [], participants = [], settlements
 export function calculateDraftBillSplitPreview(rows = [], participantNames = [], adjustments = {}) {
   const names = [...new Set(participantNames.filter(name => typeof name === "string" && name.trim()))];
   const hasInput = row => Boolean(String(row?.title ?? "").trim() || String(row?.amount ?? "").trim());
+  // Parse decimal strings without binary floating-point rounding. Currency inputs
+  // accept at most two decimal places; extra precision is rejected rather than rounded.
   const parseSatang = value => {
     const text = String(value ?? "").trim();
-    const amount = Number(text);
-    return text !== "" && Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : NaN;
+    const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
+    if (!match) return NaN;
+    const whole = Number(match[1]);
+    const fraction = Number((match[2] ?? "").padEnd(2, "0"));
+    const amount = whole * 100 + fraction;
+    return Number.isSafeInteger(whole) && Number.isSafeInteger(amount) ? amount : NaN;
+  };
+  const parseBasisPoints = value => {
+    const text = String(value ?? "").trim();
+    const match = /^(\\d+)(?:\\.(\\d{1,2}))?$/.exec(text);
+    if (!match) return NaN;
+    const whole = Number(match[1]);
+    const fraction = Number((match[2] ?? "").padEnd(2, "0"));
+    const points = whole * 100 + fraction;
+    return Number.isSafeInteger(whole) && Number.isSafeInteger(points) && points <= 10000 ? points : NaN;
   };
   const validRows = [];
   let invalidRows = 0;
@@ -390,7 +405,7 @@ export function calculateDraftBillSplitPreview(rows = [], participantNames = [],
     if (row.allocationMode === "fixed") {
       for (const name of selectedNames) allocations[name] = parseSatang(row.allocations?.[name]);
     } else if (row.allocationMode === "percentage") {
-      for (const name of selectedNames) allocations[name] = Math.round(Number(row.allocations?.[name]) * 100);
+      for (const name of selectedNames) allocations[name] = parseBasisPoints(row.allocations?.[name]);
     }
     const expense = {
       id: String(row.key ?? "draft-" + validRows.length),
