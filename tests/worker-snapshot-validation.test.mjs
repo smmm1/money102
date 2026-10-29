@@ -365,3 +365,66 @@ test("server accepts valid typed health entries and local measurement times", ()
   ];
   assert.equal(validDayTogetherState(JSON.stringify(state)), true);
 });
+
+
+test("server rejects settlements above the current debt or credit balance", () => {
+  const makeState = amountSatang => {
+    const state = validState();
+    state.bills.push({
+      id: "bill-1", title: "Dinner", date: "2026-01-01", restaurant: "BBQ", note: "", bbqId: "",
+      status: "settling",
+      participants: [{ id: "me", name: "Me", isMe: true }, { id: "friend", name: "Friend", isMe: false }],
+      expenses: [{ id: "expense-1", title: "Food", amountSatang: 10000, payerId: "me", participantIds: ["me", "friend"] }],
+      settlements: [{ id: "settlement-1", fromId: "friend", toId: "me", amountSatang, date: "2026-01-02", note: "" }]
+    });
+    return state;
+  };
+  assert.equal(validDayTogetherState(JSON.stringify(makeState(5000))), true);
+  assert.equal(validDayTogetherState(JSON.stringify(makeState(5001))), false);
+});
+
+test("server validates multiple payer totals before accepting a bill snapshot", () => {
+  const state = validState();
+  state.bills.push({
+    id: "bill-1", title: "Dinner", date: "2026-01-01", restaurant: "BBQ", note: "", bbqId: "",
+    status: "draft",
+    participants: [{ id: "me", name: "Me", isMe: true }, { id: "friend", name: "Friend", isMe: false }],
+    expenses: [{
+      id: "expense-1", title: "Food", amountSatang: 10000, payerId: "me", participantIds: ["me", "friend"],
+      payers: [{ participantId: "me", amountSatang: 4000 }, { participantId: "friend", amountSatang: 5000 }]
+    }],
+    settlements: []
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+  state.bills[0].expenses[0].payers[1].amountSatang = 6000;
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+});
+
+
+test("server rejects duplicate expense and settlement IDs within a bill", () => {
+  const duplicateExpense = validState();
+  duplicateExpense.bills.push({
+    id: "bill-1", title: "Dinner", date: "2026-01-01", restaurant: "BBQ", note: "", bbqId: "",
+    status: "draft",
+    participants: [{ id: "me", name: "Me", isMe: true }, { id: "friend", name: "Friend", isMe: false }],
+    expenses: [
+      { id: "same-expense", title: "Food", amountSatang: 10000, payerId: "me", participantIds: ["me", "friend"] },
+      { id: "same-expense", title: "Drinks", amountSatang: 5000, payerId: "friend", participantIds: ["me", "friend"] }
+    ],
+    settlements: []
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(duplicateExpense)), false);
+
+  const duplicateSettlement = validState();
+  duplicateSettlement.bills.push({
+    id: "bill-1", title: "Dinner", date: "2026-01-01", restaurant: "BBQ", note: "", bbqId: "",
+    status: "settling",
+    participants: [{ id: "me", name: "Me", isMe: true }, { id: "friend", name: "Friend", isMe: false }, { id: "other", name: "Other", isMe: false }],
+    expenses: [{ id: "expense-1", title: "Food", amountSatang: 30000, payerId: "me", participantIds: ["me", "friend", "other"] }],
+    settlements: [
+      { id: "same-settlement", fromId: "friend", toId: "me", amountSatang: 5000, date: "2026-01-02", note: "" },
+      { id: "same-settlement", fromId: "other", toId: "me", amountSatang: 5000, date: "2026-01-02", note: "" }
+    ]
+  });
+  assert.equal(validDayTogetherState(JSON.stringify(duplicateSettlement)), false);
+});

@@ -38,6 +38,21 @@ function isSnapshot(value) {
  }
  return true;
 }
+
+function allocateProportionally(total, weights) {
+ if(!Number.isSafeInteger(total)||total<0||!Array.isArray(weights)||weights.some(weight=>!Number.isSafeInteger(weight)||weight<0))return null;
+ const denominator=weights.reduce((sum,weight)=>sum+weight,0);
+ if(!Number.isSafeInteger(denominator))return null;
+ if(denominator===0)return total===0?weights.map(()=>0):null;
+ const divisor=BigInt(denominator);
+ const portions=weights.map(weight=>Number((BigInt(total)*BigInt(weight))/divisor));
+ let remainder=total-portions.reduce((sum,value)=>sum+value,0);
+ const order=weights.map((weight,index)=>({index,remainder:(BigInt(total)*BigInt(weight))%divisor}))
+  .sort((a,b)=>a.remainder===b.remainder?a.index-b.index:a.remainder>b.remainder?-1:1);
+ for(let index=0;remainder>0;index++,remainder--)portions[order[index%order.length].index]++;
+ return portions;
+}
+
 function validDayTogetherState(raw) {
  let state;
  try { state=JSON.parse(raw); } catch { return false; }
@@ -102,19 +117,28 @@ function validDayTogetherState(raw) {
   const participants=new Map();
   for(const person of bill.participants){if(!person||typeof person.id!=="string"||!person.id||participants.has(person.id)||typeof person.name!=="string"||!person.name.trim()||typeof person.isMe!=="boolean")return false;participants.set(person.id,person);}
   let total=0;
+  const expenseIds=new Set();
   for(const expense of bill.expenses){
-   if(!expense||typeof expense.id!=="string"||!expense.id||typeof expense.title!=="string"||!expense.title.trim()||!integer(expense.amountSatang,1)||!participants.has(expense.payerId)||!Array.isArray(expense.participantIds)||!expense.participantIds.length)return false;
+   if(!expense||typeof expense.id!=="string"||!expense.id||expenseIds.has(expense.id)||typeof expense.title!=="string"||!expense.title.trim()||!integer(expense.amountSatang,1)||!participants.has(expense.payerId)||!Array.isArray(expense.participantIds)||!expense.participantIds.length)return false;
+   expenseIds.add(expense.id);
    const assigned=[...new Set(expense.participantIds)];
    if(assigned.length!==expense.participantIds.length||assigned.some(id=>!participants.has(id)))return false;
    if(expense.allocationMode==="fixed"){
     const values=assigned.map(id=>expense.allocations?.[id]);
-    if(values.some(value=>!integer(value))||values.reduce((sum,value)=>sum+value,0)!==expense.amountSatang)return false;
+    if(values.some(value=>!integer(value))||values.reduce((sum,value)=>sum+BigInt(value),0n)!==BigInt(expense.amountSatang))return false;
    }else if(expense.allocationMode==="percentage"){
     const values=assigned.map(id=>expense.allocations?.[id]);
-    if(values.some(value=>!integer(value)||value>10000)||values.reduce((sum,value)=>sum+value,0)!==10000)return false;
+    if(values.some(value=>!integer(value)||value>10000)||values.reduce((sum,value)=>sum+BigInt(value),0n)!==10000n)return false;
    }else if(expense.allocationMode!==undefined&&expense.allocationMode!=="equal")return false;
+   if(expense.payers!==undefined){
+    if(!Array.isArray(expense.payers)||!expense.payers.length||
+       expense.payers.some(payer=>!payer||!participants.has(payer.participantId)||!integer(payer.amountSatang))||
+       new Set(expense.payers.map(payer=>payer.participantId)).size!==expense.payers.length||
+       expense.payers.reduce((sum,payer)=>sum+BigInt(payer.amountSatang),0n)!==BigInt(expense.amountSatang))return false;
+   }
    total+=expense.amountSatang;if(!Number.isSafeInteger(total))return false;
   }
+  let finalTotal=total;
   if(bill.adjustments!==undefined){
    const adjustment=bill.adjustments;
    if(!adjustment||typeof adjustment!=="object"||Array.isArray(adjustment)||
@@ -127,8 +151,41 @@ function validDayTogetherState(raw) {
    const tax=adjustment.taxIncluded?0:Number((BigInt(taxBase)*BigInt(adjustment.taxBasisPoints)+5000n)/10000n);
    const gross=total+service+tax;
    if(!Number.isSafeInteger(gross)||adjustment.discountSatang>gross)return false;
+   finalTotal=gross-adjustment.discountSatang;
   }
-  for(const settlement of bill.settlements)if(!settlement||typeof settlement.id!=="string"||!settlement.id||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
+  const adjustedAmounts=bill.expenses.length?allocateProportionally(finalTotal,bill.expenses.map(expense=>expense.amountSatang)):[];
+  if(!adjustedAmounts)return false;
+  const netBalances=new Map([...participants.keys()].map(id=>[id,0]));
+  for(let index=0;index<bill.expenses.length;index++){
+   const expense=bill.expenses[index],amount=adjustedAmounts[index],assigned=expense.participantIds;
+   let shares;
+   if(expense.allocationMode==="fixed"){
+    shares=allocateProportionally(amount,assigned.map(id=>expense.allocations[id]));
+    if(!shares)return false;
+   }else if(expense.allocationMode==="percentage"){
+    shares=assigned.map(id=>Number((BigInt(amount)*BigInt(expense.allocations[id]))/10000n));
+    let remainder=amount-shares.reduce((sum,value)=>sum+value,0);
+    for(let i=0;remainder>0;i=(i+1)%shares.length,remainder--)shares[i]++;
+   }else{
+    const base=Math.floor(amount/assigned.length),remainder=amount%assigned.length;
+    shares=assigned.map((id,index)=>base+(index<remainder?1:0));
+   }
+   assigned.forEach((id,index)=>netBalances.set(id,netBalances.get(id)-shares[index]));
+   if(Array.isArray(expense.payers)){
+    const contributions=allocateProportionally(amount,expense.payers.map(payer=>payer.amountSatang));
+    if(!contributions)return false;
+    expense.payers.forEach((payer,index)=>netBalances.set(payer.participantId,netBalances.get(payer.participantId)+contributions[index]));
+   }else netBalances.set(expense.payerId,netBalances.get(expense.payerId)+amount);
+  }
+  const settlementIds=new Set();
+  for(const settlement of bill.settlements){
+   if(!settlement||typeof settlement.id!=="string"||!settlement.id||settlementIds.has(settlement.id)||!participants.has(settlement.fromId)||!participants.has(settlement.toId)||settlement.fromId===settlement.toId||!integer(settlement.amountSatang,1)||!date(settlement.date)||typeof settlement.note!=="string"||settlement.note.length>1000)return false;
+   settlementIds.add(settlement.id);
+   const fromBalance=netBalances.get(settlement.fromId),toBalance=netBalances.get(settlement.toId);
+   if(fromBalance>=0||toBalance<=0||settlement.amountSatang>-fromBalance||settlement.amountSatang>toBalance)return false;
+   netBalances.set(settlement.fromId,fromBalance+settlement.amountSatang);
+   netBalances.set(settlement.toId,toBalance-settlement.amountSatang);
+  }
   if(typeof bill.restaurant!=="string"||bill.restaurant.length>200||typeof bill.note!=="string"||bill.note.length>4000)return false;
  }
  for(const visit of state.visits)if(typeof visit.restaurant!=="string"||visit.restaurant.length>200||typeof visit.title!=="string"||visit.title.length>200||!date(visit.date)||typeof visit.area!=="string"||visit.area.length>200||typeof visit.friends!=="string"||visit.friends.length>2000||!integer(visit.people,1)||!(visit.totalSatang===null||integer(visit.totalSatang))||!(visit.personalSatang===null||integer(visit.personalSatang))||!(visit.rating===null||(integer(visit.rating,1)&&visit.rating<=5))||typeof visit.menu!=="string"||visit.menu.length>2000||typeof visit.memory!=="string"||visit.memory.length>10000||typeof visit.billId!=="string")return false;
