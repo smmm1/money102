@@ -41,7 +41,7 @@ test("settlements reduce balances and canceled/invalid amounts cannot be applied
   const result = calculateSplit(expense, people, [{ amountSatang: 2500, fromId: "b", toId: "a" }]);
   assert.deepEqual(result.balances, { a: 2500, b: -2500, c: 0 });
   const invalid = calculateSplit(expense, people, [{ amountSatang: 50000, fromId: "b", toId: "a" }]);
-  assert.deepEqual(invalid.balances, { a: 0, b: 0, c: 0 });
+  assert.deepEqual(invalid.balances, { a: 5000, b: -5000, c: 0 });
 });
 
 test("rejects duplicate participant IDs from being charged twice", () => {
