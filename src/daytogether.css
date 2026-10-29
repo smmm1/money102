@@ -43,3 +43,86 @@ html[data-dt-theme="dark"]{--dt-bg:#0f172a;--dt-surface:#172033;--dt-text:#f1f5f
 .dt-trend-labels>strong{font-size:14px;font-variant-numeric:tabular-nums}
 .dt-trend-labels>small{color:var(--dt-muted);font-size:11px}
 @media(max-width:620px){.dt-health-trend .dt-section-head{align-items:flex-start;flex-direction:column}.dt-health-chart{min-height:120px}.dt-trend-labels>strong{font-size:12px}}
+
+
+/* DayTogether classic-web pass: early-2000s desktop utility, warm paper + evergreen (no blue UI). */
+:root{
+  --dt-bg:#e8e5db;
+  --dt-surface:#f8f6ee;
+  --dt-text:#292d26;
+  --dt-muted:#555a50;
+  --dt-border:#9a9c90;
+  --dt-primary:#315b43;
+  --dt-primary-soft:#dce6d7;
+  --dt-shadow:2px 2px 0 rgba(42,47,38,.12);
+}
+html[data-dt-theme="dark"]{
+  --dt-bg:#242821;
+  --dt-surface:#30362d;
+  --dt-text:#f2f0e6;
+  --dt-muted:#c1c5b9;
+  --dt-border:#697160;
+  --dt-primary:#a6c69b;
+  --dt-primary-soft:#3d4d39;
+  --dt-shadow:2px 2px 0 rgba(0,0,0,.22);
+}
+body{background:#e8e5db}
+.dt-app{background:var(--dt-bg);font-family:Tahoma,"Noto Sans Thai","Sarabun",sans-serif}
+.dt-sidebar{background:#d9d7cd;border-right:2px solid #a2a398;padding:18px 12px}
+.dt-brand{border-bottom:1px solid #b2b4a8;padding:4px 8px 18px;margin-bottom:16px}
+.dt-brand-mark{border-radius:3px;background:#315b43;color:#f8f6ee;border:1px solid #203f2e;box-shadow:inset 1px 1px 0 #77917b}
+.dt-nav-label,.dt-eyebrow{letter-spacing:.04em;color:#51564c}
+.dt-nav{gap:3px}
+.dt-nav button,.dt-sidebar-bottom>button{border-radius:2px;border:1px solid transparent;min-height:42px}
+.dt-nav button:hover,.dt-sidebar-bottom>button:hover{background:#efede4;border-color:#b1b3a7;color:#263d2e}
+.dt-nav button.active,.dt-sidebar-bottom>button.active{background:#cbd8c4;border:1px solid #8b9b84;color:#294c36;box-shadow:inset 1px 1px 0 #f8f6ee;font-weight:700}
+.dt-private-note{border-radius:2px;background:#efede4;border-color:#b3b5a9}
+.dt-main{background:var(--dt-bg)}
+.dt-topbar{background:#f1efe6;border-bottom:2px solid #a6a89c;padding:0 24px}
+.dt-breadcrumb{font-size:13px}
+.dt-content{max-width:1360px;padding:26px 28px 76px}
+.dt-page-heading h1{font-size:29px;letter-spacing:0;color:var(--dt-text)}
+.dt-welcome,.dt-section,.dt-stat,.dt-module-card,.dt-goal-card,.dt-note-card,.dt-visit-card,.dt-detail-card,.dt-settings-card,.dt-health-record,.dt-bill-card{
+  border-radius:3px;box-shadow:var(--dt-shadow)
+}
+.dt-welcome,.dt-section{border-color:#a5a79b}
+.dt-btn{border-radius:2px;border-color:#8d9185;background:#f3f1e8;box-shadow:inset 1px 1px 0 #fff,inset -1px -1px 0 #d1d0c7;color:#2d332a}
+.dt-btn:hover:not(:disabled){background:#e6e9de;border-color:#687d65}
+.dt-btn-primary{background:#315b43;border-color:#244832;color:#fff;box-shadow:inset 1px 1px 0 #72907a,inset -1px -1px 0 #244832}
+.dt-btn-primary:hover:not(:disabled){background:#274b36;color:#fff}
+.dt-btn-danger{color:#8b342b;border-color:#bd8d83;background:#f8eee9}
+.dt-stat,.dt-module-card{border-color:#b4b5aa}
+.dt-stat-icon,.dt-module-icon{border-radius:3px;background:#dce6d7;color:#315b43}
+.dt-accent-blue .dt-stat-icon,.dt-accent-blue .dt-module-icon,
+.dt-accent-navy .dt-stat-icon,.dt-accent-navy .dt-module-icon{background:#e5e4d7;color:#48513d}
+.dt-accent-purple .dt-stat-icon,.dt-accent-purple .dt-module-icon{background:#e9dfd5;color:#75523f}
+.dt-accent-orange .dt-stat-icon,.dt-accent-orange .dt-module-icon{background:#f1dfd2;color:#8b4e2d}
+.dt-progress{border-radius:2px;background:#d7d6cc}
+.dt-progress i{border-radius:2px;background:#47724f}
+.dt-pill{border-radius:2px;background:#e8e6dc}
+.dt-pill.settled{background:#dce6d7;color:#315b43}
+.dt-pill.settling{background:#f1e4c9;color:#775c25}
+.dt-icon-button,.dt-avatar{border-radius:3px}
+.dt-avatar{background:#dce6d7;color:#315b43;border:1px solid #9ca995}
+.dt-app input,.dt-app textarea,.dt-app select{border-radius:2px;border-color:#9a9c90;background:#fffef9;color:#292d26}
+.dt-app input:focus-visible,.dt-app textarea:focus-visible,.dt-app select:focus-visible,.dt-app button:focus-visible{outline:2px solid #47724f;outline-offset:1px}
+.dt-empty>span,.dt-recent-mark,.dt-list-icon{border-radius:3px;background:#dce6d7;color:#315b43}
+.dt-toast{border-radius:3px;border:1px solid #8c9d84;box-shadow:2px 2px 0 rgba(42,47,38,.16)}
+.dt-modal-backdrop{background:rgba(36,40,32,.48)}
+.dt-modal,.dt-modal-card{border-radius:3px;border:1px solid #85897c;box-shadow:3px 3px 0 rgba(30,34,27,.2)}
+.dt-mobile-nav{background:#f1efe6;border-top:2px solid #a6a89c}
+.dt-mobile-nav button{border-radius:2px;color:#4c5148}
+.dt-mobile-nav button.active{color:#315b43}
+.dt-more-sheet{border-radius:3px;border:1px solid #a5a79b;background:#f8f6ee}
+.dt-more-sheet>button{border-radius:2px}
+.dt-bill-total-preview{border-radius:3px;background:#e4e8dc;border-color:#a5b09b}
+.dt-health-chart{color:#315b43}
+@media(max-width:760px){
+  .dt-sidebar{display:none}
+  .dt-topbar{height:58px;padding:0 14px}
+  .dt-content{padding:20px 14px 92px}
+  .dt-page-heading h1{font-size:25px}
+  .dt-welcome,.dt-section{padding:16px}
+  .dt-stat-grid{gap:9px}
+}
+@media(prefers-reduced-motion:reduce){.dt-app *{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
