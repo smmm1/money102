@@ -76,3 +76,18 @@ test("sleep duration correctly crosses midnight and advances the wake date", () 
   assert.equal(calculateSleepDuration("2026-10-28T23:30", "2026-10-29T07:00")?.durationHours, 7.5);
   assert.equal(calculateSleepDuration("2026-10-28T07:00", "2026-10-28T06:00")?.durationHours, 23);
 });
+
+test("percentage allocations stay exact for large safe-integer satang amounts", () => {
+  const amountSatang = 9007199254740000;
+  const aShare = Number((BigInt(amountSatang) * 3333n) / 10000n);
+  const bShare = amountSatang - aShare;
+  const result = calculateSplit([{
+    amountSatang,
+    payerId: "a",
+    participantIds: ["a", "b"],
+    allocationMode: "percentage",
+    allocations: { a: 3333, b: 6667 },
+  }], people);
+  assert.deepEqual(plain(result.balances), { a: bShare, b: -bShare, c: 0 });
+  assert.equal(Object.values(result.balances).reduce((sum, value) => sum + value, 0), 0);
+});
