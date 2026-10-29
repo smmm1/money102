@@ -148,6 +148,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       setSessionToken("")
       lastCloudRevision = null
       memorySnapshot = {}
+      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
       setUser(null)
       setCloudReady(false)
       setCloudError("")
@@ -267,6 +268,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     if (saveTimer !== undefined) window.clearTimeout(saveTimer)
     saveTimer = undefined
     memorySnapshot = {}
+      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
     setUser(null)
     setCloudReady(false)
     setCloudError("")
@@ -282,6 +284,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     setSessionToken("")
     lastCloudRevision = null
     memorySnapshot = {}
+      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
     setUser(null)
     setCloudReady(false)
     setCloudError("")
