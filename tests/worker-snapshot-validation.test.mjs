@@ -310,3 +310,25 @@ test("CORS preflight allows authenticated account deletion from the web app", as
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "https://money102.onrender.com");
   assert.ok(response.headers.get("Access-Control-Allow-Methods")?.split(",").map(value => value.trim()).includes("DELETE"));
 });
+
+
+test("validates bill adjustment rates and rejects discounts above the adjusted total", () => {
+  const state = validState();
+  const bill = {
+    id: "bill-adjustment", title: "Dinner", date: "2026-10-29", restaurant: "", note: "", bbqId: "", status: "draft",
+    participants: [
+      { id: "me", name: "ฉัน", isMe: true },
+      { id: "friend", name: "เพื่อน", isMe: false },
+    ],
+    expenses: [{ id: "food", title: "อาหาร", amountSatang: 10000, payerId: "me", participantIds: ["me", "friend"], allocationMode: "equal" }],
+    settlements: [],
+    adjustments: { serviceBasisPoints: 1000, taxBasisPoints: 700, serviceIncluded: false, taxIncluded: false, discountSatang: 500 },
+  };
+  state.bills.push(bill);
+  assert.equal(validDayTogetherState(JSON.stringify(state)), true);
+  bill.adjustments.discountSatang = 20000;
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+  bill.adjustments.discountSatang = 0;
+  bill.adjustments.taxBasisPoints = 10001;
+  assert.equal(validDayTogetherState(JSON.stringify(state)), false);
+});
