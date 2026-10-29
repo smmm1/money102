@@ -108,7 +108,12 @@ async function api(path: string, init: RequestInit = {}) {
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
   const response = await fetch(`${apiUrl}${path}`, { ...init, headers })
   const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; [key: string]: unknown }
-  if (!response.ok) throw new Error([body.error, body.detail].filter(Boolean).join(': ') || `Request failed (${response.status})`)
+  if (!response.ok) {
+    if (response.status === 401 && token && (path === "/api/state" || path === "/api/auth/me")) {
+      window.dispatchEvent(new CustomEvent("d1-auth-expired"))
+    }
+    throw new Error([body.error, body.detail].filter(Boolean).join(': ') || `Request failed (${response.status})`)
+  }
   return body
 }
 
@@ -137,6 +142,20 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [cloudError, setCloudError] = useState("")
   const [cloudConflict, setCloudConflict] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+
+  useEffect(() => {
+    const expireSession = () => {
+      setSessionToken("")
+      lastCloudRevision = null
+      memorySnapshot = {}
+      setUser(null)
+      setCloudReady(false)
+      setCloudError("")
+      setMessage("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่")
+    }
+    window.addEventListener("d1-auth-expired", expireSession)
+    return () => window.removeEventListener("d1-auth-expired", expireSession)
+  }, [])
 
   useEffect(() => {
     installStorageShim()
