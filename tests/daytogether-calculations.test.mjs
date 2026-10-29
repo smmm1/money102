@@ -318,3 +318,27 @@ test("adjusted live draft preview excludes incomplete multi-payer rows", () => {
   assert.equal(preview.baseTotalSatang, 0);
   assert.equal(preview.totalSatang, 0);
 });
+
+
+test("draft money and percentage parsing avoid binary floating-point rounding", () => {
+  const row = (amount, mode = "equal", allocations = {}) => ({
+    key: "decimal", title: "ของกิน", amount, payerName: "ฉัน",
+    multiplePayers: false, payerAmounts: {}, participantNames: null,
+    allocationMode: mode, allocations,
+  });
+  const valid = calculateDraftBillSplitPreview([row("0.29")], ["ฉัน", "บี"]);
+  assert.equal(valid.invalidRows, 0);
+  assert.equal(valid.baseTotalSatang, 29);
+  assert.equal(valid.shares["ฉัน"] + valid.shares["บี"], 29);
+
+  const overPrecision = calculateDraftBillSplitPreview([row("1.005")], ["ฉัน", "บี"]);
+  assert.equal(overPrecision.invalidRows, 1);
+  assert.equal(overPrecision.baseTotalSatang, 0);
+
+  const percentages = calculateDraftBillSplitPreview([
+    row("0.03", "percentage", { "ฉัน": "33.33", "บี": "66.67" }),
+  ], ["ฉัน", "บี"]);
+  assert.equal(percentages.invalidRows, 0);
+  assert.equal(percentages.baseTotalSatang, 3);
+  assert.equal(percentages.shares["ฉัน"] + percentages.shares["บี"], 3);
+});
