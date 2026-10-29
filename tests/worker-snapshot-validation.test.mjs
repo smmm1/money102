@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { isSnapshot, validDayTogetherState, validateDayTogetherSnapshot } from "../workers/money102-api.js";
+import worker from "../workers/money102-api.js";
 
 const validState = () => ({
   goals: [{ id: "goal-1", name: "trip", targetSatang: 10000, status: "active", due: "", color: "green" }],
@@ -95,4 +96,16 @@ test("validates the legacy schema directly and rejects malformed legacy snapshot
   assert.equal(validateDayTogetherSnapshot({ "lamoon-daytogether-v1": JSON.stringify(legacy) }), null);
   assert.match(validateDayTogetherSnapshot({ "lamoon-daytogether-v1": "{" }), /ไม่ถูกต้อง/);
   assert.equal(isSnapshot({ "lamoon-daytogether-v1": "x".repeat(900001) }), false);
+});
+
+
+test("does not expose internal D1 errors in API responses", async () => {
+  const response = await worker.fetch(new Request("https://api.example.test/health"), {
+    DB: { prepare() { throw new Error("secret SQL details"); } },
+    APP_ORIGIN: "https://money102.onrender.com"
+  });
+  assert.equal(response.status, 500);
+  const body = await response.json();
+  assert.equal(body.error, "เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่ภายหลัง");
+  assert.equal("detail" in body, false);
 });
