@@ -75,7 +75,25 @@ function isBackupState(value: unknown): value is State {
           if (!expense || typeof expense !== "object" || Array.isArray(expense)) return false
           const entry = expense as Record<string, unknown>
           if (!isString(entry, ["id", "title", "payerId"]) || !entry.id || !String(entry.title).trim() || !isMoney(entry.amountSatang) || Number(entry.amountSatang) < 1 || !participants.has(String(entry.payerId)) || !Array.isArray(entry.participantIds) || !entry.participantIds.length || entry.participantIds.some(id => typeof id !== "string" || !participants.has(id))) return false
-          if (entry.payers !== undefined && (!Array.isArray(entry.payers) || entry.payers.some(payer => !payer || typeof payer !== "object" || Array.isArray(payer) || !isString(payer as Record<string, unknown>, ["participantId"]) || !participants.has(String((payer as Record<string, unknown>).participantId)) || !isMoney((payer as Record<string, unknown>).amountSatang)))) return false
+          if (entry.allocationMode !== undefined && !["equal", "fixed", "percentage"].includes(String(entry.allocationMode))) return false
+          if (entry.allocations !== undefined && (!entry.allocations || typeof entry.allocations !== "object" || Array.isArray(entry.allocations) || Object.values(entry.allocations as Record<string, unknown>).some(amount => !isMoney(amount)))) return false
+          if (entry.allocationMode === "fixed" || entry.allocationMode === "percentage") {
+            const allocation = entry.allocations as Record<string, unknown> | undefined
+            if (!allocation || entry.participantIds.some(id => !Object.prototype.hasOwnProperty.call(allocation, id))) return false
+            const values = entry.participantIds.map(id => Number(allocation[id]))
+            if (entry.allocationMode === "fixed" && values.reduce((sum, amount) => sum + amount, 0) !== Number(entry.amountSatang)) return false
+            if (entry.allocationMode === "percentage" && (values.some(amount => amount > 10000) || values.reduce((sum, amount) => sum + amount, 0) !== 10000)) return false
+          }
+          if (entry.payers !== undefined) {
+            if (!Array.isArray(entry.payers) || entry.payers.some(payer => !payer || typeof payer !== "object" || Array.isArray(payer) || !isString(payer as Record<string, unknown>, ["participantId"]) || !participants.has(String((payer as Record<string, unknown>).participantId)) || !isMoney((payer as Record<string, unknown>).amountSatang))) return false
+            const payers = entry.payers as Record<string, unknown>[]
+            if (payers.reduce((sum, payer) => sum + Number(payer.amountSatang), 0) !== Number(entry.amountSatang) || new Set(payers.map(payer => String(payer.participantId))).size !== payers.length) return false
+          }
+        }
+        if (record.adjustments !== undefined) {
+          if (!record.adjustments || typeof record.adjustments !== "object" || Array.isArray(record.adjustments)) return false
+          const adjustment = record.adjustments as Record<string, unknown>
+          if (!isMoney(adjustment.serviceBasisPoints) || Number(adjustment.serviceBasisPoints) > 10000 || !isMoney(adjustment.taxBasisPoints) || Number(adjustment.taxBasisPoints) > 10000 || typeof adjustment.serviceIncluded !== "boolean" || typeof adjustment.taxIncluded !== "boolean" || !isMoney(adjustment.discountSatang)) return false
         }
         for (const settlement of record.settlements) {
           if (!settlement || typeof settlement !== "object" || Array.isArray(settlement)) return false
