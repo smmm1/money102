@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import "./daytogether.css"
+import { createMemoryDataAdapter } from "./daytogether-data-adapter"
 import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview, parseMoneyToSatang, parsePercentageBasisPoints, type BillAdjustments } from "./daytogether-calculations.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
@@ -29,6 +30,7 @@ const symptomDetailsFromExtra = (value: string) => value.replace(/ระดั�
 const id = () => crypto.randomUUID()
 const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "light", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
 function readState(): State { return { ...defaults, goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { ...defaults.settings } } }
+const prototypeData = createMemoryDataAdapter<State>(defaults)
 function isBackupState(value: unknown): value is State {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
   const candidate = value as Record<string, unknown>
@@ -128,7 +130,7 @@ function csv(rows: unknown[][]) { return "\uFEFF" + rows.map(row => row.map(valu
 function download(name: string, content: string, type: string) { const a = document.createElement("a"); const url = URL.createObjectURL(new Blob([content],{type})); a.href = url; a.download=name; a.click(); window.setTimeout(()=>URL.revokeObjectURL(url),1000) }
 
 export default function DayTogether() {
-  const [state,setState] = useState<State>(() => ({ ...readState(), settings: { ...readState().settings, theme: "system" } }))
+  const [state,setState] = useState<State>(() => ({ ...prototypeData.load(), ...readState(), settings: { ...readState().settings, theme: "system" } }))
   const [path,setPath] = useState(window.location.pathname)
   const [moreOpen,setMoreOpen] = useState(false)
   const [quickAddOpen,setQuickAddOpen] = useState(false)
@@ -199,7 +201,7 @@ export default function DayTogether() {
     return () => window.clearTimeout(timer)
   }, [modal, editId, draftNote])
   const go = (next: string) => { if (window.location.pathname !== next) window.history.pushState({}, "", next); setPath(next); setMoreOpen(false); setQuery(""); window.scrollTo({top:0,behavior:"smooth"}) }
-  const update = <K extends keyof State>(key: K, value: State[K]) => setState(s=>({...s,[key]:value}))
+  const update = <K extends keyof State>(key: K, value: State[K]) => setState(s=>prototypeData.replace({...s,[key]:value}))
   const clearCategory = (category: "savings" | "health" | "notes" | "split" | "bbq") => {
     const labels = { savings: "เป้าหมายและประวัติออมเงิน", health: "ประวัติสุขภาพ", notes: "โน้ตและไดอารี", split: "บิลหารตัง", bbq: "ประวัติมื้ออาหาร" };
     if (!window.confirm("ลบ" + labels[category] + "ทั้งหมดอย่างถาวรหรือไม่? การดำเนินการนี้ย้อนกลับไม่ได้")) return;
@@ -287,7 +289,7 @@ export default function DayTogether() {
   }
   const resetSampleData = () => {
     if (!window.confirm("รีเซ็ตข้อมูลตัวอย่างทั้งหมดในหน่วยความจำหรือไม่?")) return;
-    setState({ ...defaults, settings: { ...defaults.settings, theme } });
+    setState(prototypeData.reset()); setState(s=>({...s,settings:{...s.settings,theme}}));
     setNotice("รีเซ็ตข้อมูลตัวอย่างแล้ว (ไม่กระทบข้อมูลถาวร)");
     setModal(null);
     setEditId("");
