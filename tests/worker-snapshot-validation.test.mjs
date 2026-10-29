@@ -205,7 +205,7 @@ test("password change updates the password hash and invalidates other sessions",
 
 test("state snapshot writes reject stale revisions instead of overwriting another tab", async () => {
   let revision = "2026-10-29T00:00:00.000Z";
-  let storedPayload = JSON.stringify({ "lamoon-daytogether-v1": JSON.stringify({ goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: {} }) });
+  let storedPayload = JSON.stringify({ "lamoon-daytogether-v1": JSON.stringify(validState()) });
   const db = {
     prepare(sql) {
       const statement = {
@@ -241,8 +241,8 @@ test("state snapshot writes reject stale revisions instead of overwriting anothe
     headers: { Authorization: "Bearer " + "t".repeat(40), "Content-Type": "application/json" },
     body: JSON.stringify({ payload: { "lamoon-daytogether-v1": JSON.stringify(state) }, expected_updated_at: expectedRevision })
   }), { DB: db });
-  const stateOne = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "A" } };
-  const stateTwo = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "B" } };
+  const stateOne = { ...validState(), settings: { ...validState().settings, displayName: "A" } };
+  const stateTwo = { ...validState(), settings: { ...validState().settings, displayName: "B" } };
   const initialRevision = revision;
   const success = await write(initialRevision, stateOne);
   assert.equal(success.status, 200);
@@ -270,7 +270,7 @@ test("state endpoint preserves legacy unconditional writes while clients roll fo
   };
   const response = await worker.fetch(new Request("https://api.example.test/api/state", {
     method: "PUT", headers: { Authorization: "Bearer " + "t".repeat(40), "Content-Type": "application/json" },
-    body: JSON.stringify({ payload: { "lamoon-daytogether-v1": JSON.stringify({ goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: {} }) } })
+    body: JSON.stringify({ payload: { "lamoon-daytogether-v1": JSON.stringify(validState()) } })
   }), { DB: db });
   assert.equal(response.status, 200);
   assert.ok(storedPayload.includes("lamoon-daytogether-v1"));
