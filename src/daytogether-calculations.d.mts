@@ -30,3 +30,20 @@ export type BbqPersonalCostSummary = { totalSatang: number | null; knownCount: n
 export function summarizeBbqPersonalCosts(visits?: { personalSatang?: number | null }[]): BbqPersonalCostSummary;
 
 export function formatDateInTimezone(value: string, timezone?: string): string;
+
+export type BillAdjustmentSettings = {
+  serviceFeeRateBps?: number;
+  taxRateBps?: number;
+  serviceFeeIncluded?: boolean;
+  taxIncluded?: boolean;
+  discountSatang?: number;
+  adjustmentPayerId?: string;
+};
+export type AdjustedSplitResult = {
+  valid: boolean; error: string | null; subtotalSatang: number | null; serviceFeeSatang: number | null;
+  taxSatang: number | null; discountSatang: number | null; totalSatang: number | null;
+  serviceFeeRateBps?: number; taxRateBps?: number; serviceFeeIncluded?: boolean; taxIncluded?: boolean;
+  responsibilityByParticipant: Record<string, number>; paidByParticipant: Record<string, number>;
+  balances: Record<string, number>; transfers: { fromId: string; toId: string; amountSatang: number }[];
+};
+export function calculateAdjustedSplit(expenses: SplitExpense[], participants: { id: string; name?: string; isMe?: boolean }[], settlements?: Settlement[], adjustments?: BillAdjustmentSettings): AdjustedSplitResult;
