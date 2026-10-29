@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react"
 import "./daytogether.css"
 import { AccountMenu, useAccount } from "./CloudAuth"
+import { createCloudSnapshotAdapter } from "./daytogether-data-adapter"
 import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview, parseMoneyToSatang, parsePercentageBasisPoints, type BillAdjustments } from "./daytogether-calculations.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
@@ -29,17 +30,10 @@ const symptomSeverityFromExtra = (value: string) => value.match(/ระดับ
 const symptomDetailsFromExtra = (value: string) => value.replace(/ระดับความรู้สึก: [1-5]\/5/g, "").replace(/^ · | · $/g, "")
 const id = () => crypto.randomUUID()
 const defaults: State = { goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { displayName: "", timezone: "Asia/Bangkok", theme: "light", hidden: false, cards: ["savings","health","notes","split","bbq"], healthKinds: ["weight","pressure","sleep","water","symptom","exercise"], waterGoal: 2000, heightCm: null } }
+const cloudDataAdapter = createCloudSnapshotAdapter<State>("lamoon-daytogether-v1", isBackupState, defaults)
 function readState(): State {
-  try {
-    const raw = window.localStorage.getItem("lamoon-daytogether-v1")
-    if (raw) {
-      const parsed: unknown = JSON.parse(raw)
-      if (isBackupState(parsed)) return { ...defaults, ...parsed, settings: { ...defaults.settings, ...parsed.settings } }
-    }
-  } catch {
-    // Ignore unavailable or malformed account snapshots.
-  }
-  return { ...defaults, goals: [], savings: [], health: [], notes: [], bills: [], visits: [], settings: { ...defaults.settings } }
+  const loaded = cloudDataAdapter.load()
+  return { ...defaults, ...loaded, settings: { ...defaults.settings, ...loaded.settings } }
 }
 function isBackupState(value: unknown): value is State {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
@@ -182,7 +176,7 @@ export default function DayTogether() {
   useEffect(() => { const pop = () => { setPath(window.location.pathname); const params=new URLSearchParams(window.location.search); setOpenNoteId(params.get("note")||""); }; window.addEventListener("popstate",pop); if(window.location.pathname==="/login"){window.history.replaceState({}, "", "/");setPath("/")} return () => window.removeEventListener("popstate",pop) },[])
   useEffect(() => {
     setPersistenceStatus("saving")
-    try { window.localStorage.setItem("lamoon-daytogether-v1", JSON.stringify(state)) }
+    try { cloudDataAdapter.save(state) }
     catch { setPersistenceStatus("error"); setNotice("บันทึกข้อมูลลงระบบไม่สำเร็จ กรุณาลองอีกครั้ง") }
   }, [state])
   useEffect(() => {
