@@ -146,3 +146,58 @@ test("account deletion requires an authenticated session", async () => {
   const response = await worker.fetch(new Request("https://api.example.test/api/auth/account", { method: "DELETE" }), { DB: db });
   assert.equal(response.status, 401);
 });
+
+
+test("password change requires authentication and enforces password length", async () => {
+  const db = {
+    prepare(sql) { return { bind() { return this; }, async run() { return { success: true }; }, async first() { return sql.includes("JOIN app_users") ? { id: "user-1", email: "user@example.com" } : null; } }; },
+    async batch() { throw new Error("must not change password"); }
+  };
+  const unauthenticated = await worker.fetch(new Request("https://api.example.test/api/auth/password", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currentPassword: "old-password", newPassword: "short" })
+  }), { DB: db });
+  assert.equal(unauthenticated.status, 401);
+  const weakPassword = await worker.fetch(new Request("https://api.example.test/api/auth/password", {
+    method: "POST", headers: { Authorization: "Bearer " + "t".repeat(40), "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword: "old-password", newPassword: "short" })
+  }), { DB: db });
+  assert.equal(weakPassword.status, 400);
+});
+
+test("password change updates the password hash and invalidates other sessions", async () => {
+  const { webcrypto } = await import("node:crypto");
+  const salt = new Uint8Array(16).fill(7);
+  const key = await webcrypto.subtle.importKey("raw", new TextEncoder().encode("old-password"), "PBKDF2", false, ["deriveBits"]);
+  const hash = new Uint8Array(await webcrypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, key, 256));
+  const encode = bytes => Buffer.from(bytes).toString("base64url");
+  const batched = [];
+  const db = {
+    prepare(sql) {
+      return {
+        sql, args: [],
+        bind(...args) { this.args = args; return this; },
+        async run() { return { success: true }; },
+        async first() {
+          if (sql.includes("JOIN app_users")) return { id: "user-1", email: "user@example.com" };
+          if (sql.includes("SELECT password_salt,password_hash")) return { password_salt: encode(salt), password_hash: encode(hash) };
+          return null;
+        }
+      };
+    },
+    async batch(statements) { batched.push(...statements); return statements.map(() => ({ success: true })); }
+  };
+  const response = await worker.fetch(new Request("https://api.example.test/api/auth/password", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + "t".repeat(40), "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword: "old-password", newPassword: "new-password-123" })
+  }), { DB: db });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true });
+  assert.equal(batched.length, 2);
+  assert.match(batched[0].sql, /^UPDATE app_users SET password_salt=\?,password_hash=\? WHERE id=\?$/);
+  assert.equal(batched[0].args[2], "user-1");
+  assert.equal(batched[1].sql, "DELETE FROM app_sessions WHERE user_id=? AND token_hash<>?");
+  assert.equal(batched[1].args[0], "user-1");
+  assert.equal(batched[1].args[1].length, 43);
+  assert.notEqual(batched[0].args[1], encode(hash));
+});
