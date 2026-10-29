@@ -30,3 +30,34 @@ export type BbqPersonalCostSummary = { totalSatang: number | null; knownCount: n
 export function summarizeBbqPersonalCosts(visits?: { personalSatang?: number | null }[]): BbqPersonalCostSummary;
 
 export function formatDateInTimezone(value: string, timezone?: string): string;
+
+export type BillAdjustments = {
+  serviceBasisPoints?: number;
+  taxBasisPoints?: number;
+  serviceIncluded?: boolean;
+  taxIncluded?: boolean;
+  discountSatang?: number;
+};
+export type BillAdjustmentSummary = {
+  valid: boolean;
+  error: string;
+  baseTotalSatang: number;
+  serviceSatang: number;
+  taxSatang: number;
+  preDiscountSatang: number;
+  discountSatang: number;
+  totalSatang: number;
+  serviceBasisPoints: number;
+  taxBasisPoints: number;
+  serviceIncluded: boolean;
+  taxIncluded: boolean;
+};
+export type AdjustedSplitResult = SplitResult & {
+  valid: boolean;
+  adjustmentSummary: BillAdjustmentSummary;
+  baseTotalSatang: number;
+  totalSatang: number;
+  adjustedExpenses: SplitExpense[];
+};
+export function calculateBillAdjustmentSummary(baseTotalSatang: number, adjustments?: BillAdjustments): BillAdjustmentSummary;
+export function calculateBillSplit(expenses?: SplitExpense[], participants?: SplitParticipant[], settlements?: SplitSettlement[], adjustments?: BillAdjustments): AdjustedSplitResult;
