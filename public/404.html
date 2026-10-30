@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>กำลังเปิดหน้าเว็บ…</title>
+  <script>
+    (function () {
+      var requestedPath = window.location.pathname + window.location.search + window.location.hash;
+      if (!requestedPath || requestedPath === "/404.html" || requestedPath === "/index.html") {
+        requestedPath = "/";
+      }
+      window.location.replace("/?__route=" + encodeURIComponent(requestedPath));
+    })();
+  </script>
+</head>
+<body>
+  <p>กำลังกลับเข้าสู่ DayTogether…</p>
+  <noscript>กรุณาเปิดใช้งาน JavaScript เพื่อใช้งานเว็บไซต์</noscript>
+</body>
+</html>
