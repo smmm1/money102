@@ -7,8 +7,8 @@ function corsHeaders(request, env) {
   if (allowed.has(origin)) headers["Access-Control-Allow-Origin"] = origin;
   return headers;
 }
-function json(request, env, value, status = 200) {
-  return new Response(JSON.stringify(value), {status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store",...corsHeaders(request,env)}});
+function json(request, env, value, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(value), {status,headers:{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store",...corsHeaders(request,env),...extraHeaders}});
 }
 async function ensureSchema(db) {
   await db.prepare("CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE,password_salt TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL)").run();
@@ -277,7 +277,7 @@ export default { async fetch(request,env) {
    const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
    const password=typeof body?.password==="string"?body.password:"";
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลที่ถูกต้อง"},400);
-   if(!await checkAuthRateLimit(env.DB,request,email,"signup"))return json(request,env,{error:"มีการลองสร้างบัญชีมากเกินไป กรุณารอ 15 นาทีแล้วลองใหม่"},429);
+   if(!await checkAuthRateLimit(env.DB,request,email,"signup"))return json(request,env,{error:"มีการลองสร้างบัญชีมากเกินไป กรุณารอ 15 นาทีแล้วลองใหม่"},429,{"Retry-After":"900"});
    if(password.length<8||password.length>128)return json(request,env,{error:"รหัสผ่านต้องมีความยาว 8–128 ตัวอักษร"},400);
    const existing=await env.DB.prepare("SELECT id FROM app_users WHERE email=?").bind(email).first();
    if(existing)return json(request,env,{error:"อีเมลนี้มีบัญชีแล้ว"},409);
@@ -295,7 +295,7 @@ export default { async fetch(request,env) {
    const body=await parseBody(request); const email=typeof body?.email==="string"?body.email.trim().toLowerCase():""; const password=typeof body?.password==="string"?body.password:"";
    if(!email||!password)return json(request,env,{error:"กรุณากรอกอีเมลและรหัสผ่าน"},400);
    if(email.length>254||password.length>128)return json(request,env,{error:"ข้อมูลเข้าสู่ระบบไม่ถูกต้อง"},400);
-   if(!await checkAuthRateLimit(env.DB,request,email,"signin"))return json(request,env,{error:"พยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 15 นาทีแล้วลองใหม่"},429);
+   if(!await checkAuthRateLimit(env.DB,request,email,"signin"))return json(request,env,{error:"พยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 15 นาทีแล้วลองใหม่"},429,{"Retry-After":"900"});
    const row=await env.DB.prepare("SELECT id,email,password_salt,password_hash FROM app_users WHERE email=?").bind(email).first();
    if(!row)return json(request,env,{error:"อีเมลหรือรหัสผ่านไม่ถูกต้อง"},401);
    if(!constantTimeEqual(await passwordHash(password,fromBase64Url(row.password_salt)),fromBase64Url(row.password_hash)))return json(request,env,{error:"อีเมลหรือรหัสผ่านไม่ถูกต้อง"},401);
