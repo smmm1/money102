@@ -12,6 +12,10 @@ function fakeDb() {
       return {
         bind(...values) { params = values; return this; },
         async first() {
+          if (sql.includes("SELECT id,email,password_salt,password_hash FROM app_users WHERE email")) {
+            const user = [...users.values()].find(item => item.email === params[0]);
+            return user ? { id:user.id,email:user.email,password_salt:user.password_salt,password_hash:user.password_hash } : null;
+          }
           if (sql.includes("SELECT id FROM app_users WHERE email")) {
             const user = [...users.values()].find(item => item.email === params[0]);
             return user ? { id: user.id } : null;
