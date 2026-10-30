@@ -573,7 +573,7 @@ export default function DayTogether() {
     <nav className="dt2-nav" aria-label="พื้นที่ของฉัน">
       <span className="dt2-nav-label">EXPLORE</span>
       {[...navItems,"/settings"].map((href,index)=><button key={href} className={page===href?"active":""} onClick={()=>go(href)}><span className="dt2-nav-orb">{href==="/settings"?"⚙":ICON[href]}</span><span className="dt2-nav-text">{href==="/settings"?"ตั้งค่า":PAGE_LABEL[href]}</span></button>)}
-      <button className="dt2-nav-add" onClick={()=>setQuickAddOpen(v=>!v)}>＋ <span>เพิ่มบันทึก</span></button>
+      <button className="dt2-nav-add" onClick={()=>setQuickAddOpen(v=>!v)}><span>เพิ่มบันทึก</span></button>
     </nav>
     <main className="dt2-main">
       <div className="dt2-page-meta"><span>PERSONAL UNIVERSE <b>✳</b> {PAGE_LABEL[page]||"DETAIL"}</span><span>{new Date().toLocaleDateString("th-TH",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:state.settings.timezone})}</span></div>
