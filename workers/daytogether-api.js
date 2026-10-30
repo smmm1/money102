@@ -15,6 +15,7 @@ async function ensureSchema(db) {
   await db.prepare("CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY,user_id TEXT NOT NULL,expires_at INTEGER NOT NULL,created_at TEXT NOT NULL)").run();
   await db.prepare("CREATE INDEX IF NOT EXISTS idx_app_sessions_user ON app_sessions(user_id)").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS user_app_data (user_id TEXT NOT NULL,bucket TEXT NOT NULL CHECK(bucket='app_state'),payload TEXT NOT NULL CHECK(json_valid(payload)),updated_at TEXT NOT NULL,PRIMARY KEY(user_id,bucket))").run();
+  await db.prepare("CREATE TABLE IF NOT EXISTS auth_rate_limits (bucket_key TEXT PRIMARY KEY,window_started_at INTEGER NOT NULL,attempts INTEGER NOT NULL)").run();
 }
 
 function toBase64Url(bytes) { let binary=""; for(const byte of bytes) binary+=String.fromCharCode(byte); return btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,""); }
@@ -249,6 +250,21 @@ function validateDayTogetherSnapshot(snapshot) {
  return null;
 }
 async function parseBody(request) { const length=Number(request.headers.get("Content-Length")||0); if(length>1000000)return null; try { const raw=await request.text(); if(raw.length>1000000)return null; const v=JSON.parse(raw); return v&&typeof v==="object"&&!Array.isArray(v)?v:null; } catch { return null; } }
+
+async function checkAuthRateLimit(db, request, email, scope, now = Date.now()) {
+ const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+ const cutoff = now - 15 * 60 * 1000;
+ const ipKey = await sha256("auth-ip:" + ip + ":" + scope);
+ const identityKey = await sha256("auth-identity:" + ip + ":" + email + ":" + scope);
+ const consume = async (key, limit) => {
+  const row = await db.prepare("INSERT INTO auth_rate_limits(bucket_key,window_started_at,attempts) VALUES(?,?,1) ON CONFLICT(bucket_key) DO UPDATE SET attempts=CASE WHEN window_started_at<=? THEN 1 ELSE attempts+1 END,window_started_at=CASE WHEN window_started_at<=? THEN excluded.window_started_at ELSE window_started_at END RETURNING attempts").bind(key,now,cutoff,cutoff).first();
+  return Number(row?.attempts || 0) <= limit;
+ };
+ const ipAllowed = await consume(ipKey, 30);
+ const identityAllowed = await consume(identityKey, 8);
+ return ipAllowed && identityAllowed;
+}
+
 async function issueSession(db,user) { const token=toBase64Url(randomBytes(32)); const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); await db.prepare("DELETE FROM app_sessions WHERE expires_at<=?").bind(now).run(); await db.prepare("INSERT INTO app_sessions(token_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)").bind(tokenHash,user.id,now+SESSION_TTL_SECONDS,new Date().toISOString()).run(); return {token,user}; }
 async function getAuthenticatedUser(request,db) { const authorization=request.headers.get("Authorization")||""; if(!authorization.startsWith("Bearer "))return null; const token=authorization.slice(7).trim(); if(token.length<30||token.length>200)return null; const tokenHash=await sha256(token); const now=Math.floor(Date.now()/1000); return await db.prepare("SELECT u.id,u.email FROM app_sessions s JOIN app_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(tokenHash,now).first(); }
 export { isSnapshot, validDayTogetherState, validateDayTogetherSnapshot };
@@ -261,6 +277,7 @@ export default { async fetch(request,env) {
    const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
    const password=typeof body?.password==="string"?body.password:"";
    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return json(request,env,{error:"กรุณากรอกอีเมลที่ถูกต้อง"},400);
+   if(!await checkAuthRateLimit(env.DB,request,email,"signup"))return json(request,env,{error:"มีการลองสร้างบัญชีมากเกินไป กรุณารอ 15 นาทีแล้วลองใหม่"},429);
    if(password.length<8||password.length>128)return json(request,env,{error:"รหัสผ่านต้องมีความยาว 8–128 ตัวอักษร"},400);
    const existing=await env.DB.prepare("SELECT id FROM app_users WHERE email=?").bind(email).first();
    if(existing)return json(request,env,{error:"อีเมลนี้มีบัญชีแล้ว"},409);
@@ -277,6 +294,8 @@ export default { async fetch(request,env) {
    if(url.pathname==="/api/auth/signin"&&request.method==="POST") {
    const body=await parseBody(request); const email=typeof body?.email==="string"?body.email.trim().toLowerCase():""; const password=typeof body?.password==="string"?body.password:"";
    if(!email||!password)return json(request,env,{error:"กรุณากรอกอีเมลและรหัสผ่าน"},400);
+   if(email.length>254||password.length>128)return json(request,env,{error:"ข้อมูลเข้าสู่ระบบไม่ถูกต้อง"},400);
+   if(!await checkAuthRateLimit(env.DB,request,email,"signin"))return json(request,env,{error:"พยายามเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 15 นาทีแล้วลองใหม่"},429);
    const row=await env.DB.prepare("SELECT id,email,password_salt,password_hash FROM app_users WHERE email=?").bind(email).first();
    if(!row)return json(request,env,{error:"อีเมลหรือรหัสผ่านไม่ถูกต้อง"},401);
    if(!constantTimeEqual(await passwordHash(password,fromBase64Url(row.password_salt)),fromBase64Url(row.password_hash)))return json(request,env,{error:"อีเมลหรือรหัสผ่านไม่ถูกต้อง"},401);
