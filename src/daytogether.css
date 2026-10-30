@@ -320,3 +320,81 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  .dt-form-grid{grid-template-columns:1fr}
  .dt-modal{padding:18px}
 }
+
+
+/* UX restructure: persistent task navigation + content-first workspace */
+.dt-app-layout{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh;background:#f7f8f5}
+.dt-app-sidebar{position:sticky;top:0;display:flex;flex-direction:column;align-self:start;height:100vh;padding:26px 16px 18px;background:#fff;border-right:1px solid #e5e8e1}
+.dt-app-sidebar .dt2-brand{width:100%;padding:4px 8px 28px;border-bottom:1px solid #edf0ea}
+.dt-app-sidebar .dt2-brand-symbol{display:grid;place-items:center;font-size:20px;font-weight:700}
+.dt-sidebar-label{margin:25px 10px 10px;color:#92998e;font-size:10px;font-weight:700;letter-spacing:.08em}
+.dt-app-sidebar .dt2-nav{display:grid;gap:3px;min-height:0;margin:0;padding:0;background:transparent;border:0;overflow:visible}
+.dt-app-sidebar .dt2-nav button{justify-content:flex-start;min-height:42px;padding:0 12px;border-radius:9px;color:#687166;font-size:13px;font-weight:550}
+.dt-app-sidebar .dt2-nav button.active{background:#edf2eb;color:#354d3b;font-weight:700}
+.dt-sidebar-bottom{display:grid;gap:10px;margin-top:auto;padding:18px 8px 0;border-top:1px solid #edf0ea}
+.dt-sidebar-bottom .dt2-privacy{justify-content:flex-start;width:100%;border:0;background:transparent;padding:7px 0}
+.dt-sidebar-bottom .cc-account{width:100%}
+.dt-app-layout>.dt2-main{width:100%;max-width:1240px;margin:0 auto;padding:34px clamp(22px,4vw,60px) 80px}
+.dt-app-topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:0 0 28px;padding:0 0 18px;border-bottom:1px solid #e5e8e1}
+.dt-app-topbar>div{min-width:0}
+.dt-app-breadcrumb{display:block;margin-bottom:7px;color:#92998e;font-size:10px}
+.dt-app-topbar h1{margin:0;color:#252923;font-size:clamp(27px,3.2vw,38px);font-weight:650;line-height:1.15;letter-spacing:-.05em}
+.dt-mobile-brand,.dt-mobile-nav{display:none}
+.dt-home-layout{gap:26px}
+.dt-home-intro{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:4px 0 20px}
+.dt-home-intro h2{margin:6px 0;font-size:clamp(23px,3vw,32px);font-weight:650;letter-spacing:-.05em;line-height:1.25}
+.dt-home-intro p{margin:0;color:#777d73;font-size:12px}
+.dt-home-intro .dt-home-date{color:#82907f;font-size:11px}
+.dt-home-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.dt-home-actions button{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;min-height:116px;padding:16px;border:1px solid #e5e8e1;border-radius:12px;background:#fff;text-align:left;color:#252923;transition:border-color .15s,transform .15s}
+.dt-home-actions button:hover{border-color:#9aaf98;transform:translateY(-2px)}
+.dt-home-actions button>span{display:grid;place-items:center;width:25px;height:25px;border-radius:7px;background:#edf2eb;color:#48634f;font-size:16px}
+.dt-home-actions button strong{margin-top:5px;font-size:12px;font-weight:700}
+.dt-home-actions button small{color:#858d80;font-size:10px;line-height:1.45}
+.dt-home-overview,.dt-home-recent{min-width:0}
+.dt-home-section-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #e5e8e1}
+.dt-home-section-title h3{margin:0;font-size:16px;font-weight:650}
+.dt-home-section-title>span{color:#92998e;font-size:10px}
+.dt-home-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border:1px solid #e5e8e1;border-radius:12px;background:#fff;overflow:hidden}
+.dt-home-metrics button{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:16px;border:0;border-right:1px solid #edf0ea;background:#fff;text-align:left;color:#252923}
+.dt-home-metrics button:last-child{border-right:0}
+.dt-home-metrics button:hover{background:#f8faf7}
+.dt-home-metrics small{color:#818a7d;font-size:10px}
+.dt-home-metrics strong{font-size:clamp(14px,1.6vw,20px);font-weight:650;letter-spacing:-.035em;overflow-wrap:anywhere}
+.dt-home-metrics button>span{color:#6d806d;font-size:10px}
+.dt-home-recent .dt-recent-list{border-top:1px solid #edf0ea}
+.dt-home-recent .dt-recent{padding:12px 6px}
+.dt-home-recent .dt-recent-mark{background:#f0f3ee;color:#687c66}
+.dt-app-layout .dt2-page-meta,.dt-app-layout .dt2-page-title{display:none}
+.dt-app-layout .dt-page-body{gap:22px}
+.dt-app-layout .dt-section{margin:0}
+@media(max-width:900px){
+ .dt-app-layout{grid-template-columns:190px minmax(0,1fr)}
+ .dt-app-sidebar{padding:20px 12px}
+ .dt-app-layout>.dt2-main{padding:25px 20px 75px}
+ .dt-home-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .dt-home-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .dt-home-metrics button{border-bottom:1px solid #edf0ea}
+}
+@media(max-width:680px){
+ .dt-app-layout{display:block;padding-bottom:66px}
+ .dt-app-sidebar{display:none}
+ .dt-app-layout>.dt2-main{padding:18px 14px 28px}
+ .dt-app-topbar{margin-bottom:20px;padding-bottom:14px}
+ .dt-app-breadcrumb{font-size:9px}
+ .dt-app-topbar h1{font-size:27px}
+ .dt-app-topbar>.dt-btn{min-height:36px;padding:0 10px;font-size:11px}
+ .dt-mobile-nav{position:fixed;z-index:30;right:0;bottom:0;left:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:7px 6px calc(7px + env(safe-area-inset-bottom));border-top:1px solid #e5e8e1;background:rgba(255,255,255,.97);backdrop-filter:blur(12px)}
+ .dt-mobile-nav button{min-width:0;min-height:42px;padding:0 3px;border:0;border-radius:8px;background:transparent;color:#788174;font-size:10px}
+ .dt-mobile-nav button.active{background:#edf2eb;color:#354d3b;font-weight:700}
+ .dt-home-layout{gap:20px}
+ .dt-home-intro{align-items:flex-start;flex-direction:column;gap:12px;padding:0 0 5px}
+ .dt-home-intro h2{font-size:24px}
+ .dt-home-intro>.dt-btn{width:100%}
+ .dt-home-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dt-home-actions button{min-height:96px;padding:13px}
+ .dt-home-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dt-home-metrics button{padding:13px;border-right:1px solid #edf0ea}
+ .dt-home-metrics button:nth-child(2n){border-right:0}
+ .dt-home-section-title h3{font-size:15px}
+}
