@@ -208,3 +208,115 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-stat{padding:14px 12px;border-bottom:1px solid #d6d7eb}
 .dt-goal-grid,.dt-note-grid,.dt-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* DayTogether — quiet minimal usability pass */
+:root{
+  color:#252923;background:#f7f8f5;
+  --ink:#252923;--muted:#777d73;--line:#e5e8e1;--paper:#fff;
+  --blue:#48634f;--blue-deep:#354d3b;--pink:#dce6dc;--violet:#e9ede6;
+  --yellow:#e8eee4;--cyan:#e7eee7;--shadow:0 8px 28px rgba(32,48,35,.06)
+}
+html,body,.dt2-shell{background:#f7f8f5;color:#252923}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #78927b!important;outline-offset:2px}
+.dt2-header{height:70px;padding:0 clamp(18px,4vw,64px);background:#fff;border-bottom:1px solid var(--line)}
+.dt2-brand-symbol{width:34px;height:34px;border-radius:10px;background:#48634f;color:#fff;font-size:20px;transform:none;box-shadow:none}
+.dt2-brand-copy strong{font-size:16px;font-weight:700;letter-spacing:-.04em}
+.dt2-brand-copy small{font-size:8px;letter-spacing:.1em;color:#858b80}
+.dt2-header-right{gap:10px}
+.dt2-save{font-size:9px}
+.dt2-privacy{padding:8px 10px;border-color:var(--line);background:#fff;color:#5e675d}
+.dt2-privacy.active{background:#eef3ed;border-color:#cdd9cc;color:#48634f}
+.dt2-nav{min-height:54px;gap:4px;padding:0 clamp(18px,4vw,64px);background:#fff;color:#525b51;border-bottom:1px solid var(--line)}
+.dt2-nav-label{display:none}
+.dt2-nav button{min-height:36px;padding:0 12px;border-radius:8px;color:#687166;font-size:12px;font-weight:600}
+.dt2-nav button:hover{background:#f4f6f2;color:#354d3b}
+.dt2-nav button.active{background:#edf2eb;color:#354d3b}
+.dt2-nav-index,.dt2-nav button i,.dt2-nav-orb{display:none!important}
+.dt2-nav .dt2-nav-add{margin-left:auto;border:1px solid #dce4da;background:#48634f;color:#fff;padding:0 14px}
+.dt2-main{width:min(1240px,100%);padding:30px clamp(18px,4vw,64px) 90px}
+.dt2-page-meta{font-size:9px;color:#8b9187;letter-spacing:.04em}
+.dt2-page-meta span:first-child b{color:#8da18b}
+.dt2-page-title{align-items:center;margin:12px 0 24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.dt2-page-title h1{font-size:clamp(30px,4vw,48px);font-weight:650;line-height:1.1;letter-spacing:-.055em}
+.dt2-title-stamp{padding:0;background:none;color:#8a9187;font-size:10px}
+.dt-page-body{gap:24px}
+.dt-welcome.dt2-welcome{grid-template-columns:1fr;min-height:0;padding:32px clamp(22px,4vw,48px);border-radius:18px;background:#edf2eb;color:#28342a}
+.dt2-welcome:before,.dt2-welcome:after,.dt2-welcome-foot,.dt2-sunburst{display:none}
+.dt2-welcome .dt-eyebrow{color:#6d806d;font-size:9px;letter-spacing:.1em}
+.dt2-welcome h2{max-width:620px;margin:12px 0;font-size:clamp(32px,5vw,54px);font-weight:650;line-height:1.08;letter-spacing:-.06em}
+.dt2-welcome h2 em{color:#48634f}
+.dt2-welcome h2 small{font-size:16px}
+.dt2-welcome p{margin:0 0 18px;color:#687467;font-size:13px}
+.dt2-welcome p i{color:#9aaa97}
+.dt2-welcome .dt-btn{min-height:40px;padding:0 16px;border-radius:9px;background:#48634f;color:#fff;box-shadow:none;font-weight:600}
+.dt2-welcome .dt-btn:hover{transform:translateY(-1px);box-shadow:none}
+.dt-btn{min-height:38px;padding:0 14px;border:1px solid #dce3d9;border-radius:9px;background:#fff;color:#455244;font-weight:600}
+.dt-btn:hover{transform:translateY(-1px)}
+.dt-btn-primary{background:#48634f;border-color:#48634f;color:#fff}
+.dt-btn-secondary{background:#fff;border-color:#dce3d9}
+.dt-btn-danger{border-color:#ead9d6;color:#a45d53;background:#fff}
+.dt-stat-grid{gap:10px}
+.dt-stat{min-height:128px;padding:17px;border:1px solid var(--line);border-radius:13px;background:#fff!important;color:var(--ink);box-shadow:none}
+.dt-stat:nth-child(n){background:#fff!important}
+.dt-stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.dt-stat-icon{width:28px;height:28px;margin-bottom:10px;background:#eef3ed;color:#48634f}
+.dt-stat-label{color:#737c70}
+.dt-stat strong{margin:8px 0 4px;font-size:clamp(19px,2vw,25px);font-weight:650;letter-spacing:-.04em}
+.dt-section-head{padding-bottom:11px;border-bottom:1px solid var(--line)}
+.dt-section h3,.dt-detail-card h3,.dt-settlement-form h3{font-size:17px;font-weight:650;letter-spacing:-.03em}
+.dt-recent,.dt-list-row,.dt-bill-row{padding:13px 4px;border-bottom:1px solid #edf0ea}
+.dt-recent:hover,.dt-list-row:hover,.dt-bill-row:hover{padding-left:9px;background:#f5f7f3}
+.dt-recent-mark,.dt-list-icon{flex-basis:34px;width:34px;height:34px;border-radius:9px;background:#eef3ed;color:#48634f}
+.dt-empty{min-height:145px;border:1px dashed #d9e0d6;border-radius:13px}
+.dt-empty>span{width:36px;height:36px;background:#eef3ed;color:#48634f}
+.dt-callout,.dt-health-disclaimer{border-left:3px solid #8da18b;border-radius:8px;background:#f0f4ef;color:#596b58}
+.dt-goal-grid,.dt-note-grid,.dt-visit-grid{gap:10px}
+.dt-goal-card,.dt-note-card,.dt-visit-card{padding:17px;border:1px solid var(--line);border-radius:13px;background:#fff!important;box-shadow:none}
+.dt-goal-card:nth-child(n),.dt-note-card:nth-child(n),.dt-visit-card:nth-child(n){background:#fff!important}
+.dt-goal-dot,.dt-goal-dot.blue,.dt-goal-dot.orange,.dt-goal-dot.purple{background:#78927b}
+.dt-pill{background:#f0f3ee;color:#687466}
+.dt-pill.settled{background:#eaf2e9;color:#4c7350}
+.dt-pill.settling{background:#f4f1e8;color:#87764c}
+.dt-progress{background:#edf0ea}
+.dt-progress i{background:#78927b}
+.dt-health-kind{padding:16px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.dt-health-kind>span{font-size:22px;color:#58745c}
+.dt-note-card{min-height:160px}
+.dt-detail-card{border-top:1px solid var(--line)}
+.dt-visit-art{height:96px;background:#edf2eb;color:#48634f}
+.dt-visit-art:after{inset:8px;border-color:#cbd8c9;border-radius:10px}
+.dt-visit-art span{background:#fff;color:#48634f}
+.dt-settlement-form{padding:18px;border:1px solid var(--line);border-radius:13px;background:#f3f5f1}
+.dt2-shell input,.dt2-shell textarea,.dt2-shell select{min-height:42px;padding:10px 12px;border:1px solid #dce3d9;border-radius:9px;background:#fff}
+.dt-modal-backdrop{background:rgba(28,36,29,.42);backdrop-filter:blur(3px)}
+.dt-modal{padding:22px;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 18px 60px rgba(30,42,31,.15)}
+.dt-modal-head h2{font-size:22px;font-weight:650}
+.dt-bill-total-preview,.dt-adjustment-total{border-radius:12px;background:#48634f;color:#fff}
+.dt-bill-total-preview strong,.dt-adjustment-total strong{color:#fff}
+.dt-health-custom-range button,.dt-range-tabs button,.dt-note-filters button,.dt-note-date-filter button,.dt-water-quick button,.dt-quick-water button{border-color:#dce3d9;border-radius:8px;background:#fff;color:#596657}
+.dt-health-custom-range button.active,.dt-range-tabs button.active,.dt-note-filters button.active{border-color:#48634f;background:#48634f;color:#fff}
+.dt-toast{border:1px solid #dce3d9;border-radius:12px;background:#354d3b;color:#fff;box-shadow:var(--shadow)}
+.dt-toast>span:first-child{color:#dce8d8}
+@media(max-width:760px){
+ .dt2-header{height:60px;padding:0 14px}
+ .dt2-brand-copy small{display:none}
+ .dt2-header-right{gap:6px}
+ .dt2-save{font-size:0}.dt2-save i{margin:0}
+ .dt2-privacy{padding:7px 8px;font-size:10px}
+ .dt2-nav{min-height:48px;padding:0 10px;gap:2px}
+ .dt2-nav button{min-height:34px;padding:0 10px;font-size:11px}
+ .dt2-nav .dt2-nav-add{margin-left:4px}
+ .dt2-main{padding:22px 14px 80px}
+ .dt2-page-title{margin:10px 0 18px}
+ .dt2-page-title h1{font-size:32px}
+ .dt-welcome.dt2-welcome{padding:24px 20px;border-radius:14px}
+ .dt2-welcome h2{font-size:36px}
+ .dt-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dt-stat-grid.three,.dt-stat-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dt-stat{min-height:112px;padding:14px}
+ .dt-goal-grid,.dt-note-grid,.dt-visit-grid{grid-template-columns:1fr}
+ .dt-health-kind-grid{grid-template-columns:1fr}
+ .dt-form-grid{grid-template-columns:1fr}
+ .dt-modal{padding:18px}
+}
