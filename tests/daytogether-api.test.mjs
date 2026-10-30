@@ -6,12 +6,20 @@ function fakeDb() {
   const users = new Map();
   const sessions = new Map();
   const snapshots = new Map();
+  const rateLimits = new Map();
   const db = {
     prepare(sql) {
       let params = [];
       return {
         bind(...values) { params = values; return this; },
         async first() {
+          if (sql.includes("RETURNING attempts")) {
+            const [key,now,cutoff] = params;
+            const current=rateLimits.get(key);
+            const next=!current||current.window_started_at<=cutoff?{window_started_at:now,attempts:1}:{...current,attempts:current.attempts+1};
+            rateLimits.set(key,next);
+            return {attempts:next.attempts};
+          }
           if (sql.includes("SELECT id,email,password_salt,password_hash FROM app_users WHERE email")) {
             const user = [...users.values()].find(item => item.email === params[0]);
             return user ? { id:user.id,email:user.email,password_salt:user.password_salt,password_hash:user.password_hash } : null;
@@ -91,7 +99,7 @@ const stateSnapshot = () => ({
 async function request(path, method="GET", body, token="") {
   return worker.fetch(new Request("https://api.example.test"+path,{
     method,
-    headers:{...(body?{"Content-Type":"application/json"}:{}),...(token?{Authorization:"Bearer "+token}:{})},
+    headers:{...(body?{"Content-Type":"application/json"}:{}),"CF-Connecting-IP":"203.0.113.10",...(token?{Authorization:"Bearer "+token}:{})},
     body:body?JSON.stringify(body):undefined
   }),{DB:database,APP_ORIGIN:"https://daytogether-phase1-preview.onrender.com"});
 }
@@ -166,4 +174,15 @@ test("logout revokes its session and account deletion removes access",async()=>{
   const second=await (await request("/api/auth/signup","POST",{email:"account-delete-2@example.com",password:"account-password-456"})).json();
   assert.equal((await request("/api/auth/account","DELETE",undefined,second.token)).status,200);
   assert.equal((await request("/api/auth/me","GET",undefined,second.token)).status,401);
+});
+
+test("sign-in throttles repeated attempts for the same client and identity",async()=>{
+  database=fakeDb();
+  for(let attempt=0;attempt<8;attempt++){
+    const response=await request("/api/auth/signin","POST",{email:"guess@example.com",password:"wrong-password"});
+    assert.equal(response.status,401);
+  }
+  const blocked=await request("/api/auth/signin","POST",{email:"guess@example.com",password:"wrong-password"});
+  assert.equal(blocked.status,429);
+  assert.match(blocked.headers.get("Retry-After")||"",/^900$/);
 });
