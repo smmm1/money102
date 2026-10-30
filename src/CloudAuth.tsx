@@ -18,9 +18,9 @@ export function AccountMenu() {
 }
 type LocalSnapshot = Record<string, string>
 const LOCAL_PREFIX = "lamoon-"
-const isCommandCenterPreview = window.location.hostname === "money102-command-center-preview.onrender.com"
-const defaultApiUrl = window.location.hostname === "money102-command-center-preview.onrender.com"
-  ? "https://money102-api-staging.s2mtha16.workers.dev"
+const isStagingPreview = ["money102-command-center-preview.onrender.com", "daytogether-phase1-preview.onrender.com", "daytogether-phase2-preview.onrender.com"].includes(window.location.hostname)
+const defaultApiUrl = isStagingPreview
+  ? "https://daytogether-api-staging.s2mtha16.workers.dev"
   : "https://money102-api.s2mtha16.workers.dev"
 const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
 
@@ -131,7 +131,8 @@ function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | 
 }
 export default function CloudAuth({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
-  const [checking] = useState(false)
+  const [checking,setChecking] = useState(() => Boolean(sessionToken))
+  const [authCheckError, setAuthCheckError] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -148,6 +149,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       setSessionToken("")
       lastCloudRevision = null
       memorySnapshot = {}
+      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
       setUser(null)
       setCloudReady(false)
       setCloudError("")
@@ -159,15 +161,22 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     installStorageShim()
-    if (!sessionToken) return
+    if (!sessionToken) { setChecking(false); return }
     let cancelled = false
+    setChecking(true)
     ;(async () => {
       try {
         const result = await api("/api/auth/me") as { user: AppUser }
         if (!cancelled) setUser(result.user)
-      } catch {
-        setSessionToken("")
-        if (!cancelled) setUser(null)
+      } catch (error) {
+        if (!cancelled) {
+          // Keep a valid token during transient network/5xx failures. A 401
+          // already clears it through the d1-auth-expired event in api().
+          if (getToken()) setAuthCheckError("ตรวจสอบเซสชันไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
+          else setUser(null)
+        }
+      } finally {
+        if (!cancelled) setChecking(false)
       }
     })()
     return () => { cancelled = true }
@@ -264,6 +273,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     if (saveTimer !== undefined) window.clearTimeout(saveTimer)
     saveTimer = undefined
     memorySnapshot = {}
+      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
     setUser(null)
     setCloudReady(false)
     setCloudError("")
@@ -279,6 +289,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     setSessionToken("")
     lastCloudRevision = null
     memorySnapshot = {}
+      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
     setUser(null)
     setCloudReady(false)
     setCloudError("")
@@ -308,6 +319,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }
 
   if (checking) return <AuthExperience state="loading" title="กำลังตรวจสอบพื้นที่ของคุณ" detail="กำลังตรวจสอบเซสชันอย่างปลอดภัย" />
+  if (authCheckError) return <AuthExperience state="error" title="ตรวจสอบเซสชันไม่สำเร็จ" detail={authCheckError} onRetry={() => window.location.reload()} />
   if (!user) return <main className="cc-auth-screen">
     <section className="cc-auth-frame">
       <div className="cc-auth-brand-panel">

@@ -320,3 +320,72 @@
  .cc-auth-form-top { align-items:flex-start; flex-direction:column; }
  .cc-auth-foot { font-size:8px; }
 }
+
+
+/* DayTogether sign-in — same quiet, modern visual language as the app */
+.cc-auth-screen{
+ background:#f7f7f3;
+ color:#252b27;
+ font-family:Inter,"Noto Sans Thai","Sarabun",system-ui,-apple-system,sans-serif;
+}
+.cc-auth-frame{background:#fff;box-shadow:none;border:1px solid #e7eae5;border-radius:22px;overflow:hidden}
+.cc-auth-brand-panel{
+ background:#eef3ee;
+ color:#252b27;
+ border-right:1px solid #e1e8e1;
+}
+.cc-auth-brand .cc-auth-logo{background:#668675;color:#fff;border:0;border-radius:12px;box-shadow:none}
+.cc-auth-brand strong{font-family:inherit;letter-spacing:-.01em;font-size:14px;color:#252b27}
+.cc-auth-brand strong small{font-size:11px;letter-spacing:0;color:#737b75}
+.cc-auth-editorial{padding-block:clamp(48px,8vh,90px)}
+.cc-overline{font-family:inherit;color:#718779;font-size:10px;letter-spacing:.12em}
+.cc-auth-editorial h1{font-family:inherit;color:#252b27;font-weight:600;letter-spacing:-.055em}
+.cc-auth-editorial h1 em{color:#668675}
+.cc-auth-editorial p{color:#737b75;line-height:1.85}
+.cc-auth-index{color:#737b75}
+.cc-auth-index b{color:#668675}
+.cc-auth-grid-art{opacity:.13;transform:rotate(-10deg)}
+.cc-auth-grid-art i{border-color:#8ca895;border-radius:12px}
+.cc-auth-orbit{border-color:#9bb5a055;animation:none}
+.cc-auth-orbit:before{border-color:#9bb5a044}
+.cc-auth-orbit:after{border-color:#a69ac455}
+.cc-auth-form-side{background:#fff;padding:clamp(30px,5vw,72px)}
+.cc-auth-form-top{color:#737b75}
+.cc-auth-lock{color:#737b75}
+.cc-auth-lock i,.cc-auth-foot i{background:#668675;box-shadow:0 0 0 3px #6686751c}
+.cc-auth-form-content{width:min(100%,400px)}
+.cc-auth-mini-mark{background:#edf3ee;color:#668675;border-radius:12px}
+.cc-auth-form-side h2{font-family:inherit;color:#252b27;font-weight:650;letter-spacing:-.035em}
+.cc-auth-intro{color:#737b75;line-height:1.8}
+.cc-auth-form{gap:15px}
+.cc-auth-form label{color:#414b44;font-size:13px}
+.cc-auth-form input{
+ height:48px;border:1px solid #e1e8e1;border-radius:10px;
+ background:#fbfcfa;color:#252b27;font-family:inherit;font-size:14px;
+}
+.cc-auth-form input::placeholder{color:#a0aaa2}
+.cc-auth-form input:focus{border-color:#668675;background:#fff;box-shadow:0 0 0 3px #6686751c}
+.cc-auth-submit{
+ min-height:48px;border:1px solid #668675;border-radius:10px;
+ background:#668675;color:#fff;box-shadow:none;font-family:inherit;
+}
+.cc-auth-submit:hover:not(:disabled){background:#587665;border-color:#587665;box-shadow:none;transform:translateY(-1px)}
+.cc-auth-foot{border-color:#e7eae5;color:#879188}
+.cc-auth-message{border-color:#edd9d5;background:#fcf3f1;color:#99584f;border-radius:10px}
+.cc-auth-status-icon{border-color:#e1e8e1;background:#edf3ee;color:#668675;border-radius:14px}
+.cc-auth-status-content h2{color:#252b27}
+.cc-auth-status-content p{color:#737b75}
+.cc-auth-progress{background:#e7eae5}
+.cc-auth-progress span{background:#668675}
+.cc-auth-screen button:focus-visible,.cc-auth-form input:focus-visible{outline:3px solid #9ab5a2;outline-offset:3px}
+@media(max-width:620px){
+ .cc-auth-frame{border:0;border-radius:0}
+ .cc-auth-brand-panel{background:#eef3ee;border:0}
+ .cc-auth-form-side{background:#fff}
+ .cc-auth-orbit{opacity:.35}
+ .cc-auth-editorial h1{font-size:clamp(32px,8vw,43px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .cc-auth-grid-art,.cc-auth-orbit{animation:none!important}
+ .cc-auth-submit:hover:not(:disabled){transform:none}
+}

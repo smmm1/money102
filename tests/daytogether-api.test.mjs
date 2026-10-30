@@ -1,0 +1,202 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import worker from "../workers/daytogether-api.js";
+
+function fakeDb() {
+  const users = new Map();
+  const sessions = new Map();
+  const snapshots = new Map();
+  const rateLimits = new Map();
+  const db = {
+    prepare(sql) {
+      let params = [];
+      return {
+        bind(...values) { params = values; return this; },
+        async first() {
+          if (sql.includes("RETURNING attempts")) {
+            const [key,now,cutoff] = params;
+            const current=rateLimits.get(key);
+            const next=!current||current.window_started_at<=cutoff?{window_started_at:now,attempts:1}:{...current,attempts:current.attempts+1};
+            rateLimits.set(key,next);
+            return {attempts:next.attempts};
+          }
+          if (sql.includes("SELECT id,email,password_salt,password_hash FROM app_users WHERE email")) {
+            const user = [...users.values()].find(item => item.email === params[0]);
+            return user ? { id:user.id,email:user.email,password_salt:user.password_salt,password_hash:user.password_hash } : null;
+          }
+          if (sql.includes("SELECT id FROM app_users WHERE email")) {
+            const user = [...users.values()].find(item => item.email === params[0]);
+            return user ? { id: user.id } : null;
+          }
+          if (sql.includes("SELECT password_salt,password_hash FROM app_users WHERE id")) {
+            const user = users.get(params[0]);
+            return user ? { password_salt: user.password_salt, password_hash: user.password_hash } : null;
+          }
+          if (sql.includes("SELECT u.id,u.email FROM app_sessions")) {
+            const session = sessions.get(params[0]);
+            if (!session || session.expires_at <= params[1]) return null;
+            const user = users.get(session.user_id);
+            return user ? { id: user.id, email: user.email } : null;
+          }
+          if (sql.includes("SELECT payload,updated_at FROM user_app_data")) {
+            const row = snapshots.get(params[0]);
+            return row ? { payload: row.payload, updated_at: row.updated_at } : null;
+          }
+          return null;
+        },
+        async run() {
+          if (sql.startsWith("INSERT INTO app_users")) {
+            const [id,email,password_salt,password_hash,created_at] = params;
+            if ([...users.values()].some(user => user.email === email)) throw new Error("duplicate");
+            users.set(id,{id,email,password_salt,password_hash,created_at});
+          } else if (sql.startsWith("INSERT INTO app_sessions")) {
+            const [token_hash,user_id,expires_at,created_at] = params;
+            sessions.set(token_hash,{token_hash,user_id,expires_at,created_at});
+          } else if (sql.startsWith("INSERT INTO user_app_data")) {
+            const [user_id,bucket,payload,updated_at] = params;
+            if (snapshots.has(user_id)) return {meta:{changes:0}};
+            snapshots.set(user_id,{bucket,payload,updated_at});
+            return {meta:{changes:1}};
+          } else if (sql.startsWith("UPDATE user_app_data")) {
+            const [payload,updated_at,user_id,bucket,expected] = params;
+            const current=snapshots.get(user_id);
+            if (!current || current.updated_at !== expected) return {meta:{changes:0}};
+            snapshots.set(user_id,{bucket,payload,updated_at});
+            return {meta:{changes:1}};
+          } else if (sql.startsWith("UPDATE app_users SET password_salt")) {
+            const [password_salt,password_hash,id] = params;
+            const user=users.get(id);
+            if(user) users.set(id,{...user,password_salt,password_hash});
+          } else if (sql.startsWith("DELETE FROM app_sessions WHERE expires_at")) {
+            for(const [key,value] of sessions) if(value.expires_at<=params[0]) sessions.delete(key);
+          } else if (sql.startsWith("DELETE FROM app_sessions WHERE token_hash")) {
+            sessions.delete(params[0]);
+          } else if (sql.startsWith("DELETE FROM app_sessions WHERE user_id=? AND token_hash<>?")) {
+            for(const [key,value] of sessions) if(value.user_id===params[0] && key!==params[1]) sessions.delete(key);
+          } else if (sql.startsWith("DELETE FROM app_sessions WHERE user_id")) {
+            for(const [key,value] of sessions) if(value.user_id===params[0]) sessions.delete(key);
+          } else if (sql.startsWith("DELETE FROM user_app_data WHERE user_id")) {
+            snapshots.delete(params[0]);
+          } else if (sql.startsWith("DELETE FROM app_users WHERE id")) {
+            users.delete(params[0]);
+          }
+          return {meta:{changes:1}};
+        }
+      };
+    },
+    async batch(statements) { for (const statement of statements) await statement.run(); }
+  };
+  db.deleteSnapshot = userId => snapshots.delete(userId);
+  return db;
+}
+
+const stateSnapshot = () => ({
+  "lamoon-daytogether-v1": JSON.stringify({
+    goals:[],savings:[],health:[],notes:[],bills:[],visits:[],
+    settings:{displayName:"",timezone:"Asia/Bangkok",theme:"system",hidden:false,cards:[],healthKinds:[],waterGoal:2000,heightCm:null}
+  })
+});
+async function request(path, method="GET", body, token="") {
+  return worker.fetch(new Request("https://api.example.test"+path,{
+    method,
+    headers:{...(body?{"Content-Type":"application/json"}:{}),"CF-Connecting-IP":"203.0.113.10",...(token?{Authorization:"Bearer "+token}:{})},
+    body:body?JSON.stringify(body):undefined
+  }),{DB:database,APP_ORIGIN:"https://daytogether-phase1-preview.onrender.com"});
+}
+let database;
+test("signup validates credentials, hashes passwords and creates an authenticated session", async()=>{
+  database=fakeDb();
+  const invalid=await request("/api/auth/signup","POST",{email:"not-an-email",password:"short"});
+  assert.equal(invalid.status,400);
+  const response=await request("/api/auth/signup","POST",{email:"Test@Example.com",password:"long-password-123"});
+  assert.equal(response.status,201);
+  const body=await response.json();
+  assert.equal(body.user.email,"test@example.com");
+  assert.ok(body.token.length>=40);
+  const me=await request("/api/auth/me","GET",undefined,body.token);
+  assert.equal(me.status,200);
+  assert.equal((await me.json()).user.id,body.user.id);
+});
+
+test("D1 state snapshots are isolated by the authenticated user, never a client user id",async()=>{
+  database=fakeDb();
+  const signupA=await (await request("/api/auth/signup","POST",{email:"a@example.com",password:"password-A-123"})).json();
+  const signupB=await (await request("/api/auth/signup","POST",{email:"b@example.com",password:"password-B-123"})).json();
+  const saved=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:null,user_id:signupB.user.id},signupA.token);
+  assert.equal(saved.status,200);
+  const readA=await request("/api/state","GET",undefined,signupA.token);
+  assert.ok((await readA.json()).payload["lamoon-daytogether-v1"]);
+  const readB=await request("/api/state","GET",undefined,signupB.token);
+  assert.equal((await readB.json()).payload,null);
+});
+
+test("state API rejects unauthenticated writes and invalid payloads",async()=>{
+  database=fakeDb();
+  const unauthenticated=await request("/api/state","PUT",{payload:stateSnapshot()});
+  assert.equal(unauthenticated.status,401);
+  const signup=await (await request("/api/auth/signup","POST",{email:"c@example.com",password:"password-C-123"})).json();
+  const invalid=await request("/api/state","PUT",{payload:{"lamoon-daytogether-v1":"not-json"}},signup.token);
+  assert.equal(invalid.status,400);
+});
+
+test("snapshot compare-and-set rejects stale revisions and missing rows",async()=>{
+  database=fakeDb();
+  const signup=await (await request("/api/auth/signup","POST",{email:"cas@example.com",password:"password-CAS-123"})).json();
+  const initial=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:null},signup.token);
+  assert.equal(initial.status,200);
+  const revision=(await initial.json()).updated_at;
+  const stale=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:"2020-01-01T00:00:00.000Z"},signup.token);
+  assert.equal(stale.status,409);
+  const fresh=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:revision},signup.token);
+  assert.equal(fresh.status,200);
+  database.deleteSnapshot(signup.user.id);
+  const missingRow=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:revision},signup.token);
+  assert.equal(missingRow.status,409);
+});
+
+test("password change rotates credentials and revokes other sessions",async()=>{
+  database=fakeDb();
+  const signup=await (await request("/api/auth/signup","POST",{email:"password-change@example.com",password:"initial-password-123"})).json();
+  const secondSession=await (await request("/api/auth/signin","POST",{email:"password-change@example.com",password:"initial-password-123"})).json();
+  const changed=await request("/api/auth/password","POST",{currentPassword:"initial-password-123",newPassword:"replacement-password-456"},signup.token);
+  assert.equal(changed.status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,signup.token)).status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,secondSession.token)).status,401);
+  assert.equal((await request("/api/auth/signin","POST",{email:"password-change@example.com",password:"initial-password-123"})).status,401);
+  assert.equal((await request("/api/auth/signin","POST",{email:"password-change@example.com",password:"replacement-password-456"})).status,200);
+});
+
+test("logout revokes its session and account deletion removes access",async()=>{
+  database=fakeDb();
+  const signup=await (await request("/api/auth/signup","POST",{email:"account-delete@example.com",password:"account-password-123"})).json();
+  assert.equal((await request("/api/auth/logout","POST",{},signup.token)).status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,signup.token)).status,401);
+  const second=await (await request("/api/auth/signup","POST",{email:"account-delete-2@example.com",password:"account-password-456"})).json();
+  assert.equal((await request("/api/auth/account","DELETE",undefined,second.token)).status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,second.token)).status,401);
+});
+
+test("sign-in throttles repeated attempts for the same client and identity",async()=>{
+  database=fakeDb();
+  for(let attempt=0;attempt<8;attempt++){
+    const response=await request("/api/auth/signin","POST",{email:"guess@example.com",password:"wrong-password"});
+    assert.equal(response.status,401);
+  }
+  const blocked=await request("/api/auth/signin","POST",{email:"guess@example.com",password:"wrong-password"});
+  assert.equal(blocked.status,429);
+  assert.match(blocked.headers.get("Retry-After")||"",/^900$/);
+});
+
+test("staging CORS does not trust legacy Money102 origins",async()=>{
+  const response=await worker.fetch(new Request("https://api.example.test/api/auth/me",{
+    method:"OPTIONS",headers:{Origin:"https://money102.onrender.com"}
+  }),{DB:fakeDb(),APP_ORIGIN:"https://daytogether-phase2-preview.onrender.com"});
+  assert.equal(response.status,204);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"),null);
+});
+test("staging CORS allows only the configured DayTogether preview origin",async()=>{
+  const response=await worker.fetch(new Request("https://api.example.test/api/auth/me",{
+    method:"OPTIONS",headers:{Origin:"https://daytogether-phase2-preview.onrender.com"}
+  }),{DB:fakeDb(),APP_ORIGIN:"https://daytogether-phase2-preview.onrender.com"});
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"),"https://daytogether-phase2-preview.onrender.com");
+});
