@@ -186,3 +186,17 @@ test("sign-in throttles repeated attempts for the same client and identity",asyn
   assert.equal(blocked.status,429);
   assert.match(blocked.headers.get("Retry-After")||"",/^900$/);
 });
+
+test("staging CORS does not trust legacy Money102 origins",async()=>{
+  const response=await worker.fetch(new Request("https://api.example.test/api/auth/me",{
+    method:"OPTIONS",headers:{Origin:"https://money102.onrender.com"}
+  }),{DB:fakeDb(),APP_ORIGIN:"https://daytogether-phase2-preview.onrender.com"});
+  assert.equal(response.status,204);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"),null);
+});
+test("staging CORS allows only the configured DayTogether preview origin",async()=>{
+  const response=await worker.fetch(new Request("https://api.example.test/api/auth/me",{
+    method:"OPTIONS",headers:{Origin:"https://daytogether-phase2-preview.onrender.com"}
+  }),{DB:fakeDb(),APP_ORIGIN:"https://daytogether-phase2-preview.onrender.com"});
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"),"https://daytogether-phase2-preview.onrender.com");
+});
