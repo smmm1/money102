@@ -278,7 +278,7 @@ export default { async fetch(request,env) {
  try { await ensureSchema(env.DB);
   if(url.pathname==="/health"&&request.method==="GET")return json(request,env,{ok:true,service:"daytogether-cloudflare-api",auth:"cloudflare-d1"});
   if(url.pathname==="/api/auth/signup"&&request.method==="POST") {
-   if(env.ALLOW_SIGNUP!=="true") return json(request,env,{error:"การสมัครสมาชิกถูกปิดใช้งาน กรุณาเข้าสู่ระบบด้วยบัญชีเดิม"},403);
+   if(env.ALLOW_SIGNUP==="false") return json(request,env,{error:"การสมัครสมาชิกถูกปิดใช้งาน กรุณาเข้าสู่ระบบด้วยบัญชีเดิม"},403);
    const body=await parseBody(request);
    const email=typeof body?.email==="string"?body.email.trim().toLowerCase():"";
    const password=typeof body?.password==="string"?body.password:"";
