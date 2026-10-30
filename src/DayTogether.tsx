@@ -141,7 +141,7 @@ export default function DayTogether() {
   const [accountBusy,setAccountBusy] = useState(false)
   const [accountMessage,setAccountMessage] = useState("")
   const [persistenceStatus,setPersistenceStatus] = useState<"saving"|"saved"|"error">("saved")
-  const [path,setPath] = useState(window.location.pathname)
+  const [path,setPath] = useState(() => { const params = new URLSearchParams(window.location.search); const recovered = params.get("__route"); return recovered && recovered.startsWith("/") && !recovered.startsWith("//") ? recovered.split("?")[0].split("#")[0] : window.location.pathname; })
   const [moreOpen,setMoreOpen] = useState(false)
   const [quickAddOpen,setQuickAddOpen] = useState(false)
   const [modal,setModal] = useState<null|"saving"|"goal"|"health"|"note"|"bill"|"visit">(null)
@@ -173,7 +173,7 @@ export default function DayTogether() {
   const dateTextInZone = (s: string) => formatDateInTimezone(s, state.settings.timezone)
   const page = path === "/" ? "/" : (Object.keys(PAGE_LABEL).includes(path) ? path : path.startsWith("/savings/goals/") ? "/savings" : path.startsWith("/notes/") ? "/notes" : path.startsWith("/split/") ? "/split" : path.startsWith("/bbq/") ? "/bbq" : "/404")
   const pathParts = path.split("/").filter(Boolean); const routeId = pathParts[pathParts.length - 1] || ""
-  useEffect(() => { const pop = () => { setPath(window.location.pathname); const params=new URLSearchParams(window.location.search); setOpenNoteId(params.get("note")||""); }; window.addEventListener("popstate",pop); if(window.location.pathname==="/login"){window.history.replaceState({}, "", "/");setPath("/")} return () => window.removeEventListener("popstate",pop) },[])
+  useEffect(() => { const pop = () => { setPath(window.location.pathname); const params=new URLSearchParams(window.location.search); setOpenNoteId(params.get("note")||""); }; window.addEventListener("popstate",pop); const params = new URLSearchParams(window.location.search); const recovered = params.get("__route"); if (recovered && recovered.startsWith("/") && !recovered.startsWith("//")) { const target = new URL(recovered, window.location.origin); window.history.replaceState({}, "", target.pathname + target.search + target.hash); setPath(target.pathname); setOpenNoteId(new URLSearchParams(target.search).get("note") || ""); } if(window.location.pathname==="/login"){window.history.replaceState({}, "", "/");setPath("/")} return () => window.removeEventListener("popstate",pop) },[])
   useEffect(() => {
     setPersistenceStatus("saving")
     try { cloudDataAdapter.save(state) }
