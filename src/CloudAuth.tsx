@@ -20,7 +20,7 @@ type LocalSnapshot = Record<string, string>
 const LOCAL_PREFIX = "lamoon-"
 const isStagingPreview = ["money102-command-center-preview.onrender.com", "daytogether-phase1-preview.onrender.com", "daytogether-phase2-preview.onrender.com"].includes(window.location.hostname)
 const defaultApiUrl = isStagingPreview
-  ? "https://money102-api-staging.s2mtha16.workers.dev"
+  ? "https://daytogether-api-staging.s2mtha16.workers.dev"
   : "https://money102-api.s2mtha16.workers.dev"
 const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
 
