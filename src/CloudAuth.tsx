@@ -132,6 +132,7 @@ function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | 
 export default function CloudAuth({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [checking,setChecking] = useState(() => Boolean(sessionToken))
+  const [authCheckError, setAuthCheckError] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -167,9 +168,13 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       try {
         const result = await api("/api/auth/me") as { user: AppUser }
         if (!cancelled) setUser(result.user)
-      } catch {
-        setSessionToken("")
-        if (!cancelled) setUser(null)
+      } catch (error) {
+        if (!cancelled) {
+          // Keep a valid token during transient network/5xx failures. A 401
+          // already clears it through the d1-auth-expired event in api().
+          if (getToken()) setAuthCheckError("ตรวจสอบเซสชันไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
+          else setUser(null)
+        }
       } finally {
         if (!cancelled) setChecking(false)
       }
@@ -314,6 +319,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }
 
   if (checking) return <AuthExperience state="loading" title="กำลังตรวจสอบพื้นที่ของคุณ" detail="กำลังตรวจสอบเซสชันอย่างปลอดภัย" />
+  if (authCheckError) return <AuthExperience state="error" title="ตรวจสอบเซสชันไม่สำเร็จ" detail={authCheckError} onRetry={() => window.location.reload()} />
   if (!user) return <main className="cc-auth-screen">
     <section className="cc-auth-frame">
       <div className="cc-auth-brand-panel">
