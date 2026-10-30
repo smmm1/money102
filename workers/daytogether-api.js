@@ -262,6 +262,10 @@ async function checkAuthRateLimit(db, request, email, scope, now = Date.now()) {
  };
  const ipAllowed = await consume(ipKey, 30);
  const identityAllowed = await consume(identityKey, 8);
+ // Opportunistically remove old hashed buckets so the limiter table stays bounded.
+ if (randomBytes(1)[0] === 0) {
+  await db.prepare("DELETE FROM auth_rate_limits WHERE window_started_at < ?").bind(now - 24 * 60 * 60 * 1000).run();
+ }
  return ipAllowed && identityAllowed;
 }
 
