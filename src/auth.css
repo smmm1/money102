@@ -44,3 +44,43 @@
 .cc-auth-message{overflow-wrap:anywhere}
 .cc-account{position:relative}
 @media(max-width:760px){.cc-auth-screen{padding:12px;align-items:start}.cc-auth-frame{grid-template-columns:1fr;min-height:0;border-radius:25px 25px 70px 25px}.cc-auth-brand-panel{min-height:250px;padding:24px 25px}.cc-auth-editorial{padding:35px 0 25px}.cc-auth-editorial h1{font-size:clamp(40px,12vw,58px);margin:13px 0}.cc-auth-editorial p{max-width:290px;font-size:11px}.cc-auth-index{gap:9px;padding-top:13px;font-size:8px}.cc-auth-grid-art{right:-25px;bottom:35px;grid-template-columns:repeat(3,35px);gap:5px}.cc-auth-grid-art i{width:35px;height:35px}.cc-auth-orbit{width:220px;height:220px;right:-105px;top:4%}.cc-auth-form-side{padding:23px 24px 30px}.cc-auth-form-top{padding-bottom:12px}.cc-auth-form-content{margin:30px auto 15px}.cc-auth-form-content h2{font-size:31px}}
+
+
+/* Quiet, low-friction sign-in */
+:root{--auth-ink:#252923;--auth-blue:#48634f;--auth-pink:#dce6dc;--auth-yellow:#e8eee4;--auth-violet:#e9ede6;--auth-paper:#fff;--auth-line:#e5e8e1;--auth-muted:#777d73}
+.cc-auth-screen{background:#f7f8f5;color:#252923}
+.cc-auth-frame{grid-template-columns:.9fr 1.1fr;min-height:620px;border:1px solid #e5e8e1;border-radius:18px;background:#fff;box-shadow:0 12px 45px rgba(32,48,35,.07)}
+.cc-auth-brand-panel{padding:38px;background:#edf2eb;color:#28342a}
+.cc-auth-brand{color:#28342a}
+.cc-auth-logo{width:38px;height:38px;border-radius:10px;background:#48634f;color:#fff}
+.cc-auth-brand-name small{color:#7b8878}
+.cc-auth-editorial{padding:45px 0}
+.cc-overline{color:#748472}
+.cc-auth-editorial h1{font-size:clamp(38px,5vw,58px);font-weight:650;letter-spacing:-.06em}
+.cc-auth-editorial h1 em{color:#48634f}
+.cc-auth-editorial p{color:#687467}
+.cc-auth-index{border-color:#d5dfd3;color:#71806f}
+.cc-auth-index b{color:#48634f}
+.cc-auth-grid-art,.cc-auth-orbit{display:none}
+.cc-auth-form-side{padding:34px 44px;background:#fff}
+.cc-auth-form-top{border-color:#e5e8e1}
+.cc-auth-lock{color:#7a8377}
+.cc-auth-form-content h2{font-size:clamp(28px,3vw,36px);font-weight:650;letter-spacing:-.05em}
+.cc-auth-intro{color:#777d73}
+.cc-auth-form label{color:#586354}
+.cc-auth-form input{min-height:46px;border:1px solid #dce3d9;border-radius:9px}
+.cc-auth-form input:focus{outline:2px solid #9aaf98}
+.cc-auth-submit{min-height:48px;border-radius:9px;background:#48634f;font-weight:650}
+.cc-auth-submit:hover{background:#354d3b}
+.cc-auth-submit>span:last-child{color:#e8eee4}
+.cc-auth-private-note{color:#777d73}
+.cc-auth-forgot,.cc-auth-mode-links button{color:#48634f}
+@media(max-width:760px){
+ .cc-auth-screen{background:#f7f8f5}
+ .cc-auth-frame{grid-template-columns:1fr;border-radius:14px}
+ .cc-auth-brand-panel{min-height:190px;padding:22px}
+ .cc-auth-editorial{padding:24px 0 12px}
+ .cc-auth-editorial h1{font-size:40px}
+ .cc-auth-form-side{padding:22px}
+ .cc-auth-form-content{margin:22px auto 12px}
+}
