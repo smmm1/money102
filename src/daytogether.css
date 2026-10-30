@@ -169,3 +169,42 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 @media(max-width:650px){.dt2-header{height:70px;padding:0 16px}.dt2-brand-symbol{width:39px;height:39px;font-size:26px}.dt2-brand-copy strong{font-size:16px}.dt2-brand-copy small{font-size:8px}.dt2-header-right{gap:8px}.dt2-save{font-size:0}.dt2-save i{width:8px;height:8px;margin:0}.dt2-privacy{padding:8px 10px;font-size:0}.dt2-privacy:first-letter{font-size:14px}.dt2-nav{min-height:57px;padding:0 12px;gap:2px}.dt2-nav button{min-height:36px;padding:0 11px;font-size:11px}.dt2-nav-index{display:none}.dt2-nav .dt2-nav-add{padding-inline:13px}.dt2-main{padding:24px 16px 70px}.dt2-page-meta{font-size:8px}.dt2-page-meta span:last-child{max-width:48%;text-align:right}.dt2-page-title{margin:13px 0 22px;padding-bottom:17px}.dt2-page-title h1{font-size:clamp(37px,11vw,55px)}.dt2-title-stamp{font-size:8px;padding:6px 8px}.dt-page-body{gap:25px}.dt-welcome.dt2-welcome{grid-template-columns:1fr;min-height:490px;padding:30px 24px 55px;border-radius:25px 25px 75px 25px}.dt2-welcome h2{font-size:clamp(46px,13vw,68px);margin:17px 0 12px}.dt2-welcome p{font-size:11px}.dt2-sunburst{position:absolute;right:28px;bottom:62px;width:145px;opacity:.96}.dt2-sunburst span{font-size:16px}.dt2-welcome-foot{right:22px;left:22px;bottom:18px;font-size:7px}.dt-stat-grid,.dt-stat-grid.three,.dt-stat-grid.four,.dt-stat-grid:not(.three):not(.four){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.dt-stat{min-height:145px;padding:16px;border-radius:19px 19px 19px 4px}.dt-stat:nth-child(2n){border-right:0}.dt-stat strong{font-size:21px;margin:11px 0 6px}.dt-goal-grid,.dt-note-grid,.dt-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.dt-goal-card,.dt-note-card,.dt-visit-card{padding:15px;border-radius:19px 19px 19px 4px}.dt-goal-card:nth-child(3n),.dt-note-card:nth-child(3n),.dt-visit-card:nth-child(3n){border-right:1px solid #d8d9ef}.dt-health-kind-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.dt-health-kind{padding:15px;border-radius:18px 18px 18px 4px}.dt-toast{right:10px;bottom:12px}.dt-form-grid{grid-template-columns:1fr}.dt-bill-expense-row{grid-template-columns:1fr}.dt-modal{padding:19px;border-radius:22px 22px 22px 5px}.dt-modal-backdrop{padding:10px}.dt-modal-actions{flex-wrap:wrap}.dt-section-head{align-items:flex-start}.dt-recent{gap:10px}.dt-recent-mark{flex-basis:31px;width:31px;height:31px}.dt-visit-art{height:100px}}
 @media(max-width:390px){.dt2-header-right{gap:6px}.dt2-brand-copy small{letter-spacing:.08em}.dt2-page-meta{letter-spacing:0}.dt2-page-title h1{font-size:35px}.dt-goal-grid,.dt-note-grid,.dt-visit-grid{grid-template-columns:1fr}.dt-goal-card,.dt-note-card,.dt-visit-card{border-right:1px solid #d8d9ef!important}.dt-stat strong{font-size:18px}.dt-welcome.dt2-welcome{min-height:460px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Constellation navigation and open editorial surfaces: intentionally no legacy rails, bars or card stacks */
+.dt2-header{background:transparent;border:0}
+.dt2-nav{position:relative;display:flex;justify-content:center;gap:clamp(12px,2.7vw,38px);min-height:126px;padding:16px clamp(18px,5vw,80px) 25px;background:transparent;color:var(--ink);overflow:visible}
+.dt2-nav:before{position:absolute;z-index:0;top:47px;left:14%;right:14%;height:1px;background:#c8c9e5;content:""}
+.dt2-nav-label{position:absolute;top:4px;left:clamp(20px,5.5vw,92px);margin:0;color:#8987a0}
+.dt2-nav button{z-index:1;display:flex;flex:0 0 74px;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;min-height:86px;padding:0;border:0;background:transparent;color:#77758c;white-space:normal}
+.dt2-nav button:hover{background:transparent;color:var(--blue);transform:translateY(-3px)}
+.dt2-nav .dt2-nav-orb{display:grid;place-items:center;width:53px;height:53px;border:1px solid #c9c9e2;border-radius:50%;background:#f5f6ff;color:var(--blue);font-size:20px;box-shadow:0 5px 0 #d8daf1;transition:.2s}
+.dt2-nav button.active{background:transparent;color:var(--ink)}
+.dt2-nav button.active .dt2-nav-orb{border-color:var(--blue);background:var(--blue);color:var(--yellow);box-shadow:0 5px 0 #b89aff;transform:scale(1.08)}
+.dt2-nav-text{font-size:10px;font-weight:800;white-space:nowrap}
+.dt2-nav .dt2-nav-add{flex:0 0 74px;margin:0;border:0;color:#b83e79}
+.dt2-nav .dt2-nav-add:before{display:grid;place-items:center;width:53px;height:53px;border:1px dashed var(--pink);border-radius:50%;background:#ffe5f1;color:#b83e79;font-size:24px;content:"＋"}
+.dt2-nav .dt2-nav-add span{font-size:10px}
+.dt2-page-title{border:0;padding-bottom:10px}
+.dt2-page-meta{padding-top:4px}
+.dt-stat-grid{gap:0;border-top:1px solid #c9c9e2;border-bottom:1px solid #c9c9e2}
+.dt-stat{min-height:160px;padding:20px 18px;border-right:1px solid #d6d7eb;border-radius:0;background:transparent!important;box-shadow:none!important}
+.dt-stat:hover{transform:none;background:#e0e5ff!important}
+.dt-stat-icon{background:transparent;color:var(--blue);font-size:22px}
+.dt-stat strong{font-size:clamp(19px,2vw,27px)}
+.dt-goal-grid,.dt-note-grid,.dt-visit-grid{gap:0;border-top:1px solid #c9c9e2}
+.dt-goal-card,.dt-note-card,.dt-visit-card{padding:22px 20px;border:0;border-bottom:1px solid #c9c9e2;border-right:1px solid #c9c9e2;border-radius:0;background:transparent!important;box-shadow:none}
+.dt-goal-card:nth-child(3n),.dt-note-card:nth-child(3n),.dt-visit-card:nth-child(3n){border-right:0}
+.dt-goal-card:hover,.dt-note-card:hover,.dt-visit-card:hover{background:#e0e5ff!important}
+.dt-health-kind-grid{gap:0;border-top:1px solid #c9c9e2;border-left:1px solid #c9c9e2}
+.dt-health-kind{border:0;border-right:1px solid #c9c9e2;border-bottom:1px solid #c9c9e2;border-radius:0;background:transparent}
+.dt-health-kind:hover{background:#e0e5ff}
+@media(max-width:650px){
+.dt2-nav{justify-content:flex-start;gap:12px;min-height:104px;padding:14px 15px 18px}
+.dt2-nav:before{left:35px;right:35px;top:40px}
+.dt2-nav-label{display:none}
+.dt2-nav button,.dt2-nav .dt2-nav-add{flex-basis:58px;min-height:76px}
+.dt2-nav .dt2-nav-orb,.dt2-nav .dt2-nav-add:before{width:43px;height:43px;font-size:17px}
+.dt2-nav-text,.dt2-nav .dt2-nav-add span{font-size:9px}
+.dt-stat{padding:14px 12px;border-bottom:1px solid #d6d7eb}
+.dt-goal-grid,.dt-note-grid,.dt-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
