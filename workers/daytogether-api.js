@@ -328,7 +328,11 @@ export default { async fetch(request,env) {
   const expectedMs=typeof expectedRevision==="string"?Date.parse(expectedRevision):NaN;
   const updatedAt=new Date(hasExpectedRevision && Number.isFinite(expectedMs)?Math.max(now,expectedMs+1):now).toISOString();
   if(hasExpectedRevision) {
-   const write=await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at WHERE user_app_data.updated_at = ?").bind(user.id,"app_state",serialized,updatedAt,expectedRevision).run();
+   // Compare-and-set must also reject a missing row when the client expected
+   // an existing revision. A conditional UPSERT alone would insert in that case.
+   const write = expectedRevision === null
+    ? await env.DB.prepare("INSERT INTO user_app_data(user_id,bucket,payload,updated_at) VALUES(?,?,?,?) ON CONFLICT(user_id,bucket) DO NOTHING").bind(user.id,"app_state",serialized,updatedAt).run()
+    : await env.DB.prepare("UPDATE user_app_data SET payload=?,updated_at=? WHERE user_id=? AND bucket=? AND updated_at=?").bind(serialized,updatedAt,user.id,"app_state",expectedRevision).run();
    if(write?.meta?.changes===0) return json(request,env,{error:"ข้อมูลถูกแก้ไขจากอีกแท็บแล้ว กรุณาส่งออกข้อมูลปัจจุบันก่อนโหลดข้อมูลล่าสุด",conflict:true},409);
   } else {
    // Backward compatibility for older clients during staged releases.
