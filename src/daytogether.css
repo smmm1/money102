@@ -417,3 +417,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-simple-summary-compact{padding:16px 20px}
 .dt-simple-summary-compact strong{font-size:24px}
 @media(max-width:700px){.dt-advanced-filter-grid{grid-template-columns:1fr 1fr}.dt-simple-summary{align-items:flex-start;flex-direction:column}.dt-simple-summary-actions{width:100%}.dt-simple-summary-actions .dt-btn{width:100%}}
+
+
+.dt-health-summary{display:grid;grid-template-columns:1fr auto;align-items:center}
+.dt-health-summary-secondary{min-width:150px;padding-left:22px;border-left:1px solid var(--line)}
+.dt-health-summary-secondary strong{font-size:21px}
+@media(max-width:700px){.dt-health-summary{display:grid;grid-template-columns:1fr 1fr;flex-direction:row}.dt-health-summary-secondary{padding-left:14px}}
