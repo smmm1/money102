@@ -62,6 +62,7 @@ function fakeDb() {
     },
     async batch(statements) { for (const statement of statements) await statement.run(); }
   };
+  db.deleteSnapshot = userId => snapshots.delete(userId);
   return db;
 }
 
@@ -124,6 +125,7 @@ test("snapshot compare-and-set rejects stale revisions and missing rows",async()
   assert.equal(stale.status,409);
   const fresh=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:revision},signup.token);
   assert.equal(fresh.status,200);
-  const missingRevision=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:"2020-01-01T00:00:00.000Z"},signup.token);
-  assert.equal(missingRevision.status,409);
+  database.deleteSnapshot(signup.user.id);
+  const missingRow=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:revision},signup.token);
+  assert.equal(missingRow.status,409);
 });
