@@ -16,6 +16,10 @@ function fakeDb() {
             const user = [...users.values()].find(item => item.email === params[0]);
             return user ? { id: user.id } : null;
           }
+          if (sql.includes("SELECT password_salt,password_hash FROM app_users WHERE id")) {
+            const user = users.get(params[0]);
+            return user ? { password_salt: user.password_salt, password_hash: user.password_hash } : null;
+          }
           if (sql.includes("SELECT u.id,u.email FROM app_sessions")) {
             const session = sessions.get(params[0]);
             if (!session || session.expires_at <= params[1]) return null;
@@ -47,8 +51,16 @@ function fakeDb() {
             if (!current || current.updated_at !== expected) return {meta:{changes:0}};
             snapshots.set(user_id,{bucket,payload,updated_at});
             return {meta:{changes:1}};
+          } else if (sql.startsWith("UPDATE app_users SET password_salt")) {
+            const [password_salt,password_hash,id] = params;
+            const user=users.get(id);
+            if(user) users.set(id,{...user,password_salt,password_hash});
+          } else if (sql.startsWith("DELETE FROM app_sessions WHERE expires_at")) {
+            for(const [key,value] of sessions) if(value.expires_at<=params[0]) sessions.delete(key);
           } else if (sql.startsWith("DELETE FROM app_sessions WHERE token_hash")) {
             sessions.delete(params[0]);
+          } else if (sql.startsWith("DELETE FROM app_sessions WHERE user_id=? AND token_hash<>?")) {
+            for(const [key,value] of sessions) if(value.user_id===params[0] && key!==params[1]) sessions.delete(key);
           } else if (sql.startsWith("DELETE FROM app_sessions WHERE user_id")) {
             for(const [key,value] of sessions) if(value.user_id===params[0]) sessions.delete(key);
           } else if (sql.startsWith("DELETE FROM user_app_data WHERE user_id")) {
@@ -128,4 +140,26 @@ test("snapshot compare-and-set rejects stale revisions and missing rows",async()
   database.deleteSnapshot(signup.user.id);
   const missingRow=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:revision},signup.token);
   assert.equal(missingRow.status,409);
+});
+
+test("password change rotates credentials and revokes other sessions",async()=>{
+  database=fakeDb();
+  const signup=await (await request("/api/auth/signup","POST",{email:"password-change@example.com",password:"initial-password-123"})).json();
+  const secondSession=await (await request("/api/auth/signin","POST",{email:"password-change@example.com",password:"initial-password-123"})).json();
+  const changed=await request("/api/auth/password","POST",{currentPassword:"initial-password-123",newPassword:"replacement-password-456"},signup.token);
+  assert.equal(changed.status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,signup.token)).status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,secondSession.token)).status,401);
+  assert.equal((await request("/api/auth/signin","POST",{email:"password-change@example.com",password:"initial-password-123"})).status,401);
+  assert.equal((await request("/api/auth/signin","POST",{email:"password-change@example.com",password:"replacement-password-456"})).status,200);
+});
+
+test("logout revokes its session and account deletion removes access",async()=>{
+  database=fakeDb();
+  const signup=await (await request("/api/auth/signup","POST",{email:"account-delete@example.com",password:"account-password-123"})).json();
+  assert.equal((await request("/api/auth/logout","POST",{},signup.token)).status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,signup.token)).status,401);
+  const second=await (await request("/api/auth/signup","POST",{email:"account-delete-2@example.com",password:"account-password-456"})).json();
+  assert.equal((await request("/api/auth/account","DELETE",undefined,second.token)).status,200);
+  assert.equal((await request("/api/auth/me","GET",undefined,second.token)).status,401);
 });
