@@ -37,9 +37,14 @@ function fakeDb() {
             const [token_hash,user_id,expires_at,created_at] = params;
             sessions.set(token_hash,{token_hash,user_id,expires_at,created_at});
           } else if (sql.startsWith("INSERT INTO user_app_data")) {
-            const [user_id,bucket,payload,updated_at,expected] = params;
+            const [user_id,bucket,payload,updated_at] = params;
+            if (snapshots.has(user_id)) return {meta:{changes:0}};
+            snapshots.set(user_id,{bucket,payload,updated_at});
+            return {meta:{changes:1}};
+          } else if (sql.startsWith("UPDATE user_app_data")) {
+            const [payload,updated_at,user_id,bucket,expected] = params;
             const current=snapshots.get(user_id);
-            if (current && expected !== undefined && current.updated_at !== expected) return {meta:{changes:0}};
+            if (!current || current.updated_at !== expected) return {meta:{changes:0}};
             snapshots.set(user_id,{bucket,payload,updated_at});
             return {meta:{changes:1}};
           } else if (sql.startsWith("DELETE FROM app_sessions WHERE token_hash")) {
@@ -107,4 +112,18 @@ test("state API rejects unauthenticated writes and invalid payloads",async()=>{
   const signup=await (await request("/api/auth/signup","POST",{email:"c@example.com",password:"password-C-123"})).json();
   const invalid=await request("/api/state","PUT",{payload:{"lamoon-daytogether-v1":"not-json"}},signup.token);
   assert.equal(invalid.status,400);
+});
+
+test("snapshot compare-and-set rejects stale revisions and missing rows",async()=>{
+  database=fakeDb();
+  const signup=await (await request("/api/auth/signup","POST",{email:"cas@example.com",password:"password-CAS-123"})).json();
+  const initial=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:null},signup.token);
+  assert.equal(initial.status,200);
+  const revision=(await initial.json()).updated_at;
+  const stale=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:"2020-01-01T00:00:00.000Z"},signup.token);
+  assert.equal(stale.status,409);
+  const fresh=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:revision},signup.token);
+  assert.equal(fresh.status,200);
+  const missingRevision=await request("/api/state","PUT",{payload:stateSnapshot(),expected_updated_at:"2020-01-01T00:00:00.000Z"},signup.token);
+  assert.equal(missingRevision.status,409);
 });
