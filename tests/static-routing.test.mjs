@@ -82,7 +82,7 @@ test("Finance provides savings goals, deposits/withdrawals and live bill splitti
   assert.match(finance, /saveDayState/);
   assert.match(finance, /saveDayState/);
   assert.match(sharedState, /expected_updated_at/);
-  assert.match(finance, /type: "deposit" \| "withdraw"/);
+  assert.match(finance, /type:"deposit"\|"withdraw"/);
   assert.match(finance, /goalProgress/);
   assert.match(finance, /fn-live-total/);
   assert.match(finance, /participants/);
