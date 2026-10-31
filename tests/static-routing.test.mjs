@@ -113,3 +113,20 @@ test("Food & Life is a working searchable journal for meals, places and activiti
   assert.match(foodLife, /rating/);
   assert.doesNotMatch(foodLife, /localStorage|sessionStorage/);
 });
+
+const archive = await readFile(new URL("../src/Archive.tsx", import.meta.url), "utf8");
+test("Archive aggregates every DayTogether module with search, date filters, calendar and CSV export", () => {
+  assert.match(shell, /import Archive from ["']\.\/Archive["']/);
+  assert.match(shell, /active === "archive" && <Archive\s*\/>/);
+  assert.match(archive, /lamoon-daily-log-v1/);
+  assert.match(archive, /lamoon-daytogether-v1/);
+  assert.match(archive, /lamoon-food-life-v1/);
+  assert.match(archive, /state\.health/);
+  assert.match(archive, /state\.goals/);
+  assert.match(archive, /state\.savings/);
+  assert.match(archive, /state\.bills/);
+  assert.match(archive, /function exportCsv/);
+  assert.match(archive, /setView\("calendar"\)/);
+  assert.match(archive, /setSelectedDate/);
+  assert.doesNotMatch(archive, /localStorage|sessionStorage|saveDayState/);
+});
