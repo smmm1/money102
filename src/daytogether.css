@@ -448,3 +448,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-bill-expense-row>.dt-bill-advanced{margin-top:8px}
 .dt-bill-expense-row>.dt-form-grid{grid-template-columns:1.4fr 1fr}
 @media(max-width:700px){.dt-bill-expense-row>.dt-form-grid{grid-template-columns:1fr 1fr}.dt-bill-expense-row>.dt-form-grid .dt-field:first-child{grid-column:1/-1}}
+
+
+/* Compact entry forms: optional metadata stays out of the primary path */
+.dt-form-optional{margin-top:12px;padding:0 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface,#fff)}
+.dt-form-optional>summary{padding:11px 0;color:var(--muted);font-size:12px;font-weight:650;cursor:pointer;list-style:none}
+.dt-form-optional>summary::-webkit-details-marker{display:none}
+.dt-form-optional>summary:after{content:"＋";float:right;color:var(--muted)}
+.dt-form-optional[open]>summary:after{content:"−"}
+.dt-form-optional-body{display:grid;gap:12px;padding:0 0 13px}
+.dt-form-optional-body .dt-field{margin:0}
+.dt-form-optional-body .dt-form-grid{margin:0}
+.dt-form .dt-form-optional+ .dt-modal-actions{margin-top:18px}
+@media(max-width:700px){.dt-form-optional{margin-top:10px}.dt-form-optional-body{gap:10px}}
