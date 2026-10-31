@@ -534,32 +534,53 @@ export default function DayTogether() {
       <div className="dt-modal-actions"><Button onClick={closeModal}>ยกเลิก</Button><Button type="submit" variant="primary">บันทึก</Button></div></form>}
       </section></div>
   }
+  const pageDescriptions: Record<string,string> = {
+    "/":"พื้นที่สำหรับเรื่องเล็ก ๆ ที่อยากจำ และสิ่งสำคัญที่กำลังดูแล",
+    "/savings":"บันทึกการออม ติดตามเป้าหมาย และดูความคืบหน้าของตัวเอง",
+    "/health":"เก็บข้อมูลสุขภาพไว้ในที่เดียว แล้วค่อย ๆ มองเห็นแนวโน้ม",
+    "/notes":"พื้นที่เขียนความคิด เรื่องราว และสิ่งที่ไม่อยากลืม",
+    "/split":"จัดการค่าใช้จ่ายร่วมกันให้เห็นยอดและความรับผิดชอบชัดเจน",
+    "/bbq":"บันทึกมื้ออาหาร ร้านที่ไป และความทรงจำระหว่างทาง",
+    "/settings":"ปรับพื้นที่ส่วนตัวและจัดการข้อมูลของคุณ"
+  }
   return <div className="dt2-shell dt-app-layout" data-page={page}>
-    <header className="dt-floating-header">
-      <div className="dt-floating-topline">
-        <button className="dt2-brand dt-floating-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol" aria-hidden="true">D</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
-        <div className="dt-floating-tools">
+    <header className="dt-site-header">
+      <div className="dt-site-header-inner">
+        <button className="dt2-brand dt-site-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก">
+          <span className="dt2-brand-symbol" aria-hidden="true">d.</span>
+          <span className="dt2-brand-copy"><strong>daytogether</strong><small>PERSONAL SPACE</small></span>
+        </button>
+        <nav className="dt-site-nav" aria-label="เมนูหลัก">
+          {navItems.map((href,index)=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt-site-nav-index">0{index+1}</span>{PAGE_LABEL[href]}</button>)}
+          <button type="button" className={page==="/settings"?"active":""} aria-current={page==="/settings"?"page":undefined} onClick={()=>go("/settings")}>ตั้งค่า</button>
+        </nav>
+        <div className="dt-site-tools">
           <span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span>
-          <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"◉":"◌"}</button>
+          <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}})}>{hidden?"◉":"◌"}</button>
           <AccountMenu/>
         </div>
       </div>
-      <nav className="dt-floating-nav" aria-label="เมนูหลัก">
-        {[...navItems,"/settings"].map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt-floating-nav-icon" aria-hidden="true">{ICON[href]}</span><span>{PAGE_LABEL[href]}</span></button>)}
-      </nav>
     </header>
-    <aside className="dt-app-sidebar" aria-hidden="true" />
-    <main className="dt2-main">
-      <header className="dt-app-topbar"><div><span className="dt-app-breadcrumb">DayTogether / {PAGE_LABEL[page]||"รายละเอียด"}</span><h1>{pageTitle}</h1><p className="dt-page-lead">{({"/":"บันทึกเรื่องราวและดูภาพรวมของแต่ละวัน","/savings":"ติดตามยอดออม เป้าหมาย และรายการฝากถอน","/health":"เก็บข้อมูลสุขภาพและติดตามแนวโน้มของตัวเอง","/notes":"พื้นที่เขียนความคิด ไดอารี และเรื่องที่อยากจำ","/split":"คำนวณและจัดการค่าใช้จ่ายร่วมกัน","/bbq":"เก็บประวัติร้าน มื้ออาหาร และความทรงจำ","/settings":"จัดการการแสดงผลและข้อมูลส่วนตัว"} as Record<string,string>)[page]||"รายละเอียดข้อมูลที่บันทึกไว้"}</p></div><button className="dt-mobile-brand" onClick={()=>go("/")}>DayTogether</button><Button variant="primary" onClick={()=>setQuickAddOpen(v=>!v)}>＋ เพิ่มบันทึก</Button></header>
+    <main className="dt-workspace" id="main-content">
+      <header className="dt-workspace-heading">
+        <div className="dt-workspace-heading-copy">
+          <div className="dt-breadcrumb"><span>DAYTOGETHER</span><i>/</i><span>{PAGE_LABEL[page]||"รายละเอียด"}</span></div>
+          <h1>{pageTitle}</h1>
+          <p>{pageDescriptions[page]||"รายละเอียดที่บันทึกไว้ในพื้นที่ส่วนตัว"}</p>
+        </div>
+        <div className="dt-workspace-heading-action"><Button variant="primary" onClick={()=>setQuickAddOpen(v=>!v)}>＋ เพิ่มรายการ</Button></div>
+      </header>
       <div className="dt2-content"><div className="dt-page-stage" data-layout={page}><div className="dt-page-stage-inner">{pageBody()}</div></div></div>
     </main>
-    <nav className="dt-mobile-nav" aria-label="เมนูหลัก">{navItems.slice(0,4).map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{PAGE_LABEL[href]}</span></button>)}<button type="button" className={moreOpen||["/split","/bbq","/settings"].includes(page)?"active":""} aria-expanded={moreOpen} aria-controls={moreOpen?"dt-more-sheet":undefined} onClick={()=>setMoreOpen(v=>!v)}><span>เพิ่มเติม</span></button></nav>
-    {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet" id="dt-more-sheet" role="dialog" aria-modal="true" aria-labelledby="dt-more-sheet-title"><div className="dt-sheet-handle"/><h3 id="dt-more-sheet-title">เพิ่มเติม</h3>{["/split","/bbq","/settings"].map(href=><button type="button" key={href} className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>{page===href?"กำลังดูอยู่":"เปิด"}</b></button>)}</section></>}
-    {quickAddOpen&&<><button className="dt-sheet-dismiss" style={{display:"block",position:"fixed",inset:0,background:"transparent",zIndex:20}} aria-label="ปิดเมนูเพิ่มรายการ" onClick={()=>setQuickAddOpen(false)}/><section className="dt-quick-add-menu" aria-label="เลือกประเภทข้อมูลที่จะเพิ่ม"><div className="dt-sheet-handle"/><h3>เพิ่มบันทึก</h3><p>เลือกหมวดที่ต้องการ</p><button onClick={()=>{setQuickAddOpen(false);openModal("saving")}}><span>＋</span><span><strong>ออมเงิน</strong><small>ฝากหรือถอน</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("health")}}><span>＋</span><span><strong>สุขภาพ</strong><small>น้ำหนัก น้ำดื่ม การนอน</small></span></button><button onClick={()=>{setQuickAddOpen(false);startNote()}}><span>＋</span><span><strong>โน้ต</strong><small>ความคิดและไดอารี</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("bill")}}><span>＋</span><span><strong>หารค่าใช้จ่าย</strong><small>แบ่งบิล</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("visit")}}><span>＋</span><span><strong>มื้ออาหาร</strong><small>ร้านและความทรงจำ</small></span></button></section></>}
+    <nav className="dt-mobile-nav" aria-label="เมนูหลัก">
+      {["/","/savings","/health","/notes","/split"].map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span aria-hidden="true">{ICON[href]}</span><small>{PAGE_LABEL[href]}</small></button>)}
+      <button type="button" className={moreOpen||["/bbq","/settings"].includes(page)?"active":""} aria-expanded={moreOpen} aria-controls={moreOpen?"dt-more-sheet":undefined} onClick={()=>setMoreOpen(v=>!v)}><span aria-hidden="true">···</span><small>อื่น ๆ</small></button>
+    </nav>
+    {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet" id="dt-more-sheet" role="dialog" aria-modal="true" aria-labelledby="dt-more-sheet-title"><div className="dt-sheet-handle"/><h3 id="dt-more-sheet-title">พื้นที่อื่น</h3>{["/bbq","/settings"].map(href=><button type="button" key={href} className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>{page===href?"กำลังดูอยู่":"เปิด"}</b></button>)}</section></>}
+    {quickAddOpen&&<><button className="dt-sheet-dismiss" style={{display:"block",position:"fixed",inset:0,background:"transparent",zIndex:20}} aria-label="ปิดเมนูเพิ่มรายการ" onClick={()=>setQuickAddOpen(false)}/><section className="dt-quick-add-menu" aria-label="เลือกประเภทข้อมูลที่จะเพิ่ม"><div className="dt-sheet-handle"/><h3>เพิ่มรายการใหม่</h3><p>เลือกสิ่งที่ต้องการบันทึก</p><button onClick={()=>{setQuickAddOpen(false);openModal("saving")}}><span>＋</span><span><strong>ออมเงิน</strong><small>ฝากหรือถอน</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("health")}}><span>＋</span><span><strong>สุขภาพ</strong><small>น้ำหนัก น้ำดื่ม การนอน</small></span></button><button onClick={()=>{setQuickAddOpen(false);startNote()}}><span>＋</span><span><strong>โน้ต</strong><small>ความคิดและไดอารี</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("bill")}}><span>＋</span><span><strong>หารค่าใช้จ่าย</strong><small>แบ่งบิล</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("visit")}}><span>＋</span><span><strong>มื้ออาหาร</strong><small>ร้านและความทรงจำ</small></span></button></section></>}
     {renderModal()}
     {notice&&<div className="dt-toast" role="status"><span aria-hidden="true">✓</span><span>{notice}</span>{undoAction&&<button type="button" onClick={()=>{undoAction();setUndoAction(null);setNotice("เลิกทำสำเร็จ")}} aria-label="เลิกทำการลบ">เลิกทำ</button>}<button onClick={()=>{setNotice("");setUndoAction(null)}} aria-label="ปิด">×</button></div>}
   </div>
-}
 
 function BillDetail({bill,hidden,timezone,onBack,onEdit,onDelete,onSaveSettlement,onLinkVisit,onCancelSettlement}:{bill:Bill;hidden:boolean;timezone:string;onBack:()=>void;onEdit:()=>void;onDelete:()=>void;onSaveSettlement:(from:string,to:string,amount:number,note:string)=>boolean;onLinkVisit:()=>void;onCancelSettlement:(id:string)=>void}) {
   const [from,setFrom]=useState("");const [to,setTo]=useState("");const [amount,setAmount]=useState("");const [note,setNote]=useState("");const [amountError,setAmountError]=useState("")
