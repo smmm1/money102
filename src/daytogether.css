@@ -478,3 +478,47 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-detail-actions>summary{display:inline-flex;min-width:unset;min-height:36px;padding:0 13px;font-size:13px;font-weight:650}
 .dt-detail-actions>div{position:static;display:flex;flex-wrap:wrap;min-width:0;margin-top:10px;padding:0;border:0;background:transparent;box-shadow:none}
 @media(max-width:700px){.dt-row-menu>div{right:0}.dt-list-row{gap:8px}.dt-row-menu>summary{min-width:32px;min-height:32px}}
+
+
+/* Page identities: quiet, distinct accents on a shared readable canvas */
+.dt-app-layout{--page-accent:#48634f;--page-deep:#354d3b;--page-tint:#edf2eb;--page-line:#dce6dc;--page-soft:#f7f8f5}
+.dt-app-layout[data-page="/"]{--page-accent:#48634f;--page-deep:#354d3b;--page-tint:#edf2eb;--page-line:#dce6dc;--page-soft:#f7f8f5}
+.dt-app-layout[data-page="/savings"]{--page-accent:#47765d;--page-deep:#315642;--page-tint:#eaf3ed;--page-line:#d2e4d8;--page-soft:#f5f9f6}
+.dt-app-layout[data-page="/health"]{--page-accent:#287b80;--page-deep:#1d5d62;--page-tint:#e7f3f2;--page-line:#cce4e2;--page-soft:#f3f9f8}
+.dt-app-layout[data-page="/notes"]{--page-accent:#b66a4e;--page-deep:#874a35;--page-tint:#f8eee9;--page-line:#eed8ce;--page-soft:#fcf7f4}
+.dt-app-layout[data-page="/split"]{--page-accent:#5575a4;--page-deep:#3d587f;--page-tint:#edf2f9;--page-line:#d7e1ef;--page-soft:#f6f8fc}
+.dt-app-layout[data-page="/bbq"]{--page-accent:#bd7840;--page-deep:#8d5429;--page-tint:#fbf0e5;--page-line:#f0ddc8;--page-soft:#fdf8f2}
+.dt-app-layout[data-page="/settings"]{--page-accent:#77718f;--page-deep:#554f70;--page-tint:#f0eef6;--page-line:#dfdbea;--page-soft:#f8f7fb}
+
+.dt-app-layout .dt-app-topbar{border-bottom-color:var(--page-line)}
+.dt-app-layout .dt-app-breadcrumb{color:var(--page-accent)}
+.dt-app-layout .dt-app-topbar h1{color:var(--page-deep)}
+.dt-app-layout .dt2-nav button.active{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-mobile-nav button.active{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-btn-primary{background:var(--page-accent);border-color:var(--page-accent);color:#fff}
+.dt-app-layout .dt-btn-primary:hover{background:var(--page-deep);border-color:var(--page-deep)}
+.dt-app-layout .dt-stat-icon,.dt-app-layout .dt-recent-mark,.dt-app-layout .dt-list-icon{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-empty>span{background:var(--page-tint);color:var(--page-accent)}
+.dt-app-layout .dt-section-head{border-bottom-color:var(--page-line)}
+.dt-app-layout .dt-progress i{background:var(--page-accent)}
+.dt-app-layout .dt-health-kind>span{color:var(--page-accent)}
+.dt-app-layout .dt-range-tabs button.active,.dt-app-layout .dt-note-filters button.active,.dt-app-layout .dt-note-date-filter button.active{background:var(--page-accent);border-color:var(--page-accent);color:#fff}
+.dt-app-layout .dt-callout{border-left-color:var(--page-accent);background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-bill-total-preview,.dt-app-layout .dt-adjustment-total{background:var(--page-accent)}
+.dt-app-layout .dt-toast{background:var(--page-deep);border-color:var(--page-line)}
+.dt-app-layout .dt-home-intro .dt-home-date{color:var(--page-accent)}
+.dt-app-layout .dt-home-intro h2{color:var(--page-deep)}
+.dt-app-layout .dt-home-actions button:hover,.dt-app-layout .dt-home-metrics button:hover{border-color:var(--page-line);background:var(--page-soft)}
+.dt-app-layout .dt-home-actions button>span{background:var(--page-tint);color:var(--page-accent)}
+.dt-app-layout .dt-home-metrics button>span{color:var(--page-accent)}
+.dt-app-layout .dt-welcome.dt2-welcome{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt2-welcome .dt-eyebrow,.dt-app-layout .dt2-welcome h2 em{color:var(--page-accent)}
+.dt-app-layout .dt2-welcome .dt-btn{background:var(--page-accent);border-color:var(--page-accent)}
+.dt-app-layout .dt-simple-summary{border-color:var(--page-line)}
+.dt-app-layout .dt-simple-summary>div:first-child>span{color:var(--page-accent)}
+.dt-app-layout .dt-visit-art{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-visit-art:after{border-color:var(--page-line)}
+.dt-app-layout .dt-visit-art span{color:var(--page-deep)}
+@media(prefers-reduced-motion:no-preference){
+ .dt-app-layout .dt2-nav button,.dt-app-layout .dt-btn-primary,.dt-app-layout .dt-mobile-nav button{transition:background-color .16s ease,color .16s ease,border-color .16s ease}
+}
