@@ -7,7 +7,8 @@ type StateResponse = {payload?:Record<string,string>|null;updated_at?:string|nul
 const DAILY_KEY="lamoon-daily-log-v1", FOOD_KEY="lamoon-food-life-v1", HEALTH_KEY="lamoon-health-profile-v1"
 const labels:Record<Category,string>={daily:"บันทึกประจำวัน",journal:"ไดอารี่",health:"สุขภาพ",finance:"การเงิน",life:"อาหารและชีวิต"}
 const localDate=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")}
-const parse=(raw?:string):Record<string,unknown>=>{try{const v=JSON.parse(raw||"{}");return v&&typeof v==="object"&&!Array.isArray(v)?v:{}}catch{return {}}}
+const parse=(raw?:string):unknown=>{try{return JSON.parse(raw||"{}")}catch{return {}}}
+const obj=(v:unknown):Record<string,unknown>=>v&&typeof v==="object"&&!Array.isArray(v)?v as Record<string,unknown>:{}
 const arr=(v:unknown):Record<string,unknown>[]=>Array.isArray(v)?v.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)):[]
 const txt=(v:unknown)=>typeof v==="string"?v:""
 const dateOf=(v:unknown)=>{const s=txt(v);return /^\d{4}-\d{2}-\d{2}/.test(s)?s.slice(0,10):""}
@@ -18,9 +19,9 @@ function buildItems(payload:Record<string,string>):Item[]{
  const out:Item[]=[]
  const add=(category:Category,x:Record<string,unknown>,title:string,body:string,date:unknown,detail:string,extra:string[]=[])=>
   out.push({id:txt(x.id)||category+"-"+out.length,category,categoryLabel:labels[category],title:title||"ไม่มีหัวข้อ",body, date:dateOf(date),detail,searchText:[title,body,detail,...extra].join(" ").toLocaleLowerCase()})
- const daily=parse(payload[DAILY_KEY])
- for(const x of arr(daily.entries)){const tags=Array.isArray(x.tags)?x.tags.map(txt).join(" "):"";add("daily",x,txt(x.title),txt(x.body),x.date,[txt(x.type),txt(x.mood),tags].filter(Boolean).join(" · "),[tags])}
- const state=parse(payload["lamoon-daytogether-v1"])
+ const daily=arr(parse(payload[DAILY_KEY]))
+ for(const x of daily){const tags=Array.isArray(x.tags)?x.tags.map(txt).join(" "):"";add("daily",x,txt(x.title),txt(x.body),x.date,[txt(x.type),txt(x.mood),tags].filter(Boolean).join(" · "),[tags])}
+ const state=obj(parse(payload["lamoon-daytogether-v1"]))
  for(const x of arr(state.notes)){add("journal",x,txt(x.title),txt(x.body),x.date,[txt(x.mood),Array.isArray(x.tags)?x.tags.map(txt).join(" "):"",x.pinned?"ปักหมุด":"",x.archived?"เก็บเข้าคลัง":"บันทึก"].filter(Boolean).join(" · "))}
  for(const x of arr(state.health)){
   const kind=txt(x.kind),title=kind==="weight"?"น้ำหนัก "+txt(x.value)+" กก.":kind==="bloodPressure"?"ความดัน "+txt(x.systolic)+"/"+txt(x.diastolic):kind==="pressure"?"ความดัน "+txt(x.value):kind==="water"?"ดื่มน้ำ "+txt(x.value)+" มล.":kind==="sleep"?"การนอน":kind==="symptom"?"อาการ: "+txt(x.title||x.value):"ออกกำลังกาย: "+txt(x.title||x.value)
@@ -28,9 +29,9 @@ function buildItems(payload:Record<string,string>):Item[]{
   add("health",x,title,body,x.date,kind)
  }
  for(const x of arr(state.goals)){add("finance",x,"เป้าหมายออมเงิน: "+txt(x.title||x.name),"เป้าหมาย "+money(num(x.target??x.amount??(num(x.targetSatang)/100)))+" บาท",x.createdAt||x.date,"เป้าหมายการออม")}
- for(const x of arr(state.savings)){const amount=num(x.amount??(num(x.amountCents??x.amountSatang)/100)??x.value);add("finance",x,(x.type==="withdraw"||x.type==="withdrawal"||x.kind==="withdraw"?"ถอนเงิน ":"ออมเงิน ")+money(amount)+" บาท",txt(x.note),x.date,txt(x.goalId))}
- for(const x of arr(state.bills)){const total=num(x.amount??(num(x.totalCents??x.totalSatang)/100)??x.total) || arr(x.expenses).reduce((s,e)=>s+num(e.amountSatang)/100,0);const names=arr(x.participants).map(p=>txt(p.name)).filter(Boolean).join(", ");add("finance",x,"หารค่าใช้จ่าย: "+txt(x.title||x.name),money(total)+" บาท"+(names?" · "+names:""),x.date,txt(x.note))}
- for(const x of arr(parse(payload[FOOD_KEY]).entries)){const cost=x.cost===null||x.cost===undefined?"":" · "+money(num(x.cost))+" บาท";add("life",x,txt(x.title),txt(x.note),x.date,[txt(x.place),txt(x.mood),cost,Array.isArray(x.tags)?x.tags.map(txt).join(" "):""].filter(Boolean).join(" · "))}
+ for(const x of arr(state.savings)){const amount=num(x.amount??((num(x.amountCents??x.amountSatang)/100)||x.value));add("finance",x,(x.type==="withdraw"||x.type==="withdrawal"||x.kind==="withdraw"?"ถอนเงิน ":"ออมเงิน ")+money(amount)+" บาท",txt(x.note),x.date,txt(x.goalId))}
+ for(const x of arr(state.bills)){const total=num(x.amount??((num(x.totalCents??x.totalSatang)/100)||x.total)) || arr(x.expenses).reduce((s,e)=>s+num(e.amountSatang)/100,0);const names=arr(x.participants).map(p=>txt(p.name)).filter(Boolean).join(", ");add("finance",x,"หารค่าใช้จ่าย: "+txt(x.title||x.name),money(total)+" บาท"+(names?" · "+names:""),x.date,txt(x.note))}
+ for(const x of arr(obj(parse(payload[FOOD_KEY])).entries).concat(arr(parse(payload[FOOD_KEY]))){const cost=x.cost===null||x.cost===undefined?"":" · "+money(num(x.cost))+" บาท";add("life",x,txt(x.title),txt(x.note),x.date,[txt(x.place),txt(x.mood),cost,Array.isArray(x.tags)?x.tags.map(txt).join(" "):""].filter(Boolean).join(" · "))}
  return out.sort((a,b)=>b.date.localeCompare(a.date)||a.title.localeCompare(b.title,"th"))
 }
 const pad=(n:number)=>String(n).padStart(2,"0")
