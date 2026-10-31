@@ -433,3 +433,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-simple-toolbar .dt-advanced-filters summary{white-space:nowrap}
 .dt-simple-toolbar .dt-advanced-filter-grid{grid-template-columns:minmax(0,1fr);min-width:180px}
 @media(max-width:700px){.dt-simple-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto}.dt-simple-toolbar .dt-advanced-filters{min-width:100px}.dt-simple-toolbar .dt-advanced-filter-grid{min-width:0}}
+
+
+/* Bill creation: show the simple path first, keep edge-case controls optional */
+.dt-bill-advanced{border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);padding:0 14px;margin-top:12px}
+.dt-bill-advanced>summary{cursor:pointer;list-style:none;padding:12px 0;color:var(--muted);font-size:12px;font-weight:700}
+.dt-bill-advanced>summary::-webkit-details-marker{display:none}
+.dt-bill-advanced>summary:after{content:"＋";float:right}
+.dt-bill-advanced[open]>summary:after{content:"−"}
+.dt-bill-advanced-body{padding:0 0 14px}
+.dt-bill-advanced-body>.dt-form-grid{margin-top:0}
+.dt-bill-adjustments{margin-top:14px}
+.dt-bill-adjustments h3{margin:0 0 8px}
+.dt-bill-expense-row>.dt-bill-advanced{margin-top:8px}
+.dt-bill-expense-row>.dt-form-grid{grid-template-columns:1.4fr 1fr}
+@media(max-width:700px){.dt-bill-expense-row>.dt-form-grid{grid-template-columns:1fr 1fr}.dt-bill-expense-row>.dt-form-grid .dt-field:first-child{grid-column:1/-1}}
