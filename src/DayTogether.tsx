@@ -3,6 +3,7 @@ import "./daytogether.css"
 import DailyLog from "./DailyLog"
 import Journal from "./Journal"
 import Health from "./Health"
+import Finance from "./Finance"
 
 type Section = "home" | "daily" | "journal" | "health" | "finance" | "life" | "archive"
 const nav: { id: Section; label: string; mobile: string; icon: string }[] = [
@@ -54,7 +55,8 @@ export default function DayTogether() {
           {active === "daily" && <DailyLog />}
           {active === "journal" && <Journal />}
           {active === "health" && <Health />}
-          {!["daily","journal","health"].includes(active) && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
+          {active === "finance" && <Finance />}
+          {!["daily","journal","health","finance"].includes(active) && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
           {!["daily","journal","health"].includes(active) && <button className="dt-back" onClick={() => setActive("home")}>← กลับสู่ภาพรวม</button>}
         </section>}
       </main>
