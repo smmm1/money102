@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "fix/daytogether-ux-audit"]
+    branches: [main, "fix/daytogether-ux-audit", "feat/simple-bill-split-form"]
 
 permissions:
   contents: read
