@@ -478,3 +478,135 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-detail-actions>summary{display:inline-flex;min-width:unset;min-height:36px;padding:0 13px;font-size:13px;font-weight:650}
 .dt-detail-actions>div{position:static;display:flex;flex-wrap:wrap;min-width:0;margin-top:10px;padding:0;border:0;background:transparent;box-shadow:none}
 @media(max-width:700px){.dt-row-menu>div{right:0}.dt-list-row{gap:8px}.dt-row-menu>summary{min-width:32px;min-height:32px}}
+
+
+/* Page identities: quiet, distinct accents on a shared readable canvas */
+.dt-app-layout{--page-accent:#48634f;--page-deep:#354d3b;--page-tint:#edf2eb;--page-line:#dce6dc;--page-soft:#f7f8f5}
+.dt-app-layout[data-page="/"]{--page-accent:#48634f;--page-deep:#354d3b;--page-tint:#edf2eb;--page-line:#dce6dc;--page-soft:#f7f8f5}
+.dt-app-layout[data-page="/savings"]{--page-accent:#47765d;--page-deep:#315642;--page-tint:#eaf3ed;--page-line:#d2e4d8;--page-soft:#f5f9f6}
+.dt-app-layout[data-page="/health"]{--page-accent:#287b80;--page-deep:#1d5d62;--page-tint:#e7f3f2;--page-line:#cce4e2;--page-soft:#f3f9f8}
+.dt-app-layout[data-page="/notes"]{--page-accent:#b66a4e;--page-deep:#874a35;--page-tint:#f8eee9;--page-line:#eed8ce;--page-soft:#fcf7f4}
+.dt-app-layout[data-page="/split"]{--page-accent:#5575a4;--page-deep:#3d587f;--page-tint:#edf2f9;--page-line:#d7e1ef;--page-soft:#f6f8fc}
+.dt-app-layout[data-page="/bbq"]{--page-accent:#bd7840;--page-deep:#8d5429;--page-tint:#fbf0e5;--page-line:#f0ddc8;--page-soft:#fdf8f2}
+.dt-app-layout[data-page="/settings"]{--page-accent:#77718f;--page-deep:#554f70;--page-tint:#f0eef6;--page-line:#dfdbea;--page-soft:#f8f7fb}
+
+.dt-app-layout .dt-app-topbar{border-bottom-color:var(--page-line)}
+.dt-app-layout .dt-app-breadcrumb{color:var(--page-accent)}
+.dt-app-layout .dt-app-topbar h1{color:var(--page-deep)}
+.dt-app-layout .dt2-nav button.active{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-mobile-nav button.active{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-btn-primary{background:var(--page-accent);border-color:var(--page-accent);color:#fff}
+.dt-app-layout .dt-btn-primary:hover{background:var(--page-deep);border-color:var(--page-deep)}
+.dt-app-layout .dt-stat-icon,.dt-app-layout .dt-recent-mark,.dt-app-layout .dt-list-icon{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-empty>span{background:var(--page-tint);color:var(--page-accent)}
+.dt-app-layout .dt-section-head{border-bottom-color:var(--page-line)}
+.dt-app-layout .dt-progress i{background:var(--page-accent)}
+.dt-app-layout .dt-health-kind>span{color:var(--page-accent)}
+.dt-app-layout .dt-range-tabs button.active,.dt-app-layout .dt-note-filters button.active,.dt-app-layout .dt-note-date-filter button.active{background:var(--page-accent);border-color:var(--page-accent);color:#fff}
+.dt-app-layout .dt-callout{border-left-color:var(--page-accent);background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-bill-total-preview,.dt-app-layout .dt-adjustment-total{background:var(--page-accent)}
+.dt-app-layout .dt-toast{background:var(--page-deep);border-color:var(--page-line)}
+.dt-app-layout .dt-home-intro .dt-home-date{color:var(--page-accent)}
+.dt-app-layout .dt-home-intro h2{color:var(--page-deep)}
+.dt-app-layout .dt-home-actions button:hover,.dt-app-layout .dt-home-metrics button:hover{border-color:var(--page-line);background:var(--page-soft)}
+.dt-app-layout .dt-home-actions button>span{background:var(--page-tint);color:var(--page-accent)}
+.dt-app-layout .dt-home-metrics button>span{color:var(--page-accent)}
+.dt-app-layout .dt-welcome.dt2-welcome{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt2-welcome .dt-eyebrow,.dt-app-layout .dt2-welcome h2 em{color:var(--page-accent)}
+.dt-app-layout .dt2-welcome .dt-btn{background:var(--page-accent);border-color:var(--page-accent)}
+.dt-app-layout .dt-simple-summary{border-color:var(--page-line)}
+.dt-app-layout .dt-simple-summary>div:first-child>span{color:var(--page-accent)}
+.dt-app-layout .dt-visit-art{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-visit-art:after{border-color:var(--page-line)}
+.dt-app-layout .dt-visit-art span{color:var(--page-deep)}
+@media(prefers-reduced-motion:no-preference){
+ .dt-app-layout .dt2-nav button,.dt-app-layout .dt-btn-primary,.dt-app-layout .dt-mobile-nav button{transition:background-color .16s ease,color .16s ease,border-color .16s ease}
+}
+
+
+/* DayTogether refinement: editorial readability + quiet-luxury navigation */
+.dt-app-layout{
+  --lux-ink:#26362d;--lux-deep:#1f3027;--lux-gold:#b99a67;--lux-muted:#68736b;
+  background:#faf9f6;color:#26312b;font-size:15px;
+  grid-template-columns:252px minmax(0,1fr)
+}
+.dt-app-sidebar{
+  z-index:5;padding:30px 18px 20px;background:linear-gradient(180deg,#26382f 0%,#202f28 100%);
+  border-right:1px solid #34483c;box-shadow:8px 0 28px rgba(31,48,39,.06)
+}
+.dt-app-sidebar .dt2-brand{padding:5px 8px 25px;border-bottom:1px solid rgba(232,220,193,.16)}
+.dt-app-sidebar .dt2-brand-symbol{
+  width:42px;height:42px;border:1px solid rgba(214,188,137,.62);border-radius:13px;
+  background:linear-gradient(145deg,#d7bd8d,#b18e59);color:#26382f;box-shadow:none;
+  font-family:Georgia,serif;font-size:25px;font-weight:700;transform:none
+}
+.dt-app-sidebar .dt2-brand-copy strong{color:#f6f2e9;font-family:Georgia,'Noto Sans Thai',serif;font-size:19px;font-weight:600;letter-spacing:-.035em}
+.dt-app-sidebar .dt2-brand-copy small{color:#c6b99f;font:9px 'DM Sans','Noto Sans Thai',sans-serif;letter-spacing:.06em}
+.dt-sidebar-label{margin:28px 12px 12px;color:#bca982;font-size:10px;letter-spacing:.16em}
+.dt-app-sidebar .dt2-nav{gap:6px}
+.dt-app-sidebar .dt2-nav button{
+  position:relative;min-height:47px;padding:0 14px 0 17px;border:1px solid transparent;border-radius:10px;
+  color:#d4d9d2;font-size:13px;font-weight:500;letter-spacing:.005em;transition:background .18s,color .18s,border-color .18s
+}
+.dt-app-sidebar .dt2-nav button:before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:2px;border-radius:2px;background:transparent}
+.dt-app-sidebar .dt2-nav button:hover{background:rgba(255,255,255,.065);color:#fff}
+.dt-app-sidebar .dt2-nav button.active{
+  border-color:rgba(207,180,130,.22);background:linear-gradient(90deg,rgba(190,162,111,.2),rgba(255,255,255,.045));
+  color:#f3dfb9;font-weight:700
+}
+.dt-app-sidebar .dt2-nav button.active:before{background:#d1b47e}
+.dt-app-sidebar .dt-sidebar-bottom{border-top-color:rgba(232,220,193,.16)}
+.dt-app-sidebar .dt2-save{color:#d5d8d1}
+.dt-app-sidebar .dt-sidebar-bottom .dt2-privacy{color:#d9ded7}
+.dt-app-sidebar .dt-sidebar-bottom .cc-account{color:#e8e3d8}
+.dt-app-layout>.dt2-main{max-width:1380px;padding:38px clamp(26px,4.2vw,68px) 90px}
+.dt-app-topbar{margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid #e8e4da}
+.dt-app-breadcrumb{margin-bottom:9px;color:#8a806d;font-size:11px;font-weight:600;letter-spacing:.035em}
+.dt-app-topbar h1{font-family:'DM Sans','Noto Sans Thai',sans-serif;font-size:clamp(28px,3vw,39px);font-weight:700;letter-spacing:-.045em}
+.dt-app-layout .dt-page-body{gap:28px}
+.dt-app-layout .dt-section-head{padding-bottom:15px;margin-bottom:9px;border-bottom:1px solid var(--page-line)}
+.dt-app-layout .dt-section h3,.dt-app-layout .dt-detail-card h3{font-size:18px;font-weight:700;letter-spacing:-.025em}
+.dt-app-layout .dt-section-head p,.dt-app-layout .dt-settings-card>p,.dt-app-layout .dt-detail-card>p{font-size:13px;line-height:1.75}
+.dt-app-layout .dt-stat-label,.dt-app-layout .dt-list-copy small,.dt-app-layout .dt-recent small{font-size:12px;line-height:1.65}
+.dt-app-layout .dt-stat small,.dt-app-layout .dt-home-intro p,.dt-app-layout .dt-home-section-title>span{font-size:12px;line-height:1.65}
+.dt-app-layout .dt-stat{min-height:150px;padding:20px;background:#fff;border:1px solid #ebe8df;border-radius:14px;box-shadow:0 4px 16px rgba(38,49,43,.035)}
+.dt-app-layout .dt-stat:nth-child(n){background:#fff}
+.dt-app-layout .dt-stat-icon{background:var(--page-tint);color:var(--page-deep)}
+.dt-app-layout .dt-goal-card,.dt-app-layout .dt-note-card,.dt-app-layout .dt-visit-card{background:#fff;border:1px solid #e9e5dc;border-radius:14px;box-shadow:0 5px 18px rgba(38,49,43,.035)}
+.dt-app-layout .dt-goal-card:nth-child(n),.dt-app-layout .dt-note-card:nth-child(n),.dt-app-layout .dt-visit-card:nth-child(n){background:#fff}
+.dt-app-layout .dt-home-actions button{border-color:#e9e5dc;border-radius:12px;background:#fff}
+.dt-app-layout .dt-home-metrics{border-color:#e9e5dc;border-radius:13px}
+.dt-app-layout .dt-home-metrics button{background:#fff}
+.dt-app-layout .dt-recent,.dt-app-layout .dt-list-row,.dt-app-layout .dt-bill-row{border-bottom-color:#ece9e1}
+.dt-app-layout .dt-recent:hover,.dt-app-layout .dt-list-row:hover,.dt-app-layout .dt-bill-row:hover{background:var(--page-soft)}
+.dt-app-layout .dt-btn{font-size:13px}
+.dt-app-layout input,.dt-app-layout textarea,.dt-app-layout select{font-size:14px}
+.dt-app-layout .dt-field>span{font-size:13px}
+.dt-app-layout .dt-disclaimer,.dt-app-layout .dt-form-hint{font-size:12px;line-height:1.75}
+.dt-app-layout .dt-pill{font-family:'DM Sans','Noto Sans Thai',sans-serif;font-size:10px;font-weight:650}
+.dt-app-layout .dt2-nav button.active{background:transparent;color:#f3dfb9}
+.dt-app-layout .dt-mobile-nav button.active{background:var(--page-tint);color:var(--page-deep)}
+@media(max-width:900px){
+ .dt-app-layout{grid-template-columns:218px minmax(0,1fr)}
+ .dt-app-sidebar{padding:24px 13px 18px}
+ .dt-app-layout>.dt2-main{padding:28px 20px 80px}
+}
+@media(max-width:680px){
+ .dt-app-layout{background:#faf9f6}
+ .dt-app-layout>.dt2-main{padding:18px 16px 30px}
+ .dt-app-topbar{gap:10px;margin-bottom:22px;padding-bottom:15px}
+ .dt-app-breadcrumb{font-size:10px}
+ .dt-app-topbar h1{font-size:26px;line-height:1.25}
+ .dt-app-topbar>.dt-btn{min-height:39px;padding:0 12px;font-size:12px;white-space:nowrap}
+ .dt-mobile-nav{
+   gap:3px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+   border-top:1px solid #e8e1d3;background:rgba(250,249,246,.96);
+   box-shadow:0 -8px 26px rgba(38,49,43,.07);backdrop-filter:blur(18px)
+ }
+ .dt-mobile-nav button{min-height:48px;border-radius:10px;color:#727b72;font-size:11px;font-weight:550}
+ .dt-mobile-nav button.active{background:var(--page-tint);color:var(--page-deep);font-weight:750;box-shadow:inset 0 0 0 1px var(--page-line)}
+ .dt-app-layout .dt-page-body{gap:22px}
+ .dt-app-layout .dt-section h3{font-size:17px}
+ .dt-app-layout .dt-stat{min-height:126px;padding:15px}
+ .dt-app-layout .dt-stat strong{font-size:22px}
+}

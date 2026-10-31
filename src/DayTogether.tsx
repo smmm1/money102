@@ -556,7 +556,7 @@ export default function DayTogether() {
       <div className="dt-modal-actions"><Button onClick={closeModal}>ยกเลิก</Button><Button type="submit" variant="primary">บันทึก</Button></div></form>}
       </section></div>
   }
-  return <div className="dt2-shell dt-app-layout">
+  return <div className="dt2-shell dt-app-layout" data-page={page}>
     <aside className="dt-app-sidebar">
       <button className="dt2-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
       <span className="dt-sidebar-label">เมนูหลัก</span>
