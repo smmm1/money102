@@ -35,11 +35,11 @@ export async function loadDayState(): Promise<LoadedState> {
   const payload = result.payload || {}
   return { state: parseDayState(payload[DAY_STATE_KEY]), payload, revision: result.updated_at ?? null }
 }
-export async function saveDayState(loaded: LoadedState, next: DayState): Promise<string | null> {
+export async function saveDayState(loaded: LoadedState, next: DayState, extra: Record<string,string> = {}): Promise<string | null> {
   const current = await api("/api/state") as SnapshotResponse
   const revision = current.updated_at ?? null
   if (revision !== loaded.revision) throw Object.assign(new Error("ข้อมูลถูกเปลี่ยนจากอีกอุปกรณ์แล้ว กรุณาโหลดข้อมูลล่าสุด"), { status: 409 })
-  const payload = { ...(current.payload || {}), [DAY_STATE_KEY]: JSON.stringify(next) }
+  const payload = { ...(current.payload || {}), ...extra, [DAY_STATE_KEY]: JSON.stringify(next) }
   const saved = await api("/api/state", { method: "PUT", body: JSON.stringify({ payload, expected_updated_at: revision }) }) as { updated_at?: string }
   return saved.updated_at ?? null
 }
