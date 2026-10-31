@@ -1,6 +1,9 @@
 @import "tailwindcss";
-:root{font-family:system-ui,sans-serif;color:#111;background:#fff;font-synthesis:none;text-rendering:optimizeLegibility}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap');
+:root{font-family:"IBM Plex Sans Thai","DM Sans",sans-serif;color:#343b35;background:#f7f6f1;font-synthesis:none;text-rendering:optimizeLegibility}
 *{box-sizing:border-box}
 html,body,#root{min-width:320px;min-height:100%;margin:0}
+body{min-height:100vh}
 button,input{font:inherit}
-button:focus-visible,input:focus-visible{outline:2px solid #555;outline-offset:2px}
+button:focus-visible,input:focus-visible{outline:2px solid #788d73;outline-offset:3px}
+::selection{background:#dce7d8;color:#354538}
