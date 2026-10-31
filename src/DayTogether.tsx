@@ -51,7 +51,7 @@ export default function DayTogether() {
         </> : <section className="dt-inner">
           <div className="dt-inner-meta"><span className="dt-eyebrow">{copy[active].eyebrow}</span><small>{today}</small></div><h1>{copy[active].title}</h1><p className="dt-inner-desc">{copy[active].desc}</p>
           {active === "daily" && <DailyLog />}
-          {active !== "daily" && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>
+          {active !== "daily" && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
           {active !== "daily" && <button className="dt-back" onClick={() => setActive("home")}>← กลับสู่ภาพรวม</button>}
         </section>}
       </main>
