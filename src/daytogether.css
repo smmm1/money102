@@ -1297,3 +1297,149 @@ html,body,.dt2-shell,.dt-app-layout.dt2-shell{
     transition-duration:.01ms!important
   }
 }
+
+
+/* DayTogether page-specific UX: shared foundations, different information architectures */
+:root{
+  --ink:#29352e;--muted:#7c827a;--line:#e6e3da;--paper:#fffefa;
+  --blue:#687b68;--blue-deep:#526652;--pink:#b8a8ca;--violet:#d8d0e4;
+  --yellow:#e8dfc8;--cyan:#dce7dc;--shadow:0 12px 34px rgba(45,55,45,.07);
+}
+html,body,.dt2-shell{background:#f5f3ed!important;color:var(--ink)}
+.dt2-shell{font-family:'Noto Sans Thai',sans-serif}
+.dt-floating-header{background:rgba(250,249,245,.94)!important;border-bottom:1px solid #e8e5dc!important;backdrop-filter:blur(16px)}
+.dt2-brand-symbol{background:#687b68!important;color:#fffefa!important;box-shadow:4px 4px 0 #d8d0e4!important}
+.dt-floating-nav{background:transparent!important;border-bottom:1px solid #e8e5dc!important}
+.dt-floating-nav button{color:#687168!important;border-radius:10px!important}
+.dt-floating-nav button.active{background:#e4e9df!important;color:#405642!important}
+.dt-floating-nav button:hover{background:#eeeee7!important}
+.dt2-main{max-width:1360px!important}
+.dt-app-topbar{border-bottom:1px solid #e8e5dc!important}
+.dt-app-topbar h1{font-size:clamp(28px,4vw,42px)!important;font-weight:600!important;letter-spacing:-.045em!important}
+.dt-btn{border-radius:10px!important;font-weight:600!important;min-height:42px!important}
+.dt-btn-primary{background:#687b68!important;border-color:#687b68!important;color:#fff!important}
+.dt-btn-primary:hover{background:#526652!important}
+.dt-btn-secondary{background:#fffefa!important;border-color:#e2dfd5!important}
+.dt-section-head{border-bottom:1px solid #e7e4dc!important}
+.dt-section h3,.dt-detail-card h3,.dt-settlement-form h3{font-size:18px!important;font-weight:650!important;letter-spacing:-.02em!important}
+.dt2-shell input,.dt2-shell textarea,.dt2-shell select{border-radius:9px!important;border-color:#deded4!important;background:#fffefa!important}
+.dt-empty{border:1px dashed #d7d8ce!important;border-radius:14px!important;background:#fbfaf6!important}
+.dt-empty>span{background:#e5e9df!important;color:#526652!important}
+
+/* Home: a daily command centre, not a collection of category cards */
+.dt2-shell[data-page="/"] .dt-page-body{gap:22px!important}
+.dt-home-intro{padding:30px 0!important;border:0!important;border-bottom:1px solid #e7e4dc!important;border-radius:0!important;background:transparent!important;color:var(--ink)!important}
+.dt-home-intro h2{font-size:clamp(28px,4vw,44px)!important;line-height:1.2!important;font-weight:600!important;letter-spacing:-.045em!important}
+.dt-home-intro p:not(.dt-home-date){color:#777e75!important}
+.dt-home-date{color:#7e887b!important;font-size:12px!important}
+.dt-home-overview,.dt-home-recent,.dt-today-activity{padding:20px 22px!important;border:1px solid #e7e4dc!important;border-radius:14px!important;background:#fffefa!important}
+.dt-home-section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px!important}
+.dt-home-section-title h3{margin:0!important;font-size:17px!important;font-weight:650!important}
+.dt-home-section-title span{color:#888d83!important;font-size:11px!important}
+.dt-home-metrics{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0!important}
+.dt-home-metrics>button{min-width:0!important;padding:14px 18px!important;border:0!important;border-right:1px solid #e9e7df!important;border-radius:0!important;background:transparent!important;text-align:left!important}
+.dt-home-metrics>button:last-child{border-right:0!important}
+.dt-home-metrics>button:hover{background:#f6f7f1!important}
+.dt-home-metric-icon{color:#758a72!important;background:#edf0e8!important}
+.dt-home-metrics>button strong{font-size:22px!important;color:#344536!important}
+.dt-today-activity .dt-home-section-title>strong{font-size:12px;color:#687b68}
+.dt-today-list{display:grid}
+.dt-today-row{display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 2px;border:0;border-bottom:1px solid #efede7;background:transparent;text-align:left;color:var(--ink)}
+.dt-today-row:last-child{border-bottom:0}
+.dt-today-row>span:nth-child(2){display:grid;gap:3px}
+.dt-today-row strong{font-size:13px;font-weight:600}
+.dt-today-row small,.dt-today-row time{font-size:11px;color:#858b82}
+.dt-today-dot{width:7px;height:7px;border-radius:50%;background:#8ca18a}
+.dt-today-empty{padding:22px 10px;text-align:center}
+.dt-today-empty>span{font-weight:600}
+.dt-today-empty p{margin:6px auto 14px;color:#858b82;font-size:12px}
+
+/* Savings: personal ledger with a strong balance, goal progress and transaction rows */
+.dt2-shell[data-page="/savings"] .dt-page-body{gap:26px!important}
+.dt2-shell[data-page="/savings"] .dt-simple-summary{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:24px!important;padding:26px 30px!important;border:0!important;border-radius:14px!important;background:#e6ebe1!important;color:#304333!important}
+.dt2-shell[data-page="/savings"] .dt-simple-summary>div:first-child{display:grid;gap:5px}
+.dt2-shell[data-page="/savings"] .dt-simple-summary>div:first-child>span{font-size:12px!important;color:#657565!important}
+.dt2-shell[data-page="/savings"] .dt-simple-summary strong{font-size:clamp(30px,5vw,48px)!important;font-weight:650!important;letter-spacing:-.05em}
+.dt2-shell[data-page="/savings"] .dt-simple-summary small{color:#7c877a!important}
+.dt2-shell[data-page="/savings"] .dt-disclaimer{padding-left:2px}
+.dt2-shell[data-page="/savings"] .dt-goal-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.dt2-shell[data-page="/savings"] .dt-goal-card{padding:20px!important;border:1px solid #e7e4dc!important;border-radius:12px!important;background:#fffefa!important;box-shadow:none!important}
+.dt2-shell[data-page="/savings"] .dt-goal-card:nth-child(n){background:#fffefa!important}
+.dt2-shell[data-page="/savings"] .dt-progress{height:7px!important;background:#eeeee8!important}
+.dt2-shell[data-page="/savings"] .dt-progress i{background:#849780!important}
+.dt2-shell[data-page="/savings"] .dt-list{border-top:1px solid #e8e5dc}
+.dt2-shell[data-page="/savings"] .dt-list-row{display:grid!important;grid-template-columns:38px minmax(0,1fr) minmax(100px,auto) auto!important;padding:15px 8px!important;border-bottom:1px solid #eceae3!important}
+.dt2-shell[data-page="/savings"] .dt-list-row:hover{padding-left:12px!important;background:#f7f7f1!important}
+.dt2-shell[data-page="/savings"] .dt-list-icon{background:#eef1e9!important;color:#657b65!important;border-radius:9px!important}
+
+/* Health: tracker dashboard, measurement-first and chart-led */
+.dt2-shell[data-page="/health"] .dt-page-body{gap:22px!important}
+.dt2-shell[data-page="/health"] .dt-health-disclaimer{order:5;padding:11px 14px!important;border-left:3px solid #9aaa91!important;border-radius:0 8px 8px 0!important;background:#edf1e9!important;color:#687665!important;font-size:11px!important}
+.dt2-shell[data-page="/health"] .dt-health-summary{display:grid!important;grid-template-columns:1.4fr 1fr!important;gap:0!important;padding:22px 26px!important;border:1px solid #e5e8df!important;border-radius:14px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-health-summary>div{display:grid;gap:6px}
+.dt2-shell[data-page="/health"] .dt-health-summary>div+div{padding-left:24px;border-left:1px solid #e9e8df}
+.dt2-shell[data-page="/health"] .dt-health-summary span{font-size:12px!important;color:#7d857a!important}
+.dt2-shell[data-page="/health"] .dt-health-summary strong{font-size:clamp(26px,4vw,38px)!important;color:#3c5140!important;font-weight:650!important}
+.dt2-shell[data-page="/health"] .dt-health-summary small{font-size:11px!important;color:#858b82!important}
+.dt2-shell[data-page="/health"] .dt-health-kind-grid{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:8px!important}
+.dt2-shell[data-page="/health"] .dt-health-kind{min-height:104px!important;align-content:start!important;padding:13px!important;border:1px solid #e7e7df!important;border-radius:10px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-health-kind:hover{background:#f1f4ed!important;transform:translateY(-2px)!important}
+.dt2-shell[data-page="/health"] .dt-health-kind>span{font-size:20px!important;color:#71866f!important}
+.dt2-shell[data-page="/health"] .dt-health-kind strong{font-size:12px!important}
+.dt2-shell[data-page="/health"] .dt-health-kind small{font-size:10px!important}
+.dt2-shell[data-page="/health"] .dt-water-quick{display:block!important;padding:18px 20px!important;border:1px solid #e7e4dc!important;border-radius:12px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-water-quick .dt-section-head{border:0!important}
+.dt2-shell[data-page="/health"] .dt-water-quick .dt-progress i{background:#8da58d!important}
+.dt2-shell[data-page="/health"] .dt-health-trend{padding:20px!important;border:1px solid #e7e4dc!important;border-radius:12px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-health-chart-wrap{padding:22px 8px!important;border-color:#eeece5!important;color:#758d76!important}
+.dt2-shell[data-page="/health"] .dt-health-chart{width:100%!important}
+.dt2-shell[data-page="/health"] .dt-health-trend .dt-empty{min-height:110px!important}
+.dt2-shell[data-page="/health"] .dt-health-trend .dt-range-tabs button{border-radius:8px!important}
+.dt2-shell[data-page="/health"] .dt-health-trend .dt-range-tabs button.active{background:#687b68!important}
+.dt2-shell[data-page="/health"] .dt-health-trend+.dt-section .dt-list{border-top:1px solid #e8e5dc}
+.dt2-shell[data-page="/health"] .dt-health-trend+.dt-section .dt-list-row{padding:13px 8px!important;border-bottom:1px solid #eceae3!important}
+
+/* Notes: reading and writing workspace, not a generic card gallery */
+.dt2-shell[data-page="/notes"] .dt-page-body>.dt-section{padding:22px!important;border:1px solid #e7e4dc!important;border-radius:14px!important;background:#fffefa!important}
+.dt2-shell[data-page="/notes"] .dt-section-head{align-items:center!important}
+.dt2-shell[data-page="/notes"] .dt-note-filters{align-items:center!important;padding:10px 0 14px!important;border-bottom:1px solid #efede7!important}
+.dt2-shell[data-page="/notes"] .dt-note-filters>input{flex:1 1 260px!important;max-width:480px}
+.dt2-shell[data-page="/notes"] .dt-note-grid{display:grid!important;grid-template-columns:1fr!important;gap:0!important}
+.dt2-shell[data-page="/notes"] .dt-note-card{display:grid!important;grid-template-columns:minmax(100px,150px) minmax(0,1fr) auto!important;align-items:start!important;gap:8px 18px!important;min-height:0!important;padding:17px 4px!important;border:0!important;border-bottom:1px solid #efede7!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.dt2-shell[data-page="/notes"] .dt-note-card:nth-child(n){background:transparent!important}
+.dt2-shell[data-page="/notes"] .dt-note-top{grid-column:1;grid-row:1 / span 2;align-items:start!important;justify-content:flex-start!important;flex-wrap:wrap}
+.dt2-shell[data-page="/notes"] .dt-note-open{grid-column:2;grid-row:1 / span 2}
+.dt2-shell[data-page="/notes"] .dt-note-open strong{font-size:15px!important;font-weight:650!important}
+.dt2-shell[data-page="/notes"] .dt-note-open p{max-height:54px!important;margin:5px 0!important;color:#777f75!important;font-size:12px!important}
+.dt2-shell[data-page="/notes"] .dt-note-card>.dt-tag-row{grid-column:2;grid-row:3}
+.dt2-shell[data-page="/notes"] .dt-note-card>.dt-between{grid-column:3;grid-row:1 / span 2;display:grid!important;justify-items:end!important;align-content:start!important}
+.dt2-shell[data-page="/notes"] .dt-note-card>.dt-between small{font-size:10px!important}
+.dt2-shell[data-page="/notes"] .dt-note-card .dt-icon-button{width:28px!important;height:28px!important}
+.dt2-shell[data-page="/notes"] .dt-note-reader{max-width:760px!important;background:#fffefa!important;border:1px solid #e7e4dc!important;border-radius:12px!important}
+.dt2-shell[data-page="/notes"] .dt-note-body{font-size:15px!important;line-height:2!important;color:#3d473e!important}
+
+/* responsive adjustments for page-specific layouts */
+@media(max-width:900px){
+ .dt2-shell[data-page="/health"] .dt-health-kind-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .dt2-shell[data-page="/savings"] .dt-goal-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:620px){
+ .dt-home-intro{align-items:flex-start!important;gap:16px!important;flex-direction:column!important}
+ .dt-home-metrics{grid-template-columns:1fr!important}
+ .dt-home-metrics>button{border-right:0!important;border-bottom:1px solid #e9e7df!important;padding:12px 2px!important}
+ .dt-home-metrics>button:last-child{border-bottom:0!important}
+ .dt-home-overview,.dt-home-recent,.dt-today-activity{padding:16px!important}
+ .dt-today-row{grid-template-columns:10px minmax(0,1fr)!important}
+ .dt-today-row time{grid-column:2}
+ .dt2-shell[data-page="/health"] .dt-health-summary{grid-template-columns:1fr!important;gap:15px!important}
+ .dt2-shell[data-page="/health"] .dt-health-summary>div+div{padding:14px 0 0!important;border-left:0!important;border-top:1px solid #e9e8df!important}
+ .dt2-shell[data-page="/health"] .dt-health-kind-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .dt2-shell[data-page="/notes"] .dt-page-body>.dt-section{padding:15px!important}
+ .dt2-shell[data-page="/notes"] .dt-note-card{grid-template-columns:1fr auto!important;gap:7px 10px!important}
+ .dt2-shell[data-page="/notes"] .dt-note-top{grid-column:1;grid-row:1}
+ .dt2-shell[data-page="/notes"] .dt-note-open{grid-column:1 / -1;grid-row:2}
+ .dt2-shell[data-page="/notes"] .dt-note-card>.dt-tag-row{grid-column:1 / -1;grid-row:3}
+ .dt2-shell[data-page="/notes"] .dt-note-card>.dt-between{grid-column:2;grid-row:1;display:flex!important;flex-direction:column;align-items:flex-end!important}
+ .dt2-shell[data-page="/savings"] .dt-list-row{grid-template-columns:32px minmax(0,1fr) auto!important}
+ .dt2-shell[data-page="/savings"] .dt-list-row .dt-row-menu{grid-column:3}
+}
