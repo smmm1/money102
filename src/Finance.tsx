@@ -5,12 +5,13 @@ type Goal = Record<string, unknown> & { id:string; title:string; target:number; 
 type Saving = Record<string, unknown> & { id:string; amount:number; type:"deposit"|"withdraw"; date:string; note:string; goalId?:string }
 type Split = Record<string, unknown> & { id:string; title:string; amount:number; date:string; payer:string; participants:string[]; note:string; __raw?:Record<string,unknown> }
 type Tab = "overview"|"savings"|"split"
+type SavingForm = {type:"deposit"|"withdraw";amount:string;date:string;goalId:string;note:string}
 const money=(n:number)=>new Intl.NumberFormat("th-TH",{maximumFractionDigits:2}).format(n)
 const asText=(v:unknown)=>typeof v==="string"?v:""
 const asAmount=(v:unknown)=>{const n=Number(v);return Number.isFinite(n)&&n>0?n:0}
 const dateLabel=(v:string)=>new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short",year:"numeric"}).format(new Date(v+"T12:00:00"))
 const blankGoal=()=>({title:"",target:""})
-const blankSaving=()=>({type:"deposit" as const,amount:"",date:localDate(),goalId:"",note:""})
+const blankSaving=():SavingForm=>({type:"deposit",amount:"",date:localDate(),goalId:"",note:""})
 const blankSplit=()=>({title:"",amount:"",date:localDate(),payer:"",participants:"",note:""})
 function normalizeGoals(raw:unknown[]):Goal[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({ ...x,id:asText(x.id)||uid(),title:asText(x.title)||asText(x.name)||"เป้าหมายออมเงิน",target:asAmount(x.target ?? ((Number(x.targetCents??x.targetSatang)/100) || x.amount)) })) }
 function normalizeSavings(raw:unknown[]):Saving[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({...x,id:asText(x.id)||uid(),amount:asAmount(x.amount ?? ((Number(x.amountCents??x.amountSatang)/100) || x.value)),type:x.type==="withdraw"||x.type==="withdrawal"||x.kind==="withdraw"?"withdraw":"deposit",date:asText(x.date)||localDate(),note:asText(x.note),goalId:asText(x.goalId)||undefined})) as Saving[] }
