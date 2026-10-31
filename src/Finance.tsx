@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
-import { loadDayState, saveDayState, localDate, uid, type LoadedState } from "./dayState"
+import { isModernState, loadDayState, saveDayState, localDate, uid, type LoadedState } from "./dayState"
 
 type Goal = Record<string, unknown> & { id:string; title:string; target:number; createdAt?:string }
 type Saving = Record<string, unknown> & { id:string; amount:number; type:"deposit"|"withdraw"; date:string; note:string; goalId?:string }
-type Split = Record<string, unknown> & { id:string; title:string; amount:number; date:string; payer:string; participants:string[]; note:string }
+type Split = Record<string, unknown> & { id:string; title:string; amount:number; date:string; payer:string; participants:string[]; note:string; __raw?:Record<string,unknown> }
 type Tab = "overview"|"savings"|"split"
 const money=(n:number)=>new Intl.NumberFormat("th-TH",{maximumFractionDigits:2}).format(n)
 const asText=(v:unknown)=>typeof v==="string"?v:""
@@ -12,9 +12,9 @@ const dateLabel=(v:string)=>new Intl.DateTimeFormat("th-TH",{day:"numeric",month
 const blankGoal=()=>({title:"",target:""})
 const blankSaving=()=>({type:"deposit" as const,amount:"",date:localDate(),goalId:"",note:""})
 const blankSplit=()=>({title:"",amount:"",date:localDate(),payer:"",participants:"",note:""})
-function normalizeGoals(raw:unknown[]):Goal[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({ ...x,id:asText(x.id)||uid(),title:asText(x.title)||asText(x.name)||"เป้าหมายออมเงิน",target:asAmount(x.target??x.amount) })) }
-function normalizeSavings(raw:unknown[]):Saving[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({...x,id:asText(x.id)||uid(),amount:asAmount(x.amount??x.value),type:x.type==="withdraw"||x.type==="expense"?"withdraw":"deposit",date:asText(x.date)||localDate(),note:asText(x.note),goalId:asText(x.goalId)||undefined})) as Saving[]}
-function normalizeSplits(raw:unknown[]):Split[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({...x,id:asText(x.id)||uid(),title:asText(x.title)||asText(x.name)||"รายการหารค่าใช้จ่าย",amount:asAmount(x.amount??x.total),date:asText(x.date)||localDate(),payer:asText(x.payer),participants:Array.isArray(x.participants)?x.participants.map(asText).filter(Boolean):[],note:asText(x.note)})) as Split[]}
+function normalizeGoals(raw:unknown[]):Goal[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({ ...x,id:asText(x.id)||uid(),title:asText(x.title)||asText(x.name)||"เป้าหมายออมเงิน",target:asAmount(x.target??(Number(x.targetCents??x.targetSatang)/100)||x.amount) })) }
+function normalizeSavings(raw:unknown[]):Saving[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({...x,id:asText(x.id)||uid(),amount:asAmount(x.amount??(Number(x.amountCents??x.amountSatang)/100)||x.value),type:x.type==="withdraw"||x.type==="withdrawal"||x.kind==="withdraw"?"withdraw":"deposit",date:asText(x.date)||localDate(),note:asText(x.note),goalId:asText(x.goalId)||undefined})) as Saving[] }
+function normalizeSplits(raw:unknown[]):Split[]{return raw.filter((x):x is Record<string,unknown>=>!!x&&typeof x==="object"&&!Array.isArray(x)).map(x=>({...x,__raw:x,id:asText(x.id)||uid(),title:asText(x.title)||asText(x.name)||"รายการหารค่าใช้จ่าย",amount:asAmount(x.amount??(Number(x.totalCents??x.totalSatang)/100)||x.total),date:asText(x.date)||localDate(),payer:asText(x.payer),participants:Array.isArray(x.participants)?x.participants.map(p=>typeof p==="string"?p:asText((p as Record<string,unknown>)?.name)).filter(Boolean):[],note:asText(x.note)})) as Split[] }
 export default function Finance(){
  const loadedRef=useRef<LoadedState|null>(null)
  const [goals,setGoals]=useState<Goal[]>([])
@@ -33,7 +33,19 @@ export default function Finance(){
  const net=savings.reduce((sum,x)=>sum+(x.type==="withdraw"?-x.amount:x.amount),0)
  const goalProgress=(goal:Goal)=>savings.filter(x=>x.goalId===goal.id).reduce((sum,x)=>sum+(x.type==="withdraw"?-x.amount:x.amount),0)
  const splitTotal=splits.reduce((sum,x)=>sum+x.amount,0)
- async function persist(nextGoals=goals,nextSavings=savings,nextSplits=splits){if(!loadedRef.current||saving)return;setSaving(true);setError("");try{const state={...loadedRef.current.state,goals:nextGoals,savings:nextSavings,bills:nextSplits};const revision=await saveDayState(loadedRef.current,state);loadedRef.current={...loadedRef.current,state,revision};setGoals(nextGoals);setSavings(nextSavings);setSplits(nextSplits);setGoalEditor(null);setSavingEditor(null);setSplitEditor(null);setDeleteTarget(null)}catch(e){setError(e instanceof Error?e.message:"บันทึกไม่สำเร็จ");if((e as {status?:number}).status===409)await load()}finally{setSaving(false)}}
+ function encodeFinance(goals:Goal[],savings:Saving[],splits:Split[],modern:boolean){
+ const encodedGoals=goals.map(g=>({...g,...(modern?{name:g.title,targetSatang:Math.round(g.target*100)}:{title:g.title,targetCents:Math.round(g.target*100)}),status:asText(g.status)||"active"}))
+ const encodedSavings=savings.map(x=>({...x,...(modern?{kind:x.type,amountSatang:Math.round(x.amount*100)}:{type:x.type==="withdraw"?"withdrawal":"deposit",amountCents:Math.round(x.amount*100)}),goalId:x.goalId||"",date:x.date,note:x.note}))
+ const encodedSplits=splits.map(x=>{
+  if(x.__raw)return x.__raw
+  const total=Math.round(x.amount*100),ids=x.participants.map(()=>uid()),base=Math.floor(total/ids.length),remainder=total%ids.length
+  const payerIndex=Math.max(0,x.participants.findIndex(n=>n===x.payer)),payerId=ids[payerIndex]
+  if(modern)return {id:x.id,title:x.title,date:x.date,participants:x.participants.map((name,i)=>({id:ids[i],name,isMe:i===0})),expenses:[{id:uid(),title:x.title,amountSatang:total,payerId,participantIds:ids,allocationMode:"equal"}],settlements:[],status:"draft",restaurant:"",note:x.note}
+  return {id:x.id,title:x.title,totalCents:total,date:x.date,participants:x.participants.map((name,i)=>({id:ids[i],name,shareCents:base+(i<remainder?1:0),paidCents:i===payerIndex?total:0})),settlements:[],settled:false,note:x.note}
+ })
+ return {goals:encodedGoals,savings:encodedSavings,bills:encodedSplits}
+}
+async function persist(nextGoals=goals,nextSavings=savings,nextSplits=splits){if(!loadedRef.current||saving)return;setSaving(true);setError("");try{const encoded=encodeFinance(nextGoals,nextSavings,nextSplits,isModernState(loadedRef.current.state));const state={...loadedRef.current.state,...encoded};const revision=await saveDayState(loadedRef.current,state);loadedRef.current={...loadedRef.current,state,revision};setGoals(nextGoals);setSavings(nextSavings);setSplits(nextSplits);setGoalEditor(null);setSavingEditor(null);setSplitEditor(null);setDeleteTarget(null)}catch(e){setError(e instanceof Error?e.message:"บันทึกไม่สำเร็จ");if((e as {status?:number}).status===409)await load()}finally{setSaving(false)}}
  function submitGoal(e:FormEvent){e.preventDefault();if(!goalEditor)return;const target=Number(goalEditor.target);const title=goalEditor.title.trim();if(!title||!Number.isFinite(target)||target<=0){setError("กรอกชื่อเป้าหมายและจำนวนเงินให้ถูกต้อง");return}const item:Goal={...(goals.find(g=>g.id===goalEditor.id)||{}),id:goalEditor.id||uid(),title,target};void persist(goalEditor.id?goals.map(g=>g.id===item.id?item:g):[item,...goals])}
  function submitSaving(e:FormEvent){e.preventDefault();if(!savingEditor)return;const amount=Number(savingEditor.amount);if(!Number.isFinite(amount)||amount<=0){setError("กรอกจำนวนเงินมากกว่า 0");return}const item:Saving={id:uid(),amount,type:savingEditor.type,date:savingEditor.date,note:savingEditor.note.trim(),goalId:savingEditor.goalId||undefined};void persist(goals,[item,...savings])}
  function submitSplit(e:FormEvent){e.preventDefault();if(!splitEditor)return;const amount=Number(splitEditor.amount),participants=[...new Set(splitEditor.participants.split(/[,，\n]/).map(x=>x.trim()).filter(Boolean))];if(!splitEditor.title.trim()||!Number.isFinite(amount)||amount<=0||participants.length<2){setError("กรอกชื่อรายการ จำนวนเงิน และชื่อผู้ร่วมอย่างน้อย 2 คน");return}const item:Split={id:uid(),title:splitEditor.title.trim(),amount,date:splitEditor.date,payer:splitEditor.payer.trim(),participants,note:splitEditor.note.trim()};void persist(goals,savings,[item,...splits])}
