@@ -12,7 +12,7 @@ test("the authenticated app mounts the DayTogether shell", () => {
   assert.match(app, /import DayTogether from ["']\.\/DayTogether["']/);
   assert.match(app, /<CloudAuth>[\s\S]*<DayTogether\s*\/>[\s\S]*<\/CloudAuth>/);
   assert.match(auth, /children\?: ReactNode/);
-  assert.match(auth, /if \(user\) return <>\{children/);
+  assert.match(auth, /if \(user\) return <AuthContext\.Provider value=\{\{ user, signOut \}\}>/);
 });
 
 test("DayTogether provides the Phase 1 spaces and responsive navigation", () => {
@@ -151,6 +151,6 @@ test("Phase 7 exposes account sign-out and every module on mobile navigation", (
   assert.match(auth, /value=\{\{ user, signOut \}\}/);
   assert.match(shell, /const \{ user, signOut \} = useAuth\(\)/);
   assert.match(shell, /ออกจากระบบ/);
-  assert.match(shell, /dt-mobile-nav.*\{nav\}/s);
+  assert.match(shell, /dt-mobile-nav.*nav\.map/s);
   assert.match(styles, /grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
 });
