@@ -289,7 +289,15 @@ export default function DayTogether() {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusTarget = document.querySelector<HTMLElement>(".dt-more-sheet button");
     focusTarget?.focus({ preventScroll: true });
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setMoreOpen(false); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setMoreOpen(false); return; }
+      if (event.key !== "Tab") return;
+      const items = Array.from(document.querySelectorAll<HTMLElement>(".dt-more-sheet button:not([disabled])"));
+      if (!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
