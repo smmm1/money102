@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import "./daytogether.css"
 import { AccountMenu, useAccount } from "./CloudAuth"
 import { createCloudSnapshotAdapter } from "./daytogether-data-adapter"
-import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillSplit, parseMoneyToSatang, type BillAdjustments } from "./daytogether-calculations.mjs"
+import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, parseMoneyToSatang, type BillAdjustments } from "./daytogether-calculations.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
 type Saving = { id: string; kind: "deposit" | "withdraw"; amountSatang: number; date: string; goalId: string; note: string }
@@ -263,7 +263,8 @@ export default function DayTogether() {
     if (m === "health") { const existing = state.health.find(entry => entry.id === itemId); setHealthDraftKind(existing?.kind || (kindFilter !== "all" ? kindFilter as HealthKind : "weight")) }
     if (m === "bill") {
       const existing = state.bills.find(b => b.id === itemId)
-      const totalSatang = existing?.expenses.reduce((sum, expense) => sum + expense.amountSatang, 0) ?? 0
+      const baseSatang = existing?.expenses.reduce((sum, expense) => sum + expense.amountSatang, 0) ?? 0
+      const totalSatang = existing ? calculateBillAdjustmentSummary(baseSatang, existing.adjustments ?? {serviceBasisPoints:0,taxBasisPoints:0,serviceIncluded:false,taxIncluded:false,discountSatang:0}).totalSatang : 0
       setBillTotalDraft(existing ? String(totalSatang / 100) : "")
       setBillPeopleCount(Math.max(2, existing?.participants.length || 2))
     }
@@ -525,7 +526,7 @@ export default function DayTogether() {
         </div>
         <div className="dt-bill-simple-result" aria-live="polite">
           <span>แต่ละคนจ่าย</span>
-          <strong>{(()=>{const total=parseMoneyToSatang(billTotalDraft);return total!==null&&total>0?money(Math.floor(total/billPeopleCount),hidden):money(0,hidden)})()}</strong>
+          <strong>{(()=>{const total=parseMoneyToSatang(billTotalDraft);return total!==null&&total>0?money(total/billPeopleCount,hidden):money(0,hidden)})()}</strong>
           <small>ยอดรวม {billTotalDraft.trim()&&parseMoneyToSatang(billTotalDraft)!==null?money(parseMoneyToSatang(billTotalDraft)!,hidden):"฿0"} ÷ {billPeopleCount} คน</small>
         </div>
         <p className="dt-form-hint">ใส่ยอด เลือกจำนวนคน แล้วระบบคำนวณให้ทันที</p>
