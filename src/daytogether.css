@@ -461,3 +461,20 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-form-optional-body .dt-form-grid{margin:0}
 .dt-form .dt-form-optional+ .dt-modal-actions{margin-top:18px}
 @media(max-width:700px){.dt-form-optional{margin-top:10px}.dt-form-optional-body{gap:10px}}
+
+
+/* Consistent, quiet record actions across lists and detail views */
+.dt-row-menu,.dt-detail-actions{position:relative;flex:0 0 auto}
+.dt-row-menu>summary,.dt-detail-actions>summary{display:grid;place-items:center;min-width:34px;min-height:34px;padding:0 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface,#fff);color:var(--text);font-size:18px;line-height:1;cursor:pointer;list-style:none}
+.dt-row-menu>summary::-webkit-details-marker,.dt-detail-actions>summary::-webkit-details-marker{display:none}
+.dt-row-menu[open]>summary,.dt-detail-actions[open]>summary{background:var(--surface-muted,var(--surface,#fff))}
+.dt-row-menu>div,.dt-detail-actions>div{position:absolute;z-index:8;right:0;top:calc(100% + 6px);display:grid;gap:5px;min-width:132px;padding:7px;border:1px solid var(--line);border-radius:11px;background:var(--surface,#fff);box-shadow:0 12px 30px rgba(30,35,30,.12)}
+.dt-row-menu .dt-button,.dt-detail-actions .dt-button{width:100%;justify-content:flex-start}
+.dt-list-row{gap:12px}
+.dt-list-copy{min-width:0}
+.dt-list-copy strong,.dt-list-copy small{overflow-wrap:anywhere}
+.dt-visit-card .dt-actions{margin-top:12px}
+.dt-detail-actions{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.dt-detail-actions>summary{display:inline-flex;min-width:unset;min-height:36px;padding:0 13px;font-size:13px;font-weight:650}
+.dt-detail-actions>div{position:static;display:flex;flex-wrap:wrap;min-width:0;margin-top:10px;padding:0;border:0;background:transparent;box-shadow:none}
+@media(max-width:700px){.dt-row-menu>div{right:0}.dt-list-row{gap:8px}.dt-row-menu>summary{min-width:32px;min-height:32px}}
