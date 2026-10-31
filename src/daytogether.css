@@ -610,3 +610,25 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  .dt-app-layout .dt-stat{min-height:126px;padding:15px}
  .dt-app-layout .dt-stat strong{font-size:22px}
 }
+
+
+/* UX audit fixes: clearer mobile navigation and resilient narrow layouts */
+.dt-mobile-nav button{min-height:48px;line-height:1.25;overflow-wrap:anywhere}
+.dt-more-sheet>button{min-height:48px;border-radius:9px}
+.dt-more-sheet>button.active{padding-right:10px;padding-left:10px;background:var(--page-tint,#edf2eb);color:var(--page-deep,#354d3b);font-weight:700}
+.dt-more-sheet>button.active>b{color:var(--page-accent,#48634f);font-size:11px}
+.dt-app-layout button:focus-visible,.dt-app-layout a:focus-visible,.dt-app-layout summary:focus-visible{outline:3px solid var(--lux-gold,#b99a67);outline-offset:2px}
+.dt-bill-live-share-list>span{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0;padding:9px 11px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(255,255,255,.08);overflow-wrap:anywhere}
+.dt-bill-live-share-list>span>b{flex:0 0 auto}
+@media(max-width:480px){
+ .dt-app-layout>.dt2-main{padding-right:13px;padding-left:13px}
+ .dt-health-summary{grid-template-columns:minmax(0,1fr);gap:13px}
+ .dt-health-summary-secondary{min-width:0;padding:12px 0 0;border-top:1px solid var(--page-line,#dce6dc);border-left:0}
+ .dt-health-summary-secondary strong{font-size:20px}
+ .dt-bill-live-share-list>span{align-items:flex-start}
+ .dt-more-sheet,.dt-quick-add-menu{bottom:calc(12px + env(safe-area-inset-bottom));max-height:min(75vh,620px);padding:20px 18px}
+ .dt-toast{right:12px;bottom:calc(76px + env(safe-area-inset-bottom));left:12px;max-width:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .dt-app-layout *, .dt-app-layout *::before, .dt-app-layout *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
