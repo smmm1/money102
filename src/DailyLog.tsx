@@ -25,7 +25,6 @@ function safeEntries(raw?:string):Entry[] {
 function label(type:EntryType){return types.find(t=>t.id===type)?.label||"บันทึก"}
 export default function DailyLog(){
  const [entries,setEntries]=useState<Entry[]>([])
- const [revision,setRevision]=useState<string|null>(null)
  const [loading,setLoading]=useState(true)
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState("")
@@ -38,7 +37,6 @@ export default function DailyLog(){
   setLoading(true);setError("")
   try{
    const result=await api("/api/state") as StoredState
-   setRevision(result.updated_at??null)
    setEntries(safeEntries(result.payload?.[STORAGE_KEY]))
    setReady(true)
   }catch(e){setError(e instanceof Error?e.message:"โหลดบันทึกไม่สำเร็จ")}
@@ -52,7 +50,7 @@ export default function DailyLog(){
    const current=await api("/api/state") as StoredState
    const payload={...(current.payload||{}),[STORAGE_KEY]:JSON.stringify(next)}
    const saved=await api("/api/state",{method:"PUT",body:JSON.stringify({payload,expected_updated_at:current.updated_at??null})}) as {updated_at?:string}
-   setRevision(saved.updated_at??null);setEntries(next);setReady(true);setEditor(null);setConfirmDelete(null)
+   setEntries(next);setReady(true);setEditor(null);setConfirmDelete(null)
   }catch(e){
    const status=(e as Error & {status?:number}).status
    if(status===409){setError("ข้อมูลมีการเปลี่ยนแปลงจากอีกหน้าต่าง กำลังโหลดข้อมูลล่าสุด");await load()}
