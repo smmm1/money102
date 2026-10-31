@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import "./daytogether.css"
+import DailyLog from "./DailyLog"
 
 type Section = "home" | "daily" | "journal" | "health" | "finance" | "life" | "archive"
 const nav: { id: Section; label: string; mobile: string; icon: string }[] = [
@@ -49,8 +50,8 @@ export default function DayTogether() {
           <div className="dt-footer-note">✳ &nbsp; ชีวิตไม่ใช่รายการที่ต้องทำให้ครบ แต่เป็นเรื่องราวที่ค่อย ๆ เติบโต &nbsp; ✳</div>
         </> : <section className="dt-inner">
           <div className="dt-inner-meta"><span className="dt-eyebrow">{copy[active].eyebrow}</span><small>{today}</small></div><h1>{copy[active].title}</h1><p className="dt-inner-desc">{copy[active].desc}</p>
-          {active === "daily" && <div className="dt-entry-grid">{[["▤","เรื่องราวทั่วไป","บันทึกสิ่งที่เกิดขึ้น"],["♡","สุขภาพ","การออกกำลังกายและร่างกาย"],["◫","การเงิน","เงินออมและค่าใช้จ่าย"],["☕","อาหารและกิจกรรม","มื้ออาหารและช่วงเวลาต่าง ๆ"]].map(([icon,title,desc]) => <button key={title} onClick={() => setModal(true)}><i>{icon}</i><b>{title}</b><small>{desc}</small><span>→</span></button>)}</div>}
-          <div className="dt-coming"><i>✳</i><div><b>{active === "daily" ? "พื้นที่บันทึกพร้อมแล้ว" : "พื้นที่นี้กำลังจัดเตรียม"}</b><p>{copy[active].note}</p></div><small>PHASE 1</small></div>
+          {active === "daily" && <DailyLog />}
+          {active !== "daily" && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>
           {active !== "daily" && <button className="dt-back" onClick={() => setActive("home")}>← กลับสู่ภาพรวม</button>}
         </section>}
       </main>
