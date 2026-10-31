@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 :root{font-family:'DM Sans','Noto Sans Thai',sans-serif;color:#19152d;background:#e9edff;font-synthesis:none;text-rendering:optimizeLegibility;--ink:#19152d;--muted:#77758c;--line:#c9c9e2;--paper:#f5f6ff;--blue:#3448f5;--blue-deep:#202cbd;--pink:#ff6cae;--violet:#b89aff;--yellow:#f6eb65;--cyan:#7ee8e2;--shadow:0 24px 70px rgba(31,36,111,.14)}
 *{box-sizing:border-box}
 html{min-width:320px;background:#e9edff}
@@ -1009,8 +1009,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
    Visual principles: restrained palette, clear hierarchy, predictable controls,
    useful whitespace, readable Thai typography, minimal decoration.
    ------------------------------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
-
 :root{
   color-scheme:light;
   --dt-bg:#f4f2ec;
