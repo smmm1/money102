@@ -98,3 +98,18 @@ test("Finance preserves existing goals, savings and bills in the shared D1 snaps
   assert.match(finance, /amountSatang/);
   assert.match(finance, /totalCents/);
 });
+
+const foodLife = await readFile(new URL("../src/FoodLife.tsx", import.meta.url), "utf8");
+test("Food & Life is a working searchable journal for meals, places and activities", () => {
+  assert.match(shell, /import FoodLife from ["']\.\/FoodLife["']/);
+  assert.match(shell, /active === "life" && <FoodLife\s*\/>/);
+  assert.match(foodLife, /STORAGE_KEY="lamoon-food-life-v1"/);
+  assert.match(foodLife, /loadDayState/);
+  assert.match(foodLife, /saveDayState/);
+  assert.match(foodLife, /expected_updated_at/);
+  assert.match(foodLife, /restaurant/);
+  assert.match(foodLife, /activity/);
+  assert.match(foodLife, /placeFilter/);
+  assert.match(foodLife, /rating/);
+  assert.doesNotMatch(foodLife, /localStorage|sessionStorage/);
+});
