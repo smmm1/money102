@@ -106,7 +106,7 @@ test("Food & Life is a working searchable journal for meals, places and activiti
   assert.match(foodLife, /STORAGE_KEY="lamoon-food-life-v1"/);
   assert.match(foodLife, /loadDayState/);
   assert.match(foodLife, /saveDayState/);
-  assert.match(foodLife, /expected_updated_at/);
+  assert.match(sharedState, /expected_updated_at/);
   assert.match(foodLife, /restaurant/);
   assert.match(foodLife, /activity/);
   assert.match(foodLife, /placeFilter/);
