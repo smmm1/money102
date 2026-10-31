@@ -30,3 +30,17 @@ test("authentication keeps the Cloudflare sign-in and session endpoints", () => 
   assert.match(auth, /money102-api\.s2mtha16\.workers\.dev/);
   assert.doesNotMatch(auth, /\/api\/state|localStorage|signup/);
 });
+
+const dailyLog = await readFile(new URL("../src/DailyLog.tsx", import.meta.url), "utf8");
+
+test("Daily Log reads and writes the authenticated D1 snapshot without browser persistence", () => {
+  assert.match(shell, /import DailyLog from ["']\.\/DailyLog["']/);
+  assert.match(shell, /<DailyLog\s*\/>/);
+  assert.match(dailyLog, /api\(["']\/api\/state["']\)/);
+  assert.match(dailyLog, /expected_updated_at/);
+  assert.match(dailyLog, /method:"PUT"/);
+  assert.match(dailyLog, /STORAGE_KEY = "lamoon-daily-log-v1"/);
+  assert.match(dailyLog, /async function remove\(/);
+  assert.match(dailyLog, /setEditor\(\{\.\.\.entry\}\)/);
+  assert.doesNotMatch(dailyLog, /localStorage|sessionStorage/);
+});
