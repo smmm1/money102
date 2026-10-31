@@ -20,7 +20,7 @@ function collect(payload:Record<string,string>):Item[]{
  for(const x of array(shared.notes))add("journal",x,str(x.title)||str(x.body).slice(0,60),str(x.mood))
  for(const x of array(shared.health)){const k=str(x.kind);const title=k==="weight"?"น้ำหนัก "+str(x.value)+" กก.":k==="bloodPressure"?"ความดัน "+str(x.systolic)+"/"+str(x.diastolic):k==="pressure"?"ความดัน "+str(x.value):k==="water"?"ดื่มน้ำ "+str(x.value)+" มล.":k==="sleep"?"บันทึกการนอน":k==="symptom"?"อาการ "+str(x.title||x.value):"ออกกำลังกาย "+str(x.title||x.value);add("health",x,title,str(x.note))}
  for(const x of array(shared.goals))add("finance",x,"เป้าหมายออมเงิน: "+str(x.title||x.name))
- for(const x of array(shared.savings)){const amount=Number(x.amount??((Number(x.amountCents??x.amountSatang)/100)||x.value)||0);const kind=str(x.type||x.kind);add("finance",x,(kind==="withdraw"||kind==="withdrawal"?"ถอนเงิน ":"ออมเงิน ")+amount.toLocaleString("th-TH")+" บาท",str(x.note))}
+ for(const x of array(shared.savings)){const amount=Number(x.amount ?? (((Number(x.amountCents??x.amountSatang)/100)||x.value)||0));const kind=str(x.type||x.kind);add("finance",x,(kind==="withdraw"||kind==="withdrawal"?"ถอนเงิน ":"ออมเงิน ")+amount.toLocaleString("th-TH")+" บาท",str(x.note))}
  for(const x of array(shared.bills))add("finance",x,"หารค่าใช้จ่าย: "+str(x.title||x.name))
  const foodPayload=parse(payload["lamoon-food-life-v1"]);const foodItems=array(foodPayload).length?array(foodPayload):array(object(foodPayload).entries);for(const x of foodItems)add("life",x,str(x.title),str(x.place))
  return out.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8)
