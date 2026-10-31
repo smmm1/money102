@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { api } from "./CloudAuth"
 
 type EntryType = "general" | "journal" | "health" | "finance" | "food" | "activity"
@@ -25,6 +25,7 @@ function safeEntries(raw?:string):Entry[] {
 function label(type:EntryType){return types.find(t=>t.id===type)?.label||"บันทึก"}
 export default function DailyLog(){
  const [entries,setEntries]=useState<Entry[]>([])
+ const revisionRef=useRef<string|null>(null)
  const [loading,setLoading]=useState(true)
  const [saving,setSaving]=useState(false)
  const [error,setError]=useState("")
@@ -37,6 +38,7 @@ export default function DailyLog(){
   setLoading(true);setError("")
   try{
    const result=await api("/api/state") as StoredState
+   revisionRef.current=result.updated_at??null
    setEntries(safeEntries(result.payload?.[STORAGE_KEY]))
    setReady(true)
   }catch(e){setError(e instanceof Error?e.message:"โหลดบันทึกไม่สำเร็จ")}
@@ -48,8 +50,10 @@ export default function DailyLog(){
   setSaving(true);setError("")
   try{
    const current=await api("/api/state") as StoredState
+   if((current.updated_at??null)!==revisionRef.current){setError("ข้อมูลถูกเปลี่ยนจากอีกอุปกรณ์แล้ว กำลังโหลดข้อมูลล่าสุด");await load();return}
    const payload={...(current.payload||{}),[STORAGE_KEY]:JSON.stringify(next)}
-   const saved=await api("/api/state",{method:"PUT",body:JSON.stringify({payload,expected_updated_at:current.updated_at??null})}) as {updated_at?:string}
+   const saved=await api("/api/state",{method:"PUT",body:JSON.stringify({payload,expected_updated_at:revisionRef.current})}) as {updated_at?:string}
+   revisionRef.current=saved.updated_at??null
    setEntries(next);setReady(true);setEditor(null);setConfirmDelete(null)
   }catch(e){
    const status=(e as Error & {status?:number}).status
