@@ -4,7 +4,7 @@ import { api } from "./CloudAuth"
 type Category = "daily"|"journal"|"health"|"finance"|"life"
 type Item = {id:string;category:Category;categoryLabel:string;title:string;body:string;date:string;detail:string;searchText:string}
 type StateResponse = {payload?:Record<string,string>|null;updated_at?:string|null}
-const DAILY_KEY="lamoon-daily-log-v1", FOOD_KEY="lamoon-food-life-v1", HEALTH_KEY="lamoon-health-profile-v1"
+const DAILY_KEY="lamoon-daily-log-v1", FOOD_KEY="lamoon-food-life-v1"
 const labels:Record<Category,string>={daily:"บันทึกประจำวัน",journal:"ไดอารี่",health:"สุขภาพ",finance:"การเงิน",life:"อาหารและชีวิต"}
 const localDate=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-")}
 const parse=(raw?:string):unknown=>{try{return JSON.parse(raw||"{}")}catch{return {}}}
@@ -31,7 +31,8 @@ function buildItems(payload:Record<string,string>):Item[]{
  for(const x of arr(state.goals)){add("finance",x,"เป้าหมายออมเงิน: "+txt(x.title||x.name),"เป้าหมาย "+money(num(x.target??x.amount??(num(x.targetSatang)/100)))+" บาท",x.createdAt||x.date,"เป้าหมายการออม")}
  for(const x of arr(state.savings)){const amount=num(x.amount??((num(x.amountCents??x.amountSatang)/100)||x.value));add("finance",x,(x.type==="withdraw"||x.type==="withdrawal"||x.kind==="withdraw"?"ถอนเงิน ":"ออมเงิน ")+money(amount)+" บาท",txt(x.note),x.date,txt(x.goalId))}
  for(const x of arr(state.bills)){const total=num(x.amount??((num(x.totalCents??x.totalSatang)/100)||x.total)) || arr(x.expenses).reduce((s,e)=>s+num(e.amountSatang)/100,0);const names=arr(x.participants).map(p=>txt(p.name)).filter(Boolean).join(", ");add("finance",x,"หารค่าใช้จ่าย: "+txt(x.title||x.name),money(total)+" บาท"+(names?" · "+names:""),x.date,txt(x.note))}
- for(const x of arr(obj(parse(payload[FOOD_KEY])).entries).concat(arr(parse(payload[FOOD_KEY]))){const cost=x.cost===null||x.cost===undefined?"":" · "+money(num(x.cost))+" บาท";add("life",x,txt(x.title),txt(x.note),x.date,[txt(x.place),txt(x.mood),cost,Array.isArray(x.tags)?x.tags.map(txt).join(" "):""].filter(Boolean).join(" · "))}
+ const foodPayload=parse(payload[FOOD_KEY]);const foodItems=arr(obj(foodPayload).entries).concat(arr(foodPayload));
+ for(const x of foodItems){const cost=x.cost===null||x.cost===undefined?"":" · "+money(num(x.cost))+" บาท";add("life",x,txt(x.title),txt(x.note),x.date,[txt(x.place),txt(x.mood),cost,Array.isArray(x.tags)?x.tags.map(txt).join(" "):""].filter(Boolean).join(" · "))}
  return out.sort((a,b)=>b.date.localeCompare(a.date)||a.title.localeCompare(b.title,"th"))
 }
 const pad=(n:number)=>String(n).padStart(2,"0")
