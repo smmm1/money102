@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent, type ReactNode } from "react"
 import "./auth.css"
 
 type AppUser = { id: string; email: string }
@@ -26,7 +26,7 @@ async function api(path: string, init: RequestInit = {}) {
   return body
 }
 
-export default function CloudAuth() {
+export default function CloudAuth({ children }: { children?: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [checking, setChecking] = useState(Boolean(sessionToken))
   const [email, setEmail] = useState("")
@@ -78,20 +78,32 @@ export default function CloudAuth() {
     setMessage("")
   }
 
-  if (checking) return <main className="auth-state" aria-live="polite">กำลังตรวจสอบเซสชัน…</main>
+  if (checking) return <main className="auth-state" aria-live="polite"><span className="auth-loading-mark" /><p>กำลังเตรียมพื้นที่ส่วนตัว…</p></main>
   if (connectionError) return <main className="auth-state"><p>เชื่อมต่อระบบยืนยันตัวตนไม่ได้</p><p>{connectionError}</p><button type="button" onClick={() => window.location.reload()}>ลองอีกครั้ง</button></main>
-  if (user) return <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>
+  if (user) return <>{children ?? <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>}</>
 
   return <main className="auth-page">
-    <form className="auth-form" onSubmit={signIn}>
-      <h1>DayTogether</h1>
-      <p>เข้าสู่ระบบพื้นที่ส่วนตัว</p>
-      <label htmlFor="auth-email">อีเมล</label>
-      <input id="auth-email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required />
-      <label htmlFor="auth-password">รหัสผ่าน</label>
-      <input id="auth-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />
-      {message && <p className="auth-error" role="alert">{message}</p>}
-      <button type="submit" disabled={busy}>{busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}</button>
-    </form>
+    <section className="auth-story">
+      <div className="auth-story-brand"><span className="auth-story-mark"><i /></span><span><strong>daytogether</strong><small>your life, gently kept</small></span></div>
+      <div className="auth-story-copy">
+        <span className="auth-kicker">A LITTLE SPACE FOR YOUR EVERYDAY</span>
+        <h2>ค่อย ๆ ใช้ชีวิต<br /><em>ในจังหวะของเรา</em></h2>
+        <p>พื้นที่ส่วนตัวสำหรับเก็บเรื่องราว ดูแลตัวเอง และจัดระเบียบสิ่งต่าง ๆ ในแบบที่เป็นคุณ</p>
+      </div>
+      <div className="auth-story-foot">YOUR PERSONAL SPACE · EVERY DAY, TOGETHER</div>
+    </section>
+    <section className="auth-form-wrap">
+      <form className="auth-form" onSubmit={signIn}>
+        <span className="auth-kicker">WELCOME BACK</span>
+        <h1>ยินดีต้อนรับกลับมา</h1>
+        <p>เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ</p>
+        <label htmlFor="auth-email">อีเมล</label>
+        <input id="auth-email" type="email" autoComplete="username" placeholder="name@example.com" value={email} onChange={event => setEmail(event.target.value)} required />
+        <label htmlFor="auth-password">รหัสผ่าน</label>
+        <input id="auth-password" type="password" autoComplete="current-password" placeholder="กรอกรหัสผ่านของคุณ" value={password} onChange={event => setPassword(event.target.value)} required />
+        {message && <p className="auth-error" role="alert">{message}</p>}
+        <button type="submit" disabled={busy}>{busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}</button>
+      </form>
+    </section>
   </main>
 }
