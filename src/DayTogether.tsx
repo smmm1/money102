@@ -556,7 +556,7 @@ export default function DayTogether() {
         </nav>
         <div className="dt-site-tools">
           <span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span>
-          <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}})}>{hidden?"◉":"◌"}</button>
+          <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"◉":"◌"}</button>
           <AccountMenu/>
         </div>
       </div>
