@@ -3,15 +3,27 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
+const shell = await readFile(new URL("../src/DayTogether.tsx", import.meta.url), "utf8");
 const auth = await readFile(new URL("../src/CloudAuth.tsx", import.meta.url), "utf8");
+const styles = await readFile(new URL("../src/daytogether.css", import.meta.url), "utf8");
 
-test("the fresh app shell mounts only Cloudflare authentication", () => {
+test("the authenticated app mounts the DayTogether shell", () => {
   assert.match(app, /import CloudAuth from ["']\.\/CloudAuth["']/);
-  assert.match(app, /return\s*<CloudAuth\s*\/>/);
-  assert.doesNotMatch(app, /DayTogether|Dashboard|Savings|Health|Notes/);
+  assert.match(app, /import DayTogether from ["']\.\/DayTogether["']/);
+  assert.match(app, /<CloudAuth>[\s\S]*<DayTogether\s*\/>[\s\S]*<\/CloudAuth>/);
+  assert.match(auth, /children\?: ReactNode/);
+  assert.match(auth, /if \(user\) return <>\{children/);
 });
 
-test("authentication uses the Cloudflare sign-in and session endpoints", () => {
+test("DayTogether provides the Phase 1 spaces and responsive navigation", () => {
+  for (const label of ["ภาพรวม", "บันทึกวันนี้", "บันทึกส่วนตัว", "สุขภาพ", "การเงิน", "อาหารและชีวิต", "คลังบันทึก"]) {
+    assert.ok(shell.includes(label), `missing navigation label: ${label}`);
+  }
+  assert.match(styles, /@media\(max-width:760px\)/);
+  assert.match(styles, /\.dt-mobile-nav/);
+});
+
+test("authentication keeps the Cloudflare sign-in and session endpoints", () => {
   assert.match(auth, /\/api\/auth\/signin/);
   assert.match(auth, /\/api\/auth\/me/);
   assert.match(auth, /\/api\/auth\/logout/);
