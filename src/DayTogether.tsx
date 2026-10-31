@@ -5,6 +5,7 @@ import Journal from "./Journal"
 import Health from "./Health"
 import Finance from "./Finance"
 import FoodLife from "./FoodLife"
+import Archive from "./Archive"
 
 type Section = "home" | "daily" | "journal" | "health" | "finance" | "life" | "archive"
 const nav: { id: Section; label: string; mobile: string; icon: string }[] = [
@@ -22,7 +23,7 @@ const copy: Record<Exclude<Section, "home">, { eyebrow: string; title: string; d
   health: { eyebrow: "HEALTH & WELLBEING", title: "ดูแลตัวเองทีละนิด", desc: "รวมบันทึกสุขภาพ น้ำหนัก การออกกำลังกาย และความเปลี่ยนแปลงของร่างกาย", note: "แดชบอร์ดสุขภาพและประวัติข้อมูลจะเชื่อมกับ Cloudflare D1 ในเฟสถัดไป" },
   finance: { eyebrow: "PERSONAL FINANCE", title: "จัดระเบียบเรื่องเงิน", desc: "ติดตามเงินออม เป้าหมาย และค่าใช้จ่ายที่ต้องหารร่วมกัน โดยไม่ทำให้ชีวิตซับซ้อน", note: "พื้นที่เงินออมและหารค่าใช้จ่ายกำลังเตรียมระบบบันทึกจริง" },
   life: { eyebrow: "FOOD & EVERYDAY LIFE", title: "เรื่องธรรมดาที่อยากจำ", desc: "เก็บมื้ออาหาร ร้านที่เคยไป และกิจกรรมเล็ก ๆ ที่ทำให้แต่ละวันมีความหมาย", note: "บันทึกมื้ออาหาร ร้าน และกิจกรรมของคุณ" },
-  archive: { eyebrow: "YOUR PERSONAL ARCHIVE", title: "ทุกเรื่องราวในที่เดียว", desc: "ย้อนดูบันทึกตามวัน ค้นหาสิ่งที่เคยจด และกลับไปหาความทรงจำเดิม", note: "ปฏิทิน การค้นหา และการส่งออกข้อมูลจะพัฒนาในเฟส Archive" },
+  archive: { eyebrow: "YOUR PERSONAL ARCHIVE", title: "ทุกเรื่องราวในที่เดียว", desc: "ย้อนดูบันทึกตามวัน ค้นหาสิ่งที่เคยจด และกลับไปหาความทรงจำเดิม", note: "ค้นหาและย้อนดูเรื่องราวจากทุกหมวดได้ในคลังบันทึก" },
 }
 const dateText = () => new Intl.DateTimeFormat("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())
 
@@ -58,7 +59,8 @@ export default function DayTogether() {
           {active === "health" && <Health />}
           {active === "finance" && <Finance />}
           {active === "life" && <FoodLife />}
-          {!["daily","journal","health","finance","life"].includes(active) && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
+          {active === "archive" && <Archive />}
+          {!["daily","journal","health","finance","life","archive"].includes(active) && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
           {!["daily","journal","health","finance","life"].includes(active) && <button className="dt-back" onClick={() => setActive("home")}>← กลับสู่ภาพรวม</button>}
         </section>}
       </main>
