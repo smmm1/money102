@@ -1,0 +1,150 @@
+name: DayTogether weekly progress report
+
+on:
+  schedule:
+    # Mondays at 09:00 Asia/Bangkok (UTC+7)
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: read
+
+concurrency:
+  group: daytogether-weekly-progress
+  cancel-in-progress: false
+
+jobs:
+  weekly-report:
+    name: Review project progress and publish report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Collect repository, CI, and production evidence
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const now = new Date();
+            const since = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+            const localDate = new Intl.DateTimeFormat("en-CA", {
+              timeZone: "Asia/Bangkok",
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            }).format(now);
+            const title = `DayTogether weekly progress — ${localDate}`;
+
+            const [commits, pulls, issues, runs] = await Promise.all([
+              github.paginate(github.rest.repos.listCommits, {
+                owner, repo, sha: "main", since, per_page: 100,
+              }),
+              github.paginate(github.rest.pulls.list, {
+                owner, repo, state: "open", sort: "updated", direction: "desc", per_page: 100,
+              }),
+              github.paginate(github.rest.issues.listForRepo, {
+                owner, repo, state: "open", sort: "updated", direction: "desc", per_page: 100,
+              }),
+              github.rest.actions.listWorkflowRunsForRepo({
+                owner, repo, per_page: 30,
+              }),
+            ]);
+
+            const recentRuns = runs.data.workflow_runs.filter(
+              run => new Date(run.created_at).getTime() >= now.getTime() - 7 * 24 * 60 * 60 * 1000
+            );
+
+            let productionStatus = "ตรวจสอบไม่ได้";
+            let productionDetail = "ไม่สามารถเรียก URL Production ได้";
+            try {
+              const response = await fetch("https://money102.onrender.com", {
+                redirect: "follow",
+                signal: AbortSignal.timeout(20000),
+              });
+              productionStatus = response.ok ? "ตอบกลับสำเร็จ" : `HTTP ${response.status}`;
+              productionDetail = `HTTP ${response.status}; final URL: ${response.url}`;
+            } catch (error) {
+              productionStatus = "เรียกไม่สำเร็จ";
+              productionDetail = String(error).slice(0, 300);
+            }
+
+            const commitLines = commits.slice(0, 15).map(commit =>
+              `- [${commit.sha.slice(0, 7)}] ${commit.commit.message.split("\n")[0]} — @${commit.author?.login || commit.commit.author?.name || "unknown"}`
+            );
+            const pullLines = pulls.slice(0, 15).map(pr =>
+              `- [#${pr.number}] ${pr.title} — ${pr.html_url}`
+            );
+            const issueLines = issues.filter(issue => !issue.pull_request).slice(0, 20).map(issue =>
+              `- [#${issue.number}] ${issue.title} — ${issue.html_url}`
+            );
+            const runLines = recentRuns.slice(0, 15).map(run =>
+              `- ${run.name || run.workflow_id}: **${run.conclusion || run.status}** (${run.event}, ${run.created_at}) — ${run.html_url}`
+            );
+
+            const body = [
+              `## รายงานความคืบหน้า DayTogether ประจำวันที่ ${localDate}`,
+              "",
+              "> รายงานนี้สร้างจากหลักฐานที่อ่านได้จาก GitHub Actions, commits, pull requests, issues และการเรียกหน้า Production เท่านั้น ไม่ได้แก้ไขโค้ด ฐานข้อมูล หรือ Deploy",
+              "",
+              "### 1. การเปลี่ยนแปลงใน main ภายใน 7 วันที่ผ่านมา",
+              commits.length ? commitLines.join("\n") : "- ไม่พบ commit ในช่วง 7 วันที่ผ่านมา",
+              "",
+              "### 2. Pull requests ที่ยังเปิดอยู่",
+              pullLines.length ? pullLines.join("\n") : "- ไม่มี Pull request ที่เปิดอยู่",
+              "",
+              "### 3. Issues ที่ยังเปิดอยู่",
+              issueLines.length ? issueLines.join("\n") : "- ไม่มี Issue ที่เปิดอยู่",
+              "",
+              "### 4. ผล GitHub Actions ใน 7 วันที่ผ่านมา",
+              runLines.length ? runLines.join("\n") : "- ไม่พบ workflow run ในช่วง 7 วันที่ผ่านมา",
+              "",
+              "### 5. การตอบสนองของ Production",
+              `- URL: https://money102.onrender.com`,
+              `- ผลตรวจ: **${productionStatus}**`,
+              `- รายละเอียด: ${productionDetail}`,
+              "- การตอบกลับ HTTP เพียงอย่างเดียวไม่ยืนยันว่า Login, D1 หรือฟีเจอร์ภายในทำงานถูกต้อง",
+              "",
+              "### 6. เทียบกับ Product Blueprint v1",
+              "- [ ] Hybrid Personal Space และ Home",
+              "- [ ] Daily Log เป็นศูนย์กลาง: เพิ่ม/แก้ไข/ลบ/เรียกดู และเชื่อมข้อมูลข้ามโมดูล",
+              "- [ ] Journal",
+              "- [ ] Health: น้ำหนัก, BMI และการออกกำลังกาย",
+              "- [ ] Finance: เงินออมและหารค่าใช้จ่าย",
+              "- [ ] Food & Life",
+              "- [ ] Archive & Search",
+              "- [ ] Quiet Everyday design และ responsive บนมือถือ/แท็บเล็ต/เดสก์ท็อป",
+              "- [ ] Cloudflare authentication และ D1 persistence",
+              "",
+              "สถานะรายการ Blueprint ด้านบน **ยังไม่ถูกอนุมานว่าเสร็จ** จากชื่อ commit หรือการตอบ HTTP; ต้องตรวจสอบโค้ดและทดสอบฟีเจอร์โดยตรงก่อนติ๊กผ่าน",
+              "",
+              "### 7. ข้อจำกัดและงานติดตาม",
+              "- Workflow นี้ตรวจสอบ repository, CI และ HTTP response ของหน้าเว็บเท่านั้น",
+              "- ไม่สามารถยืนยันสถานะ Render deployment ภายใน, Cloudflare Worker, D1 schema/data หรือการ Login แบบ end-to-end ได้จากการตรวจนี้",
+              "- ใช้หลักฐานจาก commit, test และ production check เพื่อกำหนดงานถัดไป; ห้ามถือว่าไม่มี commit เท่ากับไม่มีความคืบหน้า",
+              "",
+              "---",
+              `ช่วงเวลาที่ตรวจ: ${since} ถึง ${now.toISOString()} (รายงานวันที่ไทย ${localDate})`,
+            ].join("\n");
+
+            const existing = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: "all", per_page: 100,
+            });
+            const duplicate = existing.find(item => !item.pull_request && item.title === title);
+            if (duplicate) {
+              core.info(`Weekly report already exists: ${duplicate.html_url}`);
+              return;
+            }
+
+            const created = await github.rest.issues.create({
+              owner, repo, title, body,
+              labels: ["daytogether", "weekly-report"],
+            }).catch(async error => {
+              if (error.status === 422) {
+                return github.rest.issues.create({ owner, repo, title, body });
+              }
+              throw error;
+            });
+            core.info(`Created weekly report: ${created.data.html_url}`);
