@@ -72,3 +72,24 @@ test("Journal and Health preserve the existing D1 snapshot and compare revisions
   assert.match(sharedState, /\.\.\.\(current\.payload \|\| \{\}\)/);
   assert.match(sharedState, /lamoon-health-profile-v1/);
 });
+
+
+const finance = await readFile(new URL("../src/Finance.tsx", import.meta.url), "utf8");
+test("Finance provides savings goals, deposits/withdrawals and live bill splitting", () => {
+  assert.match(shell, /import Finance from ["']\.\/Finance["']/);
+  assert.match(shell, /active === "finance" && <Finance\s*\/>/);
+  assert.match(finance, /loadDayState/);
+  assert.match(finance, /saveDayState/);
+  assert.match(finance, /expected_updated_at/);
+  assert.match(finance, /type: "deposit" \| "withdraw"/);
+  assert.match(finance, /goalProgress/);
+  assert.match(finance, /fn-live-total/);
+  assert.match(finance, /participants/);
+  assert.doesNotMatch(finance, /localStorage|sessionStorage/);
+});
+test("Finance preserves existing goals, savings and bills in the shared D1 snapshot", () => {
+  assert.match(finance, /goals:nextGoals,savings:nextSavings,bills:nextSplits/);
+  assert.match(finance, /normalizeGoals/);
+  assert.match(finance, /normalizeSavings/);
+  assert.match(finance, /normalizeSplits/);
+});
