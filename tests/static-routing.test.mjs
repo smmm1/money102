@@ -80,7 +80,6 @@ test("Finance provides savings goals, deposits/withdrawals and live bill splitti
   assert.match(shell, /active === "finance" && <Finance\s*\/>/);
   assert.match(finance, /loadDayState/);
   assert.match(finance, /saveDayState/);
-  assert.match(finance, /saveDayState/);
   assert.match(sharedState, /expected_updated_at/);
   assert.match(finance, /type:"deposit"\|"withdraw"/);
   assert.match(finance, /goalProgress/);
@@ -89,7 +88,8 @@ test("Finance provides savings goals, deposits/withdrawals and live bill splitti
   assert.doesNotMatch(finance, /localStorage|sessionStorage/);
 });
 test("Finance preserves existing goals, savings and bills in the shared D1 snapshot", () => {
-  assert.match(finance, /goals:nextGoals,savings:nextSavings,bills:nextSplits/);
+  assert.match(finance, /return \{goals:encodedGoals,savings:encodedSavings,bills:encodedSplits\}/);
+  assert.match(finance, /const state=\{\.\.\.loadedRef\.current\.state,\.\.\.encoded\}/);
   assert.match(finance, /normalizeGoals/);
   assert.match(finance, /normalizeSavings/);
   assert.match(finance, /normalizeSplits/);
