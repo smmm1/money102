@@ -80,7 +80,8 @@ test("Finance provides savings goals, deposits/withdrawals and live bill splitti
   assert.match(shell, /active === "finance" && <Finance\s*\/>/);
   assert.match(finance, /loadDayState/);
   assert.match(finance, /saveDayState/);
-  assert.match(finance, /expected_updated_at/);
+  assert.match(finance, /saveDayState/);
+  assert.match(sharedState, /expected_updated_at/);
   assert.match(finance, /type: "deposit" \| "withdraw"/);
   assert.match(finance, /goalProgress/);
   assert.match(finance, /fn-live-total/);
@@ -92,4 +93,8 @@ test("Finance preserves existing goals, savings and bills in the shared D1 snaps
   assert.match(finance, /normalizeGoals/);
   assert.match(finance, /normalizeSavings/);
   assert.match(finance, /normalizeSplits/);
+  assert.match(finance, /encodeFinance/);
+  assert.match(finance, /amountCents/);
+  assert.match(finance, /amountSatang/);
+  assert.match(finance, /totalCents/);
 });
