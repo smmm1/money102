@@ -154,3 +154,23 @@ test("Phase 7 exposes account sign-out and every module on mobile navigation", (
   assert.match(shell, /dt-mobile-nav.*nav\.map/s);
   assert.match(styles, /grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
 });
+
+test("Phase 8 home overview supports both array and wrapped Food & Life snapshots", () => {
+  assert.match(homeOverview, /foodPayload=parse\(p\["lamoon-food-life-v1"\]\)/);
+  assert.match(homeOverview, /object\(foodPayload\)\.entries/);
+  assert.match(homeOverview, /foodPayload=parse\(payload\["lamoon-food-life-v1"\]\)/);
+  assert.match(homeOverview, /object\(foodPayload\)\.entries/);
+});
+test("Phase 8 home overview displays modern and legacy finance records safely", () => {
+  assert.match(homeOverview, /x\.amountCents\?\?x\.amountSatang/);
+  assert.match(homeOverview, /x\.type\|\|x\.kind/);
+  assert.match(homeOverview, /kind==="withdraw"\|\|kind==="withdrawal"/);
+  assert.match(homeOverview, /ไม่ระบุวัน/);
+});
+test("Phase 8 shared snapshot writes preserve unrelated payload namespaces", () => {
+  assert.match(sharedState, /\.\.\.\(current\.payload \|\| \{\}\)/);
+  assert.match(sharedState, /expected_updated_at/);
+  assert.match(dailyLog, /\.\.\.\(current\.payload\|\|\{\}\)/);
+  assert.match(dailyLog, /expected_updated_at/);
+  assert.match(foodLife, /saveDayState/);
+});
