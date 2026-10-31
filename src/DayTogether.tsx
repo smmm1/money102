@@ -6,6 +6,8 @@ import Health from "./Health"
 import Finance from "./Finance"
 import FoodLife from "./FoodLife"
 import Archive from "./Archive"
+import HomeOverview from "./HomeOverview"
+import { useAuth } from "./CloudAuth"
 
 type Section = "home" | "daily" | "journal" | "health" | "finance" | "life" | "archive"
 const nav: { id: Section; label: string; mobile: string; icon: string }[] = [
@@ -29,6 +31,8 @@ const dateText = () => new Intl.DateTimeFormat("th-TH", { weekday: "long", day: 
 
 export default function DayTogether() {
   const [active, setActive] = useState<Section>("home")
+  const [accountOpen, setAccountOpen] = useState(false)
+  const { user, signOut } = useAuth()
   const today = useMemo(dateText, [])
   const selected = nav.find(item => item.id === active)!
   return <div className="dt-app">
@@ -39,7 +43,7 @@ export default function DayTogether() {
       <div className="dt-sidebar-bottom"><div className="dt-note"><span>✳</span><p>ไม่ต้องทำทุกอย่างให้สมบูรณ์แบบ<br /><b>แค่ค่อย ๆ ใช้ชีวิตในแบบของเรา</b></p></div><small>DAYTOGETHER · PERSONAL SPACE</small></div>
     </aside>
     <div className="dt-main">
-      <header className="dt-topbar"><div className="dt-mobile-brand"><span className="dt-mark"><i /></span><b>daytogether</b></div><div className="dt-crumb">พื้นที่ส่วนตัว <span>/</span> <b>{selected.label}</b></div><div className="dt-actions"><button aria-label="ค้นหาบันทึก" onClick={() => setActive("archive")}>⌕</button><button aria-label="การแจ้งเตือน">♧</button><span className="dt-avatar">D</span></div></header>
+      <header className="dt-topbar"><div className="dt-mobile-brand"><span className="dt-mark"><i /></span><b>daytogether</b></div><div className="dt-crumb">พื้นที่ส่วนตัว <span>/</span> <b>{selected.label}</b></div><div className="dt-actions"><button aria-label="ค้นหาบันทึก" onClick={() => setActive("archive")}>⌕</button><div className="dt-account"><button className="dt-avatar" aria-label="บัญชีผู้ใช้" aria-expanded={accountOpen} onClick={() => setAccountOpen(v => !v)}>{(user.email[0]||"D").toUpperCase()}</button>{accountOpen&&<div className="dt-account-menu"><b>{user.email}</b><button onClick={() => void signOut()}>ออกจากระบบ</button></div>}</div></div></header>
       <main className="dt-content">
         {active === "home" ? <>
           <section className="dt-hero"><div className="dt-hero-copy"><span className="dt-eyebrow">A LITTLE SPACE FOR YOUR EVERYDAY</span><h1>ค่อย ๆ ใช้ชีวิต<br /><em>ในจังหวะของเรา</em></h1><p>พื้นที่เล็ก ๆ สำหรับเก็บเรื่องราว ดูแลตัวเอง และจัดระเบียบชีวิตในแบบที่เป็นคุณ</p><div className="dt-date">▦ &nbsp;{today}</div></div><div className="dt-landscape"><div className="dt-sun" /><div className="dt-hill hill-a" /><div className="dt-hill hill-b" /><div className="dt-plant">✳</div><span>take it<br />one day at a time</span></div></section>
@@ -50,7 +54,7 @@ export default function DayTogether() {
             <button className="dt-shortcut" onClick={() => setActive("health")}><i className="terra">♡</i><b>ดูแลสุขภาพ</b><small>บันทึกการดูแลตัวเอง</small><span>↗</span></button>
             <button className="dt-shortcut" onClick={() => setActive("finance")}><i className="gold">◫</i><b>จัดการเรื่องเงิน</b><small>ออมเงินและหารค่าใช้จ่าย</small><span>↗</span></button>
           </section>
-          <section className="dt-lower"><div className="dt-panel"><div className="dt-panel-head"><div><span className="dt-eyebrow">YOUR DAY</span><h3>พื้นที่ของวันนี้</h3></div><small>TODAY</small></div><div className="dt-empty"><i>▤</i><b>วันใหม่ที่ยังว่างอยู่</b><p>เริ่มต้นด้วยบันทึกสั้น ๆ สักเรื่องก็ได้นะ</p><button onClick={() => setActive("daily")}>เริ่มบันทึก&nbsp; →</button></div></div><div className="dt-panel reminder"><span className="dt-eyebrow">A GENTLE REMINDER</span><blockquote>“ทุกวันไม่จำเป็น<br />ต้องเป็นวันที่ดีที่สุด<br />แค่เป็นวันที่เราได้อยู่กับตัวเอง”</blockquote><small>— &nbsp; LITTLE BY LITTLE</small></div></section>
+          <HomeOverview onOpen={section => setActive(section)} />
           <div className="dt-footer-note">✳ &nbsp; ชีวิตไม่ใช่รายการที่ต้องทำให้ครบ แต่เป็นเรื่องราวที่ค่อย ๆ เติบโต &nbsp; ✳</div>
         </> : <section className="dt-inner">
           <div className="dt-inner-meta"><span className="dt-eyebrow">{copy[active].eyebrow}</span><small>{today}</small></div><h1>{copy[active].title}</h1><p className="dt-inner-desc">{copy[active].desc}</p>
@@ -65,7 +69,7 @@ export default function DayTogether() {
         </section>}
       </main>
     </div>
-    <nav className="dt-mobile-nav">{nav.filter(item => ["home","daily","journal","health","finance"].includes(item.id)).map(item => <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => setActive(item.id)}><i>{item.icon}</i><small>{item.mobile}</small></button>)}</nav>
+    <nav className="dt-mobile-nav">{nav.map(item => <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => setActive(item.id)}><i>{item.icon}</i><small>{item.mobile}</small></button>)}</nav>
 
   </div>
 }
