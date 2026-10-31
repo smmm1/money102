@@ -1002,3 +1002,300 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  .dt-floating-nav{justify-content:flex-start}
  .dt-floating-nav button{min-width:max-content;padding:0 10px;font-size:9px}
 }
+
+
+/* -------------------------------------------------------------------------
+   DayTogether design system — calm, human, task-first
+   Visual principles: restrained palette, clear hierarchy, predictable controls,
+   useful whitespace, readable Thai typography, minimal decoration.
+   ------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+
+:root{
+  color-scheme:light;
+  --dt-bg:#f4f2ec;
+  --dt-surface:#fffefa;
+  --dt-surface-muted:#f8f7f2;
+  --dt-ink:#282d27;
+  --dt-muted:#626b60;
+  --dt-subtle:#858c81;
+  --dt-line:#d9ddd4;
+  --dt-line-soft:#e9ebe5;
+  --dt-primary:#48634f;
+  --dt-primary-hover:#3e5644;
+  --dt-primary-soft:#e8ede5;
+  --dt-warm:#8b5b3e;
+  --dt-warm-soft:#f3ebe3;
+  --dt-danger:#9a4e45;
+  --dt-danger-soft:#f7ece9;
+  --dt-success:#42694b;
+  --dt-success-soft:#eaf1e9;
+  --dt-radius:7px;
+  --dt-radius-lg:10px;
+  --dt-shadow:0 2px 8px rgba(40,45,39,.045);
+  font-family:'IBM Plex Sans','Noto Sans Thai',sans-serif;
+  color:var(--dt-ink);
+  background:var(--dt-bg);
+  font-synthesis:none;
+  text-rendering:optimizeLegibility
+}
+html,body,.dt2-shell,.dt-app-layout.dt2-shell{
+  min-height:100%;
+  background:var(--dt-bg)!important;
+  color:var(--dt-ink)!important;
+  font-family:'IBM Plex Sans','Noto Sans Thai',sans-serif
+}
+.dt2-shell{font-size:15px;line-height:1.5}
+.dt2-shell *{box-sizing:border-box}
+.dt2-shell button,.dt2-shell input,.dt2-shell textarea,.dt2-shell select{font:inherit}
+.dt2-shell button{color:inherit}
+.dt2-shell button:focus-visible,.dt2-shell a:focus-visible,.dt2-shell summary:focus-visible,
+.dt2-shell input:focus-visible,.dt2-shell textarea:focus-visible,.dt2-shell select:focus-visible{
+  outline:2px solid #48634f!important;outline-offset:2px
+}
+
+/* Top navigation: ordinary application chrome, not a floating glass widget. */
+.dt-floating-header{
+  position:sticky;top:0;z-index:25;display:flex;flex-direction:column;
+  width:100%;max-width:none;margin:0;padding:9px max(22px,calc((100% - 1180px)/2)) 0;
+  border:0;border-bottom:1px solid var(--dt-line);border-radius:0;
+  background:var(--dt-surface);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none
+}
+.dt-floating-topline{min-height:42px;gap:18px}
+.dt-floating-brand{gap:9px;padding:2px 0}
+.dt-floating-brand .dt2-brand-symbol{
+  width:30px;height:30px;flex-basis:30px;border:1px solid var(--dt-line);
+  border-radius:6px;background:var(--dt-primary-soft);color:var(--dt-primary);
+  font:600 17px Georgia,serif;box-shadow:none
+}
+.dt-floating-brand .dt2-brand-copy strong{color:var(--dt-ink);font-size:14px;font-weight:600;letter-spacing:-.02em}
+.dt-floating-brand .dt2-brand-copy small{color:var(--dt-subtle);font-size:9px;letter-spacing:.02em}
+.dt-floating-tools{gap:9px}
+.dt-floating-tools .dt-save-status{color:var(--dt-subtle);font-size:10px}
+.dt-floating-tools .dt-save-status i{background:#6d8c68}
+.dt-floating-tools .dt2-privacy{
+  width:auto;height:30px;padding:0 9px;border:1px solid var(--dt-line);
+  border-radius:6px;background:var(--dt-surface);color:var(--dt-muted);font-size:11px
+}
+.dt-floating-tools .dt2-privacy:hover,.dt-floating-tools .dt2-privacy.active{
+  border-color:#c5d2c1;background:var(--dt-primary-soft);color:var(--dt-primary)
+}
+.dt-floating-tools .cc-account-trigger{
+  width:30px;height:30px;border:1px solid var(--dt-line);border-radius:6px;
+  background:var(--dt-surface-muted);color:var(--dt-primary);box-shadow:none
+}
+.dt-floating-nav{
+  justify-content:flex-start;flex-wrap:nowrap;gap:3px;margin-top:7px;padding:0;
+  border:0;border-top:1px solid var(--dt-line-soft);border-radius:0;background:transparent;
+  overflow-x:auto;scrollbar-width:thin
+}
+.dt-floating-nav button{
+  min-width:0;min-height:39px;padding:0 13px;border:0;border-bottom:2px solid transparent;
+  border-radius:0;background:transparent;color:var(--dt-muted);
+  font-size:12px;font-weight:500;transition:background .12s,color .12s,border-color .12s
+}
+.dt-floating-nav button:hover{background:var(--dt-surface-muted);color:var(--dt-ink)}
+.dt-floating-nav button.active{
+  border-bottom-color:var(--dt-primary);border-radius:0;background:transparent;
+  color:var(--dt-primary);font-weight:700;box-shadow:none
+}
+.dt-floating-nav-icon{color:var(--dt-subtle);font-size:13px}
+.dt-floating-nav button.active .dt-floating-nav-icon{color:var(--dt-primary)}
+.dt-app-layout>.dt2-main{
+  width:min(1180px,100%);max-width:1180px;margin:0 auto;
+  padding:34px 28px 84px
+}
+.dt-app-layout .dt-app-topbar{
+  margin:0 0 25px;padding:0 0 15px;border-bottom:1px solid var(--dt-line)
+}
+.dt-app-layout .dt-app-breadcrumb{margin-bottom:5px;color:var(--dt-subtle);font-size:11px;letter-spacing:0}
+.dt-app-layout .dt-app-topbar h1{
+  color:var(--dt-ink);font-size:30px;font-weight:600;line-height:1.25;letter-spacing:-.035em
+}
+
+/* Type: compact hierarchy, no oversized display text or tiny all-caps labels. */
+.dt-app-layout h1,.dt-app-layout h2,.dt-app-layout h3,.dt-app-layout h4{
+  color:var(--dt-ink);font-family:'IBM Plex Sans','Noto Sans Thai',sans-serif;
+  text-transform:none;letter-spacing:-.025em
+}
+.dt-app-layout .dt-page-body{gap:25px}
+.dt-app-layout .dt-section h3,.dt-app-layout .dt-detail-card h3,
+.dt-app-layout .dt-settlement-form h3{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.dt-app-layout .dt-section-head{
+  align-items:center;margin-bottom:8px;padding:0 0 10px;border-bottom:1px solid var(--dt-line)
+}
+.dt-app-layout .dt-section-head p,.dt-app-layout .dt-settings-card>p,
+.dt-app-layout .dt-detail-card>p{color:var(--dt-muted);font-size:12px;line-height:1.55}
+.dt-app-layout .dt-home-intro{align-items:flex-end;padding:0 0 17px}
+.dt-app-layout .dt-home-intro h2{
+  margin:5px 0 7px;font-size:25px;font-weight:600;line-height:1.3;letter-spacing:-.035em
+}
+.dt-app-layout .dt-home-intro p{color:var(--dt-muted);font-size:13px}
+.dt-app-layout .dt-home-intro .dt-home-date{color:var(--dt-subtle);font-size:11px}
+.dt-app-layout .dt-home-section-title{margin-bottom:8px;padding-bottom:9px;border-color:var(--dt-line)}
+.dt-app-layout .dt-home-section-title h3{font-size:16px;font-weight:600}
+.dt-app-layout .dt-home-section-title>span{color:var(--dt-subtle);font-size:11px}
+
+/* Surfaces: reserve cards for grouped information; prefer rules and whitespace elsewhere. */
+.dt-app-layout .dt-home-actions{gap:8px}
+.dt-app-layout .dt-home-actions button{
+  min-height:100px;padding:13px;border:1px solid var(--dt-line);border-radius:var(--dt-radius);
+  background:var(--dt-surface);color:var(--dt-ink);box-shadow:none
+}
+.dt-app-layout .dt-home-actions button:hover{border-color:#aab9a6;background:#fff;transform:translateY(-1px)}
+.dt-app-layout .dt-home-actions button>span{
+  width:25px;height:25px;border-radius:5px;background:var(--dt-primary-soft);color:var(--dt-primary)
+}
+.dt-app-layout .dt-home-actions button strong{font-size:13px;font-weight:600}
+.dt-app-layout .dt-home-actions button small{color:var(--dt-muted);font-size:11px}
+.dt-app-layout .dt-home-metrics{
+  border:1px solid var(--dt-line);border-radius:var(--dt-radius);background:var(--dt-surface);box-shadow:none
+}
+.dt-app-layout .dt-home-metrics button{
+  gap:6px;padding:14px 15px;border-right:1px solid var(--dt-line-soft);background:transparent;color:var(--dt-ink)
+}
+.dt-app-layout .dt-home-metrics button:hover{background:var(--dt-surface-muted)}
+.dt-app-layout .dt-home-metrics small{color:var(--dt-muted);font-size:11px}
+.dt-app-layout .dt-home-metrics strong{color:var(--dt-ink);font-size:19px;font-weight:600;letter-spacing:-.025em}
+.dt-app-layout .dt-home-metrics button>span{color:var(--dt-primary);font-size:11px}
+.dt-app-layout .dt-stat-grid{gap:9px}
+.dt-app-layout .dt-stat{
+  min-height:112px;padding:14px;border:1px solid var(--dt-line);border-radius:var(--dt-radius);
+  background:var(--dt-surface)!important;box-shadow:none;color:var(--dt-ink)
+}
+.dt-app-layout .dt-stat:nth-child(n){background:var(--dt-surface)!important}
+.dt-app-layout .dt-stat:hover{transform:translateY(-1px);border-color:#b8c4b3;box-shadow:var(--dt-shadow)}
+.dt-app-layout .dt-stat-icon{width:26px;height:26px;margin-bottom:8px;border-radius:5px;background:var(--dt-primary-soft);color:var(--dt-primary);font-size:15px}
+.dt-app-layout .dt-stat-label{color:var(--dt-muted);font-size:11px;font-weight:500}
+.dt-app-layout .dt-stat strong{margin:6px 0 3px;color:var(--dt-ink);font-size:21px;font-weight:600;letter-spacing:-.025em}
+.dt-app-layout .dt-stat small{color:var(--dt-subtle);font-size:11px;line-height:1.45}
+.dt-app-layout .dt-goal-grid,.dt-app-layout .dt-note-grid,.dt-app-layout .dt-visit-grid{gap:9px}
+.dt-app-layout .dt-goal-card,.dt-app-layout .dt-note-card,.dt-app-layout .dt-visit-card{
+  min-width:0;padding:15px;border:1px solid var(--dt-line);border-radius:var(--dt-radius);
+  background:var(--dt-surface)!important;box-shadow:none
+}
+.dt-app-layout .dt-goal-card:nth-child(n),.dt-app-layout .dt-note-card:nth-child(n),
+.dt-app-layout .dt-visit-card:nth-child(n){background:var(--dt-surface)!important}
+.dt-app-layout .dt-goal-card:hover,.dt-app-layout .dt-note-card:hover,.dt-app-layout .dt-visit-card:hover{
+  border-color:#b8c4b3;background:#fff!important
+}
+.dt-app-layout .dt-recent,.dt-app-layout .dt-list-row,.dt-app-layout .dt-bill-row{
+  gap:12px;padding:12px 5px;border-bottom:1px solid var(--dt-line-soft);background:transparent
+}
+.dt-app-layout .dt-recent:hover,.dt-app-layout .dt-list-row:hover,.dt-app-layout .dt-bill-row:hover{
+  padding-left:8px;background:var(--dt-surface-muted)
+}
+.dt-app-layout .dt-recent strong,.dt-app-layout .dt-list-copy strong{font-size:13px;font-weight:600}
+.dt-app-layout .dt-recent small,.dt-app-layout .dt-list-copy small{color:var(--dt-muted);font-size:11px}
+.dt-app-layout .dt-recent-mark,.dt-app-layout .dt-list-icon{
+  width:32px;height:32px;flex-basis:32px;border-radius:5px;background:var(--dt-primary-soft);color:var(--dt-primary)
+}
+.dt-app-layout .dt-empty{
+  min-height:130px;padding:24px;border:1px dashed #cfd5cb;border-radius:var(--dt-radius);
+  background:var(--dt-surface-muted)
+}
+.dt-app-layout .dt-empty>span{background:var(--dt-primary-soft);color:var(--dt-primary)}
+
+/* Buttons and controls: same shape and interaction language across pages. */
+.dt-app-layout .dt-btn{
+  min-height:38px;padding:0 13px;border:1px solid #cbd2c8;border-radius:6px;
+  background:var(--dt-surface);color:var(--dt-ink);font-size:12px;font-weight:600;
+  box-shadow:none;transition:background .12s,border-color .12s,transform .12s
+}
+.dt-app-layout .dt-btn:hover{transform:translateY(-1px);border-color:#9eae9a;background:#fff}
+.dt-app-layout .dt-btn-primary,.dt-app-layout .dt-home-intro .dt-btn{
+  border-color:var(--dt-primary);background:var(--dt-primary);color:#fff
+}
+.dt-app-layout .dt-btn-primary:hover,.dt-app-layout .dt-home-intro .dt-btn:hover{
+  border-color:var(--dt-primary-hover);background:var(--dt-primary-hover);color:#fff
+}
+.dt-app-layout .dt-btn-secondary{border-color:var(--dt-line);background:var(--dt-surface);color:var(--dt-ink)}
+.dt-app-layout .dt-btn-danger{border-color:#e5c9c3;background:var(--dt-danger-soft);color:var(--dt-danger)}
+.dt-app-layout input,.dt-app-layout textarea,.dt-app-layout select{
+  min-height:40px;padding:9px 11px;border:1px solid #cfd5cb;border-radius:6px;
+  background:var(--dt-surface);color:var(--dt-ink);font-size:14px;line-height:1.45
+}
+.dt-app-layout input::placeholder,.dt-app-layout textarea::placeholder{color:#92998f;opacity:1}
+.dt-app-layout textarea{min-height:100px;resize:vertical}
+.dt-app-layout .dt-field>span{color:var(--dt-muted);font-size:12px;font-weight:600}
+.dt-app-layout .dt-disclaimer,.dt-app-layout .dt-form-hint{color:var(--dt-muted);font-size:11px;line-height:1.5}
+.dt-app-layout .dt-pill{border:1px solid var(--dt-line);border-radius:4px;background:var(--dt-surface-muted);color:var(--dt-muted);font-size:10px}
+.dt-app-layout .dt-pill.settled{border-color:#cddccc;background:var(--dt-success-soft);color:var(--dt-success)}
+.dt-app-layout .dt-pill.settling{border-color:#e3d7c3;background:#f5f0e6;color:#796746}
+.dt-app-layout .dt-progress{height:6px;border-radius:3px;background:#e8ebe4}
+.dt-app-layout .dt-progress i{border-radius:3px;background:var(--dt-primary)}
+.dt-app-layout .dt-health-kind-grid{gap:8px}
+.dt-app-layout .dt-health-kind{
+  padding:13px;border:1px solid var(--dt-line);border-radius:var(--dt-radius);
+  background:var(--dt-surface);color:var(--dt-ink)
+}
+.dt-app-layout .dt-health-kind:hover{border-color:#b8c4b3;background:var(--dt-surface-muted)}
+.dt-app-layout .dt-health-kind>span{color:var(--dt-primary);font-size:19px}
+.dt-app-layout .dt-callout,.dt-app-layout .dt-health-disclaimer{
+  border-left:3px solid #8ca187;border-radius:4px;background:var(--dt-primary-soft);color:#4f6250
+}
+.dt-app-layout .dt-bill-total-preview,.dt-app-layout .dt-adjustment-total{
+  border-radius:var(--dt-radius);background:var(--dt-primary);color:#fff
+}
+.dt-app-layout .dt-bill-total-preview strong,.dt-app-layout .dt-adjustment-total strong{color:#fff}
+.dt-app-layout .dt-simple-bill-form{border:1px solid var(--dt-line);border-radius:var(--dt-radius);background:var(--dt-surface)}
+.dt-app-layout .dt-bill-simple-result{border-radius:var(--dt-radius);background:var(--dt-primary-soft);color:var(--dt-ink)}
+.dt-app-layout .dt-bill-simple-result>strong{color:var(--dt-primary);font-weight:700}
+.dt-app-layout .dt-range-tabs button,.dt-app-layout .dt-note-filters button,
+.dt-app-layout .dt-note-date-filter button,.dt-app-layout .dt-water-quick button,
+.dt-app-layout .dt-quick-water button,.dt-app-layout .dt-health-custom-range button{
+  border:1px solid var(--dt-line);border-radius:5px;background:var(--dt-surface);color:var(--dt-muted)
+}
+.dt-app-layout .dt-range-tabs button.active,.dt-app-layout .dt-note-filters button.active,
+.dt-app-layout .dt-note-date-filter button.active,.dt-app-layout .dt-health-custom-range button.active{
+  border-color:var(--dt-primary);background:var(--dt-primary);color:#fff
+}
+
+/* Dialogs and feedback: quiet, clear, and reversible where possible. */
+.dt-modal-backdrop{background:rgba(31,38,31,.38);backdrop-filter:blur(1px)}
+.dt-modal{border:1px solid var(--dt-line);border-radius:9px;background:var(--dt-surface);box-shadow:0 12px 36px rgba(30,38,30,.14)}
+.dt-modal-head h2{color:var(--dt-ink);font-size:21px;font-weight:600}
+.dt-app-layout .dt-toast{border:1px solid #405a45;border-radius:6px;background:#354c39;color:#fff;box-shadow:0 4px 16px rgba(30,45,31,.15)}
+.dt-app-layout .dt-toast>span:first-child{color:#e4eee1}
+.dt-app-layout .dt-visit-art{background:var(--dt-primary-soft);color:var(--dt-primary)}
+.dt-app-layout .dt-visit-art:after{border-color:#cbd6c7;border-radius:5px}
+.dt-app-layout .dt-visit-art span{background:var(--dt-surface);color:var(--dt-primary)}
+
+/* Responsive: preserve reading width and avoid compressed controls. */
+@media(max-width:1100px) and (min-width:681px){
+  .dt-floating-header{padding-right:18px;padding-left:18px}
+  .dt-floating-nav{justify-content:flex-start;overflow-x:auto}
+  .dt-floating-nav button{min-width:max-content;padding:0 11px}
+  .dt-app-layout>.dt2-main{padding:28px 22px 76px}
+}
+@media(max-width:800px) and (min-width:681px){
+  .dt-floating-brand .dt2-brand-copy{display:grid}
+  .dt-floating-brand .dt2-brand-copy small{display:none}
+  .dt-floating-tools .dt-save-status{display:none}
+}
+@media(max-width:680px){
+  .dt-floating-header{display:none}
+  .dt-app-layout>.dt2-main{padding:19px 15px 82px}
+  .dt-app-layout .dt-app-topbar{margin-bottom:18px;padding-bottom:12px}
+  .dt-app-layout .dt-app-topbar h1{font-size:25px}
+  .dt-app-layout .dt-home-intro{align-items:flex-start;gap:10px;padding-bottom:13px}
+  .dt-app-layout .dt-home-intro h2{font-size:21px}
+  .dt-app-layout .dt-home-intro .dt-btn{min-height:36px}
+  .dt-app-layout .dt-home-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .dt-app-layout .dt-home-actions button{min-height:92px;padding:11px}
+  .dt-app-layout .dt-home-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dt-app-layout .dt-home-metrics button{min-height:84px;padding:12px;border-bottom:1px solid var(--dt-line-soft)}
+  .dt-app-layout .dt-home-metrics button strong{font-size:17px}
+  .dt-app-layout .dt-stat-grid,.dt-app-layout .dt-stat-grid.three,.dt-app-layout .dt-stat-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dt-app-layout .dt-stat{min-height:102px;padding:12px}
+  .dt-app-layout .dt-goal-grid,.dt-app-layout .dt-note-grid,.dt-app-layout .dt-visit-grid{grid-template-columns:1fr}
+  .dt-app-layout .dt-health-kind-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dt-app-layout .dt-form-grid{grid-template-columns:1fr}
+  .dt-app-layout .dt-btn{min-height:40px}
+}
+@media(prefers-reduced-motion:reduce){
+  .dt-app-layout *, .dt-app-layout *::before, .dt-app-layout *::after{
+    scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important
+  }
+}
