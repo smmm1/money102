@@ -535,15 +535,17 @@ export default function DayTogether() {
   }
   return <div className="dt2-shell dt-app-layout" data-page={page}>
     <header className="dt-floating-header">
-      <button className="dt2-brand dt-floating-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
+      <div className="dt-floating-topline">
+        <button className="dt2-brand dt-floating-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
+        <div className="dt-floating-tools">
+          <span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span>
+          <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"◉":"◌"}</button>
+          <AccountMenu/>
+        </div>
+      </div>
       <nav className="dt-floating-nav" aria-label="เมนูหลัก">
         {[...navItems,"/settings"].map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt-floating-nav-icon" aria-hidden="true">{ICON[href]}</span><span>{PAGE_LABEL[href]}</span></button>)}
       </nav>
-      <div className="dt-floating-tools">
-        <span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span>
-        <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"◉":"◌"}</button>
-        <AccountMenu/>
-      </div>
     </header>
     <aside className="dt-app-sidebar" aria-hidden="true" />
     <main className="dt2-main">
