@@ -135,8 +135,7 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   const [authCheckError, setAuthCheckError] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">("signin")
+  const [authMode, setAuthMode] = useState<"signin" | "forgot">("signin")
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [cloudReady, setCloudReady] = useState(false)
@@ -218,18 +217,16 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
     event.preventDefault()
     setMessage("")
     if (authMode === "forgot") { setMessage("ยังไม่ได้ตั้งค่าการส่งอีเมลรีเซ็ตรหัสผ่าน จึงยังส่งลิงก์รีเซ็ตไม่ได้"); return }
-    if (authMode === "signup" && password !== confirmPassword) { setMessage("รหัสผ่านทั้งสองช่องไม่ตรงกัน"); return }
     setBusy(true)
     try {
-      const result = await api(authMode === "signup" ? "/api/auth/signup" : "/api/auth/signin", {
+      const result = await api("/api/auth/signin", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       }) as { token: string; user: AppUser }
       setSessionToken(result.token)
       setUser(result.user)
       setPassword("")
-      setConfirmPassword("")
-      setMessage(authMode === "signup" ? "สร้างบัญชีสำเร็จ" : "เข้าสู่ระบบสำเร็จ")
+      setMessage("เข้าสู่ระบบสำเร็จ")
       setAuthMode("signin")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -331,13 +328,12 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
       <div className="cc-auth-form-side">
         <div className="cc-auth-form-top"><span className="cc-overline">WELCOME BACK</span><span className="cc-auth-lock"><i/> PRIVATE ACCESS</span></div>
         <div className="cc-auth-form-content"><div className="cc-auth-mini-mark" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></div>
-          <h2>{authMode==="signup"?"สร้างพื้นที่ส่วนตัวใหม่":authMode==="forgot"?"ลืมรหัสผ่าน?":"ยินดีที่ได้พบกันอีกครั้ง"}</h2><p className="cc-auth-intro">{authMode==="signup"?"สร้างบัญชีเพื่อเก็บข้อมูลส่วนตัวแยกจากผู้ใช้อื่น":authMode==="forgot"?"การรีเซ็ตรหัสผ่านผ่านอีเมลยังไม่ได้ตั้งค่าในระบบนี้":"เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ"}</p>
+          <h2>{authMode==="forgot"?"ลืมรหัสผ่าน?":"กลับมาดูแลเรื่องสำคัญของคุณ"}</h2><p className="cc-auth-intro">{authMode==="forgot"?"การรีเซ็ตรหัสผ่านผ่านอีเมลยังไม่ได้ตั้งค่าในระบบนี้":"เข้าสู่ระบบเพื่อเปิดพื้นที่ส่วนตัวและบันทึกของคุณ"}</p>
           {authMode==="forgot" ? <div className="cc-auth-form"><p role="status" className="cc-auth-message">ยังไม่มีบริการส่งอีเมลรีเซ็ตรหัสผ่าน จึงไม่สามารถเปลี่ยนรหัสผ่านจากหน้านี้ได้</p><button type="button" className="cc-auth-submit" onClick={()=>{setAuthMode("signin");setMessage("")}}>กลับเข้าสู่ระบบ</button></div> : <form onSubmit={submit} className="cc-auth-form">
             <label>อีเมล<input type="email" required autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="อีเมลของคุณ" /></label>
-            <label>รหัสผ่าน<input type="password" required minLength={8} autoComplete={authMode==="signup"?"new-password":"current-password"} value={password} onChange={e => setPassword(e.target.value)} placeholder={authMode==="signup"?"อย่างน้อย 8 ตัวอักษร":"กรอกรหัสผ่าน"} /></label>
-            {authMode==="signup"&&<label>ยืนยันรหัสผ่าน<input type="password" required minLength={8} autoComplete="new-password" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} placeholder="กรอกรหัสผ่านอีกครั้ง" /></label>}
+            <label>รหัสผ่าน<input type="password" required minLength={8} autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="กรอกรหัสผ่าน" /></label>
             {message && <p role="status" className="cc-auth-message">{message}</p>}
-            <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>{authMode==="signup"?"สร้างบัญชี":"เข้าสู่ระบบ"}<span aria-hidden="true">↗</span></>}</button>
+            <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>เข้าสู่ระบบ<span aria-hidden="true">↗</span></>}</button>
             <p className="cc-auth-private-note">พื้นที่ส่วนตัวสำหรับบัญชีที่ได้รับอนุญาตเท่านั้น</p><button type="button" className="cc-auth-forgot" onClick={() => { setAuthMode("forgot"); setMessage("") }}>ลืมรหัสผ่าน?</button>
           </form>}
         </div>
