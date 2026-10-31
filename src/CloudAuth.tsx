@@ -1,233 +1,68 @@
-import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import "./auth.css"
 
 type AppUser = { id: string; email: string }
-const AuthAccountContext = createContext<{ user: AppUser; signOut: () => Promise<void>; deleteAccount: () => Promise<void>; changePassword: (currentPassword: string, newPassword: string) => Promise<void> } | null>(null)
+const TOKEN_KEY = "money102_auth_token"
+const API_URL = (import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined || "https://money102-api.s2mtha16.workers.dev").replace(/\/$/, "")
 
-export function useAccount() { return useContext(AuthAccountContext) }
-
-export function AccountMenu() {
-  const account = useContext(AuthAccountContext)
-  const [open, setOpen] = useState(false)
-  if (!account) return null
-  const { user, signOut } = account
-  return <div className="cc-account">
-    <button type="button" className="cc-account-trigger" aria-label="เมนูบัญชี" aria-expanded={open} onClick={() => setOpen(v => !v)}><span>{user.email.slice(0,1).toUpperCase()}</span><i /></button>
-    {open && <><button type="button" className="cc-account-dismiss" aria-label="ปิดเมนูบัญชี" onClick={() => setOpen(false)} /><section className="cc-account-menu"><small>ACCOUNT / ACTIVE</small><strong>{user.email}</strong><span className="cc-account-connected"><i /> เชื่อมต่อข้อมูลแล้ว</span><button type="button" onClick={() => { setOpen(false); void signOut() }}>ออกจากระบบ <span>↗</span></button></section></>}
-  </div>
-}
-type LocalSnapshot = Record<string, string>
-const LOCAL_PREFIX = "lamoon-"
-const isStagingPreview = ["money102-command-center-preview.onrender.com", "daytogether-phase1-preview.onrender.com", "daytogether-phase2-preview.onrender.com"].includes(window.location.hostname)
-const defaultApiUrl = isStagingPreview
-  ? "https://daytogether-api-staging.s2mtha16.workers.dev"
-  : "https://money102-api.s2mtha16.workers.dev"
-const apiUrl = ((import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined) || defaultApiUrl).replace(/\/$/, "")
-
-let memorySnapshot: LocalSnapshot = {}
-let storageShimInstalled = false
-function installStorageShim() {
-  if (storageShimInstalled) return
-  storageShimInstalled = true
-  const proto = Storage.prototype
-  const nativeGet = proto.getItem
-  const nativeSet = proto.setItem
-  const nativeRemove = proto.removeItem
-  proto.getItem = function(key: string) {
-    if (this === window.localStorage) return memorySnapshot[String(key)] ?? null
-    return nativeGet.call(this, key)
-  }
-  proto.setItem = function(key: string, value: string) {
-    if (this !== window.localStorage) return nativeSet.call(this, key, value)
-    const k = String(key), v = String(value)
-    memorySnapshot[k] = v
-    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
-  }
-  proto.removeItem = function(key: string) {
-    if (this !== window.localStorage) return nativeRemove.call(this, key)
-    const k = String(key)
-    delete memorySnapshot[k]
-    if (k.startsWith(LOCAL_PREFIX)) scheduleCloudSave()
-  }
-}
-function readLocalSnapshot(): LocalSnapshot {
-  const current = Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith(LOCAL_PREFIX) && typeof value === "string");
-  const legacy = Object.entries(memorySnapshot).filter(([key, value]) => key.startsWith("money102-") && typeof value === "string").map(([key, value]) => ["lamoon-legacy-" + key, value]);
-  return Object.fromEntries([...current, ...legacy])
-}
-let saveTimer: number | undefined
-let saveChain: Promise<unknown> = Promise.resolve()
-let lastCloudRevision: string | null = null
-function scheduleCloudSave() {
-  if (saveTimer !== undefined) window.clearTimeout(saveTimer)
-  const scheduledToken = getToken()
-  if (!scheduledToken) return
-  saveTimer = window.setTimeout(() => {
-    saveTimer = undefined
-    const payload = readLocalSnapshot()
-    saveChain = saveChain.then(async () => {
-      if (!scheduledToken || scheduledToken !== getToken()) return undefined
-      // Resolve the revision when this queued write actually starts. This lets
-      // sequential saves in one tab advance without masking writes from other tabs.
-      const result = await api("/api/state", {
-        method: "PUT",
-        body: JSON.stringify({ payload, expected_updated_at: lastCloudRevision })
-      }) as { updated_at?: unknown }
-      if (scheduledToken === getToken() && typeof result.updated_at === "string") lastCloudRevision = result.updated_at
-      return result
-    }).then((result) => {
-      if (result !== undefined && scheduledToken === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
-    }).catch((error: unknown) => {
-      if (scheduledToken === getToken()) {
-        const message = error instanceof Error ? error.message : String(error)
-        window.dispatchEvent(new CustomEvent("d1-persist-error", { detail: message }))
-      }
-    })
-  }, 250)
-}
-function restoreSnapshot(snapshot: LocalSnapshot) {
-  const entries = Object.entries(snapshot || {}).filter(([key, value]) => (key.startsWith(LOCAL_PREFIX) || key.startsWith("money102-")) && typeof value === "string");
-  memorySnapshot = Object.fromEntries(entries);
-  for (const [key, value] of entries) {
-    if (key.startsWith("lamoon-legacy-money102-")) memorySnapshot[key.slice("lamoon-legacy-".length)] = value;
-  }
-}
-const AUTH_TOKEN_KEY = "money102_auth_token"
-let sessionToken = window.sessionStorage.getItem(AUTH_TOKEN_KEY) || ""
-function getToken() { return sessionToken }
-function setSessionToken(token: string) {
+let sessionToken = window.sessionStorage.getItem(TOKEN_KEY) || ""
+function setToken(token: string) {
   sessionToken = token
-  if (token) window.sessionStorage.setItem(AUTH_TOKEN_KEY, token)
-  else window.sessionStorage.removeItem(AUTH_TOKEN_KEY)
+  if (token) window.sessionStorage.setItem(TOKEN_KEY, token)
+  else window.sessionStorage.removeItem(TOKEN_KEY)
 }
 
 async function api(path: string, init: RequestInit = {}) {
-  const token = getToken()
   const headers = new Headers(init.headers)
-  if (token) headers.set("Authorization", `Bearer ${token}`)
+  if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`)
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
-  const response = await fetch(`${apiUrl}${path}`, { ...init, headers })
-  const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; [key: string]: unknown }
+  const response = await fetch(`${API_URL}${path}`, { ...init, headers, cache: "no-store" })
+  const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; user?: AppUser; token?: string }
   if (!response.ok) {
-    if (response.status === 401 && token && (path === "/api/state" || path === "/api/auth/me")) {
-      window.dispatchEvent(new CustomEvent("d1-auth-expired"))
-    }
-    throw new Error([body.error, body.detail].filter(Boolean).join(': ') || `Request failed (${response.status})`)
+    const error = new Error([body.error, body.detail].filter(Boolean).join(": ") || `Request failed (${response.status})`)
+    Object.assign(error, { status: response.status })
+    throw error
   }
   return body
 }
 
-function AuthExperience({ state, title, detail, onRetry }: { state: "loading" | "error"; title: string; detail: string; onRetry?: () => void }) {
-  return <main className="cc-auth-screen cc-auth-screen-status"><section className="cc-auth-frame cc-auth-frame-status">
-    <div className="cc-auth-brand-panel"><div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">DayTogether<small>พื้นที่ส่วนตัว</small></strong></div>
-      <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
-      <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div><div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
-    </div>
-    <div className="cc-auth-form-side cc-auth-status-side"><div className="cc-auth-form-top"><span className="cc-overline">PRIVATE ACCESS</span><span className="cc-auth-lock"><i/> SECURE SESSION</span></div>
-      <div className="cc-auth-status-content"><div className={state === "error" ? "cc-auth-status-icon is-error" : "cc-auth-status-icon"}>{state === "error" ? "!" : <span className="cc-auth-loader"/>}</div><span className="cc-overline">{state === "error" ? "CONNECTION STATUS" : "PLEASE WAIT A MOMENT"}</span><h2>{title}</h2><p>{detail}</p>{state === "loading" && <div className="cc-auth-progress"><span/></div>}{onRetry && <button type="button" onClick={onRetry} className="cc-auth-submit">กลับไปหน้าเข้าสู่ระบบ <span>↗</span></button>}</div>
-      <div className="cc-auth-foot"><span><i/> YOUR DATA STAYS YOURS</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
-    </div>
-  </section></main>
-}
-export default function CloudAuth({ children }: { children: ReactNode }) {
+export default function CloudAuth() {
   const [user, setUser] = useState<AppUser | null>(null)
-  const [checking,setChecking] = useState(() => Boolean(sessionToken))
-  const [authCheckError, setAuthCheckError] = useState("")
+  const [checking, setChecking] = useState(Boolean(sessionToken))
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [authMode, setAuthMode] = useState<"signin" | "forgot">("signin")
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
-  const [cloudReady, setCloudReady] = useState(false)
-  const [cloudError, setCloudError] = useState("")
-  const [cloudConflict, setCloudConflict] = useState(false)
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [connectionError, setConnectionError] = useState("")
 
   useEffect(() => {
-    const expireSession = () => {
-      setSessionToken("")
-      lastCloudRevision = null
-      memorySnapshot = {}
-      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
-      setUser(null)
-      setCloudReady(false)
-      setCloudError("")
-      setMessage("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่")
-    }
-    window.addEventListener("d1-auth-expired", expireSession)
-    return () => window.removeEventListener("d1-auth-expired", expireSession)
-  }, [])
-
-  useEffect(() => {
-    installStorageShim()
     if (!sessionToken) { setChecking(false); return }
     let cancelled = false
-    setChecking(true)
-    ;(async () => {
-      try {
-        const result = await api("/api/auth/me") as { user: AppUser }
-        if (!cancelled) setUser(result.user)
-      } catch (error) {
-        if (!cancelled) {
-          // Keep a valid token during transient network/5xx failures. A 401
-          // already clears it through the d1-auth-expired event in api().
-          if (getToken()) setAuthCheckError("ตรวจสอบเซสชันไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
-          else setUser(null)
-        }
-      } finally {
-        if (!cancelled) setChecking(false)
-      }
-    })()
-    return () => { cancelled = true }
-  }, [])
-
-  useEffect(() => {
-    if (!user) { setCloudReady(false); setCloudError(""); return }
-    let cancelled = false
-    setCloudReady(false); setCloudError(""); lastCloudRevision = null
-    ;(async () => {
-      const result = await api("/api/state") as { payload?: LocalSnapshot | null; updated_at?: string | null }
+    api("/api/auth/me").then(result => {
+      if (!cancelled && result.user) setUser(result.user)
+    }).catch(error => {
       if (cancelled) return
-      restoreSnapshot(result.payload && typeof result.payload === "object" ? result.payload : {})
-      lastCloudRevision = typeof result.updated_at === "string" ? result.updated_at : null
-      setCloudReady(true)
-    })().catch((error: unknown) => {
-      if (!cancelled) setCloudError("เชื่อมต่อ Cloudflare ไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
-    })
+      if ((error as { status?: number }).status === 401) setToken("")
+      else setConnectionError(error instanceof Error ? error.message : String(error))
+    }).finally(() => { if (!cancelled) setChecking(false) })
     return () => { cancelled = true }
-  }, [user?.id])
-
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent).detail as { message?: unknown; conflict?: unknown } | string | undefined
-      const message = typeof detail === "string" ? detail : typeof detail === "object" && detail !== null && typeof detail.message === "string" ? detail.message : "ไม่ทราบสาเหตุ"
-      setCloudError("บันทึกลง Cloudflare D1 ไม่สำเร็จ: " + message)
-      setCloudConflict(message.includes("ข้อมูลถูกแก้ไขจากอีกแท็บแล้ว"))
-    }
-    const success = () => { setCloudError(""); setCloudConflict(false) }
-    window.addEventListener("d1-persist-error", handler)
-    window.addEventListener("d1-persist-success", success)
-    return () => {
-      window.removeEventListener("d1-persist-error", handler)
-      window.removeEventListener("d1-persist-success", success)
-    }
   }, [])
 
-  async function submit(event: FormEvent) {
+  async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setMessage("")
-    if (authMode === "forgot") { setMessage("ยังไม่ได้ตั้งค่าการส่งอีเมลรีเซ็ตรหัสผ่าน จึงยังส่งลิงก์รีเซ็ตไม่ได้"); return }
+    if (busy) return
     setBusy(true)
+    setMessage("")
+    setConnectionError("")
     try {
       const result = await api("/api/auth/signin", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
-      }) as { token: string; user: AppUser }
-      setSessionToken(result.token)
+      })
+      if (!result.token || !result.user) throw new Error("ข้อมูลการเข้าสู่ระบบจาก Cloudflare ไม่ครบถ้วน")
+      setToken(result.token)
       setUser(result.user)
       setPassword("")
-      setMessage("เข้าสู่ระบบสำเร็จ")
-      setAuthMode("signin")
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -236,114 +71,27 @@ export default function CloudAuth({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    // Flush a debounced snapshot before invalidating the session so a quick
-    // logout cannot discard the user's last edit.
-    if (saveTimer !== undefined) {
-      window.clearTimeout(saveTimer)
-      saveTimer = undefined
-      const tokenToFlush = getToken()
-      const payload = readLocalSnapshot()
-      if (tokenToFlush) {
-        saveChain = saveChain.then(async () => {
-          if (tokenToFlush !== getToken()) return undefined
-          const result = await api("/api/state", {
-            method: "PUT",
-            body: JSON.stringify({ payload, expected_updated_at: lastCloudRevision })
-          }) as { updated_at?: unknown }
-          if (tokenToFlush === getToken() && typeof result.updated_at === "string") lastCloudRevision = result.updated_at
-          return result
-        }).then(result => {
-          if (result !== undefined && tokenToFlush === getToken()) window.dispatchEvent(new CustomEvent("d1-persist-success"))
-        }).catch((error: unknown) => {
-          if (tokenToFlush === getToken()) {
-            const detail = error instanceof Error ? error.message : String(error)
-            window.dispatchEvent(new CustomEvent("d1-persist-error", { detail }))
-          }
-        })
-      }
-    }
-    // Wait for any write already in flight before logging out.
-    await saveChain
-    try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* clear local session even if network is unavailable */ }
-    setSessionToken("")
-    lastCloudRevision = null
-    if (saveTimer !== undefined) window.clearTimeout(saveTimer)
-    saveTimer = undefined
-    memorySnapshot = {}
-      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
+    try { await api("/api/auth/logout", { method: "POST", body: "{}" }) } catch { /* local session is still cleared */ }
+    setToken("")
     setUser(null)
-    setCloudReady(false)
-    setCloudError("")
-    setMessage("ออกจากระบบแล้ว")
+    setPassword("")
+    setMessage("")
   }
 
-  async function deleteAccount() {
-    // A pending save must not run after account deletion and recreate its snapshot.
-    if (saveTimer !== undefined) window.clearTimeout(saveTimer)
-    saveTimer = undefined
-    await saveChain
-    await api("/api/auth/account", { method: "DELETE" })
-    setSessionToken("")
-    lastCloudRevision = null
-    memorySnapshot = {}
-      try { window.localStorage.clear() } catch { /* best-effort cleanup of legacy browser data */ }
-    setUser(null)
-    setCloudReady(false)
-    setCloudError("")
-    setMessage("ลบบัญชีและข้อมูลทั้งหมดแล้ว")
-  }
+  if (checking) return <main className="auth-state" aria-live="polite">กำลังตรวจสอบเซสชัน…</main>
+  if (connectionError) return <main className="auth-state"><p>เชื่อมต่อระบบยืนยันตัวตนไม่ได้</p><p>{connectionError}</p><button type="button" onClick={() => window.location.reload()}>ลองอีกครั้ง</button></main>
+  if (user) return <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>
 
-  async function changePassword(currentPassword: string, newPassword: string) {
-    await api("/api/auth/password", { method: "POST", body: JSON.stringify({ currentPassword, newPassword }) })
-  }
-
-  async function reloadLatestSnapshot() {
-    if (!window.confirm("การโหลดข้อมูลล่าสุดจะแทนที่การแก้ไขที่ยังไม่ได้บันทึกในแท็บนี้ ต้องการดำเนินการต่อหรือไม่?")) return
-    if (saveTimer !== undefined) window.clearTimeout(saveTimer)
-    saveTimer = undefined
-    try {
-      await saveChain
-      const result = await api("/api/state") as { payload?: LocalSnapshot | null; updated_at?: string | null }
-      restoreSnapshot(result.payload && typeof result.payload === "object" ? result.payload : {})
-      lastCloudRevision = typeof result.updated_at === "string" ? result.updated_at : null
-      setCloudError("")
-      setCloudConflict(false)
-      window.dispatchEvent(new CustomEvent("d1-snapshot-reloaded"))
-      window.dispatchEvent(new CustomEvent("d1-persist-success"))
-    } catch (error) {
-      setCloudError("โหลดข้อมูลล่าสุดไม่สำเร็จ: " + (error instanceof Error ? error.message : String(error)))
-    }
-  }
-
-  if (checking) return <AuthExperience state="loading" title="กำลังตรวจสอบพื้นที่ของคุณ" detail="กำลังตรวจสอบเซสชันอย่างปลอดภัย" />
-  if (authCheckError) return <AuthExperience state="error" title="ตรวจสอบเซสชันไม่สำเร็จ" detail={authCheckError} onRetry={() => window.location.reload()} />
-  if (!user) return <main className="cc-auth-screen">
-    <section className="cc-auth-frame">
-      <div className="cc-auth-brand-panel">
-        <div className="cc-auth-brand"><span className="cc-auth-logo" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></span><strong className="cc-auth-brand-name">DayTogether<small>พื้นที่ส่วนตัว</small></strong></div>
-        <div className="cc-auth-editorial"><span className="cc-overline">A LITTLE SPACE FOR YOU</span><h1>Make room<br/><em>for what matters.</em></h1><p>พื้นที่เงียบ ๆ สำหรับสิ่งสำคัญของคุณ ในจังหวะที่เป็นตัวเอง</p></div>
-        <div className="cc-auth-index"><span><b>01</b> PRIVATE</span><span><b>02</b> PERSONAL</span><span><b>03</b> ALWAYS YOURS</span></div>
-        <div className="cc-auth-grid-art" aria-hidden="true"><i/><i/><i/><i/><i/><i/><i/><i/><i/></div><div className="cc-auth-orbit" aria-hidden="true"><span/><span/><span/></div>
-      </div>
-      <div className="cc-auth-form-side">
-        <div className="cc-auth-form-top"><span className="cc-overline">WELCOME BACK</span><span className="cc-auth-lock"><i/> PRIVATE ACCESS</span></div>
-        <div className="cc-auth-form-content"><div className="cc-auth-mini-mark" aria-hidden="true"><svg viewBox="0 0 40 40" focusable="false" fill="none"><path d="M12 23C7 16 12 8 20 10c7 1 11 8 7 14-3 6-11 8-15 3-4-5 0-12 6-12 4 0 7 2 10 5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><circle cx="30" cy="10" r="2.2" fill="#8DAF91"/></svg></div>
-          <h2>{authMode==="forgot"?"ลืมรหัสผ่าน?":"กลับมาดูแลเรื่องสำคัญของคุณ"}</h2><p className="cc-auth-intro">{authMode==="forgot"?"การรีเซ็ตรหัสผ่านผ่านอีเมลยังไม่ได้ตั้งค่าในระบบนี้":"เข้าสู่ระบบเพื่อเปิดพื้นที่ส่วนตัวและบันทึกของคุณ"}</p>
-          {authMode==="forgot" ? <div className="cc-auth-form"><p role="status" className="cc-auth-message">ยังไม่มีบริการส่งอีเมลรีเซ็ตรหัสผ่าน จึงไม่สามารถเปลี่ยนรหัสผ่านจากหน้านี้ได้</p><button type="button" className="cc-auth-submit" onClick={()=>{setAuthMode("signin");setMessage("")}}>กลับเข้าสู่ระบบ</button></div> : <form onSubmit={submit} className="cc-auth-form">
-            <label>อีเมล<input type="email" required autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} placeholder="อีเมลของคุณ" /></label>
-            <label>รหัสผ่าน<input type="password" required minLength={8} autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="กรอกรหัสผ่าน" /></label>
-            {message && <p role="status" className="cc-auth-message">{message}</p>}
-            <button disabled={busy} className="cc-auth-submit">{busy ? <><span className="cc-auth-button-spinner"/>กำลังตรวจสอบ…</> : <>เข้าสู่ระบบ<span aria-hidden="true">↗</span></>}</button>
-            <p className="cc-auth-private-note">พื้นที่ส่วนตัวสำหรับบัญชีที่ได้รับอนุญาตเท่านั้น</p><button type="button" className="cc-auth-forgot" onClick={() => { setAuthMode("forgot"); setMessage("") }}>ลืมรหัสผ่าน?</button>
-          </form>}
-        </div>
-        <div className="cc-auth-foot"><span><i/> SECURE SESSION</span><span>พื้นที่ส่วนตัวของคุณ</span></div>
-      </div>
-    </section>
+  return <main className="auth-page">
+    <form className="auth-form" onSubmit={signIn}>
+      <h1>DayTogether</h1>
+      <p>เข้าสู่ระบบพื้นที่ส่วนตัว</p>
+      <label htmlFor="auth-email">อีเมล</label>
+      <input id="auth-email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required />
+      <label htmlFor="auth-password">รหัสผ่าน</label>
+      <input id="auth-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />
+      {message && <p className="auth-error" role="alert">{message}</p>}
+      <button type="submit" disabled={busy}>{busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}</button>
+    </form>
   </main>
-  if (!cloudReady) return <AuthExperience state={cloudError ? "error" : "loading"} title={cloudError ? "ยังเชื่อมต่อไม่สำเร็จ" : "กำลังเตรียมพื้นที่ของคุณ"} detail={cloudError || "กำลังเชื่อมต่อพื้นที่จัดเก็บข้อมูลอย่างปลอดภัย"} onRetry={cloudError ? () => { void signOut() } : undefined} />
-  return <AuthAccountContext.Provider value={{ user, signOut, deleteAccount, changePassword }}>
-    {cloudError && <div role="alert" className="fixed bottom-4 left-4 right-4 z-[110] rounded-xl bg-red-50 p-3 text-sm text-red-800 shadow"><p>{cloudError}</p>{cloudConflict && <button type="button" className="mt-2 rounded-lg border border-red-300 px-3 py-2 font-semibold" onClick={() => void reloadLatestSnapshot()}>โหลดข้อมูลล่าสุดจาก Cloudflare</button>}</div>}
-    {children}
-  </AuthAccountContext.Provider>
 }
