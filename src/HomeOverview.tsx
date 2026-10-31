@@ -10,7 +10,7 @@ const array=(v:unknown):Raw[]=>Array.isArray(v)?v.filter((x):x is Raw=>!!x&&type
 const parse=(v?:string):unknown=>{try{return JSON.parse(v||"null")}catch{return null}}
 const str=(v:unknown)=>typeof v==="string"?v:""
 const day=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
-const dateLabel=(v:string)=>{if(!/^\\d{4}-\\d{2}-\\d{2}/.test(v))return "ไม่ระบุวัน";const d=new Date(v.slice(0,10)+"T12:00:00");return Number.isNaN(d.getTime())?"ไม่ระบุวัน":new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short"}).format(d)}
+const dateLabel=(v:string)=>{if(!/^\d{4}-\d{2}-\d{2}/.test(v))return "ไม่ระบุวัน";const d=new Date(v.slice(0,10)+"T12:00:00");return Number.isNaN(d.getTime())?"ไม่ระบุวัน":new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short"}).format(d)}
 function collect(payload:Record<string,string>):Item[]{
  const out:Item[]=[]
  const add=(category:keyof typeof labels,x:Raw,title:string,detail="")=>out.push({id:str(x.id)||category+"-"+out.length,title:title||"ไม่มีหัวข้อ",category:labels[category],date:str(x.date),detail})
