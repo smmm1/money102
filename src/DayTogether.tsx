@@ -285,6 +285,18 @@ export default function DayTogether() {
     setModal(m)
   }
   useEffect(() => {
+    if (!moreOpen) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const focusTarget = document.querySelector<HTMLElement>(".dt-more-sheet button");
+    focusTarget?.focus({ preventScroll: true });
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") setMoreOpen(false); };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      previous?.focus({ preventScroll: true });
+    };
+  }, [moreOpen]);
+  useEffect(() => {
     if (!modal) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const timer = window.setTimeout(() => {
@@ -567,8 +579,8 @@ export default function DayTogether() {
       <header className="dt-app-topbar"><div><span className="dt-app-breadcrumb">DayTogether / {PAGE_LABEL[page]||"รายละเอียด"}</span><h1>{pageTitle}</h1></div><button className="dt-mobile-brand" onClick={()=>go("/")}>DayTogether</button><Button variant="primary" onClick={()=>setQuickAddOpen(v=>!v)}>＋ เพิ่มบันทึก</Button></header>
       <div className="dt2-content">{pageBody()}</div>
     </main>
-    <nav className="dt-mobile-nav" aria-label="เมนูหลัก">{navItems.slice(0,4).map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{PAGE_LABEL[href]}</span></button>)}<button type="button" className={moreOpen||["/split","/bbq","/settings"].includes(page)?"active":""} aria-expanded={moreOpen} aria-controls="dt-more-sheet" onClick={()=>setMoreOpen(v=>!v)}><span>เพิ่มเติม</span></button></nav>
-    {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet" id="dt-more-sheet" aria-label="เมนูเพิ่มเติม"><div className="dt-sheet-handle"/><h3>เพิ่มเติม</h3>{["/split","/bbq","/settings"].map(href=><button type="button" key={href} className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>{page===href?"กำลังดูอยู่":"เปิด"}</b></button>)}</section></>}
+    <nav className="dt-mobile-nav" aria-label="เมนูหลัก">{navItems.slice(0,4).map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{PAGE_LABEL[href]}</span></button>)}<button type="button" className={moreOpen||["/split","/bbq","/settings"].includes(page)?"active":""} aria-expanded={moreOpen} aria-controls={moreOpen?"dt-more-sheet":undefined} onClick={()=>setMoreOpen(v=>!v)}><span>เพิ่มเติม</span></button></nav>
+    {moreOpen&&<><button className="dt-sheet-dismiss" aria-label="ปิดเมนูเพิ่มเติม" onClick={()=>setMoreOpen(false)}/><section className="dt-more-sheet" id="dt-more-sheet" role="dialog" aria-modal="true" aria-labelledby="dt-more-sheet-title"><div className="dt-sheet-handle"/><h3 id="dt-more-sheet-title">เพิ่มเติม</h3>{["/split","/bbq","/settings"].map(href=><button type="button" key={href} className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{ICON[href]}</span>{PAGE_LABEL[href]}<b>{page===href?"กำลังดูอยู่":"เปิด"}</b></button>)}</section></>}
     {quickAddOpen&&<><button className="dt-sheet-dismiss" style={{display:"block",position:"fixed",inset:0,background:"transparent",zIndex:20}} aria-label="ปิดเมนูเพิ่มรายการ" onClick={()=>setQuickAddOpen(false)}/><section className="dt-quick-add-menu" aria-label="เลือกประเภทข้อมูลที่จะเพิ่ม"><div className="dt-sheet-handle"/><h3>เพิ่มบันทึก</h3><p>เลือกหมวดที่ต้องการ</p><button onClick={()=>{setQuickAddOpen(false);openModal("saving")}}><span>＋</span><span><strong>ออมเงิน</strong><small>ฝากหรือถอน</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("health")}}><span>＋</span><span><strong>สุขภาพ</strong><small>น้ำหนัก น้ำดื่ม การนอน</small></span></button><button onClick={()=>{setQuickAddOpen(false);startNote()}}><span>＋</span><span><strong>โน้ต</strong><small>ความคิดและไดอารี</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("bill")}}><span>＋</span><span><strong>หารค่าใช้จ่าย</strong><small>แบ่งบิล</small></span></button><button onClick={()=>{setQuickAddOpen(false);openModal("visit")}}><span>＋</span><span><strong>มื้ออาหาร</strong><small>ร้านและความทรงจำ</small></span></button></section></>}
     {renderModal()}
     {notice&&<div className="dt-toast" role="status"><span aria-hidden="true">✓</span><span>{notice}</span>{undoAction&&<button type="button" onClick={()=>{undoAction();setUndoAction(null);setNotice("เลิกทำสำเร็จ")}} aria-label="เลิกทำการลบ">เลิกทำ</button>}<button onClick={()=>{setNotice("");setUndoAction(null)}} aria-label="ปิด">×</button></div>}
