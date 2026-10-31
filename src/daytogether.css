@@ -632,3 +632,19 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 @media(prefers-reduced-motion:reduce){
  .dt-app-layout *, .dt-app-layout *::before, .dt-app-layout *::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+
+/* Simple bill split: one total, one people counter, instant result */
+.dt-simple-bill-form{display:grid;gap:18px}
+.dt-simple-bill-form>.dt-field>input{min-height:58px;font-size:24px;font-weight:750;letter-spacing:-.03em}
+.dt-bill-count-control{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.dt-bill-count-control>span{font-size:15px;font-weight:700}
+.dt-bill-count-stepper{display:flex;align-items:center;gap:18px}
+.dt-bill-count-stepper button{display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--page-line,var(--line));border-radius:12px;background:var(--page-soft,#f7f8f5);color:var(--page-deep,var(--text));font-size:24px;font-weight:600}
+.dt-bill-count-stepper button:disabled{opacity:.35}
+.dt-bill-count-stepper strong{min-width:30px;text-align:center;font-size:22px;font-variant-numeric:tabular-nums}
+.dt-bill-simple-result{display:grid;gap:6px;padding:22px;border:1px solid var(--page-line,var(--line));border-radius:16px;background:var(--page-soft,#f7f8f5);text-align:center}
+.dt-bill-simple-result>span{color:var(--muted);font-size:13px;font-weight:650}
+.dt-bill-simple-result>strong{color:var(--page-deep,var(--text));font-size:clamp(32px,7vw,42px);font-weight:800;letter-spacing:-.045em;overflow-wrap:anywhere}
+.dt-bill-simple-result>small{color:var(--muted);font-size:12px}
+@media(max-width:480px){.dt-simple-bill-form{gap:15px}.dt-bill-count-control{padding:12px 0}.dt-bill-count-stepper{gap:14px}.dt-bill-count-stepper button{width:46px;height:46px}}
