@@ -537,7 +537,7 @@ export default function DayTogether() {
   return <div className="dt2-shell dt-app-layout" data-page={page}>
     <header className="dt-floating-header">
       <div className="dt-floating-topline">
-        <button className="dt2-brand dt-floating-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
+        <button className="dt2-brand dt-floating-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol" aria-hidden="true">D</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
         <div className="dt-floating-tools">
           <span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span>
           <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"◉":"◌"}</button>
@@ -550,7 +550,7 @@ export default function DayTogether() {
     </header>
     <aside className="dt-app-sidebar" aria-hidden="true" />
     <main className="dt2-main">
-      <header className="dt-app-topbar"><div><span className="dt-app-breadcrumb">DayTogether / {PAGE_LABEL[page]||"รายละเอียด"}</span><h1>{pageTitle}</h1></div><button className="dt-mobile-brand" onClick={()=>go("/")}>DayTogether</button><Button variant="primary" onClick={()=>setQuickAddOpen(v=>!v)}>＋ เพิ่มบันทึก</Button></header>
+      <header className="dt-app-topbar"><div><span className="dt-app-breadcrumb">DayTogether / {PAGE_LABEL[page]||"รายละเอียด"}</span><h1>{pageTitle}</h1><p className="dt-page-lead">{({"/":"บันทึกเรื่องราวและดูภาพรวมของแต่ละวัน","/savings":"ติดตามยอดออม เป้าหมาย และรายการฝากถอน","/health":"เก็บข้อมูลสุขภาพและติดตามแนวโน้มของตัวเอง","/notes":"พื้นที่เขียนความคิด ไดอารี และเรื่องที่อยากจำ","/split":"คำนวณและจัดการค่าใช้จ่ายร่วมกัน","/bbq":"เก็บประวัติร้าน มื้ออาหาร และความทรงจำ","/settings":"จัดการการแสดงผลและข้อมูลส่วนตัว"} as Record<string,string>)[page]||"รายละเอียดข้อมูลที่บันทึกไว้"}</p></div><button className="dt-mobile-brand" onClick={()=>go("/")}>DayTogether</button><Button variant="primary" onClick={()=>setQuickAddOpen(v=>!v)}>＋ เพิ่มบันทึก</Button></header>
       <div className="dt2-content">{pageBody()}</div>
     </main>
     <nav className="dt-mobile-nav" aria-label="เมนูหลัก">{navItems.slice(0,4).map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span>{PAGE_LABEL[href]}</span></button>)}<button type="button" className={moreOpen||["/split","/bbq","/settings"].includes(page)?"active":""} aria-expanded={moreOpen} aria-controls={moreOpen?"dt-more-sheet":undefined} onClick={()=>setMoreOpen(v=>!v)}><span>เพิ่มเติม</span></button></nav>
