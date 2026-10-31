@@ -1948,3 +1948,11 @@ body,.dt2-shell,.dt2-shell *{font-family:Inter,"Noto Sans Thai","IBM Plex Sans T
  .dt-page-stage .dt-page-body>.dt-home-intro{align-items:flex-start;flex-direction:column;gap:16px;padding:6px 0 20px}
  .dt-page-stage[data-layout="/health"] .dt-page-body>.dt-section:nth-of-type(1) .dt-health-kind-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Correct section order after the ledger summary */
+.dt-page-stage[data-layout="/savings"] .dt-page-body>.dt-section:nth-of-type(2){grid-column:span 7}
+.dt-page-stage[data-layout="/savings"] .dt-page-body>.dt-section:nth-of-type(3){grid-column:span 5}
+@media(max-width:980px){
+ .dt-page-stage[data-layout="/savings"] .dt-page-body>.dt-section:nth-of-type(2),
+ .dt-page-stage[data-layout="/savings"] .dt-page-body>.dt-section:nth-of-type(3){grid-column:1/-1}
+}
