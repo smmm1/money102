@@ -398,3 +398,38 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
  .dt-home-metrics button:nth-child(2n){border-right:0}
  .dt-home-section-title h3{font-size:15px}
 }
+
+
+/* DayTogether: reduce cognitive load with progressive disclosure */
+.dt-note-filters{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:0 0 18px}
+.dt-note-filters>input{max-width:100%}
+.dt-advanced-filters{border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff);padding:0 13px}
+.dt-advanced-filters summary{padding:11px 0;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;list-style:none}
+.dt-advanced-filters summary::-webkit-details-marker{display:none}
+.dt-advanced-filters summary:after{content:"＋";float:right}
+.dt-advanced-filters[open] summary:after{content:"−"}
+.dt-advanced-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 0 13px}
+.dt-simple-summary{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 24px;border:1px solid var(--line);border-radius:16px;background:var(--surface,#fff)}
+.dt-simple-summary>div:first-child{display:grid;gap:5px;min-width:0}
+.dt-simple-summary span{color:var(--muted);font-size:12px;font-weight:700}
+.dt-simple-summary strong{font-size:clamp(25px,4vw,36px);font-weight:800;letter-spacing:-.05em;overflow-wrap:anywhere}
+.dt-simple-summary small{color:var(--muted);font-size:11px}
+.dt-simple-summary-compact{padding:16px 20px}
+.dt-simple-summary-compact strong{font-size:24px}
+@media(max-width:700px){.dt-advanced-filter-grid{grid-template-columns:1fr 1fr}.dt-simple-summary{align-items:flex-start;flex-direction:column}.dt-simple-summary-actions{width:100%}.dt-simple-summary-actions .dt-btn{width:100%}}
+
+
+.dt-health-summary{display:grid;grid-template-columns:1fr auto;align-items:center}
+.dt-health-summary-secondary{min-width:150px;padding-left:22px;border-left:1px solid var(--line)}
+.dt-health-summary-secondary strong{font-size:21px}
+@media(max-width:700px){.dt-health-summary{display:grid;grid-template-columns:1fr 1fr;flex-direction:row}.dt-health-summary-secondary{padding-left:14px}}
+
+
+/* Compact primary search with optional secondary filter */
+.dt-home-hint{margin:0;color:var(--muted);font-size:12px}
+.dt-simple-toolbar{display:flex;align-items:flex-start;gap:10px}
+.dt-simple-toolbar>input{flex:1;min-width:0}
+.dt-simple-toolbar .dt-advanced-filters{width:auto;min-width:112px;flex:0 0 auto}
+.dt-simple-toolbar .dt-advanced-filters summary{white-space:nowrap}
+.dt-simple-toolbar .dt-advanced-filter-grid{grid-template-columns:minmax(0,1fr);min-width:180px}
+@media(max-width:700px){.dt-simple-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto}.dt-simple-toolbar .dt-advanced-filters{min-width:100px}.dt-simple-toolbar .dt-advanced-filter-grid{min-width:0}}
