@@ -536,8 +536,10 @@ export default function DayTogether() {
   return <div className="dt2-shell dt-app-layout" data-page={page}>
     <aside className="dt-app-sidebar">
       <button className="dt2-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
-      <span className="dt-sidebar-label">เมนูหลัก</span>
-      <nav className="dt2-nav" aria-label="พื้นที่ของฉัน">{[...navItems,"/settings"].map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt2-nav-orb" aria-hidden="true">{ICON[href]}</span><span className="dt2-nav-text">{PAGE_LABEL[href]}</span></button>)}</nav>
+      <nav className="dt2-nav" aria-label="พื้นที่ของฉัน">
+        <div className="dt-sidebar-group"><span className="dt-sidebar-label">พื้นที่ของฉัน</span>{navItems.map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt2-nav-orb" aria-hidden="true">{ICON[href]}</span><span className="dt2-nav-text">{PAGE_LABEL[href]}</span></button>)}</div>
+        <div className="dt-sidebar-group dt-sidebar-secondary"><span className="dt-sidebar-label">การจัดการ</span><button type="button" className={page==="/settings"?"active":""} aria-current={page==="/settings"?"page":undefined} onClick={()=>go("/settings")}><span className="dt2-nav-orb" aria-hidden="true">{ICON["/settings"]}</span><span className="dt2-nav-text">ตั้งค่า</span></button></div>
+      </nav>
       <div className="dt-sidebar-bottom"><span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span><button className={hidden?"dt2-privacy active":"dt2-privacy"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}</button><AccountMenu/></div>
     </aside>
     <main className="dt2-main">
