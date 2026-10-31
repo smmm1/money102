@@ -648,3 +648,86 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .dt-bill-simple-result>strong{color:var(--page-deep,var(--text));font-size:clamp(32px,7vw,42px);font-weight:800;letter-spacing:-.045em;overflow-wrap:anywhere}
 .dt-bill-simple-result>small{color:var(--muted);font-size:12px}
 @media(max-width:480px){.dt-simple-bill-form{gap:15px}.dt-bill-count-control{padding:12px 0}.dt-bill-count-stepper{gap:14px}.dt-bill-count-stepper button{width:46px;height:46px}}
+
+
+/* Minimal calm dashboard + navigation refresh */
+.dt2-shell.dt-app-layout{background:#fafbf9;color:#252b25}
+.dt-app-layout .dt-app-sidebar{width:100%;padding:24px 14px 18px;background:#fff;border-right:1px solid #edf0eb}
+.dt-app-layout .dt-app-sidebar .dt2-brand{padding:3px 8px 22px;border-bottom:1px solid #f0f2ee}
+.dt-app-layout .dt2-brand-symbol{width:36px;height:36px;border-radius:11px;background:#eaf1e9;color:#49664d;font-size:18px;transform:none;box-shadow:none}
+.dt-app-layout .dt2-brand-copy strong{font-size:15px;font-weight:700;letter-spacing:-.035em}
+.dt-app-layout .dt2-brand-copy small{font:10px 'Noto Sans Thai',sans-serif;letter-spacing:0;color:#969d94}
+.dt-app-layout .dt-sidebar-label{margin:24px 10px 9px;color:#a0a69e;font-size:9px;letter-spacing:.08em}
+.dt-app-layout .dt-app-sidebar .dt2-nav{gap:5px}
+.dt-app-layout .dt-app-sidebar .dt2-nav button{display:flex;align-items:center;gap:11px;min-height:39px;padding:0 9px;border-radius:9px;color:#777f75;font-size:12px;font-weight:500;transition:background .16s,color .16s}
+.dt-app-layout .dt-app-sidebar .dt2-nav button:hover{background:#f7f9f6;color:#435d47}
+.dt-app-layout .dt-app-sidebar .dt2-nav button.active{background:#f0f4ef;color:#3f6046;font-weight:650}
+.dt-app-layout .dt2-nav-orb{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border:0;border-radius:8px;background:transparent;color:#929b90;font-size:16px;box-shadow:none}
+.dt-app-layout .dt2-nav button.active .dt2-nav-orb{background:#e1ebdf;color:#49684d;box-shadow:none;transform:none}
+.dt-app-layout .dt2-nav-text{font-size:12px;font-weight:inherit;white-space:nowrap}
+.dt-app-layout .dt-sidebar-bottom{gap:8px;padding:14px 7px 0;border-top:1px solid #f0f2ee}
+.dt-app-layout .dt-sidebar-bottom .dt2-privacy{font-size:11px;color:#7c857a}
+.dt-app-layout .dt-sidebar-bottom .cc-account-trigger{width:34px;height:34px;background:#f4f6f2;border-color:#e8ece6;color:#596b58}
+.dt-app-layout>.dt2-main{max-width:1320px;padding:36px clamp(26px,4.5vw,68px) 84px}
+.dt-app-layout .dt-app-topbar{margin-bottom:28px;padding-bottom:18px;border-color:#edf0eb}
+.dt-app-layout .dt-app-breadcrumb{color:#a0a69e;font-size:10px}
+.dt-app-layout .dt-app-topbar h1{font-size:clamp(25px,2.8vw,33px);font-weight:600;letter-spacing:-.045em}
+.dt-app-layout .dt-btn-primary{min-height:38px;padding:0 14px;border:1px solid #e4ebe2;border-radius:9px;background:#eef4ed;color:#49634c;font-size:11px;font-weight:650;box-shadow:none}
+.dt-app-layout .dt-btn-primary:hover{background:#e5eee3;transform:translateY(-1px)}
+.dt-home-layout{gap:28px}
+.dt-home-intro{align-items:flex-end;padding:2px 0 20px}
+.dt-home-intro h2{font-size:clamp(22px,2.4vw,29px);font-weight:600;letter-spacing:-.045em;color:#30382f}
+.dt-home-intro p{color:#899187;font-size:11px}
+.dt-home-intro .dt-home-date{color:#8b9b86;font-size:10px}
+.dt-home-overview,.dt-home-recent{max-width:100%}
+.dt-home-section-title{margin-bottom:12px;padding-bottom:9px;border-color:#edf0eb}
+.dt-home-section-title h3{font-size:14px;font-weight:650;color:#394239}
+.dt-home-section-title>span{font-size:10px;color:#a0a69e}
+.dt-home-metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;border:0;border-radius:0;background:transparent;overflow:visible}
+.dt-home-metrics button{position:relative;gap:6px;min-height:126px;padding:16px 17px;border:1px solid #edf0eb!important;border-radius:12px;background:#fff!important;transition:border-color .16s,transform .16s}
+.dt-home-metrics button:hover{border-color:#d8e3d5!important;background:#fff!important;transform:translateY(-2px)}
+.dt-home-metrics button .dt-home-metric-icon{display:grid;place-items:center;width:28px;height:28px;margin-bottom:5px;border-radius:8px;background:#f0f4ef;color:#668068;font-size:15px}
+.dt-home-metrics button small{color:#929b90;font-size:10px}
+.dt-home-metrics button strong{font-size:clamp(16px,1.6vw,21px);font-weight:650;color:#303a30;letter-spacing:-.035em}
+.dt-home-metrics button>span:last-child{display:flex;align-items:center;gap:5px;color:#82917e;font-size:10px}
+.dt-home-metrics button>span:last-child b{font-weight:500}
+.dt-home-recent .dt-recent-list{border-top:1px solid #f0f2ee}
+.dt-home-recent .dt-recent{gap:12px;padding:13px 5px;border-bottom:1px solid #f0f2ee}
+.dt-home-recent .dt-recent:hover{padding-left:9px;background:#fbfcfa}
+.dt-home-recent .dt-recent-mark{flex-basis:28px;width:28px;height:28px;border-radius:8px;background:#f2f5f0;color:#82917e;font-size:10px}
+.dt-home-recent .dt-recent strong{font-size:12px;font-weight:600}
+.dt-home-recent .dt-recent small{font-size:10px;color:#929b90}
+.dt-home-recent .dt-recent>b{font-size:13px;color:#a0ad9c}
+@media(max-width:900px){
+ .dt-app-layout{grid-template-columns:174px minmax(0,1fr)}
+ .dt-app-layout .dt-app-sidebar{padding:20px 10px 16px}
+ .dt-app-layout>.dt2-main{padding:28px 22px 76px}
+ .dt-app-layout .dt-home-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:680px){
+ .dt-app-layout{display:block;min-height:100vh;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+ .dt-app-layout .dt-app-sidebar{display:none}
+ .dt-app-layout>.dt2-main{padding:18px 17px 36px}
+ .dt-app-layout .dt-app-topbar{gap:10px;margin-bottom:20px;padding-bottom:13px}
+ .dt-app-layout .dt-app-topbar h1{font-size:23px}
+ .dt-app-layout .dt-app-breadcrumb{font-size:9px;margin-bottom:4px}
+ .dt-app-layout .dt-app-topbar>.dt-btn{min-height:35px;padding:0 10px;font-size:10px;white-space:nowrap}
+ .dt-app-layout .dt-mobile-nav{position:fixed;z-index:30;right:12px;bottom:calc(9px + env(safe-area-inset-bottom));left:12px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;padding:6px;border:1px solid #e9ede7;border-radius:14px;background:rgba(255,255,255,.94);box-shadow:0 8px 28px rgba(37,49,36,.08);backdrop-filter:blur(16px)}
+ .dt-app-layout .dt-mobile-nav button{display:grid;place-items:center;min-width:0;min-height:42px;padding:4px 2px;border:0;border-radius:9px;background:transparent;color:#899287;font-size:10px;font-weight:500}
+ .dt-app-layout .dt-mobile-nav button.active{background:#edf3eb;color:#49664d;font-weight:650}
+ .dt-app-layout .dt-mobile-nav button:focus-visible{outline:2px solid #8da58a!important;outline-offset:1px}
+ .dt-app-layout .dt-home-layout{gap:22px}
+ .dt-app-layout .dt-home-intro{align-items:flex-start;gap:12px;padding:0 0 14px}
+ .dt-app-layout .dt-home-intro h2{font-size:21px}
+ .dt-app-layout .dt-home-intro p{font-size:10px;line-height:1.6}
+ .dt-app-layout .dt-home-intro .dt-btn{flex:0 0 auto}
+ .dt-app-layout .dt-home-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .dt-app-layout .dt-home-metrics button{min-height:116px;padding:13px}
+ .dt-app-layout .dt-home-metrics button strong{font-size:16px}
+ .dt-app-layout .dt-home-section-title h3{font-size:13px}
+ .dt-app-layout .dt-home-recent .dt-recent{padding:11px 2px}
+}
+@media(max-width:390px){
+ .dt-app-layout .dt-home-metrics{grid-template-columns:1fr}
+ .dt-app-layout .dt-home-metrics button{min-height:98px}
+}
