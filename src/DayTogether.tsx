@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "re
 import "./daytogether.css"
 import { AccountMenu, useAccount } from "./CloudAuth"
 import { createCloudSnapshotAdapter } from "./daytogether-data-adapter"
-import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillAdjustmentSummary, calculateBillSplit, calculateDraftBillSplitPreview, parseMoneyToSatang, parsePercentageBasisPoints, type BillAdjustments } from "./daytogether-calculations.mjs"
+import { calculateSleepDuration, calculateExpenseResponsibility, summarizeBbqPersonalCosts, buildDailyTrend, formatDateInTimezone, calculateBillSplit, parseMoneyToSatang, type BillAdjustments } from "./daytogether-calculations.mjs"
 
 type Goal = { id: string; name: string; targetSatang: number; due?: string; status: "active" | "done" | "archived"; color: string }
 type Saving = { id: string; kind: "deposit" | "withdraw"; amountSatang: number; date: string; goalId: string; note: string }
@@ -13,7 +13,6 @@ type Participant = { id: string; name: string; isMe: boolean }
 type Expense = { id: string; title: string; amountSatang: number; payerId: string; payers?: { participantId: string; amountSatang: number }[]; participantIds: string[]; allocationMode?: "equal" | "fixed" | "percentage"; allocations?: Record<string, number> }
 type Settlement = { id: string; fromId: string; toId: string; amountSatang: number; date: string; note: string }
 type Bill = { id: string; title: string; date: string; restaurant: string; participants: Participant[]; expenses: Expense[]; settlements: Settlement[]; note: string; bbqId: string; status: "draft" | "settling" | "settled"; adjustments?: BillAdjustments }
-type BillExpenseDraft = { key: string; title: string; amount: string; payerName: string; multiplePayers: boolean; payerAmounts: Record<string, string>; participantNames: string[] | null; allocationMode: "equal" | "fixed" | "percentage"; allocations: Record<string, string> }
 type Visit = { id: string; restaurant: string; title: string; date: string; area: string; friends: string; people: number; totalSatang: number | null; personalSatang: number | null; rating: number | null; menu: string; memory: string; billId: string }
 type Settings = { displayName: string; timezone: string; theme: "light" | "dark" | "system"; hidden: boolean; cards: string[]; healthKinds: HealthKind[]; waterGoal: number; heightCm: number | null }
 type State = { goals: Goal[]; savings: Saving[]; health: Health[]; notes: Note[]; bills: Bill[]; visits: Visit[]; settings: Settings }
