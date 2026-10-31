@@ -811,3 +811,88 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 @media(max-width:680px){
  .dt-app-layout .dt-app-sidebar{display:none}
 }
+
+
+/* Sidebar redesign — compact, quiet, editorial navigation */
+.dt-app-layout{grid-template-columns:216px minmax(0,1fr)}
+.dt-app-layout .dt-app-sidebar{
+ position:sticky;top:0;display:flex;flex-direction:column;align-self:start;
+ width:216px;height:100dvh;min-height:620px;padding:25px 15px 16px;
+ background:#fff;border-right:1px solid #edf0eb;box-shadow:3px 0 18px rgba(45,58,43,.018)
+}
+.dt-app-layout .dt-app-sidebar .dt2-brand{
+ display:flex;align-items:center;justify-content:flex-start;gap:11px;width:100%;
+ padding:4px 8px 23px;border:0;border-bottom:1px solid #f0f2ee;
+ background:transparent;text-align:left
+}
+.dt-app-layout .dt-app-sidebar .dt2-brand-symbol{
+ display:grid;place-items:center;flex:0 0 35px;width:35px;height:35px;
+ border:1px solid #e3ebe1;border-radius:11px;background:#f0f5ef;
+ color:#567257;font:600 19px Georgia,serif;box-shadow:none
+}
+.dt-app-layout .dt-app-sidebar .dt2-brand-copy{display:grid;gap:3px;min-width:0}
+.dt-app-layout .dt-app-sidebar .dt2-brand-copy strong{color:#303a30;font-size:14px;font-weight:650;letter-spacing:-.045em}
+.dt-app-layout .dt-app-sidebar .dt2-brand-copy small{color:#a0a79d;font-size:9px;font-weight:400;letter-spacing:0}
+.dt-app-layout .dt-app-sidebar .dt2-nav{
+ display:flex;flex-direction:column;align-items:stretch;gap:23px;
+ flex:1;min-height:0;margin:0;padding:25px 0 20px;overflow-y:auto
+}
+.dt-app-layout .dt-sidebar-group{display:grid;gap:4px}
+.dt-app-layout .dt-sidebar-label{
+ margin:0 0 7px;padding:0 10px;color:#a6ada3;
+ font-size:9px;font-weight:600;letter-spacing:.07em
+}
+.dt-app-layout .dt-app-sidebar .dt2-nav button{
+ position:relative;display:flex;align-items:center;justify-content:flex-start;gap:10px;
+ width:100%;min-height:39px;padding:0 10px;border:0;border-radius:9px;
+ background:transparent;color:#81897e;text-align:left;font-size:11px;font-weight:500;
+ transition:background .16s ease,color .16s ease
+}
+.dt-app-layout .dt-app-sidebar .dt2-nav button:before{
+ position:absolute;left:0;top:9px;bottom:9px;width:2px;border-radius:3px;
+ background:transparent;content:"";transition:background .16s ease
+}
+.dt-app-layout .dt-app-sidebar .dt2-nav button:hover{background:#f8faf7;color:#526a52;transform:none}
+.dt-app-layout .dt-app-sidebar .dt2-nav button.active{
+ background:#f2f6f1;color:#466348;font-weight:650
+}
+.dt-app-layout .dt-app-sidebar .dt2-nav button.active:before{background:#829b7e}
+.dt-app-layout .dt-app-sidebar .dt2-nav-orb{
+ display:grid;place-items:center;flex:0 0 25px;width:25px;height:25px;
+ border:0;border-radius:7px;background:transparent;color:#929c90;
+ font-size:15px;line-height:1;box-shadow:none
+}
+.dt-app-layout .dt-app-sidebar .dt2-nav button.active .dt2-nav-orb{
+ background:#e5eee2;color:#557456;box-shadow:none;transform:none
+}
+.dt-app-layout .dt-app-sidebar .dt2-nav-text{
+ color:inherit;font-size:11px;font-weight:inherit;letter-spacing:0;white-space:nowrap
+}
+.dt-app-layout .dt-app-sidebar .dt-sidebar-secondary{padding-top:16px;border-top:1px solid #f0f2ee}
+.dt-app-layout .dt-app-sidebar .dt-sidebar-bottom{
+ display:grid;grid-template-columns:1fr auto;align-items:center;gap:9px;
+ margin:0;padding:14px 5px 2px;border-top:1px solid #f0f2ee
+}
+.dt-app-layout .dt-app-sidebar .dt-save-status{
+ grid-column:1/-1;display:flex;align-items:center;gap:7px;
+ color:#929c90;font-size:9px
+}
+.dt-app-layout .dt-app-sidebar .dt-save-status i{width:6px;height:6px;border-radius:50%;background:#91ad8b}
+.dt-app-layout .dt-app-sidebar .dt2-privacy{
+ justify-content:flex-start;width:auto;min-height:32px;padding:0 8px;
+ border:0;border-radius:7px;background:transparent;color:#858e82;font-size:10px
+}
+.dt-app-layout .dt-app-sidebar .dt2-privacy:hover{background:#f6f8f5;color:#536c52}
+.dt-app-layout .dt-app-sidebar .cc-account-trigger{
+ width:31px;height:31px;border:1px solid #e9eee7;border-radius:9px;
+ background:#f7f9f6;color:#647560;font-size:10px;box-shadow:none
+}
+@media(max-width:900px) and (min-width:681px){
+ .dt-app-layout{grid-template-columns:190px minmax(0,1fr)}
+ .dt-app-layout .dt-app-sidebar{width:190px;padding:21px 11px 14px}
+ .dt-app-layout .dt-app-sidebar .dt2-nav{gap:18px}
+}
+@media(max-width:680px){
+ .dt-app-layout{display:block}
+ .dt-app-layout .dt-app-sidebar{display:none}
+}
