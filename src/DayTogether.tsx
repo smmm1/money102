@@ -581,6 +581,7 @@ export default function DayTogether() {
     {renderModal()}
     {notice&&<div className="dt-toast" role="status"><span aria-hidden="true">✓</span><span>{notice}</span>{undoAction&&<button type="button" onClick={()=>{undoAction();setUndoAction(null);setNotice("เลิกทำสำเร็จ")}} aria-label="เลิกทำการลบ">เลิกทำ</button>}<button onClick={()=>{setNotice("");setUndoAction(null)}} aria-label="ปิด">×</button></div>}
   </div>
+}
 
 function BillDetail({bill,hidden,timezone,onBack,onEdit,onDelete,onSaveSettlement,onLinkVisit,onCancelSettlement}:{bill:Bill;hidden:boolean;timezone:string;onBack:()=>void;onEdit:()=>void;onDelete:()=>void;onSaveSettlement:(from:string,to:string,amount:number,note:string)=>boolean;onLinkVisit:()=>void;onCancelSettlement:(id:string)=>void}) {
   const [from,setFrom]=useState("");const [to,setTo]=useState("");const [amount,setAmount]=useState("");const [note,setNote]=useState("");const [amountError,setAmountError]=useState("")
