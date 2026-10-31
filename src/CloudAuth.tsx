@@ -1,7 +1,14 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from "react"
 import "./auth.css"
 
 type AppUser = { id: string; email: string }
+type AuthContextValue = { user: AppUser; signOut: () => Promise<void> }
+const AuthContext = createContext<AuthContextValue | null>(null)
+export function useAuth() {
+  const value = useContext(AuthContext)
+  if (!value) throw new Error("useAuth must be used inside CloudAuth")
+  return value
+}
 const TOKEN_KEY = "money102_auth_token"
 const API_URL = (import.meta.env.VITE_CLOUDFLARE_API_URL as string | undefined || "https://money102-api.s2mtha16.workers.dev").replace(/\/$/, "")
 
@@ -12,13 +19,17 @@ function setToken(token: string) {
   else window.sessionStorage.removeItem(TOKEN_KEY)
 }
 
-async function api(path: string, init: RequestInit = {}) {
+export async function api(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers)
   if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`)
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
   const response = await fetch(`${API_URL}${path}`, { ...init, headers, cache: "no-store" })
   const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; user?: AppUser; token?: string }
   if (!response.ok) {
+    if (response.status === 401) {
+      setToken("")
+      window.dispatchEvent(new Event("money102:unauthorized"))
+    }
     const error = new Error([body.error, body.detail].filter(Boolean).join(": ") || `Request failed (${response.status})`)
     Object.assign(error, { status: response.status })
     throw error
@@ -26,7 +37,7 @@ async function api(path: string, init: RequestInit = {}) {
   return body
 }
 
-export default function CloudAuth() {
+export default function CloudAuth({ children }: { children?: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null)
   const [checking, setChecking] = useState(Boolean(sessionToken))
   const [email, setEmail] = useState("")
@@ -34,6 +45,12 @@ export default function CloudAuth() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [connectionError, setConnectionError] = useState("")
+
+  useEffect(() => {
+    const onUnauthorized = () => { setUser(null); setChecking(false) }
+    window.addEventListener("money102:unauthorized", onUnauthorized)
+    return () => window.removeEventListener("money102:unauthorized", onUnauthorized)
+  }, [])
 
   useEffect(() => {
     if (!sessionToken) { setChecking(false); return }
@@ -78,20 +95,32 @@ export default function CloudAuth() {
     setMessage("")
   }
 
-  if (checking) return <main className="auth-state" aria-live="polite">กำลังตรวจสอบเซสชัน…</main>
+  if (checking) return <main className="auth-state" aria-live="polite"><span className="auth-loading-mark" /><p>กำลังเตรียมพื้นที่ส่วนตัว…</p></main>
   if (connectionError) return <main className="auth-state"><p>เชื่อมต่อระบบยืนยันตัวตนไม่ได้</p><p>{connectionError}</p><button type="button" onClick={() => window.location.reload()}>ลองอีกครั้ง</button></main>
-  if (user) return <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>
+  if (user) return <AuthContext.Provider value={{ user, signOut }}>{children ?? <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>}</AuthContext.Provider>
 
   return <main className="auth-page">
-    <form className="auth-form" onSubmit={signIn}>
-      <h1>DayTogether</h1>
-      <p>เข้าสู่ระบบพื้นที่ส่วนตัว</p>
-      <label htmlFor="auth-email">อีเมล</label>
-      <input id="auth-email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required />
-      <label htmlFor="auth-password">รหัสผ่าน</label>
-      <input id="auth-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required />
-      {message && <p className="auth-error" role="alert">{message}</p>}
-      <button type="submit" disabled={busy}>{busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}</button>
-    </form>
+    <section className="auth-story">
+      <div className="auth-story-brand"><span className="auth-story-mark"><i /></span><span><strong>daytogether</strong><small>your life, gently kept</small></span></div>
+      <div className="auth-story-copy">
+        <span className="auth-kicker">A LITTLE SPACE FOR YOUR EVERYDAY</span>
+        <h2>ค่อย ๆ ใช้ชีวิต<br /><em>ในจังหวะของเรา</em></h2>
+        <p>พื้นที่ส่วนตัวสำหรับเก็บเรื่องราว ดูแลตัวเอง และจัดระเบียบสิ่งต่าง ๆ ในแบบที่เป็นคุณ</p>
+      </div>
+      <div className="auth-story-foot">YOUR PERSONAL SPACE · EVERY DAY, TOGETHER</div>
+    </section>
+    <section className="auth-form-wrap">
+      <form className="auth-form" onSubmit={signIn}>
+        <span className="auth-kicker">WELCOME BACK</span>
+        <h1>ยินดีต้อนรับกลับมา</h1>
+        <p>เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ</p>
+        <label htmlFor="auth-email">อีเมล</label>
+        <input id="auth-email" type="email" autoComplete="username" placeholder="name@example.com" value={email} onChange={event => setEmail(event.target.value)} required />
+        <label htmlFor="auth-password">รหัสผ่าน</label>
+        <input id="auth-password" type="password" autoComplete="current-password" placeholder="กรอกรหัสผ่านของคุณ" value={password} onChange={event => setPassword(event.target.value)} required />
+        {message && <p className="auth-error" role="alert">{message}</p>}
+        <button type="submit" disabled={busy}>{busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}</button>
+      </form>
+    </section>
   </main>
 }
