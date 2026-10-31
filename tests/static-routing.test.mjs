@@ -130,3 +130,27 @@ test("Archive aggregates every DayTogether module with search, date filters, cal
   assert.match(archive, /setSelectedDate/);
   assert.doesNotMatch(archive, /localStorage|sessionStorage|saveDayState/);
 });
+
+const homeOverview = await readFile(new URL("../src/HomeOverview.tsx", import.meta.url), "utf8");
+test("Phase 7 home overview reads all module records from authenticated D1 state", () => {
+  assert.match(shell, /import HomeOverview from ["']\.\/HomeOverview["']/);
+  assert.match(shell, /<HomeOverview onOpen=/);
+  for (const key of ["lamoon-daily-log-v1", "lamoon-daytogether-v1", "lamoon-food-life-v1"]) {
+    assert.ok(homeOverview.includes(key), "missing home overview source: " + key);
+  }
+  for (const category of ["daily", "journal", "health", "finance", "life"]) {
+    assert.ok(homeOverview.includes(category), "missing category: " + category);
+  }
+  assert.match(homeOverview, /api\(["']\/api\/state["']\)/);
+  assert.match(homeOverview, /RECENT MOMENTS/);
+  assert.doesNotMatch(homeOverview, /localStorage|sessionStorage|saveDayState/);
+});
+test("Phase 7 exposes account sign-out and every module on mobile navigation", () => {
+  assert.match(auth, /createContext/);
+  assert.match(auth, /export function useAuth/);
+  assert.match(auth, /value=\{\{ user, signOut \}\}/);
+  assert.match(shell, /const \{ user, signOut \} = useAuth\(\)/);
+  assert.match(shell, /ออกจากระบบ/);
+  assert.match(shell, /dt-mobile-nav.*\{nav\}/s);
+  assert.match(styles, /grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);
+});
