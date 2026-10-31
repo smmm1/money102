@@ -60,6 +60,12 @@ test("authenticated Daily Log create, read-after-reload, edit and delete", async
     await openDailyLog()
     await expect(record(editedTitle)).toBeVisible()
   } finally {
+    // The page may have reloaded back to Home when an assertion failed.
+    // Re-open Daily Log before attempting to remove this test's own record.
+    try {
+      const nav = page.locator(".dt-nav").getByRole("button", { name: "บันทึกวันนี้" })
+      if (await nav.count()) await nav.click()
+    } catch { /* login/session failure: no safe UI cleanup is possible */ }
     // Clean up only this test's uniquely named record. Never clear a snapshot or user data.
     for (const title of [editedTitle, originalTitle]) {
       const item = record(title)
