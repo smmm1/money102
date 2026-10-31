@@ -1514,3 +1514,212 @@ html,body,.dt2-shell{background:#f5f3ed!important;color:var(--ink)}
  .dt2-shell[data-page="/bbq"] .dt-visit-card{grid-template-columns:86px minmax(0,1fr)!important;min-height:145px!important}
  .dt2-shell[data-page="/bbq"] .dt-visit-art{padding:10px!important;font-size:27px!important}
 }
+
+
+/* DAYTOGETHER 2.0 — structural visual refresh */
+:root{
+  --dt-ink:#252c29;
+  --dt-muted:#78817a;
+  --dt-line:#e5e7df;
+  --dt-paper:#fffefa;
+  --dt-canvas:#f4f4ee;
+  --dt-sage:#637d68;
+  --dt-sage-dark:#405947;
+  --dt-sage-soft:#e8eee6;
+  --dt-lavender:#eeeaf4;
+  --dt-lavender-ink:#756887;
+  --dt-warm:#f0e9df;
+  --dt-shadow:0 14px 38px rgba(39,49,41,.055);
+}
+html,body{background:var(--dt-canvas)!important;color:var(--dt-ink)!important}
+body{font-family:"Noto Sans Thai","IBM Plex Sans Thai",sans-serif!important}
+.dt2-shell,.dt2-shell *{font-family:inherit}
+.dt2-shell{min-height:100vh;background:var(--dt-canvas)!important;color:var(--dt-ink)!important}
+.dt-floating-header{
+ position:sticky!important;top:0!important;z-index:30!important;
+ background:rgba(250,250,246,.94)!important;
+ border:0!important;border-bottom:1px solid var(--dt-line)!important;
+ box-shadow:0 3px 18px rgba(42,52,43,.035)!important;
+ backdrop-filter:blur(18px)!important;
+}
+.dt-floating-topline{
+ width:min(1240px,100%)!important;height:66px!important;margin:0 auto!important;
+ padding:0 34px!important;
+}
+.dt-floating-brand{gap:11px!important}
+.dt2-brand-symbol{
+ width:36px!important;height:36px!important;border-radius:11px!important;
+ background:var(--dt-sage-dark)!important;color:#fffefa!important;
+ box-shadow:none!important;transform:none!important;font-size:23px!important;font-weight:600!important;
+}
+.dt2-brand-copy strong{font-size:16px!important;font-weight:700!important;letter-spacing:-.035em!important}
+.dt2-brand-copy small{margin-top:1px!important;font-size:9px!important;letter-spacing:.04em!important;color:#92988e!important}
+.dt-floating-tools{gap:12px!important}
+.dt2-save{font-size:10px!important;color:#7e897e!important}
+.dt2-save i{background:#89a18b!important}
+.dt2-privacy{width:34px!important;height:34px!important;justify-content:center!important;padding:0!important;border:1px solid var(--dt-line)!important;border-radius:50%!important;background:#fffefa!important;color:#667967!important}
+.dt2-privacy.active{background:var(--dt-lavender)!important;border-color:#dcd4e8!important;color:var(--dt-lavender-ink)!important}
+.dt-floating-nav{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;
+ width:min(1240px,100%)!important;min-height:54px!important;margin:0 auto!important;padding:0 30px!important;
+ background:transparent!important;border:0!important;overflow-x:auto!important;
+}
+.dt-floating-nav button{
+ position:relative!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;
+ min-height:38px!important;padding:0 15px!important;border:0!important;border-radius:9px!important;
+ background:transparent!important;color:#727b72!important;font-size:12px!important;font-weight:550!important;
+ white-space:nowrap!important;transition:background .18s ease,color .18s ease!important;
+}
+.dt-floating-nav button .dt-floating-nav-icon{font-size:14px!important;opacity:.78!important}
+.dt-floating-nav button:hover{background:#f0f2eb!important;color:var(--dt-sage-dark)!important}
+.dt-floating-nav button.active{background:var(--dt-sage-soft)!important;color:var(--dt-sage-dark)!important;font-weight:700!important}
+.dt-floating-nav button.active:after{content:"";position:absolute;left:15px;right:15px;bottom:-7px;height:2px;border-radius:2px;background:var(--dt-sage)!important}
+.dt-app-sidebar{display:none!important}
+.dt2-main{width:min(1240px,100%)!important;max-width:1240px!important;margin:0 auto!important;padding:32px 34px 100px!important}
+.dt-app-topbar{
+ display:flex!important;align-items:flex-end!important;justify-content:space-between!important;gap:20px!important;
+ margin:0 0 26px!important;padding:0 0 20px!important;border:0!important;
+}
+.dt-app-breadcrumb{display:block!important;margin-bottom:8px!important;color:#92998f!important;font-size:10px!important;letter-spacing:.035em!important}
+.dt-app-topbar h1{margin:0!important;color:#27332a!important;font-size:clamp(27px,3.2vw,36px)!important;font-weight:650!important;line-height:1.2!important;letter-spacing:-.045em!important}
+.dt-app-topbar>.dt-btn{min-height:40px!important;padding:0 16px!important;border-radius:9px!important}
+.dt-mobile-brand{display:none!important}
+.dt2-content{width:100%!important}
+.dt-page-body{display:flex!important;flex-direction:column!important;gap:24px!important}
+.dt-section{
+ padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;
+}
+.dt-section-head{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;
+ margin:0 0 16px!important;padding:0 0 13px!important;border:0!important;border-bottom:1px solid var(--dt-line)!important;
+}
+.dt-section-head>div{min-width:0}
+.dt-section-head h3{margin:0!important;color:#303a32!important;font-size:17px!important;font-weight:650!important;letter-spacing:-.025em!important}
+.dt-section-head p{margin:4px 0 0!important;color:#899188!important;font-size:11px!important;line-height:1.6!important}
+.dt-section h3,.dt-detail-card h3,.dt-settlement-form h3{color:#303a32!important;font-weight:650!important}
+.dt-btn{min-height:40px!important;padding:0 15px!important;border-radius:9px!important;font-size:12px!important;font-weight:600!important;box-shadow:none!important;transition:background .18s ease,border-color .18s ease,transform .18s ease!important}
+.dt-btn:active{transform:translateY(1px)!important}
+.dt-btn-primary{background:var(--dt-sage-dark)!important;border:1px solid var(--dt-sage-dark)!important;color:#fffefa!important}
+.dt-btn-primary:hover{background:#314936!important}
+.dt-btn-secondary{background:#fffefa!important;border:1px solid #dfe4dc!important;color:#536455!important}
+.dt-btn-secondary:hover{background:#f2f5ef!important}
+.dt-btn-danger{background:#fbf1ef!important;border:1px solid #f0dcd7!important;color:#9b5d53!important}
+.dt2-shell input,.dt2-shell textarea,.dt2-shell select{
+ min-height:42px!important;padding:10px 12px!important;border:1px solid #dfe3db!important;border-radius:9px!important;
+ background:#fffefa!important;color:#303a32!important;font-size:13px!important;box-shadow:none!important;
+}
+.dt2-shell textarea{line-height:1.7!important}
+.dt2-shell input::placeholder,.dt2-shell textarea::placeholder{color:#a4aaa1!important}
+.dt2-shell input:focus,.dt2-shell textarea:focus,.dt2-shell select:focus{border-color:#91a48f!important;outline:3px solid rgba(99,125,104,.13)!important}
+.dt-field>label,.dt-field>span{color:#707b70!important;font-size:11px!important;font-weight:600!important}
+.dt-pill{border-radius:999px!important;font-size:10px!important;font-weight:600!important}
+.dt-empty{border:1px dashed #d9dfd6!important;border-radius:12px!important;background:#fafbf7!important}
+.dt-empty>span{background:var(--dt-sage-soft)!important;color:var(--dt-sage-dark)!important}
+.dt-toast{border:1px solid var(--dt-line)!important;border-radius:12px!important;background:#fffefa!important;box-shadow:var(--dt-shadow)!important}
+.dt-modal-backdrop{background:rgba(35,43,36,.38)!important;backdrop-filter:blur(4px)!important}
+.dt-modal{border:1px solid #e4e7df!important;border-radius:16px!important;background:#fffefa!important;box-shadow:0 24px 80px rgba(27,38,29,.18)!important}
+.dt-modal-head{border-bottom:1px solid var(--dt-line)!important}
+.dt-modal-head h2{font-size:21px!important;font-weight:650!important;letter-spacing:-.03em!important}
+.dt-modal-actions{padding-top:14px!important;border-top:1px solid var(--dt-line)!important}
+.dt-detail-card{padding:26px!important;border:1px solid var(--dt-line)!important;border-radius:14px!important;background:#fffefa!important;box-shadow:none!important}
+.dt-list-row{border-bottom:1px solid #eceee8!important}
+.dt-list-icon{border-radius:9px!important;background:var(--dt-sage-soft)!important;color:var(--dt-sage-dark)!important}
+.dt-icon-button{border-radius:8px!important;color:#768276!important}
+.dt-progress{height:7px!important;border-radius:20px!important;background:#e9ede7!important}
+.dt-progress i{border-radius:20px!important;background:#819781!important}
+
+/* Home is a calm daily overview with one prominent greeting and a clear activity timeline */
+.dt2-shell[data-page="/"] .dt-page-body{gap:25px!important}
+.dt2-shell[data-page="/"] .dt-home-intro{
+ display:flex!important;align-items:flex-end!important;justify-content:space-between!important;gap:20px!important;
+ padding:12px 0 25px!important;border:0!important;border-bottom:1px solid var(--dt-line)!important;border-radius:0!important;
+ background:transparent!important;color:var(--dt-ink)!important;
+}
+.dt2-shell[data-page="/"] .dt-home-intro h2{max-width:700px!important;margin:8px 0!important;font-size:clamp(26px,3.8vw,42px)!important;line-height:1.28!important;font-weight:600!important;letter-spacing:-.045em!important}
+.dt2-shell[data-page="/"] .dt-home-intro p:not(.dt-home-date){margin:0!important;color:#7e887e!important;font-size:13px!important}
+.dt2-shell[data-page="/"] .dt-home-date{margin:0!important;color:#8c968b!important;font-size:11px!important}
+.dt2-shell[data-page="/"] .dt-home-overview,.dt2-shell[data-page="/"] .dt-today-activity,.dt2-shell[data-page="/"] .dt-home-recent{
+ padding:20px 22px!important;border:1px solid var(--dt-line)!important;border-radius:13px!important;background:#fffefa!important;box-shadow:none!important;
+}
+.dt2-shell[data-page="/"] .dt-home-metrics>button{border-right:1px solid var(--dt-line)!important}
+.dt2-shell[data-page="/"] .dt-home-metrics>button:last-child{border:0!important}
+.dt2-shell[data-page="/"] .dt-home-metrics>button strong{font-size:22px!important;font-weight:650!important}
+.dt2-shell[data-page="/"] .dt-home-metric-icon{display:grid!important;place-items:center!important;width:30px!important;height:30px!important;border-radius:9px!important;background:var(--dt-sage-soft)!important;color:var(--dt-sage-dark)!important}
+
+/* Savings page becomes a ledger: balance panel, goal board, transaction register */
+.dt2-shell[data-page="/savings"] .dt-simple-summary{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;gap:20px!important;
+ padding:26px 30px!important;border:0!important;border-radius:14px!important;background:#e7eee5!important;color:#344b38!important;
+}
+.dt2-shell[data-page="/savings"] .dt-simple-summary strong{font-size:clamp(32px,4vw,46px)!important;font-weight:650!important;letter-spacing:-.05em!important}
+.dt2-shell[data-page="/savings"] .dt-goal-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.dt2-shell[data-page="/savings"] .dt-goal-card{padding:19px!important;border:1px solid var(--dt-line)!important;border-radius:12px!important;background:#fffefa!important;box-shadow:none!important}
+.dt2-shell[data-page="/savings"] .dt-goal-card h4{font-size:15px!important;font-weight:650!important}
+.dt2-shell[data-page="/savings"] .dt-list{border-top:1px solid var(--dt-line)!important}
+.dt2-shell[data-page="/savings"] .dt-list-row{padding:15px 8px!important}
+
+/* Health page: measurement dashboard, quick actions, chart and record history */
+.dt2-shell[data-page="/health"] .dt-health-summary{padding:22px 26px!important;border:1px solid var(--dt-line)!important;border-radius:13px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-health-kind-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+.dt2-shell[data-page="/health"] .dt-health-kind{min-height:90px!important;padding:14px!important;border:1px solid var(--dt-line)!important;border-radius:11px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-health-kind:hover{background:#f2f5ef!important;transform:translateY(-2px)!important}
+.dt2-shell[data-page="/health"] .dt-water-quick,.dt2-shell[data-page="/health"] .dt-health-trend{padding:20px!important;border:1px solid var(--dt-line)!important;border-radius:13px!important;background:#fffefa!important}
+.dt2-shell[data-page="/health"] .dt-health-chart-wrap{border-color:#edf0e9!important;color:var(--dt-sage)!important}
+
+/* Notes page: journal index and reading surface */
+.dt2-shell[data-page="/notes"] .dt-page-body>.dt-section{padding:21px!important;border:1px solid var(--dt-line)!important;border-radius:13px!important;background:#fffefa!important}
+.dt2-shell[data-page="/notes"] .dt-note-grid{grid-template-columns:1fr!important;gap:0!important}
+.dt2-shell[data-page="/notes"] .dt-note-card{display:grid!important;grid-template-columns:130px minmax(0,1fr) auto!important;gap:8px 16px!important;padding:16px 4px!important;border:0!important;border-bottom:1px solid #edf0e9!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.dt2-shell[data-page="/notes"] .dt-note-top{grid-column:1!important;grid-row:1 / span 2!important;justify-content:flex-start!important}
+.dt2-shell[data-page="/notes"] .dt-note-open{grid-column:2!important;grid-row:1 / span 2!important}
+.dt2-shell[data-page="/notes"] .dt-note-card>.dt-tag-row{grid-column:2!important;grid-row:3!important}
+.dt2-shell[data-page="/notes"] .dt-note-card>.dt-between{grid-column:3!important;grid-row:1 / span 2!important;display:grid!important;justify-items:end!important}
+.dt2-shell[data-page="/notes"] .dt-note-reader{max-width:760px!important;background:#fffefa!important}
+
+/* Bill split: functional calculator and compact bill register */
+.dt2-shell[data-page="/split"] .dt-page-body>.dt-section{padding:21px!important;border:1px solid var(--dt-line)!important;border-radius:13px!important;background:#fffefa!important}
+.dt2-shell[data-page="/split"] .dt-bill-row{border-bottom:1px solid #edf0e9!important}
+.dt2-shell[data-page="/split"] .dt-bill-row:hover{background:#f4f6f1!important}
+.dt2-shell .dt-simple-bill-form{border-color:var(--dt-line)!important;border-radius:13px!important;background:#fafbf7!important}
+.dt2-shell .dt-bill-simple-result{background:#e7eee5!important;border-radius:11px!important}
+
+/* Food memory: editorial meal archive with compact metadata */
+.dt2-shell[data-page="/bbq"] .dt-simple-summary{border:0!important;border-radius:13px!important;background:#eeeaf4!important;color:#4d465b!important}
+.dt2-shell[data-page="/bbq"] .dt-page-body>.dt-section{padding:21px!important;border:1px solid var(--dt-line)!important;border-radius:13px!important;background:#fffefa!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-card{border:1px solid var(--dt-line)!important;border-radius:12px!important;background:#fffefa!important;box-shadow:none!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-art{background:#eeeaf4!important;color:var(--dt-lavender-ink)!important}
+
+/* Mobile: keep the desktop information hierarchy while switching to thumb navigation */
+@media(max-width:760px){
+ .dt-floating-topline{height:58px!important;padding:0 16px!important}
+ .dt-floating-nav{justify-content:flex-start!important;min-height:48px!important;padding:0 10px!important;gap:2px!important}
+ .dt-floating-nav button{min-height:36px!important;padding:0 11px!important;font-size:11px!important}
+ .dt-floating-nav button.active:after{bottom:-6px!important}
+ .dt2-main{padding:24px 16px 100px!important}
+ .dt-app-topbar{align-items:center!important;margin-bottom:18px!important;padding-bottom:14px!important}
+ .dt-app-topbar h1{font-size:25px!important}
+ .dt-app-topbar>.dt-btn{min-height:36px!important;padding:0 11px!important;font-size:11px!important}
+ .dt-section-head{align-items:flex-start!important}
+ .dt2-shell[data-page="/"] .dt-home-intro{align-items:flex-start!important;flex-direction:column!important}
+ .dt2-shell[data-page="/"] .dt-home-intro h2{font-size:27px!important}
+ .dt2-shell[data-page="/"] .dt-home-overview,.dt2-shell[data-page="/"] .dt-today-activity,.dt2-shell[data-page="/"] .dt-home-recent{padding:15px!important}
+ .dt2-shell[data-page="/savings"] .dt-simple-summary{align-items:flex-start!important;flex-direction:column!important;padding:20px!important}
+ .dt2-shell[data-page="/savings"] .dt-goal-grid{grid-template-columns:1fr!important}
+ .dt2-shell[data-page="/health"] .dt-health-kind-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .dt2-shell[data-page="/health"] .dt-health-summary{grid-template-columns:1fr!important;gap:12px!important}
+ .dt2-shell[data-page="/health"] .dt-health-summary>div+div{padding:12px 0 0!important;border-left:0!important;border-top:1px solid var(--dt-line)!important}
+ .dt2-shell[data-page="/notes"] .dt-page-body>.dt-section,.dt2-shell[data-page="/split"] .dt-page-body>.dt-section,.dt2-shell[data-page="/bbq"] .dt-page-body>.dt-section{padding:15px!important}
+ .dt2-shell[data-page="/notes"] .dt-note-card{grid-template-columns:1fr auto!important;gap:7px 10px!important}
+ .dt2-shell[data-page="/notes"] .dt-note-top{grid-column:1!important;grid-row:1!important}
+ .dt2-shell[data-page="/notes"] .dt-note-open{grid-column:1 / -1!important;grid-row:2!important}
+ .dt2-shell[data-page="/notes"] .dt-note-card>.dt-tag-row{grid-column:1 / -1!important;grid-row:3!important}
+ .dt2-shell[data-page="/notes"] .dt-note-card>.dt-between{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;align-items:flex-end!important}
+ .dt2-shell[data-page="/bbq"] .dt-visit-grid{grid-template-columns:1fr!important}
+ .dt2-shell[data-page="/bbq"] .dt-visit-card{grid-template-columns:84px minmax(0,1fr)!important}
+ .dt2-shell .dt-simple-bill-form{grid-template-columns:1fr!important}
+ .dt2-shell .dt-simple-bill-form .dt-field,.dt2-shell .dt-bill-count-control,.dt2-shell .dt-bill-simple-result,.dt2-shell .dt-simple-bill-form>.dt-form-hint{grid-column:1!important}
+ .dt2-shell .dt-bill-count-control{grid-row:auto!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;padding:12px 0 0!important;border-left:0!important;border-top:1px solid var(--dt-line)!important}
+}
+@media(prefers-reduced-motion:reduce){.dt2-shell *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
