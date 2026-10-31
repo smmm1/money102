@@ -26,6 +26,10 @@ export async function api(path: string, init: RequestInit = {}) {
   const response = await fetch(`${API_URL}${path}`, { ...init, headers, cache: "no-store" })
   const body = await response.json().catch(() => ({})) as { error?: string; detail?: string; user?: AppUser; token?: string }
   if (!response.ok) {
+    if (response.status === 401) {
+      setToken("")
+      window.dispatchEvent(new Event("money102:unauthorized"))
+    }
     const error = new Error([body.error, body.detail].filter(Boolean).join(": ") || `Request failed (${response.status})`)
     Object.assign(error, { status: response.status })
     throw error
@@ -41,6 +45,12 @@ export default function CloudAuth({ children }: { children?: ReactNode }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [connectionError, setConnectionError] = useState("")
+
+  useEffect(() => {
+    const onUnauthorized = () => { setUser(null); setChecking(false) }
+    window.addEventListener("money102:unauthorized", onUnauthorized)
+    return () => window.removeEventListener("money102:unauthorized", onUnauthorized)
+  }, [])
 
   useEffect(() => {
     if (!sessionToken) { setChecking(false); return }
