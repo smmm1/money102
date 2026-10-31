@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react"
 import "./daytogether.css"
 import DailyLog from "./DailyLog"
+import Journal from "./Journal"
+import Health from "./Health"
 
 type Section = "home" | "daily" | "journal" | "health" | "finance" | "life" | "archive"
 const nav: { id: Section; label: string; mobile: string; icon: string }[] = [
@@ -24,7 +26,6 @@ const dateText = () => new Intl.DateTimeFormat("th-TH", { weekday: "long", day: 
 
 export default function DayTogether() {
   const [active, setActive] = useState<Section>("home")
-  const [modal, setModal] = useState(false)
   const today = useMemo(dateText, [])
   const selected = nav.find(item => item.id === active)!
   return <div className="dt-app">
@@ -41,7 +42,7 @@ export default function DayTogether() {
           <section className="dt-hero"><div className="dt-hero-copy"><span className="dt-eyebrow">A LITTLE SPACE FOR YOUR EVERYDAY</span><h1>ค่อย ๆ ใช้ชีวิต<br /><em>ในจังหวะของเรา</em></h1><p>พื้นที่เล็ก ๆ สำหรับเก็บเรื่องราว ดูแลตัวเอง และจัดระเบียบชีวิตในแบบที่เป็นคุณ</p><div className="dt-date">▦ &nbsp;{today}</div></div><div className="dt-landscape"><div className="dt-sun" /><div className="dt-hill hill-a" /><div className="dt-hill hill-b" /><div className="dt-plant">✳</div><span>take it<br />one day at a time</span></div></section>
           <section className="dt-heading"><div><span className="dt-eyebrow">START WITH TODAY</span><h2>วันนี้อยากบันทึกอะไร?</h2></div><button onClick={() => setActive("daily")}>ไปที่บันทึกวันนี้&nbsp; →</button></section>
           <section className="dt-shortcuts">
-            <button className="dt-shortcut featured" onClick={() => { setActive("daily"); setModal(true) }}><i>＋</i><b>บันทึกเรื่องราว</b><small>สิ่งที่เกิดขึ้นในวันนี้</small><span>↗</span></button>
+            <button className="dt-shortcut featured" onClick={() => setActive("daily")}><i>＋</i><b>บันทึกเรื่องราว</b><small>สิ่งที่เกิดขึ้นในวันนี้</small><span>↗</span></button>
             <button className="dt-shortcut" onClick={() => setActive("journal")}><i className="lav">▤</i><b>เขียนความรู้สึก</b><small>เก็บความคิดของตัวเอง</small><span>↗</span></button>
             <button className="dt-shortcut" onClick={() => setActive("health")}><i className="terra">♡</i><b>ดูแลสุขภาพ</b><small>บันทึกการดูแลตัวเอง</small><span>↗</span></button>
             <button className="dt-shortcut" onClick={() => setActive("finance")}><i className="gold">◫</i><b>จัดการเรื่องเงิน</b><small>ออมเงินและหารค่าใช้จ่าย</small><span>↗</span></button>
@@ -51,12 +52,14 @@ export default function DayTogether() {
         </> : <section className="dt-inner">
           <div className="dt-inner-meta"><span className="dt-eyebrow">{copy[active].eyebrow}</span><small>{today}</small></div><h1>{copy[active].title}</h1><p className="dt-inner-desc">{copy[active].desc}</p>
           {active === "daily" && <DailyLog />}
-          {active !== "daily" && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
-          {active !== "daily" && <button className="dt-back" onClick={() => setActive("home")}>← กลับสู่ภาพรวม</button>}
+          {active === "journal" && <Journal />}
+          {active === "health" && <Health />}
+          {!["daily","journal","health"].includes(active) && <div className="dt-coming"><i>✳</i><div><b>พื้นที่นี้กำลังจัดเตรียม</b><p>{copy[active].note}</p></div><small>COMING SOON</small></div>}
+          {!["daily","journal","health"].includes(active) && <button className="dt-back" onClick={() => setActive("home")}>← กลับสู่ภาพรวม</button>}
         </section>}
       </main>
     </div>
     <nav className="dt-mobile-nav">{nav.filter(item => ["home","daily","journal","health","finance"].includes(item.id)).map(item => <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => setActive(item.id)}><i>{item.icon}</i><small>{item.mobile}</small></button>)}</nav>
-    {modal && <div className="dt-overlay" onMouseDown={event => { if (event.target === event.currentTarget) setModal(false) }}><section className="dt-dialog" role="dialog" aria-modal="true"><button className="dt-close" onClick={() => setModal(false)} aria-label="ปิด">×</button><span className="dt-eyebrow">A NOTE FOR TODAY</span><h2>เริ่มบันทึกเรื่องราว</h2><p>หน้าบันทึกจริงพร้อมระบบบันทึกลง Cloudflare D1 จะพัฒนาในเฟส 2</p><div className="dt-dialog-note">✳ &nbsp; บันทึกหนึ่งครั้ง แล้วเชื่อมไปยังหมวดที่เกี่ยวข้องได้</div><button className="dt-confirm" onClick={() => setModal(false)}>เข้าใจแล้ว</button></section></div>}
+
   </div>
 }
