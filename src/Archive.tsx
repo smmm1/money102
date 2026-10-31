@@ -51,7 +51,7 @@ export default function Archive(){
  const load=useCallback(async()=>{setLoading(true);setError("");try{const result=await api("/api/state") as StateResponse;setItems(buildItems(result.payload||{}));setLastUpdated(result.updated_at||"")}catch(e){setError(e instanceof Error?e.message:"โหลดคลังบันทึกไม่สำเร็จ")}finally{setLoading(false)}},[])
  useEffect(()=>{void load()},[load])
  const filtered=useMemo(()=>items.filter(x=>(category==="all"||x.category===category)&&(!from||x.date>=from)&&(!to||x.date<=to)&&(!selectedDate||x.date===selectedDate)&&(!query.trim()||x.searchText.includes(query.trim().toLocaleLowerCase()))),[items,category,from,to,selectedDate,query])
- const counts=useMemo(()=>({all:items.length,...Object.fromEntries((Object.keys(labels) as Category[]).map(k=>[k,items.filter(x=>x.category===k).length]))}),[items])
+ const counts=useMemo(()=>{const result={all:items.length} as Record<"all"|Category,number>;for(const k of Object.keys(labels) as Category[])result[k]=items.filter(x=>x.category===k).length;return result},[items])
  const monthDates=useMemo(()=>{const [y,m]=month.split("-").map(Number);const first=new Date(y,m-1,1);const start=(first.getDay()+6)%7;const days=new Date(y,m,0).getDate();return [...Array(start).fill(0),...Array.from({length:days},(_,i)=>i+1)]},[month])
  const dateCounts=useMemo(()=>{const map:Record<string,number>={};for(const x of items)if(x.date?.startsWith(month))map[x.date]=(map[x.date]||0)+1;return map},[items,month])
  function shiftMonth(delta:number){const [y,m]=month.split("-").map(Number);const d=new Date(y,m-1+delta,1);setMonth(d.getFullYear()+"-"+pad(d.getMonth()+1));setSelectedDate("")}
