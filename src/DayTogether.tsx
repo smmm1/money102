@@ -534,14 +534,18 @@ export default function DayTogether() {
       </section></div>
   }
   return <div className="dt2-shell dt-app-layout" data-page={page}>
-    <aside className="dt-app-sidebar">
-      <button className="dt2-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
-      <nav className="dt2-nav" aria-label="พื้นที่ของฉัน">
-        <div className="dt-sidebar-group"><span className="dt-sidebar-label">พื้นที่ของฉัน</span>{navItems.map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt2-nav-orb" aria-hidden="true">{ICON[href]}</span><span className="dt2-nav-text">{PAGE_LABEL[href]}</span></button>)}</div>
-        <div className="dt-sidebar-group dt-sidebar-secondary"><span className="dt-sidebar-label">การจัดการ</span><button type="button" className={page==="/settings"?"active":""} aria-current={page==="/settings"?"page":undefined} onClick={()=>go("/settings")}><span className="dt2-nav-orb" aria-hidden="true">{ICON["/settings"]}</span><span className="dt2-nav-text">ตั้งค่า</span></button></div>
+    <header className="dt-floating-header">
+      <button className="dt2-brand dt-floating-brand" onClick={()=>go("/")} aria-label="DayTogether หน้าหลัก"><span className="dt2-brand-symbol">d</span><span className="dt2-brand-copy"><strong>DayTogether</strong><small>พื้นที่ส่วนตัวของคุณ</small></span></button>
+      <nav className="dt-floating-nav" aria-label="เมนูหลัก">
+        {[...navItems,"/settings"].map(href=><button key={href} type="button" className={page===href?"active":""} aria-current={page===href?"page":undefined} onClick={()=>go(href)}><span className="dt-floating-nav-icon" aria-hidden="true">{ICON[href]}</span><span>{PAGE_LABEL[href]}</span></button>)}
       </nav>
-      <div className="dt-sidebar-bottom"><span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span><button className={hidden?"dt2-privacy active":"dt2-privacy"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"}</button><AccountMenu/></div>
-    </aside>
+      <div className="dt-floating-tools">
+        <span className={"dt2-save dt-save-status is-"+persistenceStatus} role="status" aria-live="polite"><i/>{persistenceStatus==="saving"?"กำลังบันทึก":persistenceStatus==="saved"?"บันทึกแล้ว":"บันทึกไม่สำเร็จ"}</span>
+        <button className={hidden?"dt2-privacy active":"dt2-privacy"} aria-label={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} title={hidden?"แสดงข้อมูล":"ซ่อนข้อมูล"} onClick={()=>setState(s=>({...s,settings:{...s.settings,hidden:!s.settings.hidden}}))}>{hidden?"◉":"◌"}</button>
+        <AccountMenu/>
+      </div>
+    </header>
+    <aside className="dt-app-sidebar" aria-hidden="true" />
     <main className="dt2-main">
       <header className="dt-app-topbar"><div><span className="dt-app-breadcrumb">DayTogether / {PAGE_LABEL[page]||"รายละเอียด"}</span><h1>{pageTitle}</h1></div><button className="dt-mobile-brand" onClick={()=>go("/")}>DayTogether</button><Button variant="primary" onClick={()=>setQuickAddOpen(v=>!v)}>＋ เพิ่มบันทึก</Button></header>
       <div className="dt2-content">{pageBody()}</div>
