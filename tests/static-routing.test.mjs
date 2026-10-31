@@ -44,3 +44,31 @@ test("Daily Log reads and writes the authenticated D1 snapshot without browser p
   assert.match(dailyLog, /setEditor\(\{\.\.\.entry\}\)/);
   assert.doesNotMatch(dailyLog, /localStorage|sessionStorage/);
 });
+
+const journal = await readFile(new URL("../src/Journal.tsx", import.meta.url), "utf8");
+const health = await readFile(new URL("../src/Health.tsx", import.meta.url), "utf8");
+const sharedState = await readFile(new URL("../src/dayState.ts", import.meta.url), "utf8");
+
+test("Journal and Health are mounted as working authenticated modules", () => {
+  assert.match(shell, /import Journal from ["']\.\/Journal["']/);
+  assert.match(shell, /import Health from ["']\.\/Health["']/);
+  assert.match(shell, /active === "journal" && <Journal\s*\/>/);
+  assert.match(shell, /active === "health" && <Health\s*\/>/);
+  assert.match(journal, /saveDayState/);
+  assert.match(journal, /kind:"diary"/);
+  assert.match(journal, /mood/);
+  assert.match(journal, /pinned/);
+  assert.match(health, /saveDayState/);
+  assert.match(health, /HEALTH_PROFILE_KEY/);
+  assert.match(health, /ดัชนีมวลกาย/);
+  assert.match(health, /bloodPressure/);
+  assert.match(health, /ออกกำลังกาย/);
+  assert.doesNotMatch(journal + health, /localStorage|sessionStorage/);
+});
+
+test("Journal and Health preserve the existing D1 snapshot and compare revisions before writes", () => {
+  assert.match(sharedState, /lamoon-daytogether-v1/);
+  assert.match(sharedState, /expected_updated_at/);
+  assert.match(sharedState, /\.\.\.\(current\.payload \|\| \{\}\)/);
+  assert.match(sharedState, /lamoon-health-profile-v1/);
+});
