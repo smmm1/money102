@@ -1443,3 +1443,74 @@ html,body,.dt2-shell{background:#f5f3ed!important;color:var(--ink)}
  .dt2-shell[data-page="/savings"] .dt-list-row{grid-template-columns:32px minmax(0,1fr) auto!important}
  .dt2-shell[data-page="/savings"] .dt-list-row .dt-row-menu{grid-column:3}
 }
+
+
+/* Split bill: calculator-first workflow, then searchable bill history */
+.dt2-shell[data-page="/split"] .dt-page-body{gap:22px!important}
+.dt2-shell[data-page="/split"] .dt-page-body>.dt-section{padding:24px!important;border:1px solid #e7e4dc!important;border-radius:14px!important;background:#fffefa!important}
+.dt2-shell[data-page="/split"] .dt-section-head{align-items:center!important;margin-bottom:18px!important}
+.dt2-shell[data-page="/split"] .dt-section-head h3{font-size:21px!important;letter-spacing:-.03em!important}
+.dt2-shell[data-page="/split"] .dt-section-head p{max-width:440px!important;margin-top:5px!important;color:#7c827a!important}
+.dt2-shell[data-page="/split"] .dt-section-head .dt-btn{min-width:132px!important}
+.dt2-shell[data-page="/split"] .dt-toolbar{display:flex!important;gap:10px!important;margin:0 0 12px!important}
+.dt2-shell[data-page="/split"] .dt-toolbar>input{flex:1!important;min-width:0!important}
+.dt2-shell[data-page="/split"] .dt-bill-list{border-top:1px solid #e9e7df!important}
+.dt2-shell[data-page="/split"] .dt-bill-row{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto auto!important;gap:12px!important;align-items:center!important;padding:16px 8px!important;border-bottom:1px solid #eeece5!important;background:transparent!important}
+.dt2-shell[data-page="/split"] .dt-bill-row:hover{background:#f7f7f1!important}
+.dt2-shell[data-page="/split"] .dt-bill-row>.dt-list-icon{width:36px!important;height:36px!important;border-radius:10px!important;background:#edf0e8!important;color:#687b68!important}
+.dt2-shell[data-page="/split"] .dt-bill-row>.dt-list-copy{min-width:0!important}
+.dt2-shell[data-page="/split"] .dt-bill-row>.dt-list-copy strong{font-size:13px!important}
+.dt2-shell[data-page="/split"] .dt-bill-row>strong{font-size:14px!important;font-variant-numeric:tabular-nums}
+.dt2-shell[data-page="/split"] .dt-bill-row .dt-pill{white-space:nowrap!important}
+.dt2-shell .dt-simple-bill-form{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(150px,.8fr)!important;gap:18px!important;padding:22px!important;border:1px solid #e5e8df!important;border-radius:14px!important;background:#fffefa!important}
+.dt2-shell .dt-simple-bill-form .dt-field{grid-column:1!important}
+.dt2-shell .dt-simple-bill-form .dt-field input{min-height:58px!important;font-size:25px!important;font-weight:650!important;font-variant-numeric:tabular-nums!important}
+.dt2-shell .dt-bill-count-control{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;justify-content:center!important;gap:9px!important;padding:0 0 0 18px!important;border-left:1px solid #eceae3!important}
+.dt2-shell .dt-bill-count-control>span{font-size:12px!important;color:#7c827a!important}
+.dt2-shell .dt-bill-count-stepper{display:flex!important;align-items:center!important;gap:14px!important}
+.dt2-shell .dt-bill-count-stepper button{width:38px!important;height:38px!important;border:1px solid #e2e3da!important;border-radius:10px!important;background:#f6f7f1!important;color:#526652!important;font-size:21px!important}
+.dt2-shell .dt-bill-count-stepper strong{min-width:28px!important;text-align:center!important;font-size:24px!important;font-variant-numeric:tabular-nums}
+.dt2-shell .dt-bill-simple-result{grid-column:1 / -1!important;display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;gap:4px 12px!important;padding:18px 20px!important;border-radius:12px!important;background:#e9eee5!important}
+.dt2-shell .dt-bill-simple-result>span{font-size:12px!important;color:#697969!important}
+.dt2-shell .dt-bill-simple-result>strong{grid-column:2!important;grid-row:1 / span 2!important;font-size:clamp(26px,5vw,38px)!important;font-weight:700!important;font-variant-numeric:tabular-nums}
+.dt2-shell .dt-bill-simple-result>small{font-size:11px!important;color:#7b8679!important}
+.dt2-shell .dt-simple-bill-form>.dt-form-hint{grid-column:1 / -1!important;margin:0!important}
+
+/* Food journal: month summary, then a visual visit archive */
+.dt2-shell[data-page="/bbq"] .dt-page-body{gap:20px!important}
+.dt2-shell[data-page="/bbq"] .dt-simple-summary{padding:22px 26px!important;border:1px solid #e7e4dc!important;border-radius:14px!important;background:#f0eee5!important;color:#3d493e!important}
+.dt2-shell[data-page="/bbq"] .dt-simple-summary>div{display:grid!important;gap:5px!important}
+.dt2-shell[data-page="/bbq"] .dt-simple-summary span{font-size:12px!important;color:#7b8075!important}
+.dt2-shell[data-page="/bbq"] .dt-simple-summary strong{font-size:30px!important;font-weight:650!important;letter-spacing:-.04em!important}
+.dt2-shell[data-page="/bbq"] .dt-simple-summary small{font-size:12px!important;color:#72796f!important}
+.dt2-shell[data-page="/bbq"] .dt-page-body>.dt-section{padding:22px!important;border:1px solid #e7e4dc!important;border-radius:14px!important;background:#fffefa!important}
+.dt2-shell[data-page="/bbq"] .dt-section-head h3{font-size:20px!important}
+.dt2-shell[data-page="/bbq"] .dt-section-head p{margin-top:5px!important;color:#7c827a!important}
+.dt2-shell[data-page="/bbq"] .dt-toolbar{display:flex!important;gap:10px!important;margin:0 0 16px!important}
+.dt2-shell[data-page="/bbq"] .dt-toolbar>input{flex:1!important;min-width:0!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-card{display:grid!important;grid-template-columns:112px minmax(0,1fr)!important;min-height:160px!important;overflow:hidden!important;border:1px solid #e9e7df!important;border-radius:12px!important;background:#fffefa!important;box-shadow:none!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-art{display:flex!important;flex-direction:column!important;justify-content:space-between!important;align-items:flex-start!important;min-height:100%!important;padding:14px!important;background:#e9eee5!important;color:#647a62!important;font-size:32px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-art:after{display:none!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-art span{padding:5px 7px!important;border-radius:6px!important;background:#fffefa!important;color:#7b8177!important;font-size:10px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:7px!important;padding:14px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content h4{margin:0!important;font-size:15px!important;font-weight:650!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content>p{margin:0!important;color:#7c827a!important;font-size:11px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content .dt-between{display:grid!important;gap:3px!important;margin-top:auto!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content .dt-between small{color:#858b82!important;font-size:10px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content .dt-between strong{font-size:12px!important;font-variant-numeric:tabular-nums}
+.dt2-shell[data-page="/bbq"] .dt-visit-content .dt-actions{margin-top:3px!important}
+.dt2-shell[data-page="/bbq"] .dt-visit-content .dt-actions .dt-btn{min-height:34px!important;padding:0 12px!important;font-size:11px!important}
+@media(max-width:760px){
+ .dt2-shell[data-page="/split"] .dt-page-body>.dt-section,.dt2-shell[data-page="/bbq"] .dt-page-body>.dt-section{padding:16px!important}
+ .dt2-shell[data-page="/split"] .dt-section-head{align-items:flex-start!important}
+ .dt2-shell[data-page="/split"] .dt-bill-row{grid-template-columns:34px minmax(0,1fr) auto!important;gap:8px!important;padding:13px 3px!important}
+ .dt2-shell[data-page="/split"] .dt-bill-row>.dt-list-icon{width:30px!important;height:30px!important}
+ .dt2-shell[data-page="/split"] .dt-bill-row>.dt-pill{grid-column:2!important;justify-self:start!important}
+ .dt2-shell .dt-simple-bill-form{grid-template-columns:1fr!important;gap:12px!important;padding:15px!important}
+ .dt2-shell .dt-simple-bill-form .dt-field,.dt2-shell .dt-bill-count-control,.dt2-shell .dt-bill-simple-result,.dt2-shell .dt-simple-bill-form>.dt-form-hint{grid-column:1!important}
+ .dt2-shell .dt-bill-count-control{grid-row:auto!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;padding:12px 0 0!important;border-left:0!important;border-top:1px solid #eceae3!important}
+ .dt2-shell[data-page="/bbq"] .dt-visit-grid{grid-template-columns:1fr!important}
+ .dt2-shell[data-page="/bbq"] .dt-visit-card{grid-template-columns:86px minmax(0,1fr)!important;min-height:145px!important}
+ .dt2-shell[data-page="/bbq"] .dt-visit-art{padding:10px!important;font-size:27px!important}
+}
