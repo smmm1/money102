@@ -33,3 +33,33 @@ jobs:
         run: npm run check
       - name: Build production assets
         run: npm run build
+  authenticated-e2e:
+    name: Authenticated D1-backed browser E2E
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.DAYTOGETHER_E2E_ENABLED == 'true' }}
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      CI: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify E2E credentials are configured
+        shell: bash
+        run: |
+          test -n "$E2E_EMAIL" || { echo "::error::Add E2E_EMAIL to repository Actions secrets."; exit 1; }
+          test -n "$E2E_PASSWORD" || { echo "::error::Add E2E_PASSWORD to repository Actions secrets."; exit 1; }
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install app dependencies
+        run: npm install --no-audit --no-fund
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.55.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run browser E2E against PR frontend and production D1 API
+        run: npx playwright test
