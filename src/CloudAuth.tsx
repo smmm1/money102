@@ -12,7 +12,7 @@ function setToken(token: string) {
   else window.sessionStorage.removeItem(TOKEN_KEY)
 }
 
-async function api(path: string, init: RequestInit = {}) {
+export async function api(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers)
   if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`)
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json")
