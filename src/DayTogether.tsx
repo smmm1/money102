@@ -33,6 +33,7 @@ const dateText = () => new Intl.DateTimeFormat("th-TH", { weekday: "long", day: 
 export default function DayTogether() {
   const [active, setActive] = useState<Section>("home")
   const [accountOpen, setAccountOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const { user, signOut } = useAuth()
   const today = useMemo(dateText, [])
   const selected = nav.find(item => item.id === active)!
@@ -90,11 +91,24 @@ export default function DayTogether() {
         </section>}
       </main>
     </div>
+    {moreOpen && <>
+      <button className="dt-more-scrim" aria-label="ปิดเมนูเพิ่มเติม" onClick={() => setMoreOpen(false)} />
+      <section className="dt-more-sheet" aria-label="เมนูเพิ่มเติม">
+        <div className="dt-more-head"><b>พื้นที่อื่น ๆ</b><button onClick={() => setMoreOpen(false)} aria-label="ปิด">×</button></div>
+        {nav.filter(item => ["journal", "life", "archive"].includes(item.id)).map(item =>
+          <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => { setActive(item.id); setMoreOpen(false) }}>
+            <i aria-hidden="true">{item.icon}</i><span><b>{item.label}</b><small>{item.id === "journal" ? "ความคิดและความรู้สึก" : item.id === "life" ? "อาหารและกิจกรรม" : "ค้นหาบันทึกย้อนหลัง"}</small></span><em>→</em>
+          </button>)}
+      </section>
+    </>}
     <nav className="dt-mobile-nav" aria-label="เมนูหลักบนมือถือ">
-      {nav.filter(item => ["home", "daily", "journal", "health", "finance"].includes(item.id)).map(item =>
-        <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => setActive(item.id)} aria-current={active === item.id ? "page" : undefined}>
+      {nav.filter(item => ["home", "daily", "health", "finance"].includes(item.id)).map(item =>
+        <button key={item.id} className={active === item.id ? "active" : ""} onClick={() => { setActive(item.id); setMoreOpen(false) }} aria-current={active === item.id ? "page" : undefined}>
           <i aria-hidden="true">{item.icon}</i><small>{item.mobile}</small>
         </button>)}
+      <button className={["journal", "life", "archive"].includes(active) ? "active" : ""} onClick={() => setMoreOpen(v => !v)} aria-expanded={moreOpen}>
+        <i aria-hidden="true">···</i><small>เพิ่มเติม</small>
+      </button>
     </nav>
   </div>
 }
