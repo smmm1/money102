@@ -257,3 +257,26 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+
+/* Mobile overflow navigation: keep every module reachable */
+.dt-more-scrim { display:none; }
+.dt-more-sheet { display:none; }
+@media (max-width:760px) {
+  .dt-more-scrim { display:block; position:fixed; z-index:31; inset:0; border:0; background:#1d29214a; backdrop-filter:blur(2px); }
+  .dt-more-sheet {
+    display:flex; flex-direction:column; gap:5px; position:fixed; z-index:32;
+    left:12px; right:12px; bottom:calc(74px + env(safe-area-inset-bottom));
+    padding:14px; border:1px solid var(--line); border-radius:17px;
+    background:var(--surface); box-shadow:0 18px 48px #1d29212b;
+  }
+  .dt-more-head { display:flex; align-items:center; justify-content:space-between; padding:1px 4px 8px; color:var(--ink); font-size:12px; }
+  .dt-more-head button { width:28px; height:28px; border:0; border-radius:8px; background:#f0f2ec; color:var(--muted); font-size:19px; }
+  .dt-more-sheet > button { display:flex; align-items:center; gap:12px; width:100%; min-height:54px; padding:7px 9px; border:0; border-radius:10px; background:transparent; text-align:left; color:var(--ink); }
+  .dt-more-sheet > button.active { background:var(--sage-pale); }
+  .dt-more-sheet > button > i { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:#f0f2ec; color:var(--sage-dark); font-size:17px; font-style:normal; }
+  .dt-more-sheet > button > span { display:flex; flex:1; flex-direction:column; gap:2px; }
+  .dt-more-sheet > button b { color:var(--ink); font-size:11px; font-weight:600; }
+  .dt-more-sheet > button small { color:var(--muted); font-size:9px; }
+  .dt-more-sheet > button em { color:#82917f; font-size:13px; font-style:normal; }
+}
