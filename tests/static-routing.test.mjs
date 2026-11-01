@@ -55,7 +55,7 @@ test("Journal and Health are mounted as working authenticated modules", () => {
   assert.match(shell, /active === "journal" && <Journal\s*\/>/);
   assert.match(shell, /active === "health" && <Health\s*\/>/);
   assert.match(journal, /saveDayState/);
-  assert.match(journal, /kind:"diary"/);
+  assert.match(journal, /kind:\s*"diary"/);
   assert.match(journal, /mood/);
   assert.match(journal, /pinned/);
   assert.match(health, /saveDayState/);
