@@ -5,6 +5,7 @@ import {
   type LifeRecord,
 } from "./lifeSimulation"
 import "./life-simulation.css"
+import LifeScene from "./LifeScene"
 
 const LIFE_KEY = "lamoon-life-sim-v1"
 type LifeSnapshot = { version: 1; activeId: string | null; lives: LifeRecord[] }
@@ -132,6 +133,7 @@ export default function LifeWorld() {
             <div className="life-world-visual"><div className="life-map-glow" /><div className="life-world-circle"><span>TH</span></div><div className="life-world-caption"><span>จุดเริ่มต้นของชีวิต</span><b>{activeLife.region}</b></div></div>
             <div className="life-origin"><span className="life-eyebrow">จุดเริ่มต้นของชีวิต · {activeLife.bornYear + activeLife.age} พ.ศ.</span><h2>{activeLife.family}</h2><p>{activeLife.background}</p><div className="life-facts"><span>จังหวัด <b>{activeLife.province}</b></span><span>พื้นที่ <b>{activeLife.areaType}</b></span><span>เพศ <b>{activeLife.gender}</b></span></div><div className="life-facts"><span>ผู้ปกครอง <b>{activeLife.parents.join(" / ")}</b></span><span>พี่น้อง <b>{activeLife.siblings} คน</b></span></div><div className="life-facts"><span>ฐานะครอบครัว <b>{activeLife.householdIncome}</b></span><span>หนี้ครัวเรือนเริ่มต้น <b>{formatMoney(activeLife.householdDebt)}</b></span></div></div>
           </div>
+          <LifeScene life={activeLife} />
           <div className="life-section-head"><div><span className="life-eyebrow">LIFE CONDITION</span><h2>สถานะชีวิต</h2></div><small>ค่าต่าง ๆ เปลี่ยนตามการตัดสินใจของคุณ</small></div>
           <div className="life-stat-grid">
             {statLabels.map(stat => <div className="life-stat" key={stat.key}><div><span>{stat.icon} &nbsp;{stat.label}</span><b>{activeLife.stats[stat.key]}<small>/100</small></b></div><div className="life-meter"><i style={{ width: `${activeLife.stats[stat.key]}%` }} /></div></div>)}
