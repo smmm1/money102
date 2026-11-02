@@ -16,7 +16,7 @@ DayTogether is a Thai-first life simulation. Each character is born in a randomi
 - Thailand only: random birth year, all 77 provinces including Bangkok, urban/rural context, household profile, parents' occupations, and siblings.
 - Birth-year range is user-adjustable. Default: 1930–2025 (Gregorian years internally; Thai Buddhist Era shown in the interface).
 - Each simulated year produces a sourced historical event when the year matches the event register; otherwise it generates a life-stage personal event.
-- Choices include costs, success chances, success/failure outcomes, and stat effects. Chances are game mechanics affected by character education and skills, not measured real-world probabilities.
+- Choices include costs, success chances, success/failure outcomes, and stat effects. Chances are game mechanics affected by education, skills, resources, household debt, health, relationships, and urban/rural context, not measured real-world probabilities.
 - Major historical events currently include 1932, 1941, 1957, 1973, 1976, 1992, 1997, 2004, 2006, 2010, 2011, 2014, and 2020. Each event stores a source URL and note.
 - Location-sensitive events distinguish local direct exposure from national context. A nationwide headline is not treated as if every character personally experienced the same direct impact.
 - Household profiles, personal events, and outcomes are fictional scenarios, not census distributions, biography claims, or forecasts.
