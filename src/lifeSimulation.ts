@@ -410,7 +410,6 @@ function makePersonalEvent(life:LifeRecord,year:number):LifeEvent {
   const adaptive = adaptiveEvents(life)
   const pool = [...adaptive.filter(item=>!life.timeline.slice(0,8).some(entry=>entry.title===item.title)).map(item=>({...item,weight:2})), ...baseline.map(item=>({...item,weight:1}))]
   const recent = new Set(life.timeline.slice(0,12).map(item=>item.title))
-  const available = pool.filter(item=>!recent.has(item.title))
   const candidates = pool.filter(item=>!recent.has(item.title))
   const available = candidates.length ? candidates : pool
   const total = available.reduce((sum,item)=>sum+item.weight,0)
