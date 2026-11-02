@@ -30,13 +30,14 @@ test("new lives are Thailand-only and randomize a birth year, province and house
 });
 
 test("historical events are tied to documented Thai years and traceable sources", () => {
-  for (const year of ["1932", "1941", "1973", "1976", "1992", "1997", "2004", "2011", "2020"]) {
+  for (const year of ["1932", "1941", "1957", "1973", "1976", "1992", "1997", "2004", "2006", "2010", "2011", "2014", "2020"]) {
     assert.ok(history.includes("year: " + year), "missing historical event year " + year);
   }
-  for (const source of ["loc.gov", "history.state.gov", "cambridge.org", "jstor.org", "amnesty.org", "bot.or.th", "un.or.th", "worldbank.org", "who.int"]) {
+  for (const source of ["loc.gov", "history.state.gov", "cambridge.org", "jstor.org", "amnesty.org", "bot.or.th", "un.or.th", "worldbank.org", "who.int", "hrw.org"]) {
     assert.ok(history.includes(source), "missing source: " + source);
   }
   assert.ok(engine.includes("eventForYear") && engine.includes("sourceUrl"));
+  assert.equal((history.match(/name: "/g) || []).length, 77, "the province dataset must contain all 77 provinces including Bangkok");
   assert.ok(world.includes("มีแหล่งอ้างอิง") && world.includes("life-event-context") && world.includes("life-source"));
 });
 
