@@ -235,7 +235,7 @@ function stage(age:number):string {
 }
 
 function historicalEvent(event:ThaiHistoryEvent, life:LifeRecord):LifeEvent {
-  const local = event.provinces?.includes(life.province) || (event.regions.includes("ทั่วประเทศ") && !event.provinces)
+  const local = event.provinces ? event.provinces.includes(life.province) : false
   const where = local ? event.localImpact : event.nationalImpact
   const choicesById:Record<string,LifeChoice[]> = {
     "siam-1932":[
@@ -377,5 +377,5 @@ export function validateLifeRecord(value:unknown):value is LifeRecord {
   return typeof life.id==="string"&&typeof life.name==="string"&&life.country==="ประเทศไทย"&&
     typeof life.province==="string"&&typeof life.bornYear==="number"&&typeof life.age==="number"&&
     typeof life.expectedLifespan==="number"&&Array.isArray(life.timeline)&&
-    !!life.stats&&typeof life.stats.health==="number"&&typeof life.stats.stress==="number"
+    !!life.stats&&typeof life.stats.health==="number"&&typeof life.stats.stress==="number"&&typeof life.stats.wealth==="number"&&Array.isArray(life.parents)&&typeof life.family==="string"&&typeof life.region==="string"
 }
