@@ -225,6 +225,49 @@ const personalEvents:Record<string,Array<{title:string;description:string;choice
   ]
 }
 
+
+// Supplemental scenarios widen the event pool without pretending these are universal experiences.
+const additionalPersonalEvents:Record<string,Array<{title:string;description:string;choices:LifeChoice[]}>> = {
+  teen: [
+    {title:"ข่าวลือและแรงกดดันจากเพื่อน",description:"ข้อมูลที่ส่งต่อกันอาจไม่ครบหรือไม่จริง ต้องตัดสินใจว่าจะเชื่อ แชร์ หรือหยุดตรวจสอบก่อน",choices:[
+      choice("verify-info","ตรวจสอบข้อมูลก่อนแชร์","ดูแหล่งที่มา วันที่ และหลักฐาน","รู้เท่าทันข้อมูลมากขึ้น","เสียเวลาและบางเรื่องยังยืนยันไม่ได้",82,{education:2,skills:3},{stress:1}),
+      choice("ask-teacher","ถามครูหรือผู้ใหญ่ที่ไว้ใจ","นำข้อมูลไปพูดคุยและขอคำแนะนำ","ได้มุมมองเพิ่มเติม","คำแนะนำอาจไม่ครบถ้วน",72,{education:2,relationships:2},{happiness:-1}),
+      choice("step-away","ไม่ร่วมส่งต่อและพักจากวงสนทนา","ลดการปะทะและกลับไปทำสิ่งจำเป็น","ลดความกดดันชั่วคราว","อาจถูกเพื่อนมองว่าไม่เข้าพวก",78,{health:1,stress:-2},{relationships:-1})
+    ]},
+    {title:"โอกาสเรียนรู้นอกห้องเรียน",description:"มีโอกาสเข้าร่วมกิจกรรมหรือฝึกงานระยะสั้น แต่ต้องดูความปลอดภัย ค่าเดินทาง และผลต่อการเรียน",choices:[
+      choice("short-intern","ลองฝึกงานช่วงปิดเทอม","เลือกสถานที่เหมาะกับวัยและมีผู้ดูแล","เห็นโลกการทำงานและฝึกทักษะ","งานไม่ตรงคาดหรือเหนื่อยเกินไป",66,{skills:5,education:2},{health:-1,stress:2}),
+      choice("free-course","หากิจกรรมหรือคอร์สที่เข้าถึงได้","ใช้โรงเรียน ห้องสมุด หรือศูนย์เรียนรู้","เพิ่มทักษะโดยไม่เพิ่มค่าใช้จ่ายมาก","เวลาและเนื้อหาอาจไม่ตรงใจ",76,{skills:4,education:3},{happiness:-1}),
+      choice("focus-exam","เน้นเตรียมสอบในช่วงนี้","กลับมาหาประสบการณ์หลังสอบ","รักษาเป้าหมายการเรียน","พลาดโอกาสที่มีเฉพาะช่วงนี้",80,{education:4,stress:1},{relationships:-1})
+    ]}
+  ],
+  young: [
+    {title:"รายได้ไม่แน่นอนระหว่างเปลี่ยนงาน",description:"ชั่วโมงงานหรือรายได้ขึ้นลง ต้องประเมินความเสี่ยงก่อนลาออกหรือเปลี่ยนเส้นทาง",choices:[
+      choice("keep-current","รักษางานเดิมระหว่างหาข้อมูล","ยังไม่ลาออกจนเห็นทางเลือกชัด","มีรายได้ต่อเนื่องระหว่างเตรียมตัว","ความก้าวหน้าอาจช้าลง",82,{wealth:2,stress:1},{happiness:-2}),
+      choice("apply-many","สมัครงานหลายแห่งและเปรียบเทียบ","ตรวจเงินเดือน สวัสดิการ และเวลาเดินทาง","เพิ่มโอกาสพบงานเหมาะสม","ใช้เวลาและอาจถูกปฏิเสธ",66,{skills:2,relationships:1},{stress:3}),
+      choice("short-course","ฝึกทักษะที่ใช้ได้หลายงาน","เลือกแหล่งเรียนรู้ที่น่าเชื่อถือและราคาไหว","เพิ่มทางเลือกสมัครงาน","เสียเวลาและเงินก่อนเห็นผล",62,{skills:5,education:2,wealth:-1},{wealth:-2,stress:2})
+    ]},
+    {title:"ค่าครองชีพและค่าเช่าสูงขึ้น",description:"ค่าเดินทาง ที่พัก หรืออาหารเพิ่มขึ้นเมื่อเทียบกับรายได้ ต้องปรับงบโดยไม่ตัดสิ่งจำเป็น",choices:[
+      choice("room-share","พิจารณาแชร์ที่พักกับคนไว้ใจได้","ตรวจสัญญา ค่าใช้จ่าย และความปลอดภัย","ลดค่าใช้จ่ายคงที่ได้บางส่วน","ความเป็นส่วนตัวลดลง",64,{wealth:3,relationships:1},{stress:3}),
+      choice("near-work","เปรียบเทียบที่พักใกล้ที่ทำงาน","รวมค่าเช่ากับค่าเดินทางก่อนตัดสินใจ","ลดเวลาเดินทางได้","ค่าเช่าหรือเงินประกันสูง",58,{health:2,wealth:-1},{wealth:-3,stress:3}),
+      choice("budget-review","ทบทวนงบรายจ่ายประจำ","เริ่มจากรายการที่ปรับได้โดยไม่กระทบของจำเป็น","เห็นจุดลดค่าใช้จ่าย","ลดได้ไม่มากเมื่อราคาสูงขึ้น",84,{skills:2,wealth:2},{stress:2})
+    ]}
+  ],
+  adult: [
+    {title:"รายได้ของคนในบ้านสะดุด",description:"สมาชิกครอบครัวอาจถูกลดชั่วโมงงาน เจ็บป่วย หรือกิจการขายได้น้อยลง ภาระอาจกระจายมาถึงคุณ",choices:[
+      choice("temporary-budget","ปรับงบชั่วคราว","แยกค่าใช้จ่ายจำเป็นและกำหนดขอบเขตการช่วย","ช่วยประคองบ้านโดยเห็นภาระชัด","เงินสำรองลดลง",78,{wealth:-1,relationships:3,skills:2},{wealth:-4,stress:3}),
+      choice("job-search-family","ช่วยหาข้อมูลงานหรือฝึกอาชีพ","ใช้เครือข่ายและช่องทางสมัครงาน","เพิ่มโอกาสกลับมามีรายได้","งานในพื้นที่อาจมีจำกัด",64,{relationships:3,skills:2},{stress:2}),
+      choice("shared-support","ชวนญาติแบ่งภาระตามกำลัง","ตกลงสิ่งที่แต่ละคนช่วยได้","ลดภาระที่ตกกับคนเดียว","ความคาดหวังอาจไม่ตรงกัน",68,{relationships:4},{relationships:-2,stress:3})
+    ]}
+  ],
+  senior: [
+    {title:"ค่าใช้จ่ายสุขภาพและการเดินทาง",description:"การไปพบแพทย์หรือทำกิจกรรมต้องวางแผนเรื่องคนพาไป ค่าเดินทาง และค่าใช้จ่ายต่อเนื่อง",choices:[
+      choice("plan-appointments","วางแผนนัดหมายล่วงหน้า","เตรียมรายการยา เอกสาร และผู้ติดต่อ","ลดการเดินทางซ้ำ","เวลานัดอาจไม่ตรงกับคนช่วย",78,{health:2,skills:2},{stress:2}),
+      choice("ask-local-service","สอบถามบริการใกล้บ้าน","ตรวจสอบข้อมูลจากหน่วยบริการโดยตรง","อาจเข้าถึงบริการสะดวกขึ้น","บางบริการไม่มีในพื้นที่",68,{health:2,relationships:1},{stress:2}),
+      choice("family-schedule","นัดหมายกับครอบครัวล่วงหน้า","ตกลงวันเวลาและแผนสำรอง","มีคนช่วยประสานงาน","ตารางของสมาชิกอาจชนกัน",76,{relationships:3},{stress:2})
+    ]}
+  ]
+};
+
 function stage(age:number):string {
   if(age <= 5) return "infant"
   if(age <= 11) return "child"
@@ -316,7 +359,8 @@ function historicalEvent(event:ThaiHistoryEvent, life:LifeRecord):LifeEvent {
 }
 
 function makePersonalEvent(life:LifeRecord,year:number):LifeEvent {
-  const pool = personalEvents[stage(life.age)] ?? personalEvents.senior
+  const stageKey = stage(life.age)
+  const pool = [...(personalEvents[stageKey] ?? personalEvents.senior), ...(additionalPersonalEvents[stageKey] ?? [])]
   const recent = new Set(life.timeline.slice(0,10).map(item=>item.title))
   const available = pool.filter(item=>!recent.has(item.title))
   const template = pick(available.length ? available : pool)
