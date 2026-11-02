@@ -358,12 +358,65 @@ function historicalEvent(event:ThaiHistoryEvent, life:LifeRecord):LifeEvent {
   return {id:event.id,age:life.age,year:event.year,title:event.title,description:event.context,context,type:"historical",sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote,choices}
 }
 
+function adaptiveEvents(life:LifeRecord):Array<{title:string;description:string;choices:LifeChoice[]}> {
+  const events:Array<{title:string;description:string;choices:LifeChoice[]}> = []
+  const st=life.stats
+  if(life.age>=18 && (st.wealth<10 || life.householdDebt>35000)) events.push({
+    title:"รายรับไม่พอกับภาระที่มี",
+    description:"รายจ่ายจำเป็นและภาระผ่อนเริ่มเบียดเงินที่เหลือ คุณต้องเลือกวิธีประคองสถานการณ์โดยไม่ผลักปัญหาไปข้างหน้า",
+    choices:[
+      choice("budget-reset","จัดงบใหม่และคุยเจ้าหนี้","เช็กยอดจริงและขอปรับกำหนดชำระก่อนค้างจ่าย","ได้แผนที่พอจัดการได้และลดความไม่แน่นอน","เงื่อนไขใหม่ยังหนักเกินรายรับ",76,{skills:2,stress:-2},{stress:4}),
+      choice("extra-shift","รับงานเสริมระยะสั้น","รับเฉพาะงานที่ไม่เสี่ยงเสียงานหลักหรือสุขภาพ","มีรายรับเพิ่มมาช่วยค่าใช้จ่าย","งานไม่ต่อเนื่องและเวลาพักลดลง",61,{wealth:6,skills:1},{health:-2,stress:5}),
+      choice("family-budget","คุยกับคนในบ้านเพื่อแบ่งภาระ","ตกลงค่าใช้จ่ายและความช่วยเหลืออย่างตรงไปตรงมา","แบ่งเบาภาระและเข้าใจกันมากขึ้น","เกิดความเห็นไม่ตรงกัน",68,{relationships:3,stress:-1},{relationships:-2,stress:3})
+    ]})
+  if(st.stress>70) events.push({
+    title:"ภาระหลายด้านเริ่มทับซ้อน",
+    description:"งาน บ้าน และความคาดหวังทำให้เวลาพักหายไป คุณต้องตัดสินใจว่าจะลดอะไร ขอความช่วยเหลือ หรือกัดฟันทำต่อ",
+    choices:[
+      choice("reduce-commitments","เลื่อนภาระที่ไม่เร่งด่วน","คุยกำหนดส่งและแบ่งงานใหม่","ความเครียดลดลงและกลับมาคุมตารางได้","บางคนไม่พอใจที่งานล่าช้า",72,{stress:-8,health:2},{stress:3,relationships:-1}),
+      choice("ask-for-help","ขอแรงคนที่ไว้ใจ","บอกให้ชัดว่าต้องการความช่วยเหลือเรื่องใด","ได้แรงสนับสนุนและความสัมพันธ์ดีขึ้น","คนใกล้ตัวอาจมีภาระของตัวเอง",74,{relationships:3,stress:-5},{stress:2}),
+      choice("push-through","ทำตามกำหนดเดิมไปก่อน","เลือกทำเฉพาะสิ่งจำเป็นและยอมพักทีหลัง","งานสำคัญเสร็จทันเวลา","ความล้าสะสมและสุขภาพอาจแย่ลง",52,{skills:1,stress:3},{health:-3,stress:7})
+    ]})
+  if(st.health<35) events.push({
+    title:"สุขภาพเริ่มจำกัดทางเลือก",
+    description:"อาการต่อเนื่องเริ่มกระทบกิจวัตร การเข้าถึงบริการ เวลาเดินทาง และค่าใช้จ่ายกลายเป็นส่วนหนึ่งของการตัดสินใจ",
+    choices:[
+      choice("seek-care","ตรวจที่หน่วยบริการตามสิทธิ","ตรวจสอบสิทธิและนัดหมายตามความจำเป็น","ได้คำแนะนำและแนวทางดูแลที่เหมาะสม","ต้องรอคิวหรือเสียเวลาเดินทาง",78,{health:7,stress:-2,wealth:-1},{stress:3,wealth:-1}),
+      choice("nearby-care","เริ่มจากหน่วยบริการใกล้บ้าน","สอบถามบริการปฐมภูมิหรือสถานพยาบาลชุมชน","เข้าถึงคำแนะนำเบื้องต้นได้สะดวกขึ้น","บริการบางอย่างอาจต้องส่งต่อ",73,{health:4,relationships:1},{stress:2}),
+      choice("delay-check","เลื่อนการตรวจเพราะติดภาระ","เฝ้าดูอาการและจัดการเรื่องเร่งด่วนก่อน","ประหยัดเวลาในระยะสั้น","อาการอาจยืดเยื้อและกระทบงานมากกว่าเดิม",40,{wealth:1},{health:-5,stress:4})
+    ]})
+  if(life.age>=22 && life.age<=45 && st.skills>=60 && st.wealth>35) events.push({
+    title:"โอกาสใหม่ที่ยังไม่แน่นอน",
+    description:"มีคนชวนรับงานเพิ่มหรือทดลองทำสิ่งใหม่ แต่ยังไม่มีหลักประกันว่าจะคุ้มทุน คุณสามารถทดลองเล็ก ๆ หรือรักษาความมั่นคงเดิมไว้",
+    choices:[
+      choice("pilot-project","ทดลองทำเป็นงานเล็กก่อน","จำกัดเงินลงทุนและกำหนดเวลาทดลอง","ได้ลูกค้าหรือประสบการณ์โดยความเสี่ยงจำกัด","ยอดตอบรับน้อยและเสียต้นทุนบางส่วน",57,{skills:4,wealth:3},{wealth:-3,stress:2}),
+      choice("learn-first","ศึกษาตลาดและเพิ่มทักษะก่อน","หาข้อมูลต้นทุน คู่แข่ง และความต้องการจริง","ตัดสินใจได้รอบคอบขึ้น","โอกาสอาจผ่านไปก่อนพร้อม",79,{education:2,skills:3},{happiness:-1}),
+      choice("keep-stable","ยังไม่เปลี่ยนงานหรือรายได้หลัก","ให้ความสำคัญกับรายได้ที่แน่นอนในช่วงนี้","รักษาความมั่นคงและเวลาพัก","พลาดโอกาสที่อาจเติบโต",82,{stress:-2,health:1},{happiness:-1})
+    ]})
+  if(st.relationships<25) events.push({
+    title:"คนใกล้ตัวเริ่มห่างกัน",
+    description:"การสื่อสารที่น้อยลงหรือความเห็นไม่ตรงกันทำให้ความสัมพันธ์เปลี่ยนไป การเริ่มต้นใหม่อาจต้องใช้เวลาและเคารพขอบเขตของกันและกัน",
+    choices:[
+      choice("listen-first","เริ่มจากรับฟัง","ถามไถ่และฟังโดยไม่รีบตัดสิน","ความเข้าใจดีขึ้นทีละน้อย","อีกฝ่ายยังไม่พร้อมพูดคุย",68,{relationships:6,happiness:1},{relationships:-1}),
+      choice("shared-time","ชวนทำกิจกรรมสั้น ๆ ร่วมกัน","เลือกสิ่งที่ทั้งสองฝ่ายสะดวกและไม่เพิ่มภาระ","ได้ใช้เวลาร่วมกันมากขึ้น","ตารางเวลาไม่ตรงกัน",63,{relationships:4,happiness:2},{stress:1}),
+      choice("set-boundary","เว้นระยะอย่างสุภาพ","ลดการปะทะและให้เวลาทบทวน","ความตึงเครียดลดลง","ความสัมพันธ์อาจห่างต่อไป",72,{stress:-3},{relationships:-2})
+    ]})
+  return events
+}
+
 function makePersonalEvent(life:LifeRecord,year:number):LifeEvent {
   const stageKey = stage(life.age)
-  const pool = [...(personalEvents[stageKey] ?? personalEvents.senior), ...(additionalPersonalEvents[stageKey] ?? [])]
+  const baseline = [...(personalEvents[stageKey] ?? personalEvents.senior), ...(additionalPersonalEvents[stageKey] ?? [])]
+  const adaptive = adaptiveEvents(life)
+  const pool = [...adaptive.filter(item=>!life.timeline.slice(0,8).some(entry=>entry.title===item.title)).map(item=>({...item,weight:2})), ...baseline.map(item=>({...item,weight:1}))]
   const recent = new Set(life.timeline.slice(0,12).map(item=>item.title))
   const available = pool.filter(item=>!recent.has(item.title))
-  const template = pick(available.length ? available : pool)
+  const candidates = pool.filter(item=>!recent.has(item.title))
+  const available = candidates.length ? candidates : pool
+  const total = available.reduce((sum,item)=>sum+item.weight,0)
+  let ticket = Math.random()*total
+  let template = available[0]
+  for(const item of available){ticket-=item.weight;if(ticket<=0){template=item;break}}
   const era = eraLabel(year)
   const location = life.areaType
   const situationalChoice = life.stats.stress >= 65
