@@ -84,3 +84,15 @@ test("life simulation has additional stage-specific situations and state-adjuste
   assert.match(engine, /life\.householdDebt>30000/);
   assert.match(world, /estimateChoiceChance\(activeLife, choice\)/);
 });
+
+test("life scene reflects story milestones for family, pets, vehicles and household help", () => {
+  const scene = await readFile(new URL("../src/LifeScene.tsx", import.meta.url), "utf8");
+  for (const feature of ["householdScene", "children", "pets", "housekeeper", "vehicle", "life-scene-frame"]) {
+    assert.ok(scene.includes(feature), "missing visual scene feature: " + feature);
+  }
+  for (const feature of ["sceneMilestoneEvent", "adopt-cat", "adopt-dog", "start-family", "buy-car", "buy-motorcycle", "hire-housekeeper", "sceneDecisions"]) {
+    assert.ok(engine.includes(feature), "missing story-driven scene milestone: " + feature);
+  }
+  assert.ok(world.includes('import LifeScene from "./LifeScene"') && world.includes("<LifeScene life={activeLife} />"));
+  assert.ok(styles.includes(".life-scene-frame") && styles.includes(".life-scene-legend"));
+});
