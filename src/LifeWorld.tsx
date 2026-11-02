@@ -107,11 +107,11 @@ export default function LifeWorld() {
     await persist(lives, id)
   }
 
-  if (loading) return <main className="life-loading"><span className="life-mark">8</span><p>กำลังเปิดหน้าต่างสู่ชีวิตใหม่…</p></main>
+  if (loading) return <main className="life-loading"><span className="life-mark">TH</span><p>กำลังเปิดหน้าต่างสู่ชีวิตใหม่…</p></main>
 
   return <div className="life-app">
     <header className="life-topbar">
-      <button className="life-brand" onClick={() => setView("world")}><span className="life-brand-mark">8</span><span><b>DayTogether</b><small>A LIFE IN 8 BILLION</small></span></button>
+      <button className="life-brand" onClick={() => setView("world")}><span className="life-brand-mark">TH</span><span><b>DayTogether</b><small>THAI LIFE SIMULATION</small></span></button>
       <nav className="life-nav" aria-label="เมนูหลัก">
         <button className={view === "world" ? "active" : ""} onClick={() => setView("world")}>โลกของฉัน</button>
         <button className={view === "history" ? "active" : ""} onClick={() => setView("history")}>เรื่องราวชีวิต</button>
@@ -124,7 +124,7 @@ export default function LifeWorld() {
       {error && <div className="life-alert" role="alert">{error}</div>}
       {view === "world" && <>
         {!activeLife ? <section className="life-welcome">
-          <div className="life-welcome-art" aria-hidden="true"><div className="life-orbit orbit-one" /><div className="life-orbit orbit-two" /><div className="life-globe"><span>8</span></div><i className="life-star star-one">✦</i><i className="life-star star-two">✧</i><i className="life-star star-three">·</i></div>
+          <div className="life-welcome-art" aria-hidden="true"><div className="life-orbit orbit-one" /><div className="life-orbit orbit-two" /><div className="life-globe"><span>TH</span></div><i className="life-star star-one">✦</i><i className="life-star star-two">✧</i><i className="life-star star-three">·</i></div>
           <div className="life-welcome-copy"><span className="life-eyebrow">THAILAND · LIFE THROUGH THE ERAS</span><h1>หนึ่งชีวิต<br /><em>ผ่านกาลเวลาไทย</em></h1><p>เกิดในปีที่ไม่เหมือนกัน เติบโตในจังหวัดและครอบครัวที่ต่างกัน แล้วใช้ชีวิตท่ามกลางเหตุการณ์จริงของประเทศไทย ทุกทางเลือกมีต้นทุนและโอกาสของมัน</p><button className="life-primary" onClick={() => setShowCreate(true)}>สุ่มปีเกิดและเริ่มชีวิต <span>↗</span></button><small>ข้อมูลประวัติศาสตร์มีแหล่งอ้างอิง ส่วนพื้นฐานครอบครัวเป็นสถานการณ์จำลอง</small></div>
         </section> : <section className="life-dashboard">
           <div className="life-page-heading"><div><span className="life-eyebrow">YOUR CURRENT LIFE · {activeLife.status === "alive" ? "IN PROGRESS" : "COMPLETED"}</span><h1>{activeLife.name}<span className="life-age">อายุ {activeLife.age} ปี</span></h1><p>{activeLife.background} · ประเทศไทย · {activeLife.province}</p></div><button className="life-secondary" onClick={() => setShowCreate(true)}>＋ เริ่มชีวิตใหม่</button></div>
