@@ -95,7 +95,7 @@ export default function CloudAuth({ children }: { children?: ReactNode }) {
     setMessage("")
   }
 
-  if (checking) return <main className="auth-state" aria-live="polite"><span className="auth-loading-mark" /><p>กำลังเตรียมพื้นที่ส่วนตัว…</p></main>
+  if (checking) return <main className="auth-state" aria-live="polite"><span className="auth-loading-mark" /><p>กำลังเปิดโลกจำลอง…</p></main>
   if (connectionError) return <main className="auth-state"><p>เชื่อมต่อระบบยืนยันตัวตนไม่ได้</p><p>{connectionError}</p><button type="button" onClick={() => window.location.reload()}>ลองอีกครั้ง</button></main>
   if (user) return <AuthContext.Provider value={{ user, signOut }}>{children ?? <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>}</AuthContext.Provider>
 
@@ -103,17 +103,17 @@ export default function CloudAuth({ children }: { children?: ReactNode }) {
     <section className="auth-story">
       <div className="auth-story-brand"><span className="auth-story-mark"><i /></span><span><strong>daytogether</strong><small>your life, gently kept</small></span></div>
       <div className="auth-story-copy">
-        <span className="auth-kicker">A LITTLE SPACE FOR YOUR EVERYDAY</span>
-        <h2>ค่อย ๆ ใช้ชีวิต<br /><em>ในจังหวะของเรา</em></h2>
-        <p>พื้นที่ส่วนตัวสำหรับเก็บเรื่องราว ดูแลตัวเอง และจัดระเบียบสิ่งต่าง ๆ ในแบบที่เป็นคุณ</p>
+        <span className="auth-kicker">ONE LIFE AMONG BILLIONS</span>
+        <h2>หนึ่งชีวิต<br /><em>ในผู้คนอีกนับพันล้าน</em></h2>
+        <p>เริ่มต้นจากโลกที่ไม่เหมือนกัน แล้วเลือกเส้นทางชีวิตในแบบที่คุณอยากค้นพบ</p>
       </div>
-      <div className="auth-story-foot">YOUR PERSONAL SPACE · EVERY DAY, TOGETHER</div>
+      <div className="auth-story-foot">DAYTOGETHER · A LIFE IN 8 BILLION</div>
     </section>
     <section className="auth-form-wrap">
       <form className="auth-form" onSubmit={signIn}>
         <span className="auth-kicker">WELCOME BACK</span>
         <h1>ยินดีต้อนรับกลับมา</h1>
-        <p>เข้าสู่ระบบเพื่อกลับไปยังพื้นที่ของคุณ</p>
+        <p>เข้าสู่ระบบเพื่อกลับไปยังโลกและเรื่องราวชีวิตของคุณ</p>
         <label htmlFor="auth-email">อีเมล</label>
         <input id="auth-email" type="email" autoComplete="username" placeholder="name@example.com" value={email} onChange={event => setEmail(event.target.value)} required />
         <label htmlFor="auth-password">รหัสผ่าน</label>
