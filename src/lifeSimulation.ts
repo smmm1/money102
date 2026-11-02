@@ -386,9 +386,17 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
     stats[statKey]=statKey==="wealth"?Math.max(-100000,stats.wealth+(value??0)):clamp(stats[statKey]+(value??0))
   }
   const result=success?selected.successOutcome:selected.failureOutcome
+  let occupation=life.occupation
+  if(success){
+    const careerChoices:Record<string,string>={"university":"นักศึกษา","vocational":"นักเรียนสายอาชีพ","stable-job":"พนักงานประจำ","learn-job":"ลูกจ้างฝึกทักษะ/พนักงานใหม่","small-business":"เจ้าของกิจการขนาดเล็ก","work":"ลูกจ้าง/แรงงาน","craft":"อาชีพอิสระ/งานฝีมือ","promotion":"หัวหน้างาน/ผู้จัดการ","reskill":"กำลังพัฒนาทักษะอาชีพ"}
+    occupation=careerChoices[choiceId]??occupation
+  }
+  let householdDebt=life.householdDebt
+  if(choiceId==="borrow-more") householdDebt+=success?25000:40000
+  if(choiceId==="refinance"&&success) householdDebt=Math.max(0,householdDebt-5000)
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl}
-  return {...life,stats,pendingEvent:null,timeline:[entry,...life.timeline]}
+  return {...life,stats,occupation,householdDebt,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
 
 export function validateLifeRecord(value:unknown):value is LifeRecord {
