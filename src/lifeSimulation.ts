@@ -361,12 +361,19 @@ function historicalEvent(event:ThaiHistoryEvent, life:LifeRecord):LifeEvent {
 function makePersonalEvent(life:LifeRecord,year:number):LifeEvent {
   const stageKey = stage(life.age)
   const pool = [...(personalEvents[stageKey] ?? personalEvents.senior), ...(additionalPersonalEvents[stageKey] ?? [])]
-  const recent = new Set(life.timeline.slice(0,10).map(item=>item.title))
+  const recent = new Set(life.timeline.slice(0,12).map(item=>item.title))
   const available = pool.filter(item=>!recent.has(item.title))
   const template = pick(available.length ? available : pool)
   const era = eraLabel(year)
   const location = life.areaType
-  return {id:uid(),age:life.age,year,title:template.title,description:template.description,context:`บริบทของปี ${year}: ${era} · ${life.province} · ${location} · พื้นฐานครอบครัว: ${life.family}`,type:"personal",choices:template.choices}
+  const situationalChoice = life.stats.stress >= 65
+    ? choice("slow-down","ชะลอเรื่องที่ยังไม่จำเป็น","ลดภาระชั่วคราวและพักให้พอ","ความเหนื่อยลดลงและคิดได้รอบคอบขึ้น","งานบางอย่างล่าช้าหรือเลื่อนไม่ได้",82,{stress:-5,health:2},{stress:2})
+    : life.stats.wealth < 8 || life.householdDebt > 30000
+      ? choice("protect-budget","รักษาเงินสำรองก่อนก่อภาระใหม่","ตรวจสอบค่าใช้จ่ายและเงื่อนไขให้ครบ","ลดโอกาสสร้างภาระเกินกำลัง","ทางเลือกที่ต้องใช้เงินอาจต้องเลื่อน",80,{skills:2,stress:-1,wealth:1},{stress:2,wealth:-1})
+      : life.areaType.includes("ชนบท")
+        ? choice("local-network","ใช้เครือข่ายชุมชน","สอบถามโรงเรียน สหกรณ์ หรือหน่วยงานใกล้บ้านตามความเหมาะสม","พบข้อมูลหรือความช่วยเหลือที่เข้าถึงได้","ทรัพยากรในพื้นที่อาจมีจำกัด",72,{relationships:3,skills:2},{stress:1})
+        : choice("compare-options","เปรียบเทียบทางเลือกก่อนตัดสินใจ","ตรวจเวลาเดินทาง ต้นทุน และผลต่อคนในบ้าน","ลดโอกาสตัดสินใจจากข้อมูลไม่ครบ","เสียเวลาและโอกาสบางอย่างอาจผ่านไป",78,{skills:2,education:1},{stress:1})
+  return {id:uid(),age:life.age,year,title:template.title,description:template.description,context:"บริบทของปี "+year+": "+era+" · "+life.province+" · "+location+" · พื้นฐานครอบครัว: "+life.family+" · เหตุการณ์ส่วนบุคคลนี้เป็นสถานการณ์จำลอง ไม่ใช่เหตุการณ์ที่เกิดกับทุกครัวเรือน",type:"personal",choices:[...template.choices,situationalChoice]}
 }
 
 function eventForYear(life:LifeRecord,year:number):LifeEvent|null {
