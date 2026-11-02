@@ -44,6 +44,7 @@ export type LifeEntry = {
   year: number
   sourceTitle?: string
   sourceUrl?: string
+  sourceNote?: string
 }
 
 export type LifeRecord = {
@@ -395,7 +396,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   if(choiceId==="borrow-more") householdDebt+=success?25000:40000
   if(choiceId==="refinance"&&success) householdDebt=Math.max(0,householdDebt-5000)
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
-  const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl}
+  const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   return {...life,stats,occupation,householdDebt,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
 
