@@ -14,7 +14,7 @@ DayTogether is a Thai-first life simulation experience inspired by the idea of l
 ## Life simulation scope
 
 - Start multiple independent lives.
-- Randomized starting country, region, family background, and initial conditions.
+- Country selection weighted by approximate world population share, plus randomized region, family background, and initial conditions.
 - Age progression and life-stage events.
 - Branching decisions that affect health, happiness, education, relationships, skills, and wealth.
 - A timeline and archive of each life.
