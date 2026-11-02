@@ -33,6 +33,7 @@ export type LifeEvent = {
   sourceTitle?: string
   sourceUrl?: string
   sourceNote?: string
+  sceneKey?: string
   choices: LifeChoice[]
 }
 
@@ -69,6 +70,8 @@ export type LifeRecord = {
   stats: LifeStats
   pendingEvent: LifeEvent | null
   timeline: LifeEntry[]
+  householdScene?: { partner:boolean; children:number; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
+  sceneDecisions?: string[]
   createdAt: string
   endedAt?: string
 }
@@ -434,6 +437,36 @@ function eventForYear(life:LifeRecord,year:number):LifeEvent|null {
   return historicalEvent(event,life)
 }
 
+function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
+  const done = new Set(life.sceneDecisions ?? [])
+  const event = (sceneKey:string,title:string,description:string,choices:LifeChoice[]):LifeEvent => ({
+    id:uid(),age:life.age,year,title,description,
+    context:"เหตุการณ์นี้เป็นทางเลือกส่วนบุคคลของตัวละคร ไม่ใช่สิ่งที่ทุกครอบครัวต้องทำ",
+    type:"personal",sceneKey,choices
+  })
+  if(life.age>=20 && !done.has("pet")) return event("pet","มีสัตว์เลี้ยงในบ้านหรือไม่?","คุณเริ่มคิดถึงการมีเพื่อนสี่ขาในบ้าน แต่ต้องประเมินเวลา ค่าอาหาร และค่ารักษาพยาบาลระยะยาว",[
+    choice("adopt-cat","รับแมวมาเลี้ยง","เตรียมพื้นที่ อาหาร และเงินสำรองสำหรับการดูแล","มีสมาชิกใหม่และความผูกพันเพิ่มขึ้น","การปรับตัวหรือค่าใช้จ่ายอาจมากกว่าที่คิด",68,{happiness:4,relationships:3,wealth:-2},{stress:2,wealth:-2}),
+    choice("adopt-dog","รับสุนัขมาเลี้ยง","ต้องมีเวลาเดินเล่น ฝึกพฤติกรรม และดูแลสุขภาพ","ได้เพื่อนและกิจวัตรใหม่ในบ้าน","ดูแลไม่ทั่วถึงหรือมีค่าใช้จ่ายฉุกเฉิน",60,{happiness:5,health:1,wealth:-3},{stress:3,wealth:-3}),
+    choice("wait-pet","ยังไม่พร้อมเลี้ยงสัตว์","รอให้เวลาและการเงินพร้อมกว่านี้","รักษาความยืดหยุ่นของชีวิตและงบประมาณ","อาจรู้สึกเสียดายโอกาสในช่วงนี้",88,{wealth:1,stress:-1},{happiness:-1})
+  ])
+  if(life.age>=23 && !done.has("family")) return event("family","ความสัมพันธ์และการสร้างครอบครัว","ชีวิตเริ่มมีทางเลือกเรื่องคู่ชีวิต การมีลูก หรือการใช้ชีวิตอย่างอิสระ ทุกทางต้องคำนึงถึงความพร้อมและความต้องการของคนที่เกี่ยวข้อง",[
+    choice("start-family","สร้างครอบครัวและมีลูก","วางแผนเรื่องเวลา รายได้ ที่อยู่อาศัย และการดูแลเด็ก","มีคู่ชีวิตและลูกหนึ่งคนในเรื่องราว","ความพร้อมไม่ลงตัวหรือภาระใหม่หนักกว่าที่คาด",52,{relationships:5,happiness:4,wealth:-4,stress:4},{relationships:-1,stress:4,wealth:-2}),
+    choice("partner-first","เริ่มต้นกับคู่ชีวิตก่อน ยังไม่รีบมีลูก","ค่อย ๆ สร้างความเข้าใจและวางแผนร่วมกัน","มีคู่ชีวิตและความสัมพันธ์ที่มั่นคงขึ้น","ความคาดหวังหรือเป้าหมายอาจไม่ตรงกัน",68,{relationships:5,happiness:2},{relationships:-2,stress:2}),
+    choice("stay-independent","ยังไม่สร้างครอบครัวในช่วงนี้","ให้ความสำคัญกับงาน การเรียน หรือเป้าหมายส่วนตัว","มีอิสระจัดสรรเวลาและทรัพยากร","อาจต้องรับมือกับคำถามจากคนรอบข้าง",86,{skills:2,wealth:2},{stress:1})
+  ])
+  if(life.age>=27 && !done.has("vehicle")) return event("vehicle","การเดินทางและพาหนะของครอบครัว","การเดินทางไปทำงานหรือดูแลคนในบ้านเริ่มมีผลต่อเวลาและค่าใช้จ่าย การมีรถช่วยบางเรื่องแต่เพิ่มภาระระยะยาว",[
+    choice("buy-motorcycle","ซื้อรถจักรยานยนต์มือสอง","ตรวจสภาพรถ ค่าโอน ภาษี และอุปกรณ์ความปลอดภัย","เดินทางคล่องตัวขึ้นด้วยต้นทุนที่ต่ำกว่ารถยนต์","ค่าซ่อมหรือความเสี่ยงจากรถมือสองเพิ่มขึ้น",62,{wealth:-3,skills:2},{wealth:-4,stress:2}),
+    choice("buy-car","ซื้อรถยนต์เมื่อการเงินรองรับ","คำนวณเงินดาวน์ ค่างวด ประกัน น้ำมัน และค่าบำรุงรักษา","เดินทางกับครอบครัวสะดวกขึ้น","ภาระผ่อนและค่าใช้จ่ายประจำอาจกดดันงบ",42,{wealth:-8,happiness:3,stress:2},{wealth:-5,stress:5}),
+    choice("no-vehicle","ใช้ขนส่งสาธารณะหรือเดินทางร่วมกัน","เลื่อนการซื้อไว้จนกว่าจะมีเงินสำรองเพียงพอ","ลดภาระหนี้และค่าใช้จ่ายประจำ","เสียเวลาและความสะดวกบางส่วน",88,{wealth:2,stress:-1},{happiness:-1})
+  ])
+  if(life.age>=35 && life.stats.wealth>=60000 && life.householdDebt<50000 && !done.has("housekeeper")) return event("housekeeper","แบ่งเบางานในบ้าน","เมื่อภาระงานและครอบครัวมากขึ้น คุณอาจจ้างผู้ช่วยทำความสะอาดเป็นครั้งคราวหรือจัดการงานบ้านร่วมกัน",[
+    choice("hire-housekeeper","จ้างแม่บ้านเป็นครั้งคราว","ตกลงขอบเขตงาน ชั่วโมง และค่าจ้างอย่างเป็นธรรม","มีเวลาพักหรือดูแลเรื่องสำคัญมากขึ้น","ค่าใช้จ่ายต่อเนื่องและการหาคนที่ไว้ใจได้",65,{wealth:-4,stress:-3,happiness:2},{wealth:-3,stress:2}),
+    choice("share-housework","แบ่งงานบ้านกับคนในครอบครัว","จัดตารางและคุยความคาดหวังให้ชัด","ทุกคนมีส่วนร่วมและลดค่าใช้จ่าย","ตารางไม่ลงตัวหรือเกิดความขัดแย้ง",78,{relationships:3,stress:-2},{relationships:-1,stress:2}),
+    choice("do-it-yourself","ยังจัดการงานบ้านกันเอง","ปรับกิจวัตรและทำเฉพาะสิ่งจำเป็นก่อน","ไม่เพิ่มรายจ่ายประจำ","เวลาพักผ่อนอาจลดลง",85,{wealth:1},{stress:2})
+  ])
+  return null
+}
+
 export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   const minYear = Math.max(1930,Math.min(2025,Math.min(yearFrom,yearTo)))
   const maxYear = Math.max(minYear,Math.min(2025,Math.max(yearFrom,yearTo)))
@@ -454,6 +487,7 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
     occupation:"ยังไม่ถึงวัยทำงาน",bornYear,age:0,expectedLifespan:78+Math.floor(Math.random()*18),status:"alive",
     stats:{health:78,happiness:62,education:profile.education,relationships:58,skills:24,wealth:profile.wealth,stress:12},
     pendingEvent:null,timeline:[{id:uid(),age:0,year:bornYear,title:"วันแรกของชีวิต",detail:`เกิดในประเทศไทย · จังหวัด${province.name} · ${profile.family} · ผู้ปกครองทำงาน${parent1}และ${parent2}`}],
+    householdScene:{partner:false,children:0,pets:[],housekeeper:false,vehicle:null},sceneDecisions:[],
     createdAt:new Date().toISOString()
   }
   life.pendingEvent = eventForYear(life,bornYear)
@@ -468,7 +502,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
     return {...life,age:nextAge,status:"ended",endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
   }
   const nextLife={...life,age:nextAge}
-  const event=eventForYear(nextLife,year) ?? makePersonalEvent(nextLife,year)
+  const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
 
@@ -518,7 +552,18 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   if(choiceId==="refinance"&&success) householdDebt=Math.max(0,householdDebt-5000)
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
-  return {...life,stats,occupation,householdDebt,pendingEvent:null,timeline:[entry,...life.timeline]}
+  const householdScene = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
+  if(success){
+    if(choiceId==="start-family"){householdScene.partner=true;householdScene.children=Math.max(1,householdScene.children)}
+    if(choiceId==="partner-first") householdScene.partner=true
+    if(choiceId==="adopt-cat" && !householdScene.pets.includes("cat")) householdScene.pets=[...householdScene.pets,"cat"]
+    if(choiceId==="adopt-dog" && !householdScene.pets.includes("dog")) householdScene.pets=[...householdScene.pets,"dog"]
+    if(choiceId==="buy-motorcycle") householdScene.vehicle="motorcycle"
+    if(choiceId==="buy-car") householdScene.vehicle="car"
+    if(choiceId==="hire-housekeeper") householdScene.housekeeper=true
+  }
+  const sceneDecisions = event.sceneKey ? [...new Set([...(life.sceneDecisions ?? []),event.sceneKey])] : (life.sceneDecisions ?? [])
+  return {...life,stats,occupation,householdDebt,householdScene,sceneDecisions,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
 
 export function validateLifeRecord(value:unknown):value is LifeRecord {
