@@ -148,3 +148,18 @@ button{cursor:pointer}
 .life-history-timeline>div>article>p{font-size:11px;line-height:1.7;color:#77847c;margin:0}
 .life-history-timeline>div>article>a{font-size:10px;color:#4b7865;text-decoration:underline}
 @media(max-width:440px){.life-history-timeline{grid-column:1/-1}}
+
+/* Story-driven illustrated life scene */
+.life-scene-card{margin:28px 0 34px;padding:20px 20px 16px;background:#fff;border:1px solid #e3e9e2;border-radius:20px;overflow:hidden}
+.life-scene-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}
+.life-scene-heading h2{font-size:20px;font-weight:600;letter-spacing:-.03em;margin:5px 0 0;color:#29463a}
+.life-scene-era{font-size:10px;color:#89978d;white-space:nowrap}
+.life-scene-frame{border-radius:14px;overflow:hidden;border:1px solid #dce8df;background:#dcebe4}
+.life-scene-frame svg{display:block;width:100%;height:auto;min-height:190px}
+.life-scene-legend{display:flex;align-items:center;flex-wrap:wrap;gap:9px 18px;padding:13px 2px 0;font-size:10px;color:#75857a}
+.life-scene-legend span{display:inline-flex;align-items:center;gap:6px}
+.life-scene-legend small{width:100%;font-size:10px;color:#98a49a;line-height:1.6}
+.scene-dot{width:7px;height:7px;border-radius:2px;display:inline-block}
+.scene-dot.home{background:#9c6955}.scene-dot.people{background:#507f76}.scene-dot.pet{background:#b9a99a}.scene-dot.vehicle{background:#b86e55}.scene-dot.helper{background:#8d9b83}
+@media(max-width:800px){.life-scene-card{padding:14px;margin:22px 0 28px}.life-scene-heading h2{font-size:17px}.life-scene-frame svg{min-height:150px}}
+@media(max-width:440px){.life-scene-heading{align-items:flex-start;flex-direction:column;gap:5px}.life-scene-era{font-size:9px}}
