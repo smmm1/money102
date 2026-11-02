@@ -50,16 +50,29 @@ export type LifeRecord = {
 }
 
 const origins = [
-  { country: "ประเทศไทย", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนเมืองขนาดเล็ก", wealth: 900, education: 42 },
-  { country: "ญี่ปุ่น", region: "เอเชียตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีระบบขนส่งสะดวก", wealth: 4200, education: 66 },
-  { country: "อินเดีย", region: "เอเชียใต้", family: "ครอบครัวรายได้น้อย", background: "เติบโตในครอบครัวใหญ่ที่ช่วยเหลือกัน", wealth: 500, education: 35 },
-  { country: "บราซิล", region: "อเมริกาใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในเมืองที่มีความหลากหลายทางวัฒนธรรม", wealth: 1100, education: 48 },
-  { country: "เยอรมนี", region: "ยุโรปตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองขนาดกลาง", wealth: 5200, education: 72 },
-  { country: "ไนจีเรีย", region: "แอฟริกาตะวันตก", family: "ครอบครัวรายได้น้อย", background: "เติบโตในครอบครัวที่มีเครือญาติใกล้ชิด", wealth: 650, education: 38 },
-  { country: "สหรัฐอเมริกา", region: "อเมริกาเหนือ", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในชานเมือง", wealth: 6800, education: 68 },
-  { country: "เม็กซิโก", region: "อเมริกากลาง", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่มีความผูกพัน", wealth: 1300, education: 47 },
-  { country: "ฝรั่งเศส", region: "ยุโรปตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่เต็มไปด้วยศิลปะและประวัติศาสตร์", wealth: 4700, education: 70 },
-  { country: "เคนยา", region: "แอฟริกาตะวันออก", family: "ครอบครัวชนบท", background: "เติบโตใกล้ชิดธรรมชาติและชุมชน", wealth: 700, education: 40 },
+  { country: "อินเดีย", region: "เอเชียใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในครอบครัวใหญ่ที่ช่วยเหลือกัน", wealth: 500, education: 35, weight: 17.8, lifeExpectancy: 68 },
+  { country: "จีน", region: "เอเชียตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองหรือชุมชนที่มีการเปลี่ยนแปลงรวดเร็ว", wealth: 2600, education: 62, weight: 17.4, lifeExpectancy: 78 },
+  { country: "สหรัฐอเมริกา", region: "อเมริกาเหนือ", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในชานเมืองที่มีความหลากหลาย", wealth: 6800, education: 68, weight: 4.2, lifeExpectancy: 77 },
+  { country: "อินโดนีเซีย", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่มีความผูกพัน", wealth: 1000, education: 49, weight: 3.5, lifeExpectancy: 71 },
+  { country: "ปากีสถาน", region: "เอเชียใต้", family: "ครอบครัวรายได้น้อย", background: "เติบโตในครอบครัวที่มีเครือญาติใกล้ชิด", wealth: 600, education: 39, weight: 3.1, lifeExpectancy: 67 },
+  { country: "ไนจีเรีย", region: "แอฟริกาตะวันตก", family: "ครอบครัวรายได้น้อย", background: "เติบโตในเมืองที่มีชีวิตชีวาและความท้าทาย", wealth: 650, education: 38, weight: 2.9, lifeExpectancy: 54 },
+  { country: "บราซิล", region: "อเมริกาใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในเมืองที่มีความหลากหลายทางวัฒนธรรม", wealth: 1100, education: 48, weight: 2.7, lifeExpectancy: 75 },
+  { country: "บังกลาเทศ", region: "เอเชียใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่ผู้คนพึ่งพาอาศัยกัน", wealth: 700, education: 44, weight: 2.1, lifeExpectancy: 73 },
+  { country: "รัสเซีย", region: "ยุโรปตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีฤดูกาลแตกต่างชัดเจน", wealth: 2400, education: 67, weight: 1.8, lifeExpectancy: 70 },
+  { country: "เม็กซิโก", region: "อเมริกาเหนือ", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่มีวัฒนธรรมเข้มแข็ง", wealth: 1300, education: 47, weight: 1.6, lifeExpectancy: 75 },
+  { country: "ญี่ปุ่น", region: "เอเชียตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีระบบขนส่งสะดวก", wealth: 4200, education: 66, weight: 1.5, lifeExpectancy: 84 },
+  { country: "เอธิโอเปีย", region: "แอฟริกาตะวันออก", family: "ครอบครัวชนบท", background: "เติบโตใกล้ชิดธรรมชาติและชุมชน", wealth: 450, education: 33, weight: 1.4, lifeExpectancy: 66 },
+  { country: "ฟิลิปปินส์", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่ครอบครัวมีบทบาทสำคัญ", wealth: 950, education: 52, weight: 1.4, lifeExpectancy: 71 },
+  { country: "อียิปต์", region: "แอฟริกาเหนือ", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในสังคมที่มีประวัติศาสตร์ยาวนาน", wealth: 900, education: 48, weight: 1.3, lifeExpectancy: 70 },
+  { country: "เวียดนาม", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่ให้ความสำคัญกับการศึกษา", wealth: 1100, education: 58, weight: 1.2, lifeExpectancy: 74 },
+  { country: "สาธารณรัฐประชาธิปไตยคองโก", region: "แอฟริกากลาง", family: "ครอบครัวรายได้น้อย", background: "เติบโตในครอบครัวที่มีเครือญาติใกล้ชิด", wealth: 400, education: 31, weight: 1.2, lifeExpectancy: 62 },
+  { country: "อิหร่าน", region: "เอเชียตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีมรดกทางวัฒนธรรม", wealth: 1700, education: 61, weight: 1.1, lifeExpectancy: 75 },
+  { country: "เยอรมนี", region: "ยุโรปตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองขนาดกลาง", wealth: 5200, education: 72, weight: 1.0, lifeExpectancy: 81 },
+  { country: "ตุรกี", region: "เอเชียตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตระหว่างวัฒนธรรมหลายภูมิภาค", wealth: 1900, education: 55, weight: 1.0, lifeExpectancy: 77 },
+  { country: "ประเทศไทย", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนเมืองขนาดเล็ก", wealth: 900, education: 52, weight: 0.9, lifeExpectancy: 79 },
+  { country: "ฝรั่งเศส", region: "ยุโรปตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่เต็มไปด้วยศิลปะและประวัติศาสตร์", wealth: 4700, education: 70, weight: 0.8, lifeExpectancy: 82 },
+  { country: "เคนยา", region: "แอฟริกาตะวันออก", family: "ครอบครัวชนบท", background: "เติบโตใกล้ชิดธรรมชาติและชุมชน", wealth: 700, education: 40, weight: 0.7, lifeExpectancy: 62 },
+  { country: "ประเทศอื่น ๆ", region: "ภูมิภาคอื่นของโลก", family: "ครอบครัวที่มีบริบทเฉพาะ", background: "เติบโตในหนึ่งในอีกหลายประเทศของโลก", wealth: 1500, education: 50, weight: 29.4, lifeExpectancy: 72 },
 ]
 
 const firstNames = ["อเล็กซ์", "มิน", "โซเฟีย", "อามีร์", "ลิน", "โนอาห์", "อารยา", "เรย์", "เอลล่า", "คีริน"]
@@ -103,12 +116,21 @@ const eventBank: Array<Omit<LifeEvent, "id" | "age"> & { min: number; max: numbe
 function pick<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)]
 }
+function pickWeighted<T extends { weight: number }>(items: T[]): T {
+  const total = items.reduce((sum, item) => sum + item.weight, 0)
+  let point = Math.random() * total
+  for (const item of items) {
+    point -= item.weight
+    if (point < 0) return item
+  }
+  return items[items.length - 1]
+}
 function clamp(value: number): number {
   return Math.max(0, Math.min(100, value))
 }
 
 export function createLife(name = ""): LifeRecord {
-  const origin = pick(origins)
+  const origin = pickWeighted(origins)
   const gender = pick(genders)
   const age = 0
   const lifeName = name.trim() || pick(firstNames)
@@ -122,7 +144,7 @@ export function createLife(name = ""): LifeRecord {
     background: origin.background,
     bornYear: new Date().getFullYear(),
     age,
-    expectedLifespan: 68 + Math.floor(Math.random() * 25),
+    expectedLifespan: Math.max(50, origin.lifeExpectancy + Math.floor(Math.random() * 17) - 8),
     status: "alive",
     stats: { health: 82, happiness: 65, education: origin.education, relationships: 55, skills: 35, wealth: origin.wealth },
     pendingEvent: null,
