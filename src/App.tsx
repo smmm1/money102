@@ -1,10 +1,10 @@
 import CloudAuth from "./CloudAuth"
-import DayTogether from "./DayTogether"
+import LifeWorld from "./LifeWorld"
 
 export default function App() {
   return (
     <CloudAuth>
-      <DayTogether />
+      <LifeWorld />
     </CloudAuth>
   )
 }
