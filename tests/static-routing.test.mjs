@@ -85,7 +85,7 @@ test("life simulation has additional stage-specific situations and state-adjuste
   assert.match(world, /estimateChoiceChance\(activeLife, choice\)/);
 });
 
-test("life scene reflects story milestones for family, pets, vehicles and household help", () => {
+test("life scene reflects story milestones for family, pets, vehicles and household help", async () => {
   const scene = await readFile(new URL("../src/LifeScene.tsx", import.meta.url), "utf8");
   for (const feature of ["householdScene", "children", "pets", "housekeeper", "vehicle", "life-scene-frame"]) {
     assert.ok(scene.includes(feature), "missing visual scene feature: " + feature);
