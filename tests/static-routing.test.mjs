@@ -48,6 +48,15 @@ test("each simulated year produces a personal or historical event with branching
   assert.ok(world.includes("โอกาสสำเร็จเริ่มต้น") && world.includes("pendingEvent.choices.map"));
 });
 
+test("personal events react to the character's actual life conditions", () => {
+  for (const feature of ["adaptiveEvents", "รายรับไม่พอกับภาระที่มี", "ภาระหลายด้านเริ่มทับซ้อน", "สุขภาพเริ่มจำกัดทางเลือก", "โอกาสใหม่ที่ยังไม่แน่นอน", "คนใกล้ตัวเริ่มห่างกัน"]) {
+    assert.ok(engine.includes(feature), "missing adaptive simulation path: " + feature);
+  }
+  assert.ok(engine.includes("life.timeline.slice(0,8)"));
+  assert.ok(engine.includes("weight:2"));
+  assert.ok(engine.includes("householdDebt > 35000"));
+});
+
 test("life records persist to the authenticated D1 snapshot without browser local storage", () => {
   assert.ok(world.includes('LIFE_KEY = "lamoon-life-sim-v1"'));
   assert.ok(world.includes('api("/api/state")'));
