@@ -24,6 +24,10 @@ DayTogether is a Thai-first life simulation experience inspired by the idea of l
 
 The current origin and life-event data are a creative game model, not a statistically calibrated forecast of real-world birth probabilities, socioeconomic outcomes, health, or lifespan. Country-level demographic data and more nuanced event systems are future simulation-engine work.
 
+## Implementation status
+
+The current branch is the first playable vertical slice. It establishes the replacement app shell, the first life-origin model, branching annual choices, timeline, and D1 persistence. A fuller demographic dataset, richer career/relationship/family systems, more varied event content, and authenticated end-to-end browser QA remain future work before production release.
+
 ## Development and validation
 
 Requires Node.js 22+.
