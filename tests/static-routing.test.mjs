@@ -18,7 +18,7 @@ test("the authenticated app mounts the new life simulation instead of the old pe
 });
 
 test("life simulation provides multiple lives, a branching timeline and a year-by-year journey", () => {
-  for (const feature of ["createLife", "advanceLife", "resolveLifeChoice", "validateLifeRecord", "expectedLifespan", "pendingEvent", "timeline"]) {
+  for (const feature of ["createLife", "advanceLife", "resolveLifeChoice", "validateLifeRecord", "expectedLifespan", "pendingEvent", "timeline", "pickWeighted", "weight"]) {
     assert.ok(engine.includes(feature), `missing life simulation feature: ${feature}`);
   }
   for (const label of ["ประเทศไทย", "ญี่ปุ่น", "อินเดีย", "บราซิล", "เยอรมนี", "ไนจีเรีย"]) {
