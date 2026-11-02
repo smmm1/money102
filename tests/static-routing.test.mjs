@@ -45,7 +45,7 @@ test("each simulated year produces a personal or historical event with branching
   for (const feature of ["advanceLife", "resolveLifeChoice", "failureOutcome", "chance", "successEffects", "failureEffects", "stage", "eraLabel", "makePersonalEvent"]) {
     assert.ok(engine.includes(feature), "missing simulation system: " + feature);
   }
-  assert.ok(world.includes("โอกาสสำเร็จเริ่มต้น") && world.includes("pendingEvent.choices.map"));
+  assert.ok(world.includes("โอกาสสำเร็จโดยประมาณ") && world.includes("pendingEvent.choices.map"));
 });
 
 test("personal events react to the character's actual life conditions", () => {
@@ -54,7 +54,7 @@ test("personal events react to the character's actual life conditions", () => {
   }
   assert.ok(engine.includes("life.timeline.slice(0,8)"));
   assert.ok(engine.includes("weight:2"));
-  assert.ok(engine.includes("householdDebt > 35000"));
+  assert.ok(engine.includes("householdDebt > 30000"));
 });
 
 test("life records persist to the authenticated D1 snapshot without browser local storage", () => {
