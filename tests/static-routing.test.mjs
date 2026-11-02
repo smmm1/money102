@@ -63,3 +63,15 @@ test("Thai life simulation layout supports mobile and desktop and shows sources"
   assert.ok(styles.includes(".life-nav") && styles.includes(".life-stat-grid") && styles.includes(".life-modal"));
   assert.ok(styles.includes(".life-source") && styles.includes(".life-year-range"));
 });
+
+
+test("life simulation has additional stage-specific situations and state-adjusted choice odds", () => {
+  assert.match(engine, /additionalPersonalEvents/);
+  assert.match(engine, /รายได้ไม่แน่นอนระหว่างเปลี่ยนงาน/);
+  assert.match(engine, /ค่าครองชีพและค่าเช่าสูงขึ้น/);
+  assert.match(engine, /ภาระดูแลคนสองรุ่น/);
+  assert.match(engine, /estimateChoiceChance/);
+  assert.match(engine, /life\.stats\.stress>=70/);
+  assert.match(engine, /life\.householdDebt>30000/);
+  assert.match(world, /estimateChoiceChance\(activeLife, choice\)/);
+});
