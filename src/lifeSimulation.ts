@@ -378,6 +378,18 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   if(selected.requirement && life.stats.education<45) chance-=10
   chance+=Math.round((life.stats.skills-40)*0.12)
   chance+=Math.round((life.stats.education-40)*0.08)
+  const resourceSensitive=["university","tutor","better-school","small-business","craft","move","borrow-more","refinance","support","checkup"]
+  if(resourceSensitive.includes(choiceId)) {
+    chance+=Math.max(-8,Math.min(8,Math.round((life.stats.wealth-12000)/6000)))
+    if(life.householdDebt>30000) chance-=5
+  }
+  if(["family-help","grandparents","share-care","take-care","check-relatives","protect-family","stay-connected"].includes(choiceId)) {
+    chance+=Math.round((life.stats.relationships-50)*0.12)
+  }
+  if(["exercise","sports","health","routine","evacuate","stay-safe"].includes(choiceId)) {
+    chance+=Math.round((life.stats.health-50)*0.1)
+  }
+  if(["move","better-school","university","tutor"].includes(choiceId) && life.areaType.includes("ชนบท")) chance-=4
   chance=Math.max(5,Math.min(95,chance))
   const success=Math.random()*100<chance
   const effects=success?selected.successEffects:selected.failureEffects
