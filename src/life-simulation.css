@@ -121,3 +121,19 @@ button{cursor:pointer}
 .life-alert{padding:12px 16px;margin-bottom:18px;border:1px solid #efd7c9;background:#fff5ef;color:#a25e43;border-radius:12px;font-size:12px}
 @media(max-width:800px){.life-topbar{height:auto;min-height:68px;flex-wrap:wrap;padding:12px 18px;gap:12px}.life-nav{order:3;width:100%;justify-content:center}.life-nav button{font-size:11px;padding:8px 10px}.life-user>span{display:none}.life-main{width:min(100% - 30px,620px);padding:25px 0 60px}.life-welcome{grid-template-columns:1fr;gap:24px;min-height:0}.life-welcome-art{height:300px;order:2}.life-welcome-copy{padding:18px 4px 0}.life-welcome-copy h1{font-size:46px}.life-globe{width:160px;height:160px}.life-globe span{font-size:66px}.life-orbit{width:300px;height:130px}.orbit-two{width:340px;height:170px}.life-world-card{grid-template-columns:1fr}.life-world-visual{min-height:190px}.life-origin{padding:24px}.life-stat-grid{grid-template-columns:repeat(2,1fr)}.life-choices{grid-template-columns:1fr}.life-next{align-items:flex-start;flex-direction:column}.life-history-list article{grid-template-columns:32px 1fr auto;gap:12px}.life-history-list article>button{grid-column:2/-1;justify-self:start}.life-status{font-size:9px}.life-about-grid{grid-template-columns:1fr}.life-footer{padding:0 16px}.life-footer span:nth-child(2){display:none}}
 @media(max-width:440px){.life-brand-mark{width:34px;height:34px}.life-brand b{font-size:14px}.life-brand small{font-size:8px}.life-nav{gap:2px}.life-nav button{padding:7px 8px;font-size:10px}.life-page-heading{align-items:flex-start;flex-direction:column}.life-page-heading h1{font-size:32px}.life-age{display:inline-block;margin-left:5px}.life-stat-grid{grid-template-columns:1fr 1fr;gap:8px}.life-stat{padding:14px}.life-stat>div:first-child{font-size:10px}.life-stat>div:first-child>b{font-size:15px}.life-history h1,.life-about h1{font-size:34px}.life-history-list article{grid-template-columns:26px 1fr}.life-status{grid-column:2}.life-modal{padding:28px 22px}.life-modal-actions{flex-direction:column-reverse}.life-modal-actions button{justify-content:center}}
+
+.life-event-context{margin-top:12px!important;padding:14px 16px;background:#e7eee7;border-left:3px solid #6e9b82;border-radius:8px;color:#526c5e!important}
+.life-source{display:flex;flex-direction:column;gap:5px;margin-top:16px;padding-top:13px;border-top:1px solid #dce7dc;font-size:11px;color:#6f8175}
+.life-source a{color:#276454;text-decoration:underline;text-underline-offset:3px}
+.life-source small{font-size:10px;color:#8a968d;line-height:1.7}
+.life-event-card h3{font-size:14px;font-weight:600;margin:24px 0 0;color:#345d4e}
+.life-choices button{gap:9px}
+.life-choices button span{font-size:11px;line-height:1.7;color:#718078}
+.life-choices button small{font-size:10px;color:#9a8b67;line-height:1.5}
+.life-choices button em{font-style:normal;font-size:10px;color:#4f806a}
+.life-year-range{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.life-year-range>div{min-width:0}
+.life-year-range label{margin:18px 0 7px}
+.life-modal-note{display:block;color:#849187;font-size:10px;margin-top:10px}
+.life-facts{flex-wrap:wrap;gap:12px 24px}
+@media(max-width:440px){.life-year-range{grid-template-columns:1fr 1fr;gap:8px}.life-facts{gap:10px 16px}}
