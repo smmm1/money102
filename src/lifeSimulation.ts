@@ -1,3 +1,5 @@
+import { THAI_HISTORY, THAI_PROVINCES, type ThaiHistoryEvent } from "./thaiHistory"
+
 export type LifeStats = {
   health: number
   happiness: number
@@ -5,20 +7,32 @@ export type LifeStats = {
   relationships: number
   skills: number
   wealth: number
+  stress: number
 }
 
 export type LifeChoice = {
   id: string
   label: string
-  outcome: string
-  effects: Partial<LifeStats>
+  description: string
+  successOutcome: string
+  failureOutcome: string
+  chance: number
+  successEffects: Partial<LifeStats>
+  failureEffects: Partial<LifeStats>
+  requirement?: string
 }
 
 export type LifeEvent = {
   id: string
   age: number
+  year: number
   title: string
   description: string
+  context?: string
+  type: "historical" | "personal"
+  sourceTitle?: string
+  sourceUrl?: string
+  sourceNote?: string
   choices: LifeChoice[]
 }
 
@@ -28,16 +42,25 @@ export type LifeEntry = {
   title: string
   detail: string
   year: number
+  sourceTitle?: string
+  sourceUrl?: string
 }
 
 export type LifeRecord = {
   id: string
   name: string
   gender: string
-  country: string
+  country: "ประเทศไทย"
   region: string
+  province: string
+  areaType: string
   family: string
   background: string
+  parents: string[]
+  siblings: number
+  householdIncome: string
+  householdDebt: number
+  occupation: string
   bornYear: number
   age: number
   expectedLifespan: number
@@ -49,152 +72,310 @@ export type LifeRecord = {
   endedAt?: string
 }
 
-const origins = [
-  { country: "อินเดีย", region: "เอเชียใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในครอบครัวใหญ่ที่ช่วยเหลือกัน", wealth: 500, education: 35, weight: 17.8, lifeExpectancy: 68 },
-  { country: "จีน", region: "เอเชียตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองหรือชุมชนที่มีการเปลี่ยนแปลงรวดเร็ว", wealth: 2600, education: 62, weight: 17.4, lifeExpectancy: 78 },
-  { country: "สหรัฐอเมริกา", region: "อเมริกาเหนือ", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในชานเมืองที่มีความหลากหลาย", wealth: 6800, education: 68, weight: 4.2, lifeExpectancy: 77 },
-  { country: "อินโดนีเซีย", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่มีความผูกพัน", wealth: 1000, education: 49, weight: 3.5, lifeExpectancy: 71 },
-  { country: "ปากีสถาน", region: "เอเชียใต้", family: "ครอบครัวรายได้น้อย", background: "เติบโตในครอบครัวที่มีเครือญาติใกล้ชิด", wealth: 600, education: 39, weight: 3.1, lifeExpectancy: 67 },
-  { country: "ไนจีเรีย", region: "แอฟริกาตะวันตก", family: "ครอบครัวรายได้น้อย", background: "เติบโตในเมืองที่มีชีวิตชีวาและความท้าทาย", wealth: 650, education: 38, weight: 2.9, lifeExpectancy: 54 },
-  { country: "บราซิล", region: "อเมริกาใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในเมืองที่มีความหลากหลายทางวัฒนธรรม", wealth: 1100, education: 48, weight: 2.7, lifeExpectancy: 75 },
-  { country: "บังกลาเทศ", region: "เอเชียใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่ผู้คนพึ่งพาอาศัยกัน", wealth: 700, education: 44, weight: 2.1, lifeExpectancy: 73 },
-  { country: "รัสเซีย", region: "ยุโรปตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีฤดูกาลแตกต่างชัดเจน", wealth: 2400, education: 67, weight: 1.8, lifeExpectancy: 70 },
-  { country: "เม็กซิโก", region: "อเมริกาเหนือ", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่มีวัฒนธรรมเข้มแข็ง", wealth: 1300, education: 47, weight: 1.6, lifeExpectancy: 75 },
-  { country: "ญี่ปุ่น", region: "เอเชียตะวันออก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีระบบขนส่งสะดวก", wealth: 4200, education: 66, weight: 1.5, lifeExpectancy: 84 },
-  { country: "เอธิโอเปีย", region: "แอฟริกาตะวันออก", family: "ครอบครัวชนบท", background: "เติบโตใกล้ชิดธรรมชาติและชุมชน", wealth: 450, education: 33, weight: 1.4, lifeExpectancy: 66 },
-  { country: "ฟิลิปปินส์", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่ครอบครัวมีบทบาทสำคัญ", wealth: 950, education: 52, weight: 1.4, lifeExpectancy: 71 },
-  { country: "อียิปต์", region: "แอฟริกาเหนือ", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในสังคมที่มีประวัติศาสตร์ยาวนาน", wealth: 900, education: 48, weight: 1.3, lifeExpectancy: 70 },
-  { country: "เวียดนาม", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนที่ให้ความสำคัญกับการศึกษา", wealth: 1100, education: 58, weight: 1.2, lifeExpectancy: 74 },
-  { country: "สาธารณรัฐประชาธิปไตยคองโก", region: "แอฟริกากลาง", family: "ครอบครัวรายได้น้อย", background: "เติบโตในครอบครัวที่มีเครือญาติใกล้ชิด", wealth: 400, education: 31, weight: 1.2, lifeExpectancy: 62 },
-  { country: "อิหร่าน", region: "เอเชียตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่มีมรดกทางวัฒนธรรม", wealth: 1700, education: 61, weight: 1.1, lifeExpectancy: 75 },
-  { country: "เยอรมนี", region: "ยุโรปตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองขนาดกลาง", wealth: 5200, education: 72, weight: 1.0, lifeExpectancy: 81 },
-  { country: "ตุรกี", region: "เอเชียตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตระหว่างวัฒนธรรมหลายภูมิภาค", wealth: 1900, education: 55, weight: 1.0, lifeExpectancy: 77 },
-  { country: "ประเทศไทย", region: "เอเชียตะวันออกเฉียงใต้", family: "ครอบครัวชนชั้นแรงงาน", background: "เติบโตในชุมชนเมืองขนาดเล็ก", wealth: 900, education: 52, weight: 0.9, lifeExpectancy: 79 },
-  { country: "ฝรั่งเศส", region: "ยุโรปตะวันตก", family: "ครอบครัวชนชั้นกลาง", background: "เติบโตในเมืองที่เต็มไปด้วยศิลปะและประวัติศาสตร์", wealth: 4700, education: 70, weight: 0.8, lifeExpectancy: 82 },
-  { country: "เคนยา", region: "แอฟริกาตะวันออก", family: "ครอบครัวชนบท", background: "เติบโตใกล้ชิดธรรมชาติและชุมชน", wealth: 700, education: 40, weight: 0.7, lifeExpectancy: 62 },
-  { country: "ประเทศอื่น ๆ", region: "ภูมิภาคอื่นของโลก", family: "ครอบครัวที่มีบริบทเฉพาะ", background: "เติบโตในหนึ่งในอีกหลายประเทศของโลก", wealth: 1500, education: 50, weight: 29.4, lifeExpectancy: 72 },
+const firstNames = ["กานต์","มินตรา","ธนกฤต","ปภังกร","ณิชา","พิมพ์ชนก","ภาคิน","อัญชลี","วรินทร์","ชลธิชา","นที","รินรดา","ภัทร","อรทัย","ธีรภัทร","ศศิธร"]
+const genders = ["หญิง","ชาย"]
+const parentJobs = ["ทำนา","ทำสวน","ค้าขายตลาด","รับจ้างทั่วไป","ข้าราชการ","ครู","พนักงานโรงงาน","ช่างฝีมือ","ขับรถ/ขนส่ง","ประมง","งานบริการ","ธุรกิจส่วนตัว","พนักงานสำนักงาน","งานก่อสร้าง"]
+const householdProfiles = [
+  { family:"ครอบครัวรายได้น้อย", income:"รายได้น้อย", wealth:4500, debt:0, education:25, description:"รายได้ของบ้านไม่แน่นอน ต้องวางแผนค่าใช้จ่ายอย่างระมัดระวัง" },
+  { family:"ครอบครัวแรงงาน/เกษตรกร", income:"รายได้พอประทัง", wealth:12000, debt:2500, education:35, description:"ครอบครัวพึ่งพารายได้จากแรงงานหรือเกษตร รายได้อาจขึ้นลงตามฤดูกาล" },
+  { family:"ครอบครัวชนชั้นกลาง", income:"รายได้ปานกลาง", wealth:42000, debt:8000, education:52, description:"มีรายได้ประจำหรือกิจการขนาดเล็ก พอมีเงินสำรองแต่ยังมีภาระค่าใช้จ่าย" },
+  { family:"ครอบครัวมีฐานะมั่นคง", income:"รายได้ค่อนข้างมั่นคง", wealth:150000, debt:12000, education:68, description:"มีทรัพยากรและเครือข่ายช่วยเหลือมากกว่าบางครัวเรือน แต่ยังมีความเสี่ยงจากเหตุการณ์ใหญ่" },
 ]
+const pick = <T,>(items:T[]):T => items[Math.floor(Math.random()*items.length)]
+const clamp = (value:number) => Math.max(0,Math.min(100,value))
+const uid = () => crypto.randomUUID()
 
-const firstNames = ["อเล็กซ์", "มิน", "โซเฟีย", "อามีร์", "ลิน", "โนอาห์", "อารยา", "เรย์", "เอลล่า", "คีริน"]
-const genders = ["หญิง", "ชาย", "ไม่ระบุ"]
-
-const eventBank: Array<Omit<LifeEvent, "id" | "age"> & { min: number; max: number }> = [
-  { min: 1, max: 5, title: "โลกใบแรกของฉัน", description: "คุณเริ่มรับรู้โลกผ่านเสียง กลิ่น และใบหน้าของคนที่ดูแลคุณ ช่วงเวลานี้ความอบอุ่นจากครอบครัวสำคัญมาก", choices: [
-    { id: "close", label: "ใช้เวลาใกล้ชิดกับครอบครัว", outcome: "ความผูกพันในบ้านค่อย ๆ เติบโต", effects: { happiness: 7, relationships: 5, health: 2 } },
-    { id: "explore", label: "ออกไปเรียนรู้สิ่งรอบตัว", outcome: "ความอยากรู้อยากเห็นเริ่มก่อตัว", effects: { skills: 5, happiness: 3 } },
-  ] },
-  { min: 6, max: 11, title: "วันแรกในโรงเรียน", description: "คุณได้พบเพื่อนใหม่และเริ่มเรียนรู้กติกาของโลกนอกบ้าน จะใช้เวลาในวัยเด็กแบบไหนดี?", choices: [
-    { id: "study", label: "ตั้งใจเรียนและค้นหาสิ่งที่ชอบ", outcome: "พื้นฐานการเรียนรู้ของคุณแข็งแรงขึ้น", effects: { education: 8, skills: 5, happiness: -1 } },
-    { id: "friends", label: "ใช้เวลากับเพื่อนและกิจกรรม", outcome: "คุณเริ่มสร้างมิตรภาพที่มีความหมาย", effects: { relationships: 9, happiness: 5, skills: 2 } },
-  ] },
-  { min: 12, max: 17, title: "ค้นหาตัวเอง", description: "ช่วงวัยรุ่นมาพร้อมคำถามมากมาย คุณเริ่มมีความฝันและมองเห็นเส้นทางที่แตกต่างจากคนรอบตัว", choices: [
-    { id: "creative", label: "ลองทำสิ่งใหม่และสร้างผลงาน", outcome: "คุณค้นพบความสามารถที่ซ่อนอยู่", effects: { skills: 10, happiness: 5, education: 2 } },
-    { id: "responsible", label: "ช่วยแบ่งเบาภาระครอบครัว", outcome: "คุณเติบโตเป็นคนที่รับผิดชอบมากขึ้น", effects: { relationships: 6, skills: 5, wealth: 2 } },
-  ] },
-  { min: 18, max: 24, title: "ก้าวแรกสู่โลกผู้ใหญ่", description: "คุณต้องตัดสินใจว่าจะเรียนต่อ ทำงาน หรือทดลองเส้นทางใหม่ ทุกทางมีโอกาสและต้นทุนของมัน", choices: [
-    { id: "university", label: "เรียนต่อเพื่อเพิ่มโอกาสในอนาคต", outcome: "การศึกษาเปิดประตูสู่โอกาสใหม่ แต่ต้องใช้เวลาและเงิน", effects: { education: 12, skills: 6, wealth: -900, happiness: 1 } },
-    { id: "work", label: "เริ่มทำงานและสร้างรายได้", outcome: "คุณเริ่มมีรายได้และประสบการณ์จากโลกจริง", effects: { wealth: 1300, skills: 7, education: 1 } },
-  ] },
-  { min: 25, max: 34, title: "โอกาสที่เข้ามา", description: "มีโอกาสใหม่เข้ามาในชีวิต อาจเป็นงานที่ท้าทายกว่าเดิม หรือการเริ่มต้นบางอย่างด้วยตัวเอง", choices: [
-    { id: "career", label: "รับความท้าทายใหม่ในงาน", outcome: "ประสบการณ์และทักษะของคุณเพิ่มขึ้น", effects: { skills: 10, wealth: 1200, happiness: -2 } },
-    { id: "balance", label: "เลือกเวลาชีวิตและความสัมพันธ์", outcome: "คุณมีพื้นที่ให้คนสำคัญและตัวเองมากขึ้น", effects: { happiness: 9, relationships: 8, health: 3 } },
-  ] },
-  { min: 35, max: 49, title: "สิ่งที่สร้างมาถึงวันนี้", description: "คุณเริ่มมองเห็นผลของการตัดสินใจในอดีต และอาจต้องเลือกระหว่างความมั่นคงกับการเปลี่ยนแปลง", choices: [
-    { id: "build", label: "สร้างความมั่นคงระยะยาว", outcome: "คุณค่อย ๆ สร้างฐานชีวิตที่มั่นคงขึ้น", effects: { wealth: 1800, happiness: 2, health: -2 } },
-    { id: "change", label: "เริ่มต้นบทใหม่ที่อยากทำ", outcome: "การเปลี่ยนแปลงทำให้ชีวิตมีความหมายในแบบใหม่", effects: { happiness: 10, skills: 6, wealth: -500 } },
-  ] },
-  { min: 50, max: 64, title: "มองชีวิตจากอีกมุม", description: "ประสบการณ์ที่ผ่านมาเปลี่ยนวิธีที่คุณมองโลก คุณอยากใช้ช่วงเวลาต่อจากนี้อย่างไร?", choices: [
-    { id: "mentor", label: "แบ่งปันประสบการณ์ให้คนรุ่นหลัง", outcome: "ความสัมพันธ์และความรู้สึกมีคุณค่าของคุณเพิ่มขึ้น", effects: { relationships: 10, happiness: 7, skills: 3 } },
-    { id: "health", label: "หันมาใส่ใจสุขภาพและความสงบ", outcome: "คุณเริ่มให้ความสำคัญกับการดูแลตัวเอง", effects: { health: 12, happiness: 5, wealth: -250 } },
-  ] },
-  { min: 65, max: 100, title: "วันเวลาที่มีความหมาย", description: "คุณผ่านเรื่องราวมามากมายแล้ว อะไรคือสิ่งที่อยากรักษาไว้ในช่วงเวลานี้?", choices: [
-    { id: "family", label: "ใช้เวลากับคนที่รัก", outcome: "ช่วงเวลาธรรมดากลายเป็นความทรงจำที่มีค่า", effects: { relationships: 10, happiness: 8 } },
-    { id: "legacy", label: "ทำสิ่งที่อยากฝากไว้ให้โลก", outcome: "คุณได้ส่งต่อบางอย่างที่มีความหมาย", effects: { skills: 5, happiness: 9, relationships: 5 } },
-  ] },
-]
-
-function pick<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)]
+function eraLabel(year:number):string {
+  if(year < 1941) return "สยามก่อนสงคราม"
+  if(year <= 1945) return "สงครามโลกครั้งที่สอง"
+  if(year < 1960) return "ช่วงฟื้นฟูหลังสงคราม"
+  if(year < 1973) return "ยุคพัฒนาเศรษฐกิจและสังคม"
+  if(year < 1981) return "ยุคความเปลี่ยนแปลงทางการเมือง"
+  if(year < 1997) return "ยุคขยายตัวทางเศรษฐกิจ"
+  if(year < 2008) return "ยุคหลังวิกฤตเศรษฐกิจ"
+  if(year < 2020) return "ยุคอินเทอร์เน็ตและเศรษฐกิจดิจิทัล"
+  if(year < 2023) return "ยุคโควิด-19"
+  return "ยุคปัจจุบัน"
 }
-function pickWeighted<T extends { weight: number }>(items: T[]): T {
-  const total = items.reduce((sum, item) => sum + item.weight, 0)
-  let point = Math.random() * total
-  for (const item of items) {
-    point -= item.weight
-    if (point < 0) return item
+
+function choice(id:string,label:string,description:string,successOutcome:string,failureOutcome:string,chance:number,successEffects:Partial<LifeStats>,failureEffects:Partial<LifeStats>,requirement?:string):LifeChoice {
+  return {id,label,description,successOutcome,failureOutcome,chance,successEffects,failureEffects,requirement}
+}
+
+const personalEvents:Record<string,Array<{title:string;description:string;choices:LifeChoice[]}>> = {
+  infant: [
+    {title:"คนในบ้านต้องจัดสรรค่าใช้จ่าย",description:"ค่าใช้จ่ายเรื่องอาหาร ยา และของใช้เด็กเพิ่มขึ้น ผู้ใหญ่ในบ้านต้องตัดสินใจว่าจะจัดการเงินอย่างไร",choices:[
+      choice("save","ลดรายจ่ายที่ไม่จำเป็น","ครอบครัวพยายามประหยัดและทำบัญชีค่าใช้จ่าย","เงินสำรองของบ้านดีขึ้นเล็กน้อย","ทุกคนรู้สึกกดดันและมีค่าใช้จ่ายบางอย่างที่เลื่อนออกไป",85,{wealth:3,happiness:1},{stress:5,happiness:-2}),
+      choice("extra-work","ผู้ปกครองรับงานเพิ่ม","มีรายได้เพิ่มแต่เวลาพักผ่อนลดลง","รายได้ช่วยพยุงครอบครัว","ความเหนื่อยสะสมและเวลาที่มีให้กันลดลง",65,{wealth:5,relationships:1},{health:-3,stress:5}),
+      choice("family-help","ขอความช่วยเหลือจากญาติ","ครอบครัวพูดคุยกับเครือญาติ","ได้รับความช่วยเหลือและความสัมพันธ์แน่นแฟ้น","ความช่วยเหลือมีจำกัดและเกิดความเกรงใจ",70,{relationships:4,wealth:2},{relationships:-1,stress:2})
+    ]},
+    {title:"สุขภาพในวัยเด็ก",description:"เด็กเล็กต้องได้รับการดูแลเรื่องอาหาร สุขอนามัย และการตรวจสุขภาพ ผู้ใหญ่ในบ้านกำลังพิจารณาทางเลือกที่ทำได้",choices:[
+      choice("clinic","พาไปสถานพยาบาลเมื่อมีอาการ","จัดเวลาและค่าเดินทางเพื่อรับคำแนะนำจากบุคลากรสาธารณสุข","ได้รับการดูแลเหมาะสมและผู้ปกครองสบายใจขึ้น","ค่าเดินทางและเวลาทำให้บ้านต้องปรับแผน",80,{health:5,wealth:-1},{stress:2,wealth:-1}),
+      choice("community","ขอคำแนะนำจากสถานีอนามัยหรืออาสาสมัครในพื้นที่","ใช้บริการใกล้บ้านที่เข้าถึงได้","ได้รับคำแนะนำและติดตามอาการ","การเดินทางหรือทรัพยากรในพื้นที่อาจไม่สะดวก",75,{health:3,relationships:2},{stress:2}),
+      choice("wait","เฝ้าดูอาการก่อน","ครอบครัวสังเกตอาการและพยายามดูแลที่บ้าน","อาการดีขึ้นเองโดยไม่ต้องเสียค่าใช้จ่ายเพิ่ม","อาการไม่ดีขึ้นและต้องหาทางเข้าถึงบริการภายหลัง",55,{wealth:1},{health:-4,stress:3})
+    ]},
+    {title:"ใครจะช่วยเลี้ยงดู",description:"ผู้ปกครองต้องแบ่งเวลาให้การทำงานและการเลี้ยงดู จึงต้องตกลงกันว่าใครจะช่วยดูแลเด็กในแต่ละวัน",choices:[
+      choice("grandparents","ให้ปู่ย่าตายายช่วยดูแล","เด็กได้อยู่ใกล้ชิดญาติผู้ใหญ่","มีคนช่วยดูแลและความผูกพันเพิ่มขึ้น","ผู้สูงอายุเหนื่อยและเกิดความเห็นไม่ตรงกัน",80,{relationships:4,happiness:2},{relationships:-2,stress:3}),
+      choice("parent-care","ผู้ปกครองคนหนึ่งลดเวลาทำงาน","รายได้บ้านอาจลดลงแต่มีเวลาดูแลมากขึ้น","ความใกล้ชิดในครอบครัวเพิ่มขึ้น","ภาระการเงินตึงตัวขึ้น",70,{relationships:5,health:1},{wealth:-3,stress:3}),
+      choice("paid-care","จ้างคนช่วยดูแลเท่าที่ครอบครัวจ่ายไหว","ต้องแบ่งเงินส่วนหนึ่งเป็นค่าดูแล","ผู้ปกครองมีเวลาทำงานและพักมากขึ้น","ค่าใช้จ่ายสูงกว่าที่คาด",65,{wealth:-2,relationships:2},{wealth:-5,stress:2})
+    ]}
+  ],
+  child: [
+    {title:"โอกาสเข้าเรียน",description:"ถึงวัยเข้าเรียนแล้ว ระยะทาง ค่าเดินทาง และค่าใช้จ่ายเป็นปัจจัยสำคัญของครอบครัวในยุคนี้",choices:[
+      choice("near-school","เข้าเรียนโรงเรียนใกล้บ้าน","เดินทางสะดวกและยังช่วยงานบ้านได้บ้าง","ได้พื้นฐานการเรียนและมีเพื่อนในชุมชน","ทรัพยากรหรือกิจกรรมบางอย่างอาจมีจำกัด",85,{education:5,relationships:2},{education:2}),
+      choice("better-school","ลองสอบหรือสมัครโรงเรียนที่มีทรัพยากรมากกว่า","ต้องเดินทางไกลหรือมีค่าใช้จ่ายเพิ่ม","ได้โอกาสเรียนรู้และพบเครือข่ายใหม่","ปรับตัวลำบากหรือค่าเดินทางเป็นภาระ",55,{education:9,skills:3,wealth:-2},{stress:4,wealth:-2}),
+      choice("help-home","ช่วยครอบครัวทำงานและเรียนเท่าที่ทำได้","เวลาเรียนและเวลาช่วยบ้านต้องแบ่งกัน","ได้ทักษะชีวิตและช่วยแบ่งเบาภาระ","การเรียนอาจสะดุดจากภาระที่มากเกินไป",60,{skills:4,relationships:2,wealth:1},{education:-4,stress:4})
+    ]},
+    {title:"เพื่อนชวนทำกิจกรรม",description:"เพื่อนในโรงเรียนหรือชุมชนชวนเข้าร่วมกิจกรรมหลังเลิกเรียน คุณต้องเลือกว่าจะใช้เวลาอย่างไร",choices:[
+      choice("sports","เข้าร่วมกีฬา","ฝึกซ้อมสม่ำเสมอและเรียนรู้การทำงานเป็นทีม","สุขภาพและมิตรภาพดีขึ้น","เหนื่อยหรือบาดเจ็บเล็กน้อยจนต้องพัก",80,{health:4,relationships:4,skills:2},{health:-2}),
+      choice("reading","ใช้เวลาห้องสมุดหรือฝึกทักษะ","ค่อย ๆ สะสมความรู้และความสนใจ","ทักษะและพื้นฐานการเรียนดีขึ้น","รู้สึกพลาดกิจกรรมกับเพื่อนบางส่วน",75,{education:4,skills:4},{happiness:-2,education:1}),
+      choice("community","ช่วยงานวัดหรืองานชุมชน","รู้จักคนต่างวัยและเรียนรู้งานส่วนรวม","ได้เครือข่ายและความรับผิดชอบ","เสียเวลาพักผ่อนและการบ้าน",75,{relationships:5,skills:3},{stress:2})
+    ]},
+    {title:"ครอบครัวมีรายจ่ายก้อนใหญ่",description:"บ้านมีค่าใช้จ่ายที่ไม่ได้วางแผน เช่น ซ่อมบ้าน อุปกรณ์ทำกิน หรือค่าเดินทาง ครอบครัวต้องหาทางรับมือ",choices:[
+      choice("reduce","ลดค่าใช้จ่ายและเลื่อนสิ่งที่ไม่จำเป็น","ช่วยกันทบทวนสิ่งที่ต้องจ่ายก่อน","ครอบครัวผ่านช่วงตึงตัวไปได้","ความต้องการบางอย่างต้องถูกเลื่อนออกไป",80,{wealth:3,relationships:2},{happiness:-2,stress:2}),
+      choice("side-job","รับงานเสริมในเวลาว่าง","สมาชิกวัยทำงานรับงานเพิ่ม","มีเงินเข้ามาช่วยค่าใช้จ่าย","เวลาครอบครัวและการพักผ่อนลดลง",65,{wealth:5,skills:2},{health:-2,stress:4}),
+      choice("borrow","กู้ยืมจากแหล่งที่ครอบครัวเข้าถึง","ต้องเข้าใจดอกเบี้ยและกำหนดชำระ","มีเงินแก้ปัญหาเฉพาะหน้า","ภาระหนี้ทำให้อนาคตตึงตัวขึ้น",60,{wealth:4},{wealth:-4,stress:5})
+    ]}
+  ],
+  teen: [
+    {title:"ผลการเรียนกับความคาดหวัง",description:"ผลการเรียนและความคาดหวังจากคนรอบตัวเริ่มมีผลต่อทางเลือกในอนาคต",choices:[
+      choice("tutor","ขอคำแนะนำครูหรือเรียนเสริมเท่าที่ไหว","ใช้เวลาและทรัพยากรเพิ่มเพื่ออุดช่องว่าง","ผลการเรียนและความมั่นใจดีขึ้น","ค่าใช้จ่ายหรือความกดดันเพิ่มขึ้น",65,{education:7,skills:3,wealth:-1},{stress:4,wealth:-1}),
+      choice("self-study","วางตารางอ่านหนังสือด้วยตัวเอง","ฝึกวินัยและขอความช่วยเหลือเมื่อจำเป็น","พัฒนาทักษะการเรียนรู้ด้วยตนเอง","ทำไม่ต่อเนื่องและรู้สึกท้อ",70,{education:5,skills:4},{education:1,happiness:-2}),
+      choice("balance","แบ่งเวลาให้เพื่อนและกิจกรรมด้วย","ไม่ให้ผลการเรียนเป็นเรื่องเดียวในชีวิต","สุขภาพใจและความสัมพันธ์ดีขึ้น","ผลการเรียนบางวิชาอาจไม่ตามเป้า",80,{happiness:4,relationships:4},{education:-1})
+    ]},
+    {title:"อยากหารายได้ระหว่างเรียน",description:"คุณเริ่มเห็นค่าใช้จ่ายของครอบครัวและอยากมีเงินของตัวเอง งานที่ทำได้ขึ้นกับอายุ กฎหมาย และโอกาสในพื้นที่",choices:[
+      choice("weekend","ช่วยงานร้านหรือกิจการครอบครัว","เลือกงานที่เหมาะกับวัยและไม่กระทบการเรียน","ได้ประสบการณ์และรายได้เล็กน้อย","เหนื่อยจนเวลาพักและเรียนลดลง",75,{skills:4,wealth:2},{health:-2,education:-1}),
+      choice("craft","ฝึกทำของขายหรืองานฝีมือ","เริ่มจากสิ่งที่มีและทดลองตลาดเล็ก ๆ","ได้ทักษะและอาจมีรายได้","ขายไม่ดีและเสียต้นทุนบางส่วน",55,{skills:6,wealth:3},{wealth:-2,stress:2}),
+      choice("focus-study","เน้นเรียนและหาทุนสนับสนุน","ค้นหาทุนหรือความช่วยเหลือทางการศึกษา","มีเวลาเรียนและโอกาสต่อยอด","ยังไม่มีรายได้ของตัวเอง",65,{education:7,skills:2},{wealth:-1})
+    ]},
+    {title:"เลือกเส้นทางหลังจบการศึกษา",description:"ครอบครัวและครูช่วยกันคุยเรื่องเรียนต่อ สายอาชีพ หรือเริ่มทำงาน แต่ละทางมีต้นทุนและโอกาสไม่เหมือนกัน",choices:[
+      choice("vocational","เรียนสายอาชีพ","เน้นทักษะที่ใช้ทำงานได้และฝึกปฏิบัติ","มีทักษะวิชาชีพและโอกาสเริ่มทำงาน","ต้องเลือกสาขาให้เหมาะกับตลาดงาน",75,{education:5,skills:8,wealth:-2},{skills:2,wealth:-1}),
+      choice("university","เตรียมสอบเข้ามหาวิทยาลัย","ใช้เวลาเตรียมตัวและอาจต้องย้ายที่อยู่","เปิดโอกาสทางการศึกษาเพิ่ม","ค่าใช้จ่ายและการแข่งขันสูง",55,{education:10,skills:4,wealth:-4},{stress:4,wealth:-2}),
+      choice("work","เริ่มทำงานเพื่อช่วยครอบครัว","มองหางานที่เหมาะกับอายุและทักษะ","มีรายได้และประสบการณ์เร็วขึ้น","การเรียนต่ออาจยากขึ้นหากไม่มีแผน",70,{wealth:4,skills:5},{education:-2,stress:2})
+    ]}
+  ],
+  young: [
+    {title:"โอกาสงานแรก",description:"คุณกำลังหางานแรก ตลาดแรงงานในปีนี้และพื้นที่ที่อยู่มีผลต่อจำนวนงานและค่าจ้าง",choices:[
+      choice("stable-job","เลือกงานประจำที่มั่นคงกว่า","รายได้เริ่มต้นอาจไม่สูงแต่มีความแน่นอน","มีประสบการณ์และรายได้ต่อเนื่อง","เติบโตช้าและงานอาจไม่ตรงใจ",75,{wealth:5,skills:3,stress:1},{wealth:2,happiness:-2}),
+      choice("learn-job","เลือกงานที่ได้ฝึกทักษะ","รับความท้าทายและเรียนรู้จากคนทำงานจริง","ทักษะเพิ่มและเปิดโอกาสในอนาคต","ช่วงแรกอาจกดดันและรายได้ไม่แน่นอน",60,{skills:8,education:2},{stress:5,wealth:-1}),
+      choice("small-business","เริ่มค้าขายหรือทำกิจการเล็ก ๆ","ต้องคำนวณต้นทุนและความเสี่ยงก่อนลงทุน","กิจการเริ่มมีลูกค้าและรายได้","ขาดทุนจากต้นทุนหรือยอดขายไม่ถึงเป้า",45,{wealth:8,skills:7},{wealth:-7,stress:6})
+    ]},
+    {title:"ย้ายถิ่นเพื่อโอกาส",description:"งานหรือการเรียนอาจพาคุณไปอีกอำเภอหรือจังหวัด การย้ายมีทั้งโอกาสและต้นทุนทางสังคม",choices:[
+      choice("move","ย้ายไปเมืองที่มีงานมากกว่า","เตรียมค่าเดินทาง ที่พัก และเงินสำรอง","ได้เครือข่ายและโอกาสงานเพิ่ม","ค่าครองชีพสูงและคิดถึงบ้าน",60,{wealth:4,skills:4,relationships:-1},{wealth:-4,stress:5}),
+      choice("stay","อยู่ใกล้ครอบครัวและหางานในพื้นที่","ใช้เครือข่ายท้องถิ่นและลดค่าใช้จ่าย","ความสัมพันธ์และค่าใช้จ่ายคงที่ดีขึ้น","ตัวเลือกงานอาจมีจำกัด",75,{relationships:4,wealth:1},{happiness:-1}),
+      choice("commute","เดินทางไปทำงานโดยยังอยู่บ้านเดิม","ลดต้นทุนย้ายบ้านแต่เสียเวลาเดินทาง","เก็บเงินได้มากขึ้น","ความเหนื่อยจากการเดินทางสะสม",70,{wealth:3,relationships:1},{health:-2,stress:3})
+    ]},
+    {title:"ความสัมพันธ์จริงจัง",description:"ความสัมพันธ์เริ่มมีผลต่อแผนอนาคต คุณต้องคุยเรื่องเวลา เงิน ครอบครัว และความคาดหวัง",choices:[
+      choice("communicate","คุยกันตรง ๆ เรื่องเป้าหมายชีวิต","รับฟังและตกลงขอบเขตที่ทั้งคู่ยอมรับได้","ความเข้าใจและความไว้วางใจเพิ่มขึ้น","พบความต่างที่ต้องใช้เวลาปรับตัว",80,{relationships:7,happiness:3},{stress:2}),
+      choice("slow","ค่อย ๆ เรียนรู้กันโดยไม่เร่งตัดสินใจ","ให้เวลาและดูการกระทำต่อเนื่อง","ลดแรงกดดันและเห็นความเข้ากันได้ชัดขึ้น","อีกฝ่ายอาจต้องการความชัดเจนมากกว่า",75,{happiness:2,relationships:3},{relationships:-1}),
+      choice("commit","วางแผนอนาคตร่วมกัน","เริ่มคุยเรื่องครอบครัวและการเงิน","ความสัมพันธ์มีทิศทางชัดเจน","ภาระและความคาดหวังเพิ่มขึ้น",60,{relationships:6,stress:2},{stress:5})
+    ]}
+  ],
+  adult: [
+    {title:"โอกาสเลื่อนตำแหน่ง",description:"ที่ทำงานมีตำแหน่งหรือหน้าที่ใหม่ คุณต้องประเมินทักษะ เวลา และความเสี่ยงต่อชีวิตส่วนตัว",choices:[
+      choice("promotion","รับบทบาทที่ใหญ่ขึ้น","รับผิดชอบงานและคนมากขึ้น","รายได้และประสบการณ์เพิ่มขึ้น","ความเครียดและเวลางานเพิ่ม",60,{wealth:7,skills:7,stress:4},{stress:7,health:-2}),
+      choice("specialist","พัฒนาความเชี่ยวชาญในสายงาน","เรียนรู้เชิงลึกโดยไม่เปลี่ยนบทบาททันที","ทักษะเฉพาะทางแข็งแรงขึ้น","ผลตอบแทนอาจมาช้ากว่า",75,{skills:8,education:3},{happiness:-1}),
+      choice("balance","รักษาสมดุลชีวิตและงาน","กำหนดขอบเขตเวลาทำงานให้ชัด","สุขภาพใจและความสัมพันธ์ดีขึ้น","โอกาสบางอย่างอาจผ่านไป",85,{health:3,happiness:5,relationships:3},{wealth:-1})
+    ]},
+    {title:"ภาระดูแลคนในครอบครัว",description:"คนในครอบครัวต้องการความช่วยเหลือมากขึ้น คุณต้องจัดสมดุลระหว่างรายได้ เวลา และความสัมพันธ์",choices:[
+      choice("share-care","แบ่งหน้าที่กับญาติพี่น้อง","คุยกันให้ชัดว่าใครดูแลเรื่องใด","ภาระไม่ตกกับคนเดียวและความสัมพันธ์ดีขึ้น","ความเห็นไม่ตรงกันอาจทำให้ล่าช้า",75,{relationships:5,stress:-2},{relationships:-2,stress:4}),
+      choice("take-care","รับหน้าที่ดูแลหลัก","จัดเวลาและเงินสำรองเพื่อดูแลใกล้ชิด","คนในบ้านได้รับการดูแลสม่ำเสมอ","เหนื่อยและกระทบงานของตัวเอง",65,{relationships:6,health:-2,wealth:-2},{health:-5,stress:6}),
+      choice("services","หาข้อมูลบริการชุมชนหรือสวัสดิการ","ตรวจสอบสิทธิและบริการที่มีอยู่จริงในพื้นที่","ได้แรงสนับสนุนเพิ่มและแบ่งเบาภาระ","บริการอาจมีคิวหรือไม่ครอบคลุม",60,{skills:2,stress:-2,wealth:1},{stress:2})
+    ]},
+    {title:"หนี้สินและการเงินครัวเรือน",description:"ค่าใช้จ่าย หนี้ และเป้าหมายครอบครัวเริ่มต้องวางแผนร่วมกัน",choices:[
+      choice("budget","ทำงบรายรับรายจ่ายและจัดลำดับหนี้","แยกหนี้จำเป็น ดอกเบี้ย และค่าใช้จ่ายประจำ","เริ่มควบคุมกระแสเงินสดได้ดีขึ้น","พบว่าภาระหนี้สูงกว่าที่คิด",80,{wealth:4,skills:3,stress:-2},{stress:4}),
+      choice("extra-income","หารายได้เสริมจากทักษะที่มี","เริ่มจากงานที่ไม่ต้องลงทุนสูง","มีรายได้เพิ่มและทักษะใหม่","งานเสริมกินเวลาพักผ่อน",60,{wealth:5,skills:4},{health:-2,stress:4}),
+      choice("refinance","ศึกษาการปรับโครงสร้างหนี้","เปรียบเทียบเงื่อนไขและค่าใช้จ่ายก่อนตัดสินใจ","ภาระรายเดือนอาจจัดการง่ายขึ้น","เงื่อนไขไม่เหมาะหรือมีต้นทุนแฝง",45,{wealth:3,stress:-1},{wealth:-3,stress:4})
+    ]}
+  ],
+  midlife: [
+    {title:"ความเปลี่ยนแปลงในอาชีพ",description:"เทคโนโลยี ตลาด และโครงสร้างงานเปลี่ยนไป ทักษะที่เคยใช้ได้อาจต้องปรับตัว",choices:[
+      choice("reskill","เรียนทักษะใหม่","ใช้เวลานอกงานฝึกเครื่องมือหรือความรู้ใหม่","เพิ่มทางเลือกในการทำงาน","เรียนไม่ทันภาระชีวิตหรือเสียค่าใช้จ่าย",65,{skills:8,education:4,wealth:-1},{stress:3,wealth:-2}),
+      choice("network","ขยายเครือข่ายคนทำงาน","ติดต่อเพื่อนร่วมอาชีพและชุมชนวิชาชีพ","ได้ข้อมูลโอกาสและคำแนะนำ","ยังไม่พบโอกาสที่เหมาะสม",70,{relationships:5,skills:2},{happiness:-1}),
+      choice("adapt","ปรับงานเดิมให้เข้ากับสถานการณ์","ค่อย ๆ เปลี่ยนวิธีทำงานและลดความเสี่ยง","รักษารายได้และเรียนรู้ไปพร้อมกัน","การเปลี่ยนแปลงช้าเกินไป",75,{skills:4,wealth:3},{wealth:-2,stress:3})
+    ]},
+    {title:"ลูกหลานเริ่มมีเส้นทางของตัวเอง",description:"คนรุ่นถัดไปเริ่มตัดสินใจเรื่องเรียน งาน และชีวิต คุณต้องเลือกว่าจะสนับสนุนอย่างไร",choices:[
+      choice("listen","รับฟังความต้องการก่อนให้คำแนะนำ","เปิดพื้นที่ให้พูดคุยโดยไม่ตัดสิน","ความสัมพันธ์และความไว้วางใจเพิ่มขึ้น","อาจต้องยอมรับทางเลือกที่ไม่ตรงใจ",85,{relationships:6,happiness:3},{stress:2}),
+      choice("support","ช่วยค่าเรียนหรืออุปกรณ์เท่าที่ไหว","วางงบช่วยเหลือโดยไม่สร้างหนี้เกินตัว","เพิ่มโอกาสให้คนในครอบครัว","เงินสำรองของบ้านลดลง",70,{relationships:5,wealth:-3},{stress:3,wealth:-4}),
+      choice("independence","ให้ลองรับผิดชอบและเรียนรู้เอง","คอยเป็นที่ปรึกษาเมื่อจำเป็น","เพิ่มทักษะและความมั่นใจ","เกิดความขัดแย้งระหว่างทาง",65,{skills:4,relationships:2},{relationships:-2})
+    ]},
+    {title:"สุขภาพเริ่มต้องใส่ใจมากขึ้น",description:"ภาระงานและวัยที่เพิ่มขึ้นทำให้การพักผ่อน การตรวจสุขภาพ และกิจวัตรประจำวันสำคัญกว่าเดิม",choices:[
+      choice("checkup","จัดเวลาตรวจสุขภาพตามความเหมาะสม","ปรึกษาบุคลากรสุขภาพและติดตามผล","พบปัญหาได้เร็วหรือสบายใจขึ้น","เสียเวลาและค่าใช้จ่าย",80,{health:5,wealth:-1,stress:-1},{wealth:-1}),
+      choice("exercise","ปรับกิจวัตรให้เคลื่อนไหวสม่ำเสมอ","เริ่มจากกิจกรรมที่เหมาะกับสภาพร่างกาย","สุขภาพและอารมณ์ดีขึ้น","ทำต่อเนื่องยากในช่วงงานหนัก",70,{health:5,happiness:3},{health:1}),
+      choice("rest","ลดงานบางส่วนและให้เวลาพัก","ทบทวนสิ่งที่จำเป็นและสิ่งที่รอได้","ความเหนื่อยสะสมลดลง","รายได้หรือความก้าวหน้าบางส่วนช้าลง",75,{health:4,stress:-4,happiness:2},{wealth:-2})
+    ]}
+  ],
+  senior: [
+    {title:"วางแผนชีวิตหลังวัยทำงาน",description:"รายได้ประจำอาจเปลี่ยนไป คุณต้องคิดถึงเงินออม สุขภาพ และรูปแบบชีวิตในระยะยาว",choices:[
+      choice("retire-plan","วางแผนรายจ่ายและเงินสำรอง","ประเมินรายได้ที่มีและค่าใช้จ่ายจำเป็น","ความมั่นคงทางการเงินชัดเจนขึ้น","พบช่องว่างเงินออมที่ต้องแก้ไข",80,{wealth:3,stress:-2},{stress:4}),
+      choice("part-time","ทำงานต่อแบบลดภาระ","เลือกงานที่เหมาะกับสุขภาพและเวลา","มีรายได้และกิจวัตรต่อเนื่อง","เหนื่อยเกินกว่าที่ประเมิน",65,{wealth:4,skills:2},{health:-3,stress:3}),
+      choice("family","คุยกับครอบครัวเรื่องการช่วยเหลือ","ตกลงความคาดหวังและขอบเขตให้ชัด","ลดความเข้าใจผิดและมีแผนร่วมกัน","พูดคุยยากและต้องใช้เวลา",75,{relationships:5},{stress:2})
+    ]},
+    {title:"ส่งต่อประสบการณ์",description:"คนรอบตัวอาจต้องการคำแนะนำจากประสบการณ์ที่คุณสะสมมา",choices:[
+      choice("mentor","เป็นพี่เลี้ยงให้คนรุ่นหลัง","แบ่งปันความรู้และช่วยให้เขาลองทำด้วยตัวเอง","รู้สึกมีคุณค่าและความสัมพันธ์ดีขึ้น","ใช้พลังงานและเวลามากกว่าที่คิด",80,{relationships:5,happiness:4,skills:2},{health:-1}),
+      choice("community","เข้าร่วมกิจกรรมชุมชน","เลือกกิจกรรมที่เหมาะกับสุขภาพและความสนใจ","ได้เพื่อนและเครือข่ายใหม่","กิจกรรมอาจไม่ตรงกับความต้องการ",75,{relationships:5,happiness:3},{happiness:-1}),
+      choice("personal","ทำสิ่งที่เคยอยากทำ","จัดเวลาให้ความสนใจส่วนตัว","ความสุขและความหมายในชีวิตเพิ่มขึ้น","ต้องปรับงบประมาณหรือเวลา",85,{happiness:5,skills:2},{wealth:-1})
+    ]},
+    {title:"การดูแลตัวเองในแต่ละวัน",description:"กิจวัตรที่เหมาะสมและความช่วยเหลือใกล้บ้านมีความสำคัญต่อการใช้ชีวิตอย่างอิสระ",choices:[
+      choice("routine","สร้างกิจวัตรพักผ่อนและเคลื่อนไหว","เลือกกิจกรรมที่เหมาะกับร่างกาย","สุขภาพและอารมณ์ดีขึ้น","ทำได้ไม่สม่ำเสมอ",80,{health:4,happiness:3},{health:1}),
+      choice("support","ขอให้ครอบครัวช่วยในเรื่องที่จำเป็น","สื่อสารความต้องการอย่างชัดเจน","ได้รับการช่วยเหลือและใกล้ชิดกัน","รู้สึกเกรงใจหรือมีความเห็นไม่ตรงกัน",75,{relationships:5,stress:-1},{stress:2}),
+      choice("community-care","สอบถามบริการดูแลผู้สูงอายุในพื้นที่","ตรวจสอบบริการและสิทธิที่เข้าถึงได้","พบแหล่งสนับสนุนที่เหมาะสม","บริการอาจมีข้อจำกัดด้านพื้นที่",60,{health:2,stress:-1},{stress:2})
+    ]}
+  ]
+}
+
+function stage(age:number):string {
+  if(age <= 5) return "infant"
+  if(age <= 11) return "child"
+  if(age <= 17) return "teen"
+  if(age <= 34) return "young"
+  if(age <= 49) return "adult"
+  if(age <= 59) return "midlife"
+  return "senior"
+}
+
+function historicalEvent(event:ThaiHistoryEvent, life:LifeRecord):LifeEvent {
+  const local = event.provinces?.includes(life.province) || (event.regions.includes("ทั่วประเทศ") && !event.provinces)
+  const where = local ? event.localImpact : event.nationalImpact
+  const choicesById:Record<string,LifeChoice[]> = {
+    "siam-1932":[
+      choice("listen-news","ติดตามข่าวจากแหล่งที่ครอบครัวเข้าถึง","ฟังข่าวหรืออ่านหนังสือพิมพ์เมื่อมีโอกาส","เข้าใจความเปลี่ยนแปลงและพูดคุยในบ้านได้ดีขึ้น","ข้อมูลที่ได้รับยังไม่ครบถ้วน",80,{education:2,skills:1},{happiness:-1}),
+      choice("focus-livelihood","ให้ความสำคัญกับงานและความเป็นอยู่","ครอบครัวติดตามสถานการณ์เท่าที่จำเป็น","กิจวัตรและรายได้ดำเนินต่อไป","พลาดข้อมูลบางอย่างที่อาจสำคัญ",85,{wealth:1,stress:-1},{education:-1}),
+      choice("move-city","ย้ายเข้าใกล้แหล่งงานในเมือง (หากมีทุนและเครือข่าย)","การย้ายถิ่นมีต้นทุนและความไม่แน่นอน","พบโอกาสงานใหม่","ค่าใช้จ่ายและความเสี่ยงเพิ่ม",35,{wealth:5,skills:2},{wealth:-5,stress:4})
+    ],
+    "ww2-1941":[
+      choice("ration","สำรองอาหารและใช้ของอย่างประหยัด","ครอบครัวจัดลำดับสิ่งจำเป็นและแบ่งปันเมื่อทำได้","ลดความเสี่ยงจากของขาดแคลนบางส่วน","ของจำเป็นยังขาดตลาดและรายจ่ายเพิ่ม",75,{wealth:2,health:1},{wealth:-2,stress:3}),
+      choice("stay-safe","หลีกเลี่ยงพื้นที่เสี่ยงและติดตามคำเตือน","ลดการเดินทางที่ไม่จำเป็นและดูแลคนในบ้าน","ลดการเผชิญความเสี่ยงโดยตรง","การเดินทางและงานบางอย่างหยุดชะงัก",80,{health:2,stress:1},{wealth:-2,stress:3}),
+      choice("keep-work","พยายามรักษาอาชีพและรายได้เดิม","ปรับเวลาหรือวิธีทำงานตามสถานการณ์","ยังพอมีรายได้ต่อเนื่อง","การค้าขายและการขนส่งสะดุด",55,{wealth:4,skills:1},{wealth:-4,stress:4}),
+      choice("help-neighbors","ช่วยเหลือคนในชุมชน","แบ่งปันอาหาร ข่าวสาร หรือแรงงานเท่าที่มี","เครือข่ายชุมชนแน่นแฟ้นขึ้น","ทรัพยากรของบ้านลดลง",70,{relationships:5,wealth:-1},{wealth:-3,stress:2})
+    ],
+    "october-1973":[
+      choice("follow-news","ติดตามข่าวและพูดคุยอย่างระมัดระวัง","ตรวจสอบข่าวจากหลายแหล่งเท่าที่เข้าถึงได้","เข้าใจสถานการณ์และความเปลี่ยนแปลงมากขึ้น","ข่าวลือทำให้สับสน",80,{education:2,skills:1},{stress:2}),
+      choice("avoid-crowd","หลีกเลี่ยงพื้นที่ชุมนุมและดูแลคนในบ้าน","วางแผนเส้นทางและการเดินทางใหม่","ลดการเผชิญเหตุเฉพาะหน้า","กิจวัตรและการเดินทางถูกรบกวน",85,{health:1,stress:-1},{wealth:-1,stress:2}),
+      choice("community-talk","ร่วมวงพูดคุยในชุมชนอย่างสงบ","แลกเปลี่ยนความเห็นโดยคำนึงถึงความปลอดภัย","ได้มุมมองและเครือข่ายใหม่","เกิดความขัดแย้งกับคนเห็นต่าง",55,{relationships:3,education:2},{relationships:-2,stress:3})
+    ],
+    "october-1976":[
+      choice("stay-away","หลีกเลี่ยงพื้นที่เกิดเหตุและอยู่ในที่ปลอดภัย","ไม่เข้าไปใกล้พื้นที่มหาวิทยาลัยและสนามหลวง","ลดความเสี่ยงจากความรุนแรงโดยตรง","ความไม่แน่นอนยังส่งผลต่อความรู้สึก",90,{health:1,stress:1},{stress:4}),
+      choice("check-family","ติดต่อญาติหรือคนรู้จักเพื่อยืนยันความปลอดภัย","ใช้ช่องทางสื่อสารที่มีในยุคนั้น","ทราบข่าวครอบครัวและช่วยกันวางแผน","ติดต่อไม่ได้ในช่วงสถานการณ์ตึงเครียด",75,{relationships:3,stress:-1},{stress:4}),
+      choice("keep-records","เก็บข้อมูลและบันทึกสิ่งที่รับรู้จากแหล่งที่ตรวจสอบได้","แยกข้อเท็จจริงออกจากข่าวลือ","มีบันทึกและเข้าใจเหตุการณ์มากขึ้น","ข้อมูลบางส่วนยังไม่สามารถยืนยันได้",60,{education:3,skills:2},{stress:2})
+    ],
+    "black-may-1992":[
+      choice("avoid-rally","หลีกเลี่ยงพื้นที่ชุมนุมและตรวจเส้นทางก่อนเดินทาง","งดเข้าใกล้จุดที่มีการเผชิญหน้า","ลดความเสี่ยงทางกายภาพ","การเดินทางและงานสะดุด",90,{health:1,stress:-1},{wealth:-1,stress:3}),
+      choice("check-loved-ones","ติดต่อคนใกล้ชิดและนัดจุดปลอดภัย","ตรวจสอบความปลอดภัยของครอบครัว","ช่วยให้ครอบครัวประสานงานกันได้","สื่อสารติดขัดและเกิดความกังวล",80,{relationships:3,stress:-1},{stress:4}),
+      choice("follow-reliable-news","ติดตามรายงานจากหลายสำนักข่าว","ระวังข่าวลือและข้อมูลที่ยังไม่ยืนยัน","เข้าใจเหตุการณ์และผลกระทบมากขึ้น","ข้อมูลขัดแย้งกันทำให้สับสน",75,{education:2,skills:1},{stress:2})
+    ],
+    "tom-yum-kung-1997":[
+      choice("cut-costs","ลดรายจ่ายและเก็บเงินสดสำรอง","ทบทวนหนี้และค่าใช้จ่ายจำเป็น","ครอบครัวมีเงินสำรองพอรับแรงกระแทกบางส่วน","รายได้ลดจนการประหยัดไม่พอ",80,{wealth:5,stress:-1},{wealth:-3,stress:4}),
+      choice("retrain","เรียนทักษะใหม่เพื่อหางานในสายอื่น","ใช้เวลาฝึกทักษะที่ตลาดยังต้องการ","มีทางเลือกสมัครงานเพิ่ม","ใช้เวลาและเงินแต่ยังไม่พบงาน",60,{skills:7,education:3,wealth:-1},{wealth:-2,stress:4}),
+      choice("seek-stable-work","หางานที่รายได้แน่นอนกว่า","ปรับเป้าหมายงานและยอมรับงานชั่วคราว","มีรายได้เข้ามาพยุงครอบครัว","หางานยากและรายได้ต่ำลง",55,{wealth:4,skills:2},{wealth:-4,stress:5}),
+      choice("borrow-more","กู้เพิ่มเพื่อประคองกิจการ (เสี่ยงสูง)","ต้องตรวจดอกเบี้ย หลักประกัน และกำลังชำระหนี้","กิจการมีเงินหมุนต่อชั่วคราว","หนี้เพิ่มและความเสี่ยงผิดนัดสูงขึ้น",30,{wealth:5,skills:1},{wealth:-8,stress:8},"ต้องประเมินหนี้และรายได้อย่างรอบคอบ")
+    ],
+    "tsunami-2004":[
+      choice("evacuate","อพยพไปพื้นที่สูง/จุดปลอดภัยเมื่อมีคำเตือน","ให้ความสำคัญกับชีวิตก่อนทรัพย์สิน","ลดความเสี่ยงจากคลื่นและน้ำท่วม","การอพยพเร่งด่วนทำให้ของใช้เสียหาย",90,{health:2,stress:2},{wealth:-2,stress:5}),
+      choice("help-family","รวมญาติและตรวจสอบสมาชิกในครอบครัว","ใช้จุดนัดพบและช่องทางแจ้งข่าว","ครอบครัวประสานงานกันได้ดีขึ้น","ยังติดต่อบางคนไม่ได้และเกิดความกังวล",75,{relationships:4,stress:-1},{stress:6}),
+      choice("rebuild-livelihood","หลังเหตุการณ์ค่อยวางแผนฟื้นฟูอาชีพ","ตรวจสอบความช่วยเหลือและต้นทุนก่อนลงทุนใหม่","เริ่มฟื้นรายได้อย่างเป็นขั้นตอน","กิจการฟื้นช้าและมีหนี้เพิ่ม",50,{skills:3,wealth:4},{wealth:-5,stress:5}),
+      choice("community-aid","ช่วยงานชุมชนและศูนย์ประสานความช่วยเหลือ","ช่วยเท่าที่ปลอดภัยและไม่ละเลยคนในบ้าน","ได้เครือข่ายและช่วยผู้ประสบภัย","เหนื่อยล้าและมีภาระเพิ่ม",70,{relationships:5,happiness:2},{health:-2,stress:3})
+    ],
+    "great-flood-2011":[
+      choice("move-valuables","ย้ายเอกสาร ยา และของจำเป็นขึ้นที่สูง","เตรียมของจำเป็นและแผนติดต่อครอบครัว","ลดความเสียหายต่อของสำคัญ","น้ำมาเร็วกว่าที่คาดและย้ายของไม่ทัน",80,{wealth:2,stress:1},{wealth:-4,stress:5}),
+      choice("evacuate","อพยพตามประกาศและไปอยู่กับญาติ/ศูนย์พักพิง","จัดลำดับความปลอดภัยของเด็ก ผู้สูงอายุ และผู้ป่วย","ลดความเสี่ยงต่อชีวิต","ที่พักชั่วคราวแออัดและรายได้หยุดชะงัก",85,{health:2,relationships:2},{wealth:-3,stress:4}),
+      choice("protect-work","ปกป้องเครื่องมือทำกินและประสานนายจ้าง","หาทางรักษาอุปกรณ์และแจ้งสถานะการทำงาน","กลับมาทำงานได้เร็วขึ้นเมื่อสถานการณ์คลี่คลาย","ทรัพย์สินเสียหายหรือที่ทำงานปิด",55,{wealth:4,skills:2},{wealth:-6,stress:5}),
+      choice("help-neighbors","ช่วยขนของและดูแลเพื่อนบ้าน","ช่วยเหลือโดยไม่เสี่ยงเกินกำลัง","ชุมชนช่วยกันรับมือได้ดีขึ้น","เกิดความเหนื่อยล้าและเสียทรัพย์สินบางส่วน",70,{relationships:5,happiness:2},{health:-2,wealth:-1})
+    ],
+    "covid-2020":[
+      choice("remote-work","ปรับงานหรือการเรียนให้ทำจากบ้านได้","จัดพื้นที่และเวลาในบ้านใหม่","ลดการเดินทางและรักษารายได้บางส่วน","งานบางประเภททำจากบ้านไม่ได้หรือรายได้ลด",60,{skills:4,health:2},{wealth:-3,stress:4}),
+      choice("adapt-income","หาช่องทางรายได้ใหม่ที่เหมาะกับข้อจำกัด","ทดลองขายของหรือรับงานที่ทำได้อย่างปลอดภัย","มีรายได้เสริมและทักษะใหม่","ลงทุนแล้วขายไม่ดีหรือเหนื่อยเกินไป",50,{skills:5,wealth:3},{wealth:-4,stress:4}),
+      choice("protect-health","ทำตามคำแนะนำสาธารณสุขและลดความเสี่ยง","ติดตามข้อมูลจากหน่วยงานสุขภาพและดูแลคนเปราะบาง","ลดโอกาสสัมผัสเชื้อและจัดการความเสี่ยงดีขึ้น","ข้อจำกัดทำให้เครียดและโดดเดี่ยว",85,{health:3,stress:-1},{stress:4}),
+      choice("support-neighbors","ช่วยเหลือคนใกล้บ้านตามกำลัง","แบ่งปันอาหาร ข้อมูล หรือช่วยซื้อของจำเป็น","ความสัมพันธ์ในชุมชนแน่นแฟ้นขึ้น","ทรัพยากรและเงินสำรองลดลง",70,{relationships:4,happiness:2,wealth:-1},{wealth:-2,stress:2})
+    ]
   }
-  return items[items.length - 1]
-}
-function clamp(value: number): number {
-  return Math.max(0, Math.min(100, value))
+  const choices = choicesById[event.id] ?? []
+  const context = local ? event.localImpact : event.nationalImpact
+  return {id:event.id,age:life.age,year:event.year,title:event.title,description:event.context,context,type:"historical",sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote,choices}
 }
 
-export function createLife(name = ""): LifeRecord {
-  const origin = pickWeighted(origins)
+function makePersonalEvent(life:LifeRecord,year:number):LifeEvent {
+  const pool = personalEvents[stage(life.age)] ?? personalEvents.senior
+  const recent = new Set(life.timeline.slice(0,10).map(item=>item.title))
+  const available = pool.filter(item=>!recent.has(item.title))
+  const template = pick(available.length ? available : pool)
+  const era = eraLabel(year)
+  const location = life.areaType
+  return {id:uid(),age:life.age,year,title:template.title,description:template.description,context:`บริบทของปี ${year}: ${era} · ${life.province} · ${location} · พื้นฐานครอบครัว: ${life.family}`,type:"personal",choices:template.choices}
+}
+
+function eventForYear(life:LifeRecord,year:number):LifeEvent|null {
+  const event = THAI_HISTORY.find(item=>item.year===year)
+  if(!event) return null
+  return historicalEvent(event,life)
+}
+
+export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
+  const minYear = Math.max(1930,Math.min(2025,Math.min(yearFrom,yearTo)))
+  const maxYear = Math.max(minYear,Math.min(2025,Math.max(yearFrom,yearTo)))
+  const bornYear = minYear + Math.floor(Math.random()*(maxYear-minYear+1))
+  const province = pick(THAI_PROVINCES)
+  const profile = pick(householdProfiles)
   const gender = pick(genders)
-  const age = 0
+  const jobs = [...parentJobs]
+  const parent1 = pick(jobs)
+  const parent2 = pick(jobs.filter(job=>job!==parent1))
+  const siblings = Math.floor(Math.random()*5)
+  const areaType = province.area === "เมือง/ชนบท" ? pick(["เมือง","ชนบท"]) : province.area
   const lifeName = name.trim() || pick(firstNames)
-  const life: LifeRecord = {
-    id: crypto.randomUUID(),
-    name: lifeName,
-    gender,
-    country: origin.country,
-    region: origin.region,
-    family: origin.family,
-    background: origin.background,
-    bornYear: new Date().getFullYear(),
-    age,
-    expectedLifespan: Math.max(50, origin.lifeExpectancy + Math.floor(Math.random() * 17) - 8),
-    status: "alive",
-    stats: { health: 82, happiness: 65, education: origin.education, relationships: 55, skills: 35, wealth: origin.wealth },
-    pendingEvent: null,
-    timeline: [{ id: crypto.randomUUID(), age: 0, year: new Date().getFullYear(), title: "วันแรกของชีวิต", detail: `คุณได้ถือกำเนิดในประเทศ${origin.country} · ${origin.family}` }],
-    createdAt: new Date().toISOString(),
+  const life:LifeRecord = {
+    id:uid(),name:lifeName,gender,country:"ประเทศไทย",region:province.region,province:province.name,areaType,
+    family:profile.family,background:`${profile.description} เติบโตใน${areaType}${province.name}`,
+    parents:[parent1,parent2],siblings,householdIncome:profile.income,householdDebt:profile.debt,
+    occupation:"ยังไม่ถึงวัยทำงาน",bornYear,age:0,expectedLifespan:78+Math.floor(Math.random()*18),status:"alive",
+    stats:{health:78,happiness:62,education:profile.education,relationships:58,skills:24,wealth:profile.wealth,stress:12},
+    pendingEvent:null,timeline:[{id:uid(),age:0,year:bornYear,title:"วันแรกของชีวิต",detail:`เกิดในประเทศไทย · จังหวัด${province.name} · ${profile.family} · ผู้ปกครองทำงาน${parent1}และ${parent2}`}],
+    createdAt:new Date().toISOString()
   }
+  life.pendingEvent = eventForYear(life,bornYear)
   return life
 }
 
-export function advanceLife(life: LifeRecord): LifeRecord {
-  if (life.status !== "alive" || life.pendingEvent) return life
-  const nextAge = life.age + 1
-  if (nextAge >= life.expectedLifespan) {
-    const ended: LifeRecord = {
-      ...life, age: nextAge, status: "ended", endedAt: new Date().toISOString(),
-      timeline: [{ id: crypto.randomUUID(), age: nextAge, year: life.bornYear + nextAge, title: "เรื่องราวชีวิตเดินทางมาถึงปลายทาง", detail: "ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ" }, ...life.timeline],
-    }
-    return ended
+export function advanceLife(life:LifeRecord):LifeRecord {
+  if(life.status!=="alive"||life.pendingEvent) return life
+  const nextAge=life.age+1
+  const year=life.bornYear+nextAge
+  if(nextAge>=life.expectedLifespan) {
+    return {...life,age:nextAge,status:"ended",endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
   }
-  const template = eventBank.find(event => nextAge >= event.min && nextAge <= event.max) ?? eventBank[eventBank.length - 1]
-  const pendingEvent: LifeEvent = {
-    id: crypto.randomUUID(), age: nextAge, title: template.title, description: template.description,
-    choices: template.choices,
-  }
-  return { ...life, age: nextAge, pendingEvent }
+  const nextLife={...life,age:nextAge}
+  const event=eventForYear(nextLife,year) ?? makePersonalEvent(nextLife,year)
+  return {...nextLife,pendingEvent:event}
 }
 
-export function resolveLifeChoice(life: LifeRecord, choiceId: string): LifeRecord {
-  const event = life.pendingEvent
-  if (!event) return life
-  const choice = event.choices.find(item => item.id === choiceId)
-  if (!choice) return life
-  const stats = { ...life.stats }
-  for (const [key, value] of Object.entries(choice.effects)) {
-    const statKey = key as keyof LifeStats
-    stats[statKey] = statKey === "wealth" ? Math.max(-50000, stats.wealth + (value ?? 0)) : clamp(stats[statKey] + (value ?? 0))
+export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
+  const event=life.pendingEvent
+  if(!event) return life
+  const selected=event.choices.find(item=>item.id===choiceId)
+  if(!selected) return life
+  let chance=selected.chance
+  if(selected.requirement && life.stats.education<45) chance-=10
+  chance+=Math.round((life.stats.skills-40)*0.12)
+  chance+=Math.round((life.stats.education-40)*0.08)
+  chance=Math.max(5,Math.min(95,chance))
+  const success=Math.random()*100<chance
+  const effects=success?selected.successEffects:selected.failureEffects
+  const stats={...life.stats}
+  for(const [key,value] of Object.entries(effects)) {
+    const statKey=key as keyof LifeStats
+    stats[statKey]=statKey==="wealth"?Math.max(-100000,stats.wealth+(value??0)):clamp(stats[statKey]+(value??0))
   }
-  const entry: LifeEntry = {
-    id: crypto.randomUUID(), age: life.age, year: life.bornYear + life.age,
-    title: event.title, detail: choice.outcome,
-  }
-  return { ...life, stats, pendingEvent: null, timeline: [entry, ...life.timeline] }
+  const result=success?selected.successOutcome:selected.failureOutcome
+  const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
+  const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl}
+  return {...life,stats,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
 
-export function validateLifeRecord(value: unknown): value is LifeRecord {
-  if (!value || typeof value !== "object") return false
-  const life = value as Partial<LifeRecord>
-  return typeof life.id === "string" && typeof life.name === "string" &&
-    typeof life.age === "number" && typeof life.bornYear === "number" &&
-    (life.status === "alive" || life.status === "ended") &&
-    !!life.stats && typeof life.stats.health === "number" &&
-    Array.isArray(life.timeline)
+export function validateLifeRecord(value:unknown):value is LifeRecord {
+  if(!value||typeof value!=="object") return false
+  const life=value as Partial<LifeRecord>
+  return typeof life.id==="string"&&typeof life.name==="string"&&life.country==="ประเทศไทย"&&
+    typeof life.province==="string"&&typeof life.bornYear==="number"&&typeof life.age==="number"&&
+    typeof life.expectedLifespan==="number"&&Array.isArray(life.timeline)&&
+    !!life.stats&&typeof life.stats.health==="number"&&typeof life.stats.stress==="number"
 }
