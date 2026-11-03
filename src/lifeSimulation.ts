@@ -612,7 +612,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
-    const childEducationMatch=choiceId.match(/^child-(public|private|community|academic|vocational|listen)-(\\d+)$/)
+    const childEducationMatch=choiceId.match(/^child-(public|private|community|academic|vocational|listen)-(\d+)$/)
     if(childEducationMatch){
       const index=Number(childEducationMatch[2])
       const educationLabels:Record<string,string>={public:"โรงเรียนรัฐ",private:"โรงเรียนเอกชน",community:"ค้นหาข้อมูลกับชุมชน",academic:"สายสามัญ",vocational:"สายอาชีพ",listen:"กำลังค้นหาความสนใจ"}
