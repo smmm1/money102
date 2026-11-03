@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import ts from "typescript";
 
 const app = await readFile(new URL("../src/App.tsx", import.meta.url), "utf8");
 const auth = await readFile(new URL("../src/CloudAuth.tsx", import.meta.url), "utf8");
@@ -141,4 +142,37 @@ test("loan drawdowns are recorded as debt rather than earned income", async () =
   assert.doesNotMatch(borrowMoney, /kind: "income"/);
   assert.match(economy, /kind: "debt", label: "ดอกเบี้ยทบเข้ายอดหนี้", amount: interest/);
   assert.match(borrowMoney, /!Number\.isFinite\(annualRate\)/, "NaN and infinite interest rates must be rejected");
+});
+
+
+test("household economy functions preserve cash, debt and interest arithmetic", async () => {
+  const source = await readFile(new URL("../src/lifeEconomy.ts", import.meta.url), "utf8");
+  const javascript = ts.transpile(source, { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 });
+  const moduleUrl = "data:text/javascript;base64," + Buffer.from(javascript).toString("base64");
+  const { createLifeEconomy, simulateEconomyMonth, borrowMoney, repayDebt } = await import(moduleUrl);
+
+  const withDebt = createLifeEconomy(10000, 0, 0, 1200);
+  const afterInterest = simulateEconomyMonth(withDebt, 1, 123);
+  assert.equal(afterInterest.cash, 10000);
+  assert.equal(afterInterest.debt, 1212);
+  assert.equal(afterInterest.ledger[0].kind, "debt");
+  assert.equal(afterInterest.ledger[0].label, "ดอกเบี้ยทบเข้ายอดหนี้");
+
+  const shortfall = simulateEconomyMonth(createLifeEconomy(0, 100, 150), 1, 456);
+  assert.equal(shortfall.cash, 0);
+  assert.equal(shortfall.debt, 51);
+  assert.ok(shortfall.ledger.some(entry => entry.kind === "debt" && entry.label === "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย" && entry.amount === 50));
+
+  const loan = borrowMoney(createLifeEconomy(5000, 10000, 0), 1000, 0.12);
+  assert.equal(loan.ok, true);
+  assert.equal(loan.economy.cash, 6000);
+  assert.equal(loan.economy.debt, 1000);
+  assert.equal(loan.economy.ledger[0].kind, "debt");
+  assert.equal(borrowMoney(createLifeEconomy(5000, 10000, 0), 1000, Number.NaN).ok, false);
+
+  const repayment = repayDebt(loan.economy, 400);
+  assert.equal(repayment.ok, true);
+  assert.equal(repayment.economy.cash, 5600);
+  assert.equal(repayment.economy.debt, 600);
+  assert.equal(repayment.economy.ledger[0].kind, "debt");
 });
