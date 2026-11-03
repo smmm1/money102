@@ -321,3 +321,10 @@ button{cursor:pointer}
 .life-story-circumstances small{font-size:.7rem;color:var(--life-muted,#7d8178)}
 .life-story-circumstances b{font-size:.82rem;font-weight:600;overflow-wrap:anywhere;color:var(--life-ink,#34443b)}
 @media(max-width:560px){.life-story-circumstances{gap:8px;padding:11px}}
+
+.life-economy-household-costs{display:flex;flex-direction:column;gap:7px;margin-top:2px;padding-top:9px;border-top:1px solid #e5e9df}
+.life-economy-household-costs>small{color:#687b6d;font-size:10px;line-height:1.5}
+.life-economy-household-costs ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 14px;margin:0;padding:0;list-style:none}
+.life-economy-household-costs li{display:flex;justify-content:space-between;gap:8px;color:#89958a;font-size:10px}
+.life-economy-household-costs li b{color:#536b59;font-weight:600;font-variant-numeric:tabular-nums}
+@media(max-width:520px){.life-economy-household-costs ul{grid-template-columns:1fr}}
