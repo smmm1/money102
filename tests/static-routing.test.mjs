@@ -113,6 +113,7 @@ test("household members create recurring costs that flow through the cash ledger
   const economy = await readFile(new URL("../src/lifeEconomy.ts", import.meta.url), "utf8");
   const simulation = await readFile(new URL("../src/lifeSimulation.ts", import.meta.url), "utf8");
   const panel = await readFile(new URL("../src/LifeEconomyPanel.tsx", import.meta.url), "utf8");
+  const story = await readFile(new URL("../src/LifeStoryExperience.tsx", import.meta.url), "utf8");
   for (const feature of ["householdCostMonthly", "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน"]) {
     assert.ok(economy.includes(feature), "missing recurring cost accounting: " + feature);
   }
@@ -120,4 +121,5 @@ test("household members create recurring costs that flow through the cash ledger
     assert.ok(simulation.includes(feature), "missing household cost driver: " + feature);
   }
   assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม"));
+  assert.ok(story.includes("householdCostMonthly"), "story summary must include recurring household costs");
 });
