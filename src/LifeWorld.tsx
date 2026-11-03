@@ -123,9 +123,12 @@ export default function LifeWorld() {
           <div className="life-welcome-copy"><span className="life-eyebrow">THAILAND · LIFE THROUGH THE ERAS</span><h1>หนึ่งชีวิต<br /><em>ผ่านกาลเวลาไทย</em></h1><p>เกิดในปีที่ไม่เหมือนกัน เติบโตในจังหวัดและครอบครัวที่ต่างกัน แล้วใช้ชีวิตท่ามกลางเหตุการณ์จริงของประเทศไทย ทุกทางเลือกมีต้นทุนและโอกาสของมัน</p><button className="life-primary" onClick={() => setShowCreate(true)}>สุ่มปีเกิดและเริ่มชีวิต <span>↗</span></button><small>ข้อมูลประวัติศาสตร์มีแหล่งอ้างอิง ส่วนพื้นฐานครอบครัวเป็นสถานการณ์จำลอง</small></div>
         </section> : <section className="life-dashboard">
           <div className="life-page-heading"><div><span className="life-eyebrow">YOUR CURRENT LIFE · {activeLife.status === "alive" ? "IN PROGRESS" : "COMPLETED"}</span><h1>{activeLife.name}<span className="life-age">อายุ {activeLife.age} ปี</span></h1><p>{activeLife.background} · ประเทศไทย · {activeLife.province}</p></div><button className="life-secondary" onClick={() => setShowCreate(true)}>＋ เริ่มชีวิตใหม่</button></div>
-          <div className="life-world-card">
-            <div className="life-world-visual"><div className="life-map-glow" /><div className="life-world-circle"><span>TH</span></div><div className="life-world-caption"><span>จุดเริ่มต้นของชีวิต</span><b>{activeLife.region}</b></div></div>
-            <div className="life-origin"><span className="life-eyebrow">จุดเริ่มต้นของชีวิต · {activeLife.bornYear + activeLife.age} พ.ศ.</span><h2>{activeLife.family}</h2><p>{activeLife.background}</p><div className="life-facts"><span>จังหวัด <b>{activeLife.province}</b></span><span>พื้นที่ <b>{activeLife.areaType}</b></span><span>เพศ <b>{activeLife.gender}</b></span></div><div className="life-facts"><span>ผู้ปกครอง <b>{activeLife.parents.join(" / ")}</b></span><span>พี่น้อง <b>{activeLife.siblings} คน</b></span></div><div className="life-facts"><span>ฐานะครอบครัว <b>{activeLife.householdIncome}</b></span><span>หนี้ครัวเรือนเริ่มต้น <b>{formatMoney(activeLife.householdDebt)}</b></span></div></div>
+          <div className="life-origin-strip">
+            <span><small>บ้านเกิด</small><b>{activeLife.province} · {activeLife.areaType}</b></span>
+            <span><small>ครอบครัว</small><b>{activeLife.family}</b></span>
+            <span><small>ผู้ปกครอง</small><b>{activeLife.parents.join(" / ")}</b></span>
+            <span><small>พี่น้อง</small><b>{activeLife.siblings} คน</b></span>
+            <span><small>ยุคที่เกิด</small><b>พ.ศ. {activeLife.bornYear + 543}</b></span>
           </div>
           <LifeStoryExperience life={activeLife} saving={saving} onUpdate={nextLife => void updateLife(nextLife)} onHistory={() => setView("history")} />
           <div className="life-section-head"><div><span className="life-eyebrow">LIFE TIMELINE</span><h2>เส้นทางที่ผ่านมา</h2></div><button className="life-text-button" onClick={() => setView("history")}>ดูทั้งหมด →</button></div>
