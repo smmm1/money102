@@ -96,6 +96,7 @@ test("life scene reflects story milestones for family, pets, vehicles and househ
   }
   assert.ok(story.includes('import LifeScene from "./LifeScene"') && story.includes("<LifeScene life={life} />"));
   assert.ok(styles.includes(".life-scene-frame") && styles.includes(".life-scene-legend"));
+  assert.ok(scene.includes("life.parentAlive") && scene.includes("life.parentAges") && scene.includes("lifeStageForAge(parentAge)"), "living parents must remain visible and age with the player");
   for (const feature of ["lifeStageForAge", "childAges", "partnerAge", "advanceHouseholdAges", "age<=2", "age<=12", "age<=19", "age<65"]) {
     assert.ok(engine.includes(feature), "missing age progression rule: " + feature);
   }
