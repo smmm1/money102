@@ -381,7 +381,9 @@ function historicalEvent(event:ThaiHistoryEvent, life:LifeRecord):LifeEvent {
 function adaptiveEvents(life:LifeRecord):Array<{title:string;description:string;choices:LifeChoice[]}> {
   const events:Array<{title:string;description:string;choices:LifeChoice[]}> = []
   const st=life.stats
-  if(life.age>=18 && (st.wealth<10 || life.householdDebt>35000)) events.push({
+  const cash=life.economy?.cash ?? st.wealth
+  const monthlyCost=Math.max(1,life.economy?.monthlyExpenses ?? 0)
+  if(life.age>=18 && (cash<Math.max(3000,monthlyCost) || life.householdDebt>35000)) events.push({
     title:"รายรับไม่พอกับภาระที่มี",
     description:"รายจ่ายจำเป็นและภาระผ่อนเริ่มเบียดเงินที่เหลือ คุณต้องเลือกวิธีประคองสถานการณ์โดยไม่ผลักปัญหาไปข้างหน้า",
     choices:[
@@ -405,7 +407,7 @@ function adaptiveEvents(life:LifeRecord):Array<{title:string;description:string;
       choice("nearby-care","เริ่มจากหน่วยบริการใกล้บ้าน","สอบถามบริการปฐมภูมิหรือสถานพยาบาลชุมชน","เข้าถึงคำแนะนำเบื้องต้นได้สะดวกขึ้น","บริการบางอย่างอาจต้องส่งต่อ",73,{health:4,relationships:1},{stress:2}),
       choice("delay-check","เลื่อนการตรวจเพราะติดภาระ","เฝ้าดูอาการและจัดการเรื่องเร่งด่วนก่อน","ประหยัดเวลาในระยะสั้น","อาการอาจยืดเยื้อและกระทบงานมากกว่าเดิม",40,{wealth:1},{health:-5,stress:4})
     ]})
-  if(life.age>=22 && life.age<=45 && st.skills>=60 && st.wealth>35) events.push({
+  if(life.age>=22 && life.age<=45 && st.skills>=60 && cash>Math.max(35000,monthlyCost*2)) events.push({
     title:"โอกาสใหม่ที่ยังไม่แน่นอน",
     description:"มีคนชวนรับงานเพิ่มหรือทดลองทำสิ่งใหม่ แต่ยังไม่มีหลักประกันว่าจะคุ้มทุน คุณสามารถทดลองเล็ก ๆ หรือรักษาความมั่นคงเดิมไว้",
     choices:[
@@ -448,7 +450,7 @@ function makePersonalEvent(life:LifeRecord,year:number):LifeEvent {
   const location = life.areaType
   const situationalChoice = life.stats.stress >= 65
     ? choice("slow-down","ชะลอเรื่องที่ยังไม่จำเป็น","ลดภาระชั่วคราวและพักให้พอ","ความเหนื่อยลดลงและคิดได้รอบคอบขึ้น","งานบางอย่างล่าช้าหรือเลื่อนไม่ได้",82,{stress:-5,health:2},{stress:2})
-    : life.stats.wealth < 8 || life.householdDebt > 30000
+    : (life.economy?.cash ?? life.stats.wealth) < Math.max(3000,(life.economy?.monthlyExpenses ?? 0)) || life.householdDebt > 30000
       ? choice("protect-budget","รักษาเงินสำรองก่อนก่อภาระใหม่","ตรวจสอบค่าใช้จ่ายและเงื่อนไขให้ครบ","ลดโอกาสสร้างภาระเกินกำลัง","ทางเลือกที่ต้องใช้เงินอาจต้องเลื่อน",80,{skills:2,stress:-1,wealth:1},{stress:2,wealth:-1})
       : life.areaType.includes("ชนบท")
         ? choice("local-network","ใช้เครือข่ายชุมชน","สอบถามโรงเรียน สหกรณ์ หรือหน่วยงานใกล้บ้านตามความเหมาะสม","พบข้อมูลหรือความช่วยเหลือที่เข้าถึงได้","ทรัพยากรในพื้นที่อาจมีจำกัด",72,{relationships:3,skills:2},{stress:1})
@@ -487,7 +489,7 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     const childNumber=schoolAgeIndex+1
     return event(`child-school-${schoolAgeIndex}`,`ถึงวัยเข้าเรียนของลูกคนที่ ${childNumber}`,`ลูกอายุครบ 6 ปี ครอบครัวต้องเลือกเส้นทางการศึกษา โดยคำนึงถึงโรงเรียนที่เดินทางถึงได้ ค่าใช้จ่าย และเวลาที่ผู้ปกครองมีให้ พื้นที่อาศัยปัจจุบันคือ${life.areaType}ในจังหวัด${life.province}`,[
       choice(`child-public-${schoolAgeIndex}`,"เลือกโรงเรียนรัฐใกล้บ้าน","ตรวจเขตพื้นที่ คุณภาพการสอน การเดินทาง และค่าใช้จ่ายแฝง","ครอบครัวจัดการค่าใช้จ่ายได้และเด็กเริ่มเรียนใกล้ชุมชน","การเดินทางหรือทรัพยากรของโรงเรียนอาจไม่ตรงความต้องการ",82,{relationships:2,wealth:-1},{stress:2,wealth:-1}),
-      choice(`child-private-${schoolAgeIndex}`,"พิจารณาโรงเรียนเอกชน","เปรียบเทียบค่าเทอม ค่าเดินทาง และความต่อเนื่องในการจ่ายระยะยาว","เด็กได้รับทางเลือกด้านหลักสูตรเพิ่มขึ้น","ค่าใช้จ่ายกดดันเงินสำรองของบ้าน",life.stats.wealth>=35?62:34,{wealth:-5,stress:2,relationships:1},{wealth:-3,stress:4}),
+      choice(`child-private-${schoolAgeIndex}`,"พิจารณาโรงเรียนเอกชน","เปรียบเทียบค่าเทอม ค่าเดินทาง และความต่อเนื่องในการจ่ายระยะยาว","เด็กได้รับทางเลือกด้านหลักสูตรเพิ่มขึ้น","ค่าใช้จ่ายกดดันเงินสำรองของบ้าน",(life.economy?.cash ?? life.stats.wealth)>=Math.max(35000,(life.economy?.monthlyExpenses ?? 0)*2)?62:34,{wealth:-5,stress:2,relationships:1},{wealth:-3,stress:4}),
       choice(`child-community-${schoolAgeIndex}`,"ขอคำแนะนำจากชุมชนและญาติ","สอบถามโรงเรียน ครู และผู้ปกครองในพื้นที่ก่อนตัดสินใจ","ได้ข้อมูลจากคนที่รู้บริบทท้องถิ่น","ข้อมูลที่ได้อาจไม่ครบ ต้องตรวจสอบเพิ่มเติม",76,{relationships:2,skills:1},{stress:1})
     ])
   }
@@ -495,7 +497,7 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
   if(teenChildIndex>=0) {
     const childNumber=teenChildIndex+1
     return event(`child-path-${teenChildIndex}`,`ลูกคนที่ ${childNumber} เริ่มคิดถึงอนาคตหลังวัยเรียน`,`ลูกอายุ 15 ปี เริ่มสนใจเส้นทางหลังการศึกษาภาคบังคับ ครอบครัวควรรับฟังความถนัดและดูทางเลือกที่มีจริงในพื้นที่ ไม่จำเป็นต้องเลือกเส้นทางเดียวกันทุกคน`,[
-      choice(`child-academic-${teenChildIndex}`,"สนับสนุนสายสามัญ","ช่วยค้นข้อมูลโรงเรียน ค่าเดินทาง ทุน และความถนัดของเด็ก","มีทางเลือกศึกษาต่อในระดับที่สูงขึ้น","แรงกดดันหรือค่าใช้จ่ายอาจเกินกำลัง",life.stats.wealth>=25?68:48,{relationships:2,wealth:-2,stress:1},{stress:3,wealth:-1}),
+      choice(`child-academic-${teenChildIndex}`,"สนับสนุนสายสามัญ","ช่วยค้นข้อมูลโรงเรียน ค่าเดินทาง ทุน และความถนัดของเด็ก","มีทางเลือกศึกษาต่อในระดับที่สูงขึ้น","แรงกดดันหรือค่าใช้จ่ายอาจเกินกำลัง",(life.economy?.cash ?? life.stats.wealth)>=Math.max(25000,(life.economy?.monthlyExpenses ?? 0)*1.5)?68:48,{relationships:2,wealth:-2,stress:1},{stress:3,wealth:-1}),
       choice(`child-vocational-${teenChildIndex}`,"สำรวจสายอาชีพและทักษะวิชาชีพ","ดูหลักสูตรที่ได้รับการรับรอง ค่าอุปกรณ์ และโอกาสฝึกงาน","เด็กได้พัฒนาทักษะที่เชื่อมกับอาชีพ","สาขาที่เลือกอาจไม่ตรงกับความสนใจภายหลัง",74,{skills:1,relationships:2},{stress:2}),
       choice(`child-listen-${teenChildIndex}`,"เปิดโอกาสให้ลูกลองค้นหาความสนใจ","พูดคุยเรื่องเป้าหมายและหาข้อมูลร่วมกันโดยไม่เร่งตัดสินใจ","ความสัมพันธ์และความเข้าใจในครอบครัวดีขึ้น","อาจต้องใช้เวลาตัดสินใจและวางแผนเพิ่ม",84,{relationships:3,happiness:1},{stress:1})
     ])
@@ -539,7 +541,7 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     choice("buy-car","ซื้อรถยนต์เมื่อการเงินรองรับ","คำนวณเงินดาวน์ ค่างวด ประกัน น้ำมัน และค่าบำรุงรักษา","เดินทางกับครอบครัวสะดวกขึ้น","ภาระผ่อนและค่าใช้จ่ายประจำอาจกดดันงบ",42,{wealth:-8,happiness:3,stress:2},{wealth:-5,stress:5}),
     choice("no-vehicle","ใช้ขนส่งสาธารณะหรือเดินทางร่วมกัน","เลื่อนการซื้อไว้จนกว่าจะมีเงินสำรองเพียงพอ","ลดภาระหนี้และค่าใช้จ่ายประจำ","เสียเวลาและความสะดวกบางส่วน",88,{wealth:2,stress:-1},{happiness:-1})
   ])
-  if(life.age>=35 && life.stats.wealth>=60000 && life.householdDebt<50000 && !done.has("housekeeper")) return event("housekeeper","แบ่งเบางานในบ้าน","เมื่อภาระงานและครอบครัวมากขึ้น คุณอาจจ้างผู้ช่วยทำความสะอาดเป็นครั้งคราวหรือจัดการงานบ้านร่วมกัน",[
+  if(life.age>=35 && (life.economy?.cash ?? life.stats.wealth)>=Math.max(60000,(life.economy?.monthlyExpenses ?? 0)*3) && life.householdDebt<50000 && !done.has("housekeeper")) return event("housekeeper","แบ่งเบางานในบ้าน","เมื่อภาระงานและครอบครัวมากขึ้น คุณอาจจ้างผู้ช่วยทำความสะอาดเป็นครั้งคราวหรือจัดการงานบ้านร่วมกัน",[
     choice("hire-housekeeper","จ้างแม่บ้านเป็นครั้งคราว","ตกลงขอบเขตงาน ชั่วโมง และค่าจ้างอย่างเป็นธรรม","มีเวลาพักหรือดูแลเรื่องสำคัญมากขึ้น","ค่าใช้จ่ายต่อเนื่องและการหาคนที่ไว้ใจได้",65,{wealth:-4,stress:-3,happiness:2},{wealth:-3,stress:2}),
     choice("share-housework","แบ่งงานบ้านกับคนในครอบครัว","จัดตารางและคุยความคาดหวังให้ชัด","ทุกคนมีส่วนร่วมและลดค่าใช้จ่าย","ตารางไม่ลงตัวหรือเกิดความขัดแย้ง",78,{relationships:3,stress:-2},{relationships:-1,stress:2}),
     choice("do-it-yourself","ยังจัดการงานบ้านกันเอง","ปรับกิจวัตรและทำเฉพาะสิ่งจำเป็นก่อน","ไม่เพิ่มรายจ่ายประจำ","เวลาพักผ่อนอาจลดลง",85,{wealth:1},{stress:2})
