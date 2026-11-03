@@ -190,3 +190,30 @@ button{cursor:pointer}
 @media(prefers-reduced-motion:reduce){.life-scene-character,.life-scene-pet-tail,.life-scene-cloud,.life-scene-sun{animation:none!important;will-change:auto}}
 @media(max-width:800px){.life-scene-frame svg{min-height:0}.life-scene-legend{gap:8px 12px}.life-scene-legend span{font-size:9px}}
 @media(max-width:440px){.life-scene-card{padding:12px}.life-scene-frame{border-radius:10px}.life-scene-legend{gap:7px 10px}.life-scene-legend small{font-size:9px}}
+
+
+/* Household economy and financial decision interface */
+.life-economy{margin:26px 0;padding:clamp(16px,3vw,28px);border:1px solid var(--life-line,#e7e4dd);border-radius:18px;background:var(--life-card,#fff)}
+.life-economy-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}
+.life-economy-summary article,.life-economy-grid article{padding:16px;border:1px solid var(--life-line,#e7e4dd);border-radius:13px;background:var(--life-soft,#faf9f6);min-width:0}
+.life-economy-summary span,.life-economy-grid article>span{display:block;color:var(--life-muted,#777);font-size:12px}
+.life-economy-summary b{display:block;margin-top:7px;font-size:clamp(16px,2vw,22px);overflow-wrap:anywhere}
+.life-economy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.life-economy-grid h3{margin:8px 0;font-size:18px}
+.life-economy-grid p{min-height:62px;color:var(--life-muted,#777);font-size:13px;line-height:1.65}
+.life-economy-grid label{display:grid;gap:6px;margin:12px 0;font-size:12px;color:var(--life-muted,#777)}
+.life-economy-grid input,.life-economy-grid select{width:100%;min-width:0;padding:10px;border:1px solid var(--life-line,#ddd);border-radius:9px;background:#fff;color:inherit}
+.life-economy-grid button{margin:5px 5px 5px 0;padding:10px 13px;border:0;border-radius:9px;background:var(--life-accent,#246b60);color:white;cursor:pointer;font:inherit;font-size:13px}
+.life-economy-grid button.life-secondary{background:#e9eee9;color:#244c43}
+.life-economy-grid button:disabled{opacity:.45;cursor:not-allowed}
+.life-economy-grid small{display:block;margin-top:10px;color:var(--life-muted,#777);font-size:11px;line-height:1.6}
+.life-economy-price{display:block;margin:10px 0;font-size:18px}
+.life-economy-actions{display:flex;flex-wrap:wrap}
+.life-economy-note{margin:14px 0;padding:12px;border-radius:10px;background:#f3f6f1;color:#38564a;font-size:13px}
+.life-economy details{margin:12px 0;color:var(--life-muted,#777);font-size:13px}
+.life-economy-ledger{margin-top:20px}
+.life-economy-ledger h3{font-size:16px}
+.life-economy-ledger>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--life-line,#eee);font-size:13px}
+.life-economy-ledger>div b{white-space:nowrap}
+@media(max-width:850px){.life-economy-grid{grid-template-columns:1fr 1fr}.life-economy-summary{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.life-economy-grid{grid-template-columns:1fr}.life-economy-grid p{min-height:0}.life-economy{padding:13px}.life-economy-summary article{padding:12px}}
