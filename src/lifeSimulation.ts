@@ -668,8 +668,18 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
     occupation=careerChoices[choiceId]??occupation
   }
   let householdDebt=life.householdDebt
-  if(choiceId==="borrow-more") householdDebt+=success?25000:40000
-  if(choiceId==="refinance"&&success) householdDebt=Math.max(0,householdDebt-5000)
+  let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth),0,0,life.householdDebt)
+  if(choiceId==="borrow-more") {
+    const principal=success?25000:40000
+    householdDebt+=principal
+    economy={...economy,cash:economy.cash+principal,debt:economy.debt+principal,ledger:[{year:event.year,month:1,kind:"income",label:success?"เงินกู้ที่ได้รับ":"เงินกู้ฉุกเฉินที่ได้รับ",amount:principal},...economy.ledger].slice(0,240)}
+  }
+  if(choiceId==="refinance"&&success) {
+    const repayment=Math.min(5000,householdDebt,economy.cash)
+    householdDebt=Math.max(0,householdDebt-repayment)
+    economy={...economy,cash:economy.cash-repayment,debt:Math.max(0,economy.debt-repayment),ledger:repayment>0?[{year:event.year,month:1,kind:"expense",label:"ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้",amount:-repayment},...economy.ledger].slice(0,240):economy.ledger}
+  }
+  economy={...economy,debt:householdDebt}
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
