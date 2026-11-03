@@ -672,12 +672,12 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   if(choiceId==="borrow-more") {
     const principal=success?25000:40000
     householdDebt+=principal
-    economy={...economy,cash:economy.cash+principal,debt:economy.debt+principal,ledger:[{year:event.year,month:1,kind:"income",label:success?"เงินกู้ที่ได้รับ":"เงินกู้ฉุกเฉินที่ได้รับ",amount:principal},...economy.ledger].slice(0,240)}
+    economy={...economy,cash:economy.cash+principal,debt:economy.debt+principal,ledger:[{year:event.year,month:1,kind:"income" as const,label:success?"เงินกู้ที่ได้รับ":"เงินกู้ฉุกเฉินที่ได้รับ",amount:principal},...economy.ledger].slice(0,240)}
   }
   if(choiceId==="refinance"&&success) {
     const repayment=Math.min(5000,householdDebt,economy.cash)
     householdDebt=Math.max(0,householdDebt-repayment)
-    economy={...economy,cash:economy.cash-repayment,debt:Math.max(0,economy.debt-repayment),ledger:repayment>0?[{year:event.year,month:1,kind:"expense",label:"ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้",amount:-repayment},...economy.ledger].slice(0,240):economy.ledger}
+    economy={...economy,cash:economy.cash-repayment,debt:Math.max(0,economy.debt-repayment),ledger:repayment>0?[{year:event.year,month:1,kind:"expense" as const,label:"ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้",amount:-repayment},...economy.ledger].slice(0,240):economy.ledger}
   }
   economy={...economy,debt:householdDebt}
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
