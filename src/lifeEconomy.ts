@@ -99,7 +99,7 @@ export function simulateEconomyMonth(input: LifeEconomy, absoluteMonth: number, 
   if (next.debt > 0) {
     const interest = roundBaht(next.debt * next.debtRate / 12)
     next.debt = roundBaht(next.debt + interest)
-    next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "expense", label: "ดอกเบี้ยหนี้", amount: -interest })
+    next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "debt", label: "ดอกเบี้ยทบเข้ายอดหนี้", amount: interest })
   }
   return next
 }
