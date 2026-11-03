@@ -130,7 +130,7 @@ export default function LifeWorld() {
             <span><small>พี่น้อง</small><b>{activeLife.siblings} คน</b></span>
             <span><small>ยุคที่เกิด</small><b>พ.ศ. {activeLife.bornYear + 543}</b></span>
           </div>
-          <LifeStoryExperience life={activeLife} saving={saving} onUpdate={nextLife => void updateLife(nextLife)} onHistory={() => setView("history")} />
+          <LifeStoryExperience life={activeLife} saving={saving} onUpdate={nextLife => void updateLife(nextLife)} onHistory={() => setView("history")} onFinance={() => setView("economy")} />
           <div className="life-section-head"><div><span className="life-eyebrow">LIFE TIMELINE</span><h2>เส้นทางที่ผ่านมา</h2></div><button className="life-text-button" onClick={() => setView("history")}>ดูทั้งหมด →</button></div>
           <div className="life-timeline">{activeLife.timeline.slice(0,4).map(item => <article key={item.id}><span className="life-timeline-age">{item.age} ปี</span><div><b>{item.title}</b><p>{item.detail}</p>{item.sourceTitle && <a className="life-timeline-source" href={item.sourceUrl} target="_blank" rel="noreferrer">แหล่งอ้างอิง: {item.sourceTitle} ↗</a>}</div><small>พ.ศ. {item.year + 543}</small></article>)}</div>
         </section>}
