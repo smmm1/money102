@@ -16,7 +16,7 @@ export type Holding = { assetId: string; units: number; averageCost: number }
 export type MoneyLedgerEntry = {
   year: number
   month: number
-  kind: "income" | "expense" | "lottery" | "buy" | "sell" | "market"
+  kind: "income" | "expense" | "debt" | "lottery" | "buy" | "sell" | "market"
   label: string
   amount: number
 }
@@ -95,7 +95,7 @@ export function simulateEconomyMonth(input: LifeEconomy, absoluteMonth: number, 
   next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "income", label: wageFactor < 0.8 ? "รายได้ลดลง/งานสะดุด" : "รายได้ประจำ", amount: income })
   next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "expense", label: "ค่าครองชีพ", amount: -expenses })
   if (householdCosts > 0) next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "expense", label: "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน", amount: -householdCosts })
-  if (shortfall > 0) next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "income", label: "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย", amount: shortfall })
+  if (shortfall > 0) next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "debt", label: "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย", amount: shortfall })
   if (next.debt > 0) {
     const interest = roundBaht(next.debt * next.debtRate / 12)
     next.debt = roundBaht(next.debt + interest)
@@ -176,7 +176,7 @@ export function repayDebt(input: LifeEconomy, amount: number): EconomyActionResu
   const payment = roundBaht(amount)
   if (!Number.isFinite(payment) || payment <= 0 || payment > input.cash || input.debt <= 0) return { economy: input, ok: false, message: "ยอดชำระไม่ถูกต้องหรือเงินสดไม่พอ" }
   const paid = Math.min(payment, input.debt)
-  return { economy: pushLedger({ ...input, cash: input.cash - paid, debt: roundBaht(input.debt - paid) }, { year: 0, month: 0, kind: "expense", label: "ชำระหนี้", amount: -paid }), ok: true, message: `ชำระหนี้ ${paid.toLocaleString("th-TH")} บาท` }
+  return { economy: pushLedger({ ...input, cash: input.cash - paid, debt: roundBaht(input.debt - paid) }, { year: 0, month: 0, kind: "debt", label: "ชำระหนี้", amount: -paid }), ok: true, message: `ชำระหนี้ ${paid.toLocaleString("th-TH")} บาท` }
 }
 
 export function borrowMoney(input: LifeEconomy, amount: number, annualRate: number): EconomyActionResult {
