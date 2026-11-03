@@ -313,3 +313,11 @@ button{cursor:pointer}
 .life-economy-chart>div{display:flex;justify-content:space-between;gap:8px;color:#788779;font-size:9px}
 .life-economy-chart>div small{color:#a0a79c}
 .life-economy-chart svg{display:block;width:100%;height:84px;margin-top:7px;overflow:visible}
+
+
+/* Context strip keeps every story choice grounded in the character's current circumstances. */
+.life-story-circumstances{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 14px;margin:18px 0;padding:13px 14px;border:1px solid var(--life-line,#e6e3da);border-radius:14px;background:rgba(255,255,255,.52)}
+.life-story-circumstances span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.life-story-circumstances small{font-size:.7rem;color:var(--life-muted,#7d8178)}
+.life-story-circumstances b{font-size:.82rem;font-weight:600;overflow-wrap:anywhere;color:var(--life-ink,#34443b)}
+@media(max-width:560px){.life-story-circumstances{gap:8px;padding:11px}}
