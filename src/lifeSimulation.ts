@@ -1,4 +1,5 @@
 import { THAI_HISTORY, THAI_PROVINCES, type ThaiHistoryEvent } from "./thaiHistory"
+import { createLifeEconomy, moveMarkets, simulateEconomyMonth, type LifeEconomy } from "./lifeEconomy"
 
 export type LifeStats = {
   health: number
@@ -70,6 +71,7 @@ export type LifeRecord = {
   expectedLifespan: number
   status: "alive" | "ended"
   stats: LifeStats
+  economy?: LifeEconomy
   pendingEvent: LifeEvent | null
   timeline: LifeEntry[]
   householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
@@ -504,6 +506,7 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
     parents:[parent1,parent2],siblings,householdIncome:profile.income,householdDebt:profile.debt,
     occupation:"ยังไม่ถึงวัยทำงาน",bornYear,age:0,expectedLifespan:78+Math.floor(Math.random()*18),status:"alive",
     stats:{health:78,happiness:62,education:profile.education,relationships:58,skills:24,wealth:profile.wealth,stress:12},
+    economy:createLifeEconomy(profile.wealth, profile.income==="รายได้น้อย"?6500:profile.income==="รายได้พอประทัง"?11000:profile.income==="รายได้ปานกลาง"?22000:42000, profile.income==="รายได้น้อย"?6200:profile.income==="รายได้พอประทัง"?9500:profile.income==="รายได้ปานกลาง"?18000:32000, profile.debt),
     pendingEvent:null,timeline:[{id:uid(),age:0,year:bornYear,title:"วันแรกของชีวิต",detail:`เกิดในประเทศไทย · จังหวัด${province.name} · ${profile.family} · ผู้ปกครองทำงาน${parent1}และ${parent2}`}],
     householdScene:{partner:false,children:0,pets:[],housekeeper:false,vehicle:null},sceneDecisions:[],
     createdAt:new Date().toISOString()
@@ -531,7 +534,13 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   if(nextAge>=life.expectedLifespan) {
     return {...life,age:nextAge,status:"ended",endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
   }
-  const nextLife={...life,age:nextAge,householdScene:advanceHouseholdAges(life)}
+  let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth), 0, 0, life.householdDebt)
+  for(let month=1;month<=12;month++) {
+    const absoluteMonth=(nextAge-1)*12+month
+    economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
+    if(life.bornYear+nextAge>=1975) economy=moveMarkets(economy,absoluteMonth,life.bornYear*97+life.id.length)
+  }
+  const nextLife={...life,age:nextAge,economy,householdScene:advanceHouseholdAges(life)}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
