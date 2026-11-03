@@ -621,7 +621,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   const nextParentAges=currentParentAges.map(age=>age+1)
   const parentLifespans=life.parentLifespans ?? [90,90]
   const parentAlive=(life.parentAlive??[true,true]).map((alive,index)=>alive && nextParentAges[index]<parentLifespans[index])
-  const nextLife={...life,age:nextAge,economy,householdScene,parentAges:nextParentAges,parentAlive}
+  const nextLife={...life,age:nextAge,economy,householdDebt:economy.debt,stats:{...life.stats,wealth:economy.cash},householdScene,parentAges:nextParentAges,parentAlive}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
@@ -676,7 +676,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
     economy={...economy,cash:economy.cash+principal,debt:economy.debt+principal,ledger:[{year:event.year,month:1,kind:"income" as const,label:success?"เงินกู้ที่ได้รับ":"เงินกู้ฉุกเฉินที่ได้รับ",amount:principal},...economy.ledger].slice(0,240)}
   }
   if(choiceId==="refinance"&&success) {
-    const repayment=Math.min(5000,householdDebt,economy.cash)
+    const repayment=Math.max(0,Math.min(5000,householdDebt,economy.cash))
     householdDebt=Math.max(0,householdDebt-repayment)
     economy={...economy,cash:economy.cash-repayment,debt:Math.max(0,economy.debt-repayment),ledger:repayment>0?[{year:event.year,month:1,kind:"expense" as const,label:"ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้",amount:-repayment},...economy.ledger].slice(0,240):economy.ledger}
   }
