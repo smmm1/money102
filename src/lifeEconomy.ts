@@ -139,12 +139,14 @@ export function drawLottery(input: LifeEconomy, seed: number): EconomyActionResu
   const n = input.lotteryTickets
   for (let i = 0; i < n; i++) {
     const r = seeded(seed + i * 65537)
-    if (r < 1 / 1000000) winnings += 6000000
-    else if (r < 1 / 1000000 + 2 / 100000) winnings += 100000
-    else if (r < 1 / 1000000 + 2 / 100000 + 1 / 10000) winnings += 40000
-    else if (r < 1 / 1000000 + 2 / 100000 + 1 / 10000 + 1 / 1000) winnings += 4000
-    else if (r < 1 / 1000000 + 2 / 100000 + 1 / 10000 + 1 / 1000 + 1 / 100) winnings += 2000
-    else if (r < 1 / 1000000 + 2 / 100000 + 1 / 10000 + 1 / 1000 + 1 / 100 + 1 / 100) winnings += 2000
+    if (r < 1 / 1_000_000) winnings += 6_000_000
+    else if (r < 6 / 1_000_000) winnings += 200_000
+    else if (r < 16 / 1_000_000) winnings += 80_000
+    else if (r < 66 / 1_000_000) winnings += 40_000
+    else if (r < 166 / 1_000_000) winnings += 20_000
+    else if (r < 2_166 / 1_000_000) winnings += 4_000
+    else if (r < 4_166 / 1_000_000) winnings += 4_000
+    else if (r < 14_166 / 1_000_000) winnings += 2_000
   }
   winnings = roundBaht(winnings)
   const tickets = input.lotteryTickets
