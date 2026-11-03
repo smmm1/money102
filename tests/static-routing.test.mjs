@@ -117,9 +117,10 @@ test("household members create recurring costs that flow through the cash ledger
   for (const feature of ["householdCostMonthly", "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน"]) {
     assert.ok(economy.includes(feature), "missing recurring cost accounting: " + feature);
   }
-  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostMonthly:estimateHouseholdCostMonthly", "pet-care-followup-", "retryableMilestone", "กำลังเตรียมเงินดูแล", "parentAges", "parent-care-", "parent-checkup-", "parent-family-plan-"]) {
+  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostMonthly:estimateHouseholdCostMonthly", "pet-care-followup-", "retryableMilestone", "กำลังเตรียมเงินดูแล", "parentAges", "parentLifespans", "parentAlive", "parent-loss-", "parent-care-", "parent-checkup-", "parent-family-plan-"]) {
     assert.ok(simulation.includes(feature), "missing household cost driver: " + feature);
   }
   assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม"));
   assert.ok(story.includes("householdCostMonthly"), "story summary must include recurring household costs");
+  assert.ok(story.includes("parentAlive") && story.includes("ถึงแก่กรรม"), "story cast must distinguish living and deceased parents");
 });
