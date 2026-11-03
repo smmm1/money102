@@ -544,6 +544,21 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   return life
 }
 
+function estimateHouseholdCostMonthly(life:LifeRecord,scene:LifeRecord["householdScene"],economy:LifeEconomy):number {
+  if(!scene) return 0
+  let share=0
+  if(scene.partner) share+=0.08
+  const childAges=scene.childAges ?? Array.from({length:scene.children},()=>0)
+  for(const age of childAges.slice(0,scene.children)) share+=age<6?0.10:age<15?0.14:0.18
+  share+=scene.pets.length*0.035
+  if(scene.housekeeper) share+=0.22
+  if(scene.vehicle==="motorcycle") share+=0.04
+  if(scene.vehicle==="car") share+=0.10
+  if(scene.vehicle==="pickup") share+=0.09
+  // This is a game-budget estimate, not a claim about historical household prices.
+  return Math.round(Math.max(0,economy.monthlyExpenses)*share)
+}
+
 function advanceHouseholdAges(life:LifeRecord):LifeRecord["householdScene"] {
   const scene=life.householdScene
   if(!scene) return scene
@@ -565,12 +580,14 @@ export function advanceLife(life:LifeRecord):LifeRecord {
     return {...life,age:nextAge,status:"ended",endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
   }
   let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth), 0, 0, life.householdDebt)
+  const householdScene=advanceHouseholdAges(life)
+  economy={...economy,householdCostMonthly:estimateHouseholdCostMonthly(life,householdScene,economy)}
   for(let month=1;month<=12;month++) {
     const absoluteMonth=(nextAge-1)*12+month
     economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
     if(life.bornYear+nextAge>=1975) economy=moveMarkets(economy,absoluteMonth,life.bornYear*97+life.id.length)
   }
-  const nextLife={...life,age:nextAge,economy,householdScene:advanceHouseholdAges(life)}
+  const nextLife={...life,age:nextAge,economy,householdScene}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
