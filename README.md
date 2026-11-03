@@ -1,20 +1,47 @@
-# DayTogether (ชื่อชั่วคราว)
+# DayTogether — Thailand Life Simulation
 
-เว็บจดบันทึกชีวิตส่วนตัวภาษาไทย พัฒนาด้วย React + TypeScript + Vite, Cloudflare Worker API, Cloudflare D1 และ Render
+DayTogether is a Thai-first life simulation. Each character is born in a randomized year in Thailand (default range 1930–2025), province, urban/rural setting, and fictional household profile. The player advances year by year and makes choices shaped by age, work, education, household resources, relationships, and the historical period.
 
-## Phase 2 architecture
+## Technology and production constraints
 
-- **Frontend:** React + TypeScript + Vite. Render serves the static app.
-- **Authentication:** Cloudflare Worker provides sign-up/sign-in, hashed sessions, password change, logout and account deletion. Passwords are hashed with PBKDF2-SHA-256; session tokens are stored hashed in D1.
-- **Persistence:** App state is validated on the server and stored in D1 by authenticated `user_id`. The browser storage bridge is memory-only; it does not use persistent browser localStorage.
-- **Isolation:** Cloudflare D1 does not provide PostgreSQL-style Row Level Security. Equivalent access isolation is enforced in the Worker: the user ID is derived only from a validated bearer session, and all snapshot reads/writes/deletes are scoped to that user ID. Never accept a client-supplied user ID as authority.
-- **Migrations:** `workers/migrations/0000_auth_snapshot.sql` creates the authentication/session/snapshot tables; `0001_daytogether.sql` defines normalized domain tables; `0002_migration_ledger.sql` records the applied schema set; `0003_auth_rate_limits.sql` adds hashed IP/identity counters for sign-in and sign-up throttling (8 attempts per identity and 30 per IP per 15-minute window). Old rate-limit buckets are periodically pruned. The current UI writes a validated JSON snapshot; normalized domain tables are prepared but are not yet the active write path.
-- **Staging resources:** `wrangler.daytogether.toml` targets the isolated `daytogether-phase2-preview-data` D1 database and `daytogether-api-staging` Worker. The Phase 2 preview must use `VITE_CLOUDFLARE_API_URL=https://daytogether-api-staging.s2mtha16.workers.dev`.
-- **Production safety:** This Phase 2 branch/preview is isolated. It does not alter `money102.onrender.com`, the production Worker, or the production D1 database.
+- React 19 + TypeScript + Vite.
+- Existing Render production target: https://money102.onrender.com. The project remains DayTogether in the existing repository.
+- Existing Cloudflare authentication is retained.
+- Each player's lives persist in the authenticated Cloudflare D1 snapshot under the separate `lamoon-life-sim-v1` key.
+- Writes merge the latest snapshot and use `expected_updated_at`; no browser localStorage is used.
+- Do not modify the production Render service, Cloudflare Worker, or D1 schema while validating this branch.
 
-## Development and checks
+## Simulation model
 
-Requires Node.js 22+.
+- Thailand only: random birth year, all 77 provinces including Bangkok, urban/rural context, household profile, parents' occupations, and siblings.
+- Birth-year range is user-adjustable. Default: 1930–2025 (Gregorian years internally; Thai Buddhist Era shown in the interface).
+- Each simulated year produces a sourced historical event when the year matches the event register; otherwise it generates a life-stage personal event.
+- Choices include costs, success chances, success/failure outcomes, and stat effects. Chances are game mechanics affected by education, skills, resources, household debt, health, relationships, and urban/rural context, not measured real-world probabilities.
+- Major historical events currently include 1932, 1941, 1957, 1973, 1976, 1992, 1997, 2004, 2006, 2010, 2011, 2014, and 2020. Each event stores a source URL and note.
+- Location-sensitive events distinguish local direct exposure from national context. A nationwide headline is not treated as if every character personally experienced the same direct impact.
+- Household profiles, personal events, and outcomes are fictional scenarios, not census distributions, biography claims, or forecasts.
+
+## Historical source register
+
+- 1932: Library of Congress — https://www.loc.gov/item/today-in-history/june-24/
+- 1941: U.S. Department of State — https://history.state.gov/historicaldocuments/frus1941v05/d424
+- 1957: U.S. Department of State — https://history.state.gov/historicaldocuments/frus1955-57v22/d523
+- 1973: Cambridge University Press — https://www.cambridge.org/core/books/abs/political-change-in-southeast-asia/thailand/6F763505F17AFC9FC04BDFED22C78E66
+- 1976: Moments of Silence — https://www.jstor.org/stable/j.ctvwvr2pb.12
+- 1992: Amnesty International — https://www.amnesty.org/en/documents/asa39/010/1992/en/
+- 1997: Bank of Thailand — https://www.bot.or.th/en/our-roles/special-measures/Tom-Yum-Kung-lesson.html
+- 2004: United Nations Thailand — https://old.un.or.th/tsunamiinthailand/tsunami2004anditsimpact.html
+- 2006: U.S. Department of State — https://2009-2017.state.gov/j/drl/rls/hrrpt/2006/78792.htm
+- 2010: Human Rights Watch — https://www.hrw.org/report/2011/05/03/descent-chaos/thailands-2010-red-shirt-protests-and-government-crackdown
+- 2011: World Bank / Royal Thai Government — https://openknowledge.worldbank.org/bitstream/10986/26862/1/698220WP0v20P10se0Only060Box370022B.pdf
+- 2014: Amnesty International — https://www.amnesty.org/en/documents/ASA39/011/2014/en/
+- 2020: WHO South-East Asia — https://apo.who.int/publications/i/item/9789290228011
+
+## Known limitations before production
+
+This is the first Thailand-focused simulation slice, not a complete social history of Thailand. Province-level demographic weights, household economics, occupational pathways, legal/social systems, local event coverage, and the personal event library still need deeper research. Demographic probabilities and historical household economics are not yet calibrated to census or longitudinal datasets. The game labels fictional probabilities and resource points as simulation mechanics rather than facts.
+
+## Validation
 
 ```sh
 npm install
@@ -23,29 +50,4 @@ npm run check
 npm run build
 ```
 
-For the Worker, apply the SQL migrations to the configured staging database before deploying:
-
-```sh
-npx wrangler d1 migrations apply daytogether-phase2-preview-data --config wrangler.daytogether.toml --remote
-npx wrangler deploy --config wrangler.daytogether.toml
-```
-
-Do not run these commands against the production database without a reviewed backup and an explicit production deployment plan.
-
-## Authentication and privacy
-
-- `POST /api/auth/signup`, `POST /api/auth/signin`, `GET /api/auth/me`
-- `POST /api/auth/password`, `POST /api/auth/logout`, `DELETE /api/auth/account`
-- `GET/PUT /api/state` (server validates payload shape and money constraints; compare-and-set revision prevents silent cross-tab overwrite)
-- Health and note content, password fields and request bodies must not be written to logs.
-- Logout clears the in-memory browser snapshot and session token.
-- JSON and CSV exports are generated locally on demand. CSV values are escaped against spreadsheet formula injection.
-- Email-based password reset is not implemented because no email provider or verification flow is configured.
-- Native RLS is not available in D1; ownership checks in the Worker are the enforcement boundary.
-
-## Current scope limits
-
-- Normalized domain tables are defined by migration but the frontend currently persists a single validated snapshot. CRUD over the normalized tables is a later migration step.
-- No private photo storage for BBQ visits yet.
-- E2E browser checks against separate user accounts, responsive widths and failure/expiry paths remain necessary before production release.
-- A passing CI run does not prove a production deploy. Render/Worker deploy status must be verified separately.
+Do not merge or deploy until CI, authenticated browser QA, and D1 save/reload behavior have been verified.

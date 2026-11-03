@@ -2,7 +2,7 @@ name: Build check
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feature/life-economy-systems]
   push:
     branches: [main, fix/d1-only-persistence]
 
