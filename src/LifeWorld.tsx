@@ -25,7 +25,6 @@ function readSnapshot(raw?: string): LifeSnapshot {
   }
 }
 
-const formatMoney = (amount: number) => `${new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 }).format(amount)} หน่วยจำลอง`
 export default function LifeWorld() {
   const { user, signOut } = useAuth()
   const [view, setView] = useState<View>("world")
