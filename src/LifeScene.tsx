@@ -139,7 +139,7 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
     }
   })
   const people: ScenePerson[] = [
-    ...life.parents.slice(0, 2).filter((_, index) => (life.parentAlive ?? [true, true])[index] !== false).map((job, index) => {
+    ...life.parents.slice(0, 2).map((job, index) => ({ job, index })).filter(({ index }) => (life.parentAlive ?? [true, true])[index] !== false).map(({ index }) => {
       const parentAge = life.parentAges?.[index] ?? 45
       return {
         id: "parent-" + index,
