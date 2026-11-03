@@ -657,7 +657,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
-    const parentCareMatch=choiceId.match(/^parent-(checkup|community|family-plan)-(\\d+)$/)
+    const parentCareMatch=choiceId.match(/^parent-(checkup|community|family-plan)-(\d+)$/)
     if(parentCareMatch){
       const index=Number(parentCareMatch[2])
       const careLabels:Record<string,string>={checkup:"วางแผนตรวจสุขภาพ",community:"ค้นหาบริการในชุมชน","family-plan":"แบ่งหน้าที่ดูแลร่วมกัน"}
