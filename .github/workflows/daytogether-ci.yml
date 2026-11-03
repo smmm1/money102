@@ -2,7 +2,7 @@ name: DayTogether CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, feature/life-economy-systems]
   push:
     branches: [main, "fix/daytogether-ux-audit", "feat/simple-bill-split-form"]
 
