@@ -486,7 +486,6 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     ])
   }
   const parentAges=life.parentAges ?? []
-  const parentCare=life.parentCare ?? []
   const parentCareIndex=parentAges.findIndex((age,index)=>age>=60 && !done.has(`parent-care-${index}`))
   if(parentCareIndex>=0) {
     const parentName=parentCareIndex===0?"พ่อ":"แม่"
