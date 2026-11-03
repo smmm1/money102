@@ -42,7 +42,7 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
           <div>{cast.length ? cast.map(item => <span key={item}>{item}</span>) : <span>ตอนนี้มีเพียงคุณและเรื่องราวที่กำลังเริ่มต้น</span>}</div>
         </div>
         <div className="life-story-stats">
-          {metrics.map(metric => <div key={metric.key}><span>{metric.mark} {metric.label}</span><b>{life.stats[metric.key]}<small>/100</small></b><i><em style={{ width: `${life.stats[metric.key]}%` }} /></i></div>)}
+          {metrics.map(metric => <div key={metric.key}><span>{metric.mark} {metric.label}</span><b>{life.stats[metric.key]}<small>/100</small></b><i role="progressbar" aria-label={metric.label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={life.stats[metric.key]}><em style={{ width: `${life.stats[metric.key]}%` }} /></i></div>)}
           <div className="life-story-cash"><span>เงินทุนครัวเรือน</span><b>{money(life.economy?.cash ?? life.stats.wealth)} ฿</b><small>หนี้ {money(life.economy?.debt ?? life.householdDebt)} ฿</small></div>
         </div>
         <button className="life-story-finance-link" onClick={onFinance}><span><b>การเงินของชีวิตนี้</b><small>รายรับ {money(life.economy?.monthlyIncome ?? 0)} ฿/เดือน · รายจ่าย {money(life.economy?.monthlyExpenses ?? 0)} ฿/เดือน</small></span><i>ดูบัญชีและการลงทุน ↗</i></button>
@@ -54,6 +54,12 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
           <h2>{event.title}</h2>
           <p className="life-story-description">{event.description}</p>
           {event.context && <p className="life-story-context">{event.context}</p>}
+          <div className="life-story-circumstances" aria-label="บริบทชีวิตในปีนี้">
+            <span><small>อาชีพ</small><b>{life.occupation}</b></span>
+            <span><small>ฐานะครัวเรือน</small><b>{life.householdIncome}</b></span>
+            <span><small>พื้นฐานครอบครัว</small><b>{life.family}</b></span>
+            <span><small>พื้นที่อาศัย</small><b>{life.province} · {life.areaType}</b></span>
+          </div>
           {event.sourceTitle && <div className="life-story-source"><span>อ่านที่มา</span><a href={event.sourceUrl} target="_blank" rel="noreferrer">{event.sourceTitle} ↗</a><small>{event.sourceNote}</small></div>}
           <div className="life-story-choice-heading"><span>จุดตัดสินใจ</span><small>เลือกทางที่ตัวละครจะเดินต่อ</small></div>
           <div className="life-story-choices">{event.choices.map((choice, index) => {
