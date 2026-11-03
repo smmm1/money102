@@ -125,7 +125,7 @@ test("household members create recurring costs that flow through the cash ledger
   assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม") && panel.includes("householdCostLabels") && panel.includes("householdCostBreakdown"));
   assert.ok(styles.includes(".life-economy-household-costs") && styles.includes("grid-template-columns:repeat(2"));
   assert.ok(story.includes("householdCostMonthly"), "story summary must include recurring household costs");
-  for (const feature of ['economy.cash+principal', 'economy.debt+principal', 'kind:"income"', 'ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้', 'economy.debt:householdDebt', 'wealthDelta=effects.wealth', 'stats.wealth=economy.cash', 'householdDebt,economy,householdScene', 'householdDebt:economy.debt', 'Math.max(0,Math.min(5000,householdDebt,economy.cash))']) {
+  for (const feature of ['economy.cash+principal', 'economy.debt+principal', 'kind:"debt"', 'ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้', 'economy.debt:householdDebt', 'wealthDelta=effects.wealth', 'stats.wealth=economy.cash', 'householdDebt,economy,householdScene', 'householdDebt:economy.debt', 'Math.max(0,Math.min(5000,householdDebt,economy.cash))']) {
     assert.ok(simulation.includes(feature) || simulation.includes(feature.replace("economy.debt:householdDebt","debt:householdDebt")), "missing debt-to-cash ledger integration: " + feature);
   }
   assert.ok(story.includes("parentAlive") && story.includes("ถึงแก่กรรม"), "story cast must distinguish living and deceased parents");
