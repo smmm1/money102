@@ -574,19 +574,21 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   return life
 }
 
-function estimateHouseholdCostMonthly(scene:LifeRecord["householdScene"],economy:LifeEconomy):number {
-  if(!scene) return 0
-  let share=0
-  if(scene.partner) share+=0.08
+function estimateHouseholdCostMonthly(scene:LifeRecord["householdScene"],economy:LifeEconomy):NonNullable<LifeEconomy["householdCostBreakdown"]> {
+  const breakdown={partner:0,children:0,pets:0,householdHelp:0,vehicle:0}
+  if(!scene) return breakdown
+  const base=Math.max(0,economy.monthlyExpenses)
+  if(scene.partner) breakdown.partner=Math.round(base*0.08)
   const childAges=scene.childAges ?? Array.from({length:scene.children},()=>0)
-  for(const age of childAges.slice(0,scene.children)) share+=age<6?0.10:age<15?0.14:0.18
-  share+=scene.pets.length*0.035
-  if(scene.housekeeper) share+=0.22
-  if(scene.vehicle==="motorcycle") share+=0.04
-  if(scene.vehicle==="car") share+=0.10
-  if(scene.vehicle==="pickup") share+=0.09
-  // This is a game-budget estimate, not a claim about historical household prices.
-  return Math.round(Math.max(0,economy.monthlyExpenses)*share)
+  const childShare=childAges.slice(0,scene.children).reduce((sum,age)=>sum+(age<6?0.10:age<15?0.14:0.18),0)
+  breakdown.children=Math.round(base*childShare)
+  breakdown.pets=Math.round(base*scene.pets.length*0.035)
+  if(scene.housekeeper) breakdown.householdHelp=Math.round(base*0.22)
+  if(scene.vehicle==="motorcycle") breakdown.vehicle=Math.round(base*0.04)
+  if(scene.vehicle==="car") breakdown.vehicle=Math.round(base*0.10)
+  if(scene.vehicle==="pickup") breakdown.vehicle=Math.round(base*0.09)
+  // These are transparent game-budget assumptions, not historical price claims.
+  return breakdown
 }
 
 function advanceHouseholdAges(life:LifeRecord):LifeRecord["householdScene"] {
@@ -611,7 +613,8 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   }
   let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth), 0, 0, life.householdDebt)
   const householdScene=advanceHouseholdAges(life)
-  economy={...economy,householdCostMonthly:estimateHouseholdCostMonthly(householdScene,economy)}
+  const householdCostBreakdown=estimateHouseholdCostMonthly(householdScene,economy)
+  economy={...economy,householdCostBreakdown,householdCostMonthly:Object.values(householdCostBreakdown).reduce((sum,value)=>sum+value,0)}
   for(let month=1;month<=12;month++) {
     const absoluteMonth=(nextAge-1)*12+month
     economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
