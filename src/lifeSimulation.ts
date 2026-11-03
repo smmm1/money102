@@ -464,6 +464,25 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     context:"เหตุการณ์นี้เป็นทางเลือกส่วนบุคคลของตัวละคร ไม่ใช่สิ่งที่ทุกครอบครัวต้องทำ",
     type:"personal",sceneKey,choices
   })
+  const children = life.householdScene?.childAges ?? []
+  const schoolAgeIndex = children.findIndex((age,index)=>age===6 && !done.has(`child-school-${index}`))
+  if(schoolAgeIndex>=0) {
+    const childNumber=schoolAgeIndex+1
+    return event(`child-school-${schoolAgeIndex}`,`ถึงวัยเข้าเรียนของลูกคนที่ ${childNumber}`,`ลูกอายุครบ 6 ปี ครอบครัวต้องเลือกเส้นทางการศึกษา โดยคำนึงถึงโรงเรียนที่เดินทางถึงได้ ค่าใช้จ่าย และเวลาที่ผู้ปกครองมีให้ พื้นที่อาศัยปัจจุบันคือ${life.areaType}ในจังหวัด${life.province}`,[
+      choice(`child-public-${schoolAgeIndex}`,"เลือกโรงเรียนรัฐใกล้บ้าน","ตรวจเขตพื้นที่ คุณภาพการสอน การเดินทาง และค่าใช้จ่ายแฝง","ครอบครัวจัดการค่าใช้จ่ายได้และเด็กเริ่มเรียนใกล้ชุมชน","การเดินทางหรือทรัพยากรของโรงเรียนอาจไม่ตรงความต้องการ",82,{education:2,relationships:2,wealth:-1},{stress:2,wealth:-1}),
+      choice(`child-private-${schoolAgeIndex}`,"พิจารณาโรงเรียนเอกชน","เปรียบเทียบค่าเทอม ค่าเดินทาง และความต่อเนื่องในการจ่ายระยะยาว","เด็กได้รับทางเลือกด้านหลักสูตรเพิ่มขึ้น","ค่าใช้จ่ายกดดันเงินสำรองของบ้าน",life.stats.wealth>=35?62:34,{education:4,wealth:-5,stress:2},{wealth:-3,stress:4}),
+      choice(`child-community-${schoolAgeIndex}`,"ขอคำแนะนำจากชุมชนและญาติ","สอบถามโรงเรียน ครู และผู้ปกครองในพื้นที่ก่อนตัดสินใจ","ได้ข้อมูลจากคนที่รู้บริบทท้องถิ่น","ข้อมูลที่ได้อาจไม่ครบ ต้องตรวจสอบเพิ่มเติม",76,{relationships:2,skills:1,education:1},{stress:1})
+    ])
+  }
+  const teenChildIndex = children.findIndex((age,index)=>age===15 && !done.has(`child-path-${index}`))
+  if(teenChildIndex>=0) {
+    const childNumber=teenChildIndex+1
+    return event(`child-path-${teenChildIndex}`,`ลูกคนที่ ${childNumber} เริ่มคิดถึงอนาคตหลังวัยเรียน`,`ลูกอายุ 15 ปี เริ่มสนใจเส้นทางหลังการศึกษาภาคบังคับ ครอบครัวควรรับฟังความถนัดและดูทางเลือกที่มีจริงในพื้นที่ ไม่จำเป็นต้องเลือกเส้นทางเดียวกันทุกคน`,[
+      choice(`child-academic-${teenChildIndex}`,"สนับสนุนสายสามัญ","ช่วยค้นข้อมูลโรงเรียน ค่าเดินทาง ทุน และความถนัดของเด็ก","มีทางเลือกศึกษาต่อในระดับที่สูงขึ้น","แรงกดดันหรือค่าใช้จ่ายอาจเกินกำลัง",life.stats.wealth>=25?68:48,{education:3,relationships:2,wealth:-2},{stress:3,wealth:-1}),
+      choice(`child-vocational-${teenChildIndex}`,"สำรวจสายอาชีพและทักษะวิชาชีพ","ดูหลักสูตรที่ได้รับการรับรอง ค่าอุปกรณ์ และโอกาสฝึกงาน","เด็กได้พัฒนาทักษะที่เชื่อมกับอาชีพ","สาขาที่เลือกอาจไม่ตรงกับความสนใจภายหลัง",74,{skills:3,education:2,relationships:2},{stress:2}),
+      choice(`child-listen-${teenChildIndex}`,"เปิดโอกาสให้ลูกลองค้นหาความสนใจ","พูดคุยเรื่องเป้าหมายและหาข้อมูลร่วมกันโดยไม่เร่งตัดสินใจ","ความสัมพันธ์และความเข้าใจในครอบครัวดีขึ้น","อาจต้องใช้เวลาตัดสินใจและวางแผนเพิ่ม",84,{relationships:3,happiness:1},{stress:1})
+    ])
+  }
   if(life.age>=20 && !done.has("pet")) return event("pet","มีสัตว์เลี้ยงในบ้านหรือไม่?","คุณเริ่มคิดถึงการมีเพื่อนสี่ขาในบ้าน แต่ต้องประเมินเวลา ค่าอาหาร และค่ารักษาพยาบาลระยะยาว",[
     choice("adopt-cat","รับแมวมาเลี้ยง","เตรียมพื้นที่ อาหาร และเงินสำรองสำหรับการดูแล","มีสมาชิกใหม่และความผูกพันเพิ่มขึ้น","การปรับตัวหรือค่าใช้จ่ายอาจมากกว่าที่คิด",68,{happiness:4,relationships:3,wealth:-2},{stress:2,wealth:-2}),
     choice("adopt-dog","รับสุนัขมาเลี้ยง","ต้องมีเวลาเดินเล่น ฝึกพฤติกรรม และดูแลสุขภาพ","ได้เพื่อนและกิจวัตรใหม่ในบ้าน","ดูแลไม่ทั่วถึงหรือมีค่าใช้จ่ายฉุกเฉิน",60,{happiness:5,health:1,wealth:-3},{stress:3,wealth:-3}),
