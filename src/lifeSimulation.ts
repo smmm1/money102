@@ -63,6 +63,8 @@ export type LifeRecord = {
   background: string
   parents: string[]
   parentAges?: number[]
+  parentLifespans?: number[]
+  parentAlive?: boolean[]
   parentCare?: string[]
   siblings: number
   householdIncome: string
@@ -466,6 +468,18 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     context:"เหตุการณ์นี้เป็นทางเลือกส่วนบุคคลของตัวละคร ไม่ใช่สิ่งที่ทุกครอบครัวต้องทำ",
     type:"personal",sceneKey,choices
   })
+  const parentAges=life.parentAges ?? []
+  const parentAlive=life.parentAlive ?? [true,true]
+  const parentLossIndex=parentAlive.findIndex((alive,index)=>!alive && !done.has(`parent-loss-${index}`))
+  if(parentLossIndex>=0) {
+    const parentName=parentLossIndex===0?"พ่อ":"แม่"
+    const parentAge=parentAges[parentLossIndex] ?? 0
+    return event(`parent-loss-${parentLossIndex}`,`การจากไปของ${parentName}`,`${parentName} จากไปเมื่ออายุ ${parentAge} ปี ครอบครัวต้องใช้เวลาในการปรับตัว ความเศร้าและวิธีรับมือของแต่ละคนไม่เหมือนกัน คุณสามารถเลือกดูแลตัวเองและคนในบ้านตามกำลัง`,[
+      choice(`parent-loss-family-${parentLossIndex}`,"ใช้เวลาอยู่กับครอบครัวและระลึกถึงผู้จากไป","แบ่งเวลาให้ความรู้สึกของตัวเองและคนใกล้ชิด","ความสัมพันธ์ในครอบครัวแน่นแฟ้นขึ้น","ความเศร้าและความเห็นต่างอาจทำให้ช่วงเวลานี้หนักขึ้น",82,{relationships:4,happiness:1},{stress:5,happiness:-3}),
+      choice(`parent-loss-rest-${parentLossIndex}`,"ขอเวลาพักและค่อยกลับไปทำกิจวัตร","จัดการงานจำเป็นเท่าที่ไหวและไม่ฝืนตัวเอง","ค่อย ๆ ฟื้นกำลังและกลับมาจัดการชีวิต","ภาระงานหรือค่าใช้จ่ายอาจยังรออยู่",76,{health:2,stress:-2},{stress:3,health:-1}),
+      choice(`parent-loss-support-${parentLossIndex}`,"พูดคุยกับคนที่ไว้ใจหรือขอความช่วยเหลือ","ไม่จำเป็นต้องรับมือกับความสูญเสียเพียงลำพัง","ได้รับแรงสนับสนุนและรู้สึกไม่โดดเดี่ยว","อาจยังไม่พบคนหรือบริการที่เข้าใจในทันที",78,{relationships:3,health:1},{stress:3})
+    ])
+  }
   const children = life.householdScene?.childAges ?? []
   const schoolAgeIndex = children.findIndex((age,index)=>age>=6 && !done.has(`child-school-${index}`))
   if(schoolAgeIndex>=0) {
@@ -485,8 +499,7 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
       choice(`child-listen-${teenChildIndex}`,"เปิดโอกาสให้ลูกลองค้นหาความสนใจ","พูดคุยเรื่องเป้าหมายและหาข้อมูลร่วมกันโดยไม่เร่งตัดสินใจ","ความสัมพันธ์และความเข้าใจในครอบครัวดีขึ้น","อาจต้องใช้เวลาตัดสินใจและวางแผนเพิ่ม",84,{relationships:3,happiness:1},{stress:1})
     ])
   }
-  const parentAges=life.parentAges ?? []
-  const parentCareIndex=parentAges.findIndex((age,index)=>age>=60 && !done.has(`parent-care-${index}`))
+  const parentCareIndex=parentAges.findIndex((age,index)=>age>=60 && parentAlive[index]!==false && !done.has(`parent-care-${index}`))
   if(parentCareIndex>=0) {
     const parentName=parentCareIndex===0?"พ่อ":"แม่"
     const parentAge=parentAges[parentCareIndex]
@@ -549,7 +562,7 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   const life:LifeRecord = {
     id:uid(),name:lifeName,gender,country:"ประเทศไทย",region:province.region,province:province.name,areaType,
     family:profile.family,background:`${profile.description} เติบโตใน${areaType}${province.name}`,
-    parents:[parent1,parent2],parentAges:[20+Math.floor(Math.random()*15),20+Math.floor(Math.random()*15)],parentCare:[],siblings,householdIncome:profile.income,householdDebt:profile.debt,
+    parents:[parent1,parent2],parentAges:[20+Math.floor(Math.random()*15),20+Math.floor(Math.random()*15)],parentLifespans:[68+Math.floor(Math.random()*21),68+Math.floor(Math.random()*21)],parentAlive:[true,true],parentCare:[],siblings,householdIncome:profile.income,householdDebt:profile.debt,
     occupation:"ยังไม่ถึงวัยทำงาน",bornYear,age:0,expectedLifespan:78+Math.floor(Math.random()*18),status:"alive",
     stats:{health:78,happiness:62,education:profile.education,relationships:58,skills:24,wealth:profile.wealth,stress:12},
     economy:createLifeEconomy(profile.wealth, profile.income==="รายได้น้อย"?6500:profile.income==="รายได้พอประทัง"?11000:profile.income==="รายได้ปานกลาง"?22000:42000, profile.income==="รายได้น้อย"?6200:profile.income==="รายได้พอประทัง"?9500:profile.income==="รายได้ปานกลาง"?18000:32000, profile.debt),
@@ -604,7 +617,9 @@ export function advanceLife(life:LifeRecord):LifeRecord {
     economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
     if(life.bornYear+nextAge>=1975) economy=moveMarkets(economy,absoluteMonth,life.bornYear*97+life.id.length)
   }
-  const nextLife={...life,age:nextAge,economy,householdScene,parentAges:(life.parentAges??[]).map(age=>age+1)}
+  const nextParentAges=(life.parentAges??[]).map(age=>age+1)
+  const parentAlive=(life.parentAlive??[true,true]).map((alive,index)=>alive && nextParentAges[index]<(life.parentLifespans?.[index]??100))
+  const nextLife={...life,age:nextAge,economy,householdScene,parentAges:nextParentAges,parentAlive}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
