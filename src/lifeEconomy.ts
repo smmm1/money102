@@ -24,6 +24,7 @@ export type LifeEconomy = {
   cash: number
   monthlyIncome: number
   monthlyExpenses: number
+  householdCostMonthly?: number
   debt: number
   debtRate: number
   creditAccess: number
@@ -75,9 +76,11 @@ export function simulateEconomyMonth(input: LifeEconomy, absoluteMonth: number, 
   const income = roundBaht(input.monthlyIncome * wageFactor)
   const inflation = 0.001 + seeded(seed + absoluteMonth * 104729) * 0.004
   const expenses = roundBaht(input.monthlyExpenses * (1 + inflation))
-  let next: LifeEconomy = { ...input, cash: input.cash + income - expenses, monthlyExpenses: expenses, lastSimulatedMonth: absoluteMonth }
+  const householdCosts = roundBaht((input.householdCostMonthly ?? 0) * (1 + inflation))
+  let next: LifeEconomy = { ...input, cash: input.cash + income - expenses - householdCosts, monthlyExpenses: expenses, householdCostMonthly: householdCosts, lastSimulatedMonth: absoluteMonth }
   next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "income", label: wageFactor < 0.8 ? "รายได้ลดลง/งานสะดุด" : "รายได้ประจำ", amount: income })
   next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "expense", label: "ค่าครองชีพ", amount: -expenses })
+  if (householdCosts > 0) next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "expense", label: "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน", amount: -householdCosts })
   if (next.debt > 0) {
     const interest = roundBaht(next.debt * next.debtRate / 12)
     next.debt = roundBaht(next.debt + interest)
