@@ -544,7 +544,7 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   return life
 }
 
-function estimateHouseholdCostMonthly(life:LifeRecord,scene:LifeRecord["householdScene"],economy:LifeEconomy):number {
+function estimateHouseholdCostMonthly(scene:LifeRecord["householdScene"],economy:LifeEconomy):number {
   if(!scene) return 0
   let share=0
   if(scene.partner) share+=0.08
@@ -581,7 +581,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   }
   let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth), 0, 0, life.householdDebt)
   const householdScene=advanceHouseholdAges(life)
-  economy={...economy,householdCostMonthly:estimateHouseholdCostMonthly(life,householdScene,economy)}
+  economy={...economy,householdCostMonthly:estimateHouseholdCostMonthly(householdScene,economy)}
   for(let month=1;month<=12;month++) {
     const absoluteMonth=(nextAge-1)*12+month
     economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
