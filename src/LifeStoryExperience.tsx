@@ -47,7 +47,7 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
             return <button key={choice.id} disabled={saving} onClick={() => onUpdate(resolveLifeChoice(life, choice.id))}>
               <span className="life-story-choice-index">{index + 1}</span>
               <span className="life-story-choice-copy"><b>{choice.label}</b><small>{choice.description}</small></span>
-              <span className="life-easy-chance">{chance}%</span>
+              <span className="life-story-chance life-easy-chance">{chance}%</span>
             </button>
           })}</div>
           <p className="life-easy-hint">ตัวเลขคือโอกาสสำเร็จโดยประมาณในเกม ผลลัพธ์อาจแตกต่างกันตามพื้นฐานและสิ่งที่คุณเคยเลือก</p>
