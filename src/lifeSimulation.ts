@@ -580,7 +580,12 @@ function estimateHouseholdCostMonthly(scene:LifeRecord["householdScene"],economy
   const base=Math.max(0,economy.monthlyExpenses)
   if(scene.partner) breakdown.partner=Math.round(base*0.08)
   const childAges=scene.childAges ?? Array.from({length:scene.children},()=>0)
-  const childShare=childAges.slice(0,scene.children).reduce((sum,age)=>sum+(age<6?0.10:age<15?0.14:0.18),0)
+  const childShare=childAges.slice(0,scene.children).reduce((sum,age,index)=>{
+    const pathway=scene.childEducation?.[index]
+    if(age<6) return sum+0.10
+    if(age<15) return sum+(pathway==="โรงเรียนเอกชน"?0.22:pathway==="ค้นหาข้อมูลกับชุมชน"?0.11:0.14)
+    return sum+(pathway==="สายอาชีพ"?0.18:pathway==="สายสามัญ"?0.20:pathway==="กำลังค้นหาความสนใจ"?0.12:0.16)
+  },0)
   breakdown.children=Math.round(base*childShare)
   breakdown.pets=Math.round(base*scene.pets.length*0.035)
   if(scene.housekeeper) breakdown.householdHelp=Math.round(base*0.22)
