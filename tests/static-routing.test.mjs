@@ -139,4 +139,5 @@ test("loan drawdowns are recorded as debt rather than earned income", async () =
   const borrowMoney = economy.slice(start, end);
   assert.match(borrowMoney, /kind: "debt"/);
   assert.doesNotMatch(borrowMoney, /kind: "income"/);
+  assert.match(economy, /kind: "debt", label: "ดอกเบี้ยทบเข้ายอดหนี้", amount: interest/);
 });
