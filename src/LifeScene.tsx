@@ -185,6 +185,9 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
   const wall = earlyEra ? "#c6a982" : midEra ? "#e1d6bd" : "#f1e3c9"
   const roof = earlyEra ? "#80634c" : midEra ? "#8d6654" : "#9c6955"
   const roofLine = earlyEra ? "#654c3d" : "#805444"
+  const eventText = [life.pendingEvent?.title, life.pendingEvent?.description, life.pendingEvent?.context].filter(Boolean).join(" ").toLowerCase()
+  const weatherMood = /น้ำท่วม|อุทกภัย|ฝนตกหนัก|พายุ/.test(eventText) ? "rain" : /ภัยแล้ง|ฝนทิ้งช่วง|ขาดแคลนน้ำ|อากาศร้อนจัด/.test(eventText) ? "dry" : /โควิด|โรคระบาด|โรคติดต่อ/.test(eventText) ? "health" : "calm"
+  const moodLabel = weatherMood === "rain" ? "สภาพอากาศแปรปรวน" : weatherMood === "dry" ? "ช่วงอากาศแห้งแล้ง" : weatherMood === "health" ? "ช่วงเฝ้าระวังสุขภาพ" : ""
 
   return <section className="life-scene-card" aria-label="ภาพจำลองบ้านและสมาชิกในชีวิต">
     <div className="life-scene-heading"><div><span className="life-eyebrow">A LITTLE WORLD OF YOUR OWN</span><h2>ฉากชีวิตปัจจุบัน</h2></div><span className="life-scene-era">พ.ศ. {life.bornYear + life.age + 543} · {life.province} · {rural ? "ชุมชนชนบท" : "ชุมชนเมือง"}</span></div>
@@ -195,6 +198,9 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
         <rect y="225" width="820" height="16" fill="#86a98c" />
         <circle className="life-scene-sun" cx="685" cy="65" r="29" fill="#f3d991" />
         {!rural && <g opacity=".45" fill={earlyEra ? "#9caeaa" : "#aebfba"} shapeRendering="crispEdges"><rect x="12" y="150" width="55" height="85"/><rect x="20" y="135" width="38" height="15"/><rect x="90" y="165" width="70" height="70"/><rect x="100" y="150" width="50" height="15"/><rect x="650" y="145" width="48" height="90"/><rect x="710" y="165" width="80" height="70"/></g>}\n        <g className="life-scene-cloud" opacity=".65" fill="#f5faf4"><rect x="70" y="72" width="85" height="17" rx="8"/><rect x="100" y="59" width="45" height="22" rx="10"/><rect x="560" y="105" width="100" height="16" rx="8"/><rect x="595" y="91" width="44" height="21" rx="10"/></g>
+        {weatherMood === "rain" && <g aria-hidden="true" stroke="#7e9eaa" strokeWidth="3" opacity=".72"><path d="M185 92 l-9 19 M225 75 l-9 19 M260 102 l-9 19 M600 145 l-9 19 M640 130 l-9 19 M690 160 l-9 19 M750 120 l-9 19"/></g>}
+        {weatherMood === "dry" && <g aria-hidden="true"><circle cx="685" cy="65" r="40" fill="#e8c77e" opacity=".24"/><path d="M0 286 Q160 270 310 291 T620 285 T820 290" stroke="#c6a66c" strokeWidth="5" fill="none" opacity=".75"/></g>}
+        {weatherMood === "health" && <g aria-hidden="true" fill="#7e9eaa" opacity=".22"><circle cx="185" cy="118" r="8"/><circle cx="215" cy="145" r="5"/><circle cx="630" cy="82" r="7"/><circle cx="660" cy="105" r="4"/></g>}
         <g shapeRendering="crispEdges">
           <rect x="285" y="112" width="260" height="143" fill={wall} />
           <path d="M265 118 L415 35 L565 118 Z" fill={roof} />
@@ -222,6 +228,7 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
       {pets.length > 0 && <span><i className="scene-dot pet" /> สัตว์เลี้ยง {pets.length}</span>}
       {state.vehicle && <span><i className="scene-dot vehicle" /> {state.vehicle === "motorcycle" ? "รถจักรยานยนต์" : state.vehicle === "pickup" ? "รถกระบะ" : "รถยนต์"}</span>}
       {state.housekeeper && <span><i className="scene-dot helper" /> ผู้ช่วยในบ้าน</span>}
+      {moodLabel && <span><i className="scene-dot pet" /> {moodLabel}</span>}
       {!hasExtras && <small>ฉากและสมาชิกจะค่อย ๆ เปลี่ยนตามเหตุการณ์และการตัดสินใจของชีวิตนี้</small>}
       {hasExtras && <small>รูปลักษณ์ตามช่วงวัยและสมาชิกในฉากอิงจากข้อมูลชีวิตที่บันทึกไว้ · ท่าทางเคลื่อนไหวอย่างนุ่มนวล</small>}
     </div>
