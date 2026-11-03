@@ -181,7 +181,7 @@ export function repayDebt(input: LifeEconomy, amount: number): EconomyActionResu
 
 export function borrowMoney(input: LifeEconomy, amount: number, annualRate: number): EconomyActionResult {
   const principal = roundBaht(amount)
-  if (!Number.isFinite(principal) || principal <= 0 || principal > 1000000 || annualRate < 0.03 || annualRate > 0.36) return { economy: input, ok: false, message: "วงเงินหรืออัตราดอกเบี้ยอยู่นอกเงื่อนไขเกม" }
+  if (!Number.isFinite(principal) || principal <= 0 || principal > 1000000 || !Number.isFinite(annualRate) || annualRate < 0.03 || annualRate > 0.36) return { economy: input, ok: false, message: "วงเงินหรืออัตราดอกเบี้ยอยู่นอกเงื่อนไขเกม" }
   const maxBorrow = Math.max(0, input.monthlyIncome * (input.creditAccess / 100) * 18 - input.debt)
   if (principal > maxBorrow) return { economy: input, ok: false, message: "รายได้และประวัติการเงินยังไม่รองรับวงเงินนี้" }
   const economy = pushLedger({ ...input, cash: input.cash + principal, debt: input.debt + principal, debtRate: annualRate, creditAccess: clamp(input.creditAccess + 1, 0, 100) }, { year: 0, month: 0, kind: "debt", label: `กู้เงิน อัตราดอกเบี้ย ${(annualRate * 100).toFixed(1)}% ต่อปี`, amount: principal })
