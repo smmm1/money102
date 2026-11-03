@@ -45,7 +45,7 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
           {metrics.map(metric => <div key={metric.key}><span>{metric.mark} {metric.label}</span><b>{life.stats[metric.key]}<small>/100</small></b><i role="progressbar" aria-label={metric.label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={life.stats[metric.key]}><em style={{ width: `${life.stats[metric.key]}%` }} /></i></div>)}
           <div className="life-story-cash"><span>เงินทุนครัวเรือน</span><b>{money(life.economy?.cash ?? life.stats.wealth)} ฿</b><small>หนี้ {money(life.economy?.debt ?? life.householdDebt)} ฿</small></div>
         </div>
-        <button className="life-story-finance-link" onClick={onFinance}><span><b>การเงินของชีวิตนี้</b><small>รายรับ {money(life.economy?.monthlyIncome ?? 0)} ฿/เดือน · รายจ่าย {money(life.economy?.monthlyExpenses ?? 0)} ฿/เดือน</small></span><i>ดูบัญชีและการลงทุน ↗</i></button>
+        <button className="life-story-finance-link" onClick={onFinance}><span><b>การเงินของชีวิตนี้</b><small>รายรับ {money(life.economy?.monthlyIncome ?? 0)} ฿/เดือน · รายจ่าย {money((life.economy?.monthlyExpenses ?? 0) + (life.economy?.householdCostMonthly ?? 0))} ฿/เดือน</small></span><i>ดูบัญชีและการลงทุน ↗</i></button>
       </div>
 
       <aside className="life-story-panel">
