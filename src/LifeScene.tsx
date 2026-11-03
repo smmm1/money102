@@ -14,6 +14,7 @@ type SceneState = {
   partnerAge?: number
   children: number
   childAges: number[]
+  childEducation?: string[]
   pets: ("cat" | "dog")[]
   housekeeper: boolean
   vehicle: "motorcycle" | "car" | "pickup" | null
@@ -120,6 +121,7 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
     partnerAge: storedScene?.partnerAge,
     children: Math.max(0, Math.min(4, storedScene?.children ?? 0)),
     childAges: storedScene?.childAges ?? Array.from({ length: Math.max(0, storedScene?.children ?? 0) }, () => 0),
+    childEducation: storedScene?.childEducation ?? [],
     pets: storedScene?.pets ?? [],
     housekeeper: storedScene?.housekeeper ?? false,
     vehicle: storedScene?.vehicle ?? null,
@@ -133,7 +135,7 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
       shirt: index % 2 ? "#d5a85e" : "#7996a5",
       hair: "#4a3932",
       stage,
-      activity: activityForStage(stage),
+      activity: state.childEducation?.[index] ? "read" : activityForStage(stage),
     }
   })
   const people: ScenePerson[] = [
