@@ -77,6 +77,7 @@ export type LifeRecord = {
   stats: LifeStats
   economy?: LifeEconomy
   pendingEvent: LifeEvent | null
+  lastOutcome?: { success: boolean; title: string; detail: string; chance: number; year: number }
   timeline: LifeEntry[]
   householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; childEducation?:string[]; pets:("cat"|"dog")[]; petAges?:number[]; petCare?:string[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
   sceneDecisions?: string[]
@@ -570,7 +571,7 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
     householdScene:{partner:false,children:0,pets:[],housekeeper:false,vehicle:null},sceneDecisions:[],
     createdAt:new Date().toISOString()
   }
-  life.pendingEvent = eventForYear(life,bornYear)
+  life.pendingEvent = eventForYear(life,bornYear) ?? makePersonalEvent(life,bornYear)
   return life
 }
 
@@ -614,7 +615,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   const nextAge=life.age+1
   const year=life.bornYear+nextAge
   if(nextAge>=life.expectedLifespan) {
-    return {...life,age:nextAge,status:"ended",endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
+    return {...life,age:nextAge,status:"ended",lastOutcome:undefined,endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
   }
   let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth), 0, 0, life.householdDebt)
   const householdScene=advanceHouseholdAges(life)
@@ -631,7 +632,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   const parentAlive=(life.parentAlive??[true,true]).map((alive,index)=>alive && nextParentAges[index]<parentLifespans[index])
   const nextLife={...life,age:nextAge,economy,householdDebt:economy.debt,stats:{...life.stats,wealth:economy.cash},householdScene,parentAges:nextParentAges,parentAlive}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
-  return {...nextLife,pendingEvent:event}
+  return {...nextLife,pendingEvent:event,lastOutcome:undefined}
 }
 
 export function estimateChoiceChance(life:LifeRecord,selected:LifeChoice):number {
@@ -744,7 +745,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   }
   const retryableMilestone = !!event.sceneKey && !success && (event.sceneKey.startsWith("child-school-") || event.sceneKey.startsWith("child-path-") || event.sceneKey.startsWith("pet-care-") || event.sceneKey.startsWith("parent-care-"))
   const sceneDecisions = event.sceneKey && !retryableMilestone ? [...new Set([...(life.sceneDecisions ?? []),event.sceneKey])] : (life.sceneDecisions ?? [])
-  return {...life,stats,occupation,householdDebt,economy,householdScene,sceneDecisions,pendingEvent:null,timeline:[entry,...life.timeline]}
+  return {...life,stats,occupation,householdDebt,economy,householdScene,sceneDecisions,pendingEvent:null,lastOutcome:{success,title:event.title,detail:result,chance,year:event.year},timeline:[entry,...life.timeline]}
 }
 
 export function validateLifeRecord(value:unknown):value is LifeRecord {
