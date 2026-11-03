@@ -64,6 +64,12 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
             {event.sourceTitle && <div className="life-story-source"><span>แหล่งอ้างอิง</span><a href={event.sourceUrl} target="_blank" rel="noreferrer">{event.sourceTitle} ↗</a><small>{event.sourceNote}</small></div>}
           </details>
         </> : life.status === "alive" ? <>
+          {life.lastOutcome && <div className={'life-story-result ' + (life.lastOutcome.success ? 'is-success' : 'is-failure')}>
+            <span>{life.lastOutcome.success ? "ผลลัพธ์ · สำเร็จ" : "ผลลัพธ์ · ไม่เป็นไปตามแผน"}</span>
+            <h2>{life.lastOutcome.title}</h2>
+            <p>{life.lastOutcome.detail}</p>
+            <small>โอกาสสำเร็จที่คำนวณได้ {life.lastOutcome.chance}% · พ.ศ. {life.lastOutcome.year + 543}</small>
+          </div>}
           <div className="life-story-kicker"><span>ก้าวต่อไปของชีวิต</span><span>พ.ศ. {year + 543}</span></div>
           <h2>ปีนี้ผ่านไปแล้ว</h2>
           <p className="life-story-description">พร้อมเริ่มปีถัดไปหรือยัง? เหตุการณ์ใหม่จะเปลี่ยนไปตามอายุ ครอบครัว สุขภาพ และทางเลือกที่ผ่านมา</p>
