@@ -174,7 +174,7 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
   const pets = state.pets.slice(0, 3)
   const hasExtras = state.partner || state.children > 0 || pets.length > 0 || state.housekeeper || !!state.vehicle
   const left = 30
-  const right = 650
+  const right = 560
   const positions = people.map((_, index) => people.length <= 1 ? 330 : left + index * (right - left) / (people.length - 1))
   const stageSummary = "คุณอยู่ในวัย" + stageLabels[selfStage]
 
@@ -202,7 +202,7 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
           <rect x="165" y="248" width="28" height="8" fill="#6e896c"/><rect x="200" y="258" width="16" height="6" fill="#6e896c"/>
         </g>
         {people.map((person, index) => <Sprite key={person.id} x={positions[index]} y={250} person={person} />)}
-        {pets.map((pet, index) => pet === "cat" ? <Cat key={"pet-" + index} x={590 + index * 42} y={318} /> : <Dog key={"pet-" + index} x={585 + index * 45} y={315} />)}
+        {pets.map((pet, index) => pet === "cat" ? <Cat key={"pet-" + index} x={590 + index * 42} y={335} /> : <Dog key={"pet-" + index} x={585 + index * 45} y={332} />)}
         {state.vehicle && <Vehicle kind={state.vehicle} />}
         <g fill="#6e8e70" shapeRendering="crispEdges"><rect x="120" y="220" width="8" height="22"/><rect x="110" y="211" width="28" height="11"/><rect x="620" y="235" width="9" height="18"/><rect x="612" y="226" width="25" height="10"/></g>
       </svg>
