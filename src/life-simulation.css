@@ -297,3 +297,19 @@ button{cursor:pointer}
 .life-story-world .life-scene-era{font-size:9px}
 @media(max-width:850px){.life-origin-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:520px){.life-origin-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.life-story-finance-link{align-items:flex-start;flex-direction:column}.life-story-finance-link i{align-self:flex-end}}
+
+
+.life-economy-cashflow{display:flex;flex-direction:column;gap:9px;margin:14px 0;padding:14px 16px;border:1px solid #e5e9df;border-radius:12px;background:#f8faf6}
+.life-economy-cashflow>div:first-child{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.life-economy-cashflow>div:first-child span{color:#64776a;font-size:11px}
+.life-economy-cashflow>div:first-child b{color:#365d47;font-size:14px;font-variant-numeric:tabular-nums}
+.life-economy-flow-row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:9px}
+.life-economy-flow-row small{color:#8b968a;font-size:9px}
+.life-economy-flow-row>i{display:block;height:7px;border-radius:10px;background:#e9eee6;overflow:hidden}
+.life-economy-flow-row>i>em{display:block;height:100%;border-radius:10px;background:#789b80}
+.life-economy-flow-row>i>em.expense{background:#c48d73}
+.life-economy-flow-row>b{color:#718075;font-size:9px;font-variant-numeric:tabular-nums}
+.life-economy-chart{margin:9px 0 12px;padding:10px 11px;border:1px solid #e7e9e1;border-radius:9px;background:#f8faf6}
+.life-economy-chart>div{display:flex;justify-content:space-between;gap:8px;color:#788779;font-size:9px}
+.life-economy-chart>div small{color:#a0a79c}
+.life-economy-chart svg{display:block;width:100%;height:84px;margin-top:7px;overflow:visible}
