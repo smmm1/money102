@@ -95,4 +95,13 @@ test("life scene reflects story milestones for family, pets, vehicles and househ
   }
   assert.ok(world.includes('import LifeScene from "./LifeScene"') && world.includes("<LifeScene life={activeLife} />"));
   assert.ok(styles.includes(".life-scene-frame") && styles.includes(".life-scene-legend"));
+  for (const feature of ["lifeStageForAge", "childAges", "partnerAge", "advanceHouseholdAges", "age<=2", "age<=12", "age<=19", "age<65"]) {
+    assert.ok(engine.includes(feature), "missing age progression rule: " + feature);
+  }
+  for (const feature of ["life-scene-character--infant", "life-scene-activity--play", "life-scene-activity--read", "life-scene-pet-tail", "life-scene-sun"]) {
+    assert.ok(scene.includes(feature) || styles.includes(feature), "missing age-aware scene animation: " + feature);
+  }
+  for (const feature of ["@keyframes life-scene-play", "@keyframes life-scene-walk", "@keyframes life-scene-tail", "prefers-reduced-motion:reduce"]) {
+    assert.ok(styles.includes(feature), "missing accessible scene motion rule: " + feature);
+  }
 });
