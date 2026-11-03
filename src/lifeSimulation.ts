@@ -617,8 +617,10 @@ export function advanceLife(life:LifeRecord):LifeRecord {
     economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
     if(life.bornYear+nextAge>=1975) economy=moveMarkets(economy,absoluteMonth,life.bornYear*97+life.id.length)
   }
-  const nextParentAges=(life.parentAges??[]).map(age=>age+1)
-  const parentAlive=(life.parentAlive??[true,true]).map((alive,index)=>alive && nextParentAges[index]<(life.parentLifespans?.[index]??100))
+  const currentParentAges=life.parentAges ?? [life.age+25,life.age+27]
+  const nextParentAges=currentParentAges.map(age=>age+1)
+  const parentLifespans=life.parentLifespans ?? [90,90]
+  const parentAlive=(life.parentAlive??[true,true]).map((alive,index)=>alive && nextParentAges[index]<parentLifespans[index])
   const nextLife={...life,age:nextAge,economy,householdScene,parentAges:nextParentAges,parentAlive}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
