@@ -98,7 +98,7 @@ test("life scene reflects story milestones for family, pets, vehicles and househ
   for (const feature of ["lifeStageForAge", "childAges", "partnerAge", "advanceHouseholdAges", "age<=2", "age<=12", "age<=19", "age<65"]) {
     assert.ok(engine.includes(feature), "missing age progression rule: " + feature);
   }
-  assert.equal((scene.match(/return <g transform=\\{transform\\}><g className=\\{className\\}/g) || []).length, 2, "sprite positioning must remain outside the animated group");
+  assert.equal((scene.match(/return <g transform=\{transform\}><g className=\{className\}/g) || []).length, 2, "sprite positioning must remain outside the animated group");
   for (const feature of ["life-scene-character--infant", "life-scene-activity--play", "life-scene-activity--read", "life-scene-pet-tail", "life-scene-sun"]) {
     assert.ok(scene.includes(feature) || styles.includes(feature), "missing age-aware scene animation: " + feature);
   }
