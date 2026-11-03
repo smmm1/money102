@@ -465,7 +465,7 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     type:"personal",sceneKey,choices
   })
   const children = life.householdScene?.childAges ?? []
-  const schoolAgeIndex = children.findIndex((age,index)=>age===6 && !done.has(`child-school-${index}`))
+  const schoolAgeIndex = children.findIndex((age,index)=>age>=6 && !done.has(`child-school-${index}`))
   if(schoolAgeIndex>=0) {
     const childNumber=schoolAgeIndex+1
     return event(`child-school-${schoolAgeIndex}`,`ถึงวัยเข้าเรียนของลูกคนที่ ${childNumber}`,`ลูกอายุครบ 6 ปี ครอบครัวต้องเลือกเส้นทางการศึกษา โดยคำนึงถึงโรงเรียนที่เดินทางถึงได้ ค่าใช้จ่าย และเวลาที่ผู้ปกครองมีให้ พื้นที่อาศัยปัจจุบันคือ${life.areaType}ในจังหวัด${life.province}`,[
@@ -474,7 +474,7 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
       choice(`child-community-${schoolAgeIndex}`,"ขอคำแนะนำจากชุมชนและญาติ","สอบถามโรงเรียน ครู และผู้ปกครองในพื้นที่ก่อนตัดสินใจ","ได้ข้อมูลจากคนที่รู้บริบทท้องถิ่น","ข้อมูลที่ได้อาจไม่ครบ ต้องตรวจสอบเพิ่มเติม",76,{relationships:2,skills:1,education:1},{stress:1})
     ])
   }
-  const teenChildIndex = children.findIndex((age,index)=>age===15 && !done.has(`child-path-${index}`))
+  const teenChildIndex = children.findIndex((age,index)=>age>=15 && !done.has(`child-path-${index}`))
   if(teenChildIndex>=0) {
     const childNumber=teenChildIndex+1
     return event(`child-path-${teenChildIndex}`,`ลูกคนที่ ${childNumber} เริ่มคิดถึงอนาคตหลังวัยเรียน`,`ลูกอายุ 15 ปี เริ่มสนใจเส้นทางหลังการศึกษาภาคบังคับ ครอบครัวควรรับฟังความถนัดและดูทางเลือกที่มีจริงในพื้นที่ ไม่จำเป็นต้องเลือกเส้นทางเดียวกันทุกคน`,[
