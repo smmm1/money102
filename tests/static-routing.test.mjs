@@ -115,13 +115,15 @@ test("household members create recurring costs that flow through the cash ledger
   const simulation = await readFile(new URL("../src/lifeSimulation.ts", import.meta.url), "utf8");
   const panel = await readFile(new URL("../src/LifeEconomyPanel.tsx", import.meta.url), "utf8");
   const story = await readFile(new URL("../src/LifeStoryExperience.tsx", import.meta.url), "utf8");
-  for (const feature of ["householdCostMonthly", "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน"]) {
+  const styles = await readFile(new URL("../src/life-simulation.css", import.meta.url), "utf8");
+  for (const feature of ["householdCostMonthly", "householdCostBreakdown", "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน", "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย", "const shortfall = Math.max(0, -rawCash)"]) {
     assert.ok(economy.includes(feature), "missing recurring cost accounting: " + feature);
   }
-  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostMonthly:estimateHouseholdCostMonthly", "pet-care-followup-", "retryableMilestone", "กำลังเตรียมเงินดูแล", "parentAges", "parentLifespans", "parentAlive", "parent-loss-", "parent-care-", "parent-checkup-", "parent-family-plan-"]) {
+  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostBreakdown,householdCostMonthly:Object.values(householdCostBreakdown)", "pet-care-followup-", "retryableMilestone", "กำลังเตรียมเงินดูแล", "parentAges", "parentLifespans", "parentAlive", "parent-loss-", "parent-care-", "parent-checkup-", "parent-family-plan-"]) {
     assert.ok(simulation.includes(feature), "missing household cost driver: " + feature);
   }
-  assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม"));
+  assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม") && panel.includes("householdCostLabels") && panel.includes("householdCostBreakdown"));
+  assert.ok(styles.includes(".life-economy-household-costs") && styles.includes("grid-template-columns:repeat(2"));
   assert.ok(story.includes("householdCostMonthly"), "story summary must include recurring household costs");
   for (const feature of ['economy.cash+principal', 'economy.debt+principal', 'kind:"income"', 'ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้', 'economy.debt:householdDebt', 'wealthDelta=effects.wealth', 'stats.wealth=economy.cash', 'householdDebt,economy,householdScene', 'householdDebt:economy.debt', 'Math.max(0,Math.min(5000,householdDebt,economy.cash))']) {
     assert.ok(simulation.includes(feature) || simulation.includes(feature.replace("economy.debt:householdDebt","debt:householdDebt")), "missing debt-to-cash ledger integration: " + feature);
