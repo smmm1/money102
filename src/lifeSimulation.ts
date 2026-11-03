@@ -665,7 +665,11 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const chance=estimateChoiceChance(life,selected)
   const success=Math.random()*100<chance
   const effects=success?selected.successEffects:selected.failureEffects
-  const wealthDelta=effects.wealth ?? 0
+  // Wealth effects in event definitions are abstract game points, while the
+  // household economy stores real-valued simulated baht. Convert each point
+  // into a modest share of one month's household income instead of adding
+  // 1–10 baht to a household budget.
+  const wealthEffect=effects.wealth ?? 0
   const stats={...life.stats}
   for(const [key,value] of Object.entries(effects)) {
     const statKey=key as keyof LifeStats
@@ -679,6 +683,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   }
   let householdDebt=life.householdDebt
   let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth),0,0,life.householdDebt)
+  const wealthDelta=wealthEffect*Math.max(100,Math.round(economy.monthlyIncome*0.05))
   if(choiceId==="borrow-more") {
     const principal=success?25000:40000
     householdDebt+=principal
