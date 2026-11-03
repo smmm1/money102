@@ -20,6 +20,7 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
   const scene = life.householdScene
   const cast = [
     life.age < 18 ? "ครอบครัวเดิม" : null,
+    ...(life.parentAges?.map((age,index) => `${index===0 ? "พ่อ" : "แม่"} · ${life.parentAlive?.[index]===false ? `ถึงแก่กรรม อายุ ${age} ปี` : `อายุ ${age} ปี`}`) ?? []),
     scene?.partner ? (scene.partnerAge ? `คู่ชีวิต · อายุ ${scene.partnerAge} ปี` : "คู่ชีวิต") : null,
     ...(scene?.childAges?.slice(0, scene.children).map((age, index) => `ลูก ${index + 1} · อายุ ${age} ปี${scene.childEducation?.[index] ? ` · ${scene.childEducation[index]}` : ""}`) ?? (scene?.children ? [`ลูก ${scene.children} คน`] : [])),
     ...(scene?.pets?.map((pet, index) => `${pet === "cat" ? "แมว" : "สุนัข"} ${index + 1}${scene.petAges?.[index] !== undefined ? ` · ${scene.petAges[index]} ปี` : ""}${scene.petCare?.[index] ? ` · ${scene.petCare[index]}` : ""}`) ?? []),
