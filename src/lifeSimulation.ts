@@ -623,7 +623,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
-    const petCareMatch=choiceId.match(/^pet-(vet|community|delay)-(\\d+)$/)
+    const petCareMatch=choiceId.match(/^pet-(vet|community|delay)-(\d+)$/)
     if(petCareMatch){
       const index=Number(petCareMatch[2])
       const careLabels:Record<string,string>={vet:"ตรวจสุขภาพแล้ว",community:"ใช้บริการในพื้นที่",delay:"กำลังเตรียมเงินดูแล"}
