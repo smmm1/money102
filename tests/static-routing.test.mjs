@@ -107,3 +107,17 @@ test("life scene reflects story milestones for family, pets, vehicles and househ
     assert.ok(styles.includes(feature), "missing accessible scene motion rule: " + feature);
   }
 });
+
+
+test("household members create recurring costs that flow through the cash ledger", async () => {
+  const economy = await readFile(new URL("../src/lifeEconomy.ts", import.meta.url), "utf8");
+  const simulation = await readFile(new URL("../src/lifeSimulation.ts", import.meta.url), "utf8");
+  const panel = await readFile(new URL("../src/LifeEconomyPanel.tsx", import.meta.url), "utf8");
+  for (const feature of ["householdCostMonthly", "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน"]) {
+    assert.ok(economy.includes(feature), "missing recurring cost accounting: " + feature);
+  }
+  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostMonthly:estimateHouseholdCostMonthly"]) {
+    assert.ok(simulation.includes(feature), "missing household cost driver: " + feature);
+  }
+  assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม"));
+});
