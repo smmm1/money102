@@ -60,7 +60,7 @@ function Sprite({ x, y, person }: { x: number; y: number; person: ScenePerson })
   const bodyX = 16 - bodyWidth / 2
   const bodyHeight = child ? 18 : teen ? 21 : 23
   const legStart = 22 + bodyHeight
-  return <g transform={transform} className={className} shapeRendering="crispEdges">
+  return <g transform={transform}><g className={className} shapeRendering="crispEdges">
     <rect x={child ? 8 : 7} y="0" width={child ? 16 : 18} height={child ? 16 : 17} rx="5" fill="#dca77f" />
     <path d={elder ? "M6 8 Q7 -3 16 1 Q25 -3 27 9 L23 7 L20 4 L13 7 Z" : "M6 8 Q6 -2 16 0 Q26 -2 27 8 L23 7 L20 4 L12 7 Z"} fill={elder ? "#aeb3ad" : person.hair} />
     <rect x="10" y="9" width="2" height="2" fill="#493b35" /><rect x="20" y="9" width="2" height="2" fill="#493b35" />
