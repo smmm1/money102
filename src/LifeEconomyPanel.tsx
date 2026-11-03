@@ -6,6 +6,7 @@ import {
 
 type Props = { economy: LifeEconomy; year: number; onChange: (next: LifeEconomy) => void; disabled?: boolean }
 const money = (n: number) => new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 }).format(n)
+const householdCostLabels: Record<string, string> = { partner: "คู่ชีวิต", children: "ลูก", pets: "สัตว์เลี้ยง", householdHelp: "ผู้ช่วยในบ้าน", vehicle: "ยานพาหนะ" }
 
 export default function LifeEconomyPanel({ economy, year, onChange, disabled = false }: Props) {
   const [amount, setAmount] = useState("500")
@@ -38,7 +39,7 @@ export default function LifeEconomyPanel({ economy, year, onChange, disabled = f
       <div><span>กระแสเงินสดต่อเดือน</span><b>{money(economy.monthlyIncome - totalMonthlyExpenses)} ฿</b></div>
       <div className="life-economy-flow-row"><small>รายรับ</small><i><em style={{ width: (economy.monthlyIncome / maxFlow * 100) + "%" }} /></i><b>{money(economy.monthlyIncome)} ฿</b></div>
       <div className="life-economy-flow-row"><small>รายจ่าย</small><i><em className="expense" style={{ width: (totalMonthlyExpenses / maxFlow * 100) + "%" }} /></i><b>{money(totalMonthlyExpenses)} ฿</b></div>
-      {(economy.householdCostMonthly ?? 0) > 0 && <small>รวมค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน {money(economy.householdCostMonthly ?? 0)} ฿/เดือน (ประมาณการในเกม)</small> }
+      {(economy.householdCostMonthly ?? 0) > 0 && <div className="life-economy-household-costs"><small>ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน {money(economy.householdCostMonthly ?? 0)} ฿/เดือน · ประมาณการในเกม</small>{economy.householdCostBreakdown && <ul>{Object.entries(economy.householdCostBreakdown).filter(([, value]) => value > 0).map(([key, value]) => <li key={key}><span>{householdCostLabels[key] ?? key}</span><b>{money(value)} ฿</b></li>)}</ul>}</div> }
     </div>
     <div className="life-economy-grid">
       <article><span className="life-eyebrow">LOTTERY · สลากกินแบ่ง</span><h3>ลุ้นโชค</h3>{year < 1939 ? <p>ระบบสลากกินแบ่งรัฐบาลยังไม่เปิดในยุคนี้</p> : <><p>ซื้อสลากมีโอกาสเสียเงินทั้งหมด รางวัลใหญ่มีโอกาสเกิดต่ำมาก ไม่ใช่วิธีสร้างรายได้ที่เชื่อถือได้</p><label>จำนวนใบ <input type="number" min="1" max="20" value={tickets} onChange={e => setTickets(e.target.value)} /></label><button disabled={disabled} onClick={() => apply(buyLotteryTickets(economy, Number(tickets)))}>ซื้อสลาก · ใบละ 80 บาท</button><button className="life-secondary" disabled={disabled || economy.lotteryTickets === 0} onClick={() => apply(drawLottery(economy, year * 100 + economy.lastSimulatedMonth + economy.lotteryTickets))}>ออกรางวัล ({economy.lotteryTickets} ใบ)</button><small>ใช้ไป {money(economy.totalLotterySpent)} ฿ · ถูกรางวัลรวม {money(economy.totalLotteryWon)} ฿</small></>}</article>
