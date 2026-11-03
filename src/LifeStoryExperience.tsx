@@ -54,7 +54,7 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory,
 
           <details className="life-easy-more">
             <summary>อ่านบริบทและที่มาของเหตุการณ์</summary>
-            {event.context && <p>{event.context}</p>}
+            {event.context && <p className="life-story-context">{event.context}</p>}
             <div className="life-story-circumstances">
               <span><small>อาชีพ</small><b>{life.occupation}</b></span>
               <span><small>ฐานะครัวเรือน</small><b>{life.householdIncome}</b></span>
