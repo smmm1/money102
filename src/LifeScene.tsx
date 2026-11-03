@@ -139,14 +139,17 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
     }
   })
   const people: ScenePerson[] = [
-    ...(life.age < 18 ? life.parents.slice(0, 2).map((job, index) => ({
-      id: "parent-" + index,
-      label: index === 0 ? "พ่อ" : "แม่",
-      shirt: index === 0 ? "#628b79" : "#bd8c76",
-      hair: "#493d35",
-      stage: "adult" as LifeStage,
-      activity: "rest" as SceneActivity,
-    })) : []),
+    ...life.parents.slice(0, 2).filter((_, index) => (life.parentAlive ?? [true, true])[index] !== false).map((job, index) => {
+      const parentAge = life.parentAges?.[index] ?? 45
+      return {
+        id: "parent-" + index,
+        label: (index === 0 ? "พ่อ" : "แม่") + " · " + parentAge + " ปี",
+        shirt: index === 0 ? "#628b79" : "#bd8c76",
+        hair: "#493d35",
+        stage: lifeStageForAge(parentAge),
+        activity: parentAge >= 60 ? "rest" as SceneActivity : "walk" as SceneActivity,
+      }
+    }),
     {
       id: "self",
       label: "คุณ",
