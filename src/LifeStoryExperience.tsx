@@ -1,7 +1,7 @@
 import LifeScene from "./LifeScene"
 import { advanceLife, estimateChoiceChance, resolveLifeChoice, type LifeRecord } from "./lifeSimulation"
 
-type Props = { life: LifeRecord; saving: boolean; onUpdate: (life: LifeRecord) => void; onHistory: () => void }
+type Props = { life: LifeRecord; saving: boolean; onUpdate: (life: LifeRecord) => void; onHistory: () => void; onFinance: () => void }
 
 const metrics = [
   { key: "health", label: "สุขภาพ", mark: "♡" },
@@ -14,7 +14,7 @@ const metrics = [
 
 const money = (value: number) => new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 }).format(value)
 
-export default function LifeStoryExperience({ life, saving, onUpdate, onHistory }: Props) {
+export default function LifeStoryExperience({ life, saving, onUpdate, onHistory, onFinance }: Props) {
   const event = life.pendingEvent
   const year = life.bornYear + life.age
   const scene = life.householdScene
@@ -45,6 +45,7 @@ export default function LifeStoryExperience({ life, saving, onUpdate, onHistory 
           {metrics.map(metric => <div key={metric.key}><span>{metric.mark} {metric.label}</span><b>{life.stats[metric.key]}<small>/100</small></b><i><em style={{ width: `${life.stats[metric.key]}%` }} /></i></div>)}
           <div className="life-story-cash"><span>เงินทุนครัวเรือน</span><b>{money(life.economy?.cash ?? life.stats.wealth)} ฿</b><small>หนี้ {money(life.economy?.debt ?? life.householdDebt)} ฿</small></div>
         </div>
+        <button className="life-story-finance-link" onClick={onFinance}><span><b>การเงินของชีวิตนี้</b><small>รายรับ {money(life.economy?.monthlyIncome ?? 0)} ฿/เดือน · รายจ่าย {money(life.economy?.monthlyExpenses ?? 0)} ฿/เดือน</small></span><i>ดูบัญชีและการลงทุน ↗</i></button>
       </div>
 
       <aside className="life-story-panel">
