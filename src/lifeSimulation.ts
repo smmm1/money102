@@ -74,7 +74,7 @@ export type LifeRecord = {
   economy?: LifeEconomy
   pendingEvent: LifeEvent | null
   timeline: LifeEntry[]
-  householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
+  householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; childEducation?:string[]; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
   sceneDecisions?: string[]
   createdAt: string
   endedAt?: string
@@ -469,17 +469,17 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
   if(schoolAgeIndex>=0) {
     const childNumber=schoolAgeIndex+1
     return event(`child-school-${schoolAgeIndex}`,`ถึงวัยเข้าเรียนของลูกคนที่ ${childNumber}`,`ลูกอายุครบ 6 ปี ครอบครัวต้องเลือกเส้นทางการศึกษา โดยคำนึงถึงโรงเรียนที่เดินทางถึงได้ ค่าใช้จ่าย และเวลาที่ผู้ปกครองมีให้ พื้นที่อาศัยปัจจุบันคือ${life.areaType}ในจังหวัด${life.province}`,[
-      choice(`child-public-${schoolAgeIndex}`,"เลือกโรงเรียนรัฐใกล้บ้าน","ตรวจเขตพื้นที่ คุณภาพการสอน การเดินทาง และค่าใช้จ่ายแฝง","ครอบครัวจัดการค่าใช้จ่ายได้และเด็กเริ่มเรียนใกล้ชุมชน","การเดินทางหรือทรัพยากรของโรงเรียนอาจไม่ตรงความต้องการ",82,{education:2,relationships:2,wealth:-1},{stress:2,wealth:-1}),
-      choice(`child-private-${schoolAgeIndex}`,"พิจารณาโรงเรียนเอกชน","เปรียบเทียบค่าเทอม ค่าเดินทาง และความต่อเนื่องในการจ่ายระยะยาว","เด็กได้รับทางเลือกด้านหลักสูตรเพิ่มขึ้น","ค่าใช้จ่ายกดดันเงินสำรองของบ้าน",life.stats.wealth>=35?62:34,{education:4,wealth:-5,stress:2},{wealth:-3,stress:4}),
-      choice(`child-community-${schoolAgeIndex}`,"ขอคำแนะนำจากชุมชนและญาติ","สอบถามโรงเรียน ครู และผู้ปกครองในพื้นที่ก่อนตัดสินใจ","ได้ข้อมูลจากคนที่รู้บริบทท้องถิ่น","ข้อมูลที่ได้อาจไม่ครบ ต้องตรวจสอบเพิ่มเติม",76,{relationships:2,skills:1,education:1},{stress:1})
+      choice(`child-public-${schoolAgeIndex}`,"เลือกโรงเรียนรัฐใกล้บ้าน","ตรวจเขตพื้นที่ คุณภาพการสอน การเดินทาง และค่าใช้จ่ายแฝง","ครอบครัวจัดการค่าใช้จ่ายได้และเด็กเริ่มเรียนใกล้ชุมชน","การเดินทางหรือทรัพยากรของโรงเรียนอาจไม่ตรงความต้องการ",82,{relationships:2,wealth:-1},{stress:2,wealth:-1}),
+      choice(`child-private-${schoolAgeIndex}`,"พิจารณาโรงเรียนเอกชน","เปรียบเทียบค่าเทอม ค่าเดินทาง และความต่อเนื่องในการจ่ายระยะยาว","เด็กได้รับทางเลือกด้านหลักสูตรเพิ่มขึ้น","ค่าใช้จ่ายกดดันเงินสำรองของบ้าน",life.stats.wealth>=35?62:34,{wealth:-5,stress:2,relationships:1},{wealth:-3,stress:4}),
+      choice(`child-community-${schoolAgeIndex}`,"ขอคำแนะนำจากชุมชนและญาติ","สอบถามโรงเรียน ครู และผู้ปกครองในพื้นที่ก่อนตัดสินใจ","ได้ข้อมูลจากคนที่รู้บริบทท้องถิ่น","ข้อมูลที่ได้อาจไม่ครบ ต้องตรวจสอบเพิ่มเติม",76,{relationships:2,skills:1},{stress:1})
     ])
   }
   const teenChildIndex = children.findIndex((age,index)=>age>=15 && !done.has(`child-path-${index}`))
   if(teenChildIndex>=0) {
     const childNumber=teenChildIndex+1
     return event(`child-path-${teenChildIndex}`,`ลูกคนที่ ${childNumber} เริ่มคิดถึงอนาคตหลังวัยเรียน`,`ลูกอายุ 15 ปี เริ่มสนใจเส้นทางหลังการศึกษาภาคบังคับ ครอบครัวควรรับฟังความถนัดและดูทางเลือกที่มีจริงในพื้นที่ ไม่จำเป็นต้องเลือกเส้นทางเดียวกันทุกคน`,[
-      choice(`child-academic-${teenChildIndex}`,"สนับสนุนสายสามัญ","ช่วยค้นข้อมูลโรงเรียน ค่าเดินทาง ทุน และความถนัดของเด็ก","มีทางเลือกศึกษาต่อในระดับที่สูงขึ้น","แรงกดดันหรือค่าใช้จ่ายอาจเกินกำลัง",life.stats.wealth>=25?68:48,{education:3,relationships:2,wealth:-2},{stress:3,wealth:-1}),
-      choice(`child-vocational-${teenChildIndex}`,"สำรวจสายอาชีพและทักษะวิชาชีพ","ดูหลักสูตรที่ได้รับการรับรอง ค่าอุปกรณ์ และโอกาสฝึกงาน","เด็กได้พัฒนาทักษะที่เชื่อมกับอาชีพ","สาขาที่เลือกอาจไม่ตรงกับความสนใจภายหลัง",74,{skills:3,education:2,relationships:2},{stress:2}),
+      choice(`child-academic-${teenChildIndex}`,"สนับสนุนสายสามัญ","ช่วยค้นข้อมูลโรงเรียน ค่าเดินทาง ทุน และความถนัดของเด็ก","มีทางเลือกศึกษาต่อในระดับที่สูงขึ้น","แรงกดดันหรือค่าใช้จ่ายอาจเกินกำลัง",life.stats.wealth>=25?68:48,{relationships:2,wealth:-2,stress:1},{stress:3,wealth:-1}),
+      choice(`child-vocational-${teenChildIndex}`,"สำรวจสายอาชีพและทักษะวิชาชีพ","ดูหลักสูตรที่ได้รับการรับรอง ค่าอุปกรณ์ และโอกาสฝึกงาน","เด็กได้พัฒนาทักษะที่เชื่อมกับอาชีพ","สาขาที่เลือกอาจไม่ตรงกับความสนใจภายหลัง",74,{skills:1,relationships:2},{stress:2}),
       choice(`child-listen-${teenChildIndex}`,"เปิดโอกาสให้ลูกลองค้นหาความสนใจ","พูดคุยเรื่องเป้าหมายและหาข้อมูลร่วมกันโดยไม่เร่งตัดสินใจ","ความสัมพันธ์และความเข้าใจในครอบครัวดีขึ้น","อาจต้องใช้เวลาตัดสินใจและวางแผนเพิ่ม",84,{relationships:3,happiness:1},{stress:1})
     ])
   }
@@ -612,6 +612,13 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
+    const childEducationMatch=choiceId.match(/^child-(public|private|community|academic|vocational|listen)-(\\d+)$/)
+    if(childEducationMatch){
+      const index=Number(childEducationMatch[2])
+      const educationLabels:Record<string,string>={public:"โรงเรียนรัฐ",private:"โรงเรียนเอกชน",community:"ค้นหาข้อมูลกับชุมชน",academic:"สายสามัญ",vocational:"สายอาชีพ",listen:"กำลังค้นหาความสนใจ"}
+      householdScene.childEducation=[...(householdScene.childEducation??[])]
+      householdScene.childEducation[index]=educationLabels[childEducationMatch[1]]
+    }
     if(choiceId==="start-family"){
       householdScene.partner=true
       householdScene.partnerAge=life.age
