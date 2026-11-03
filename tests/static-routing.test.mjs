@@ -161,7 +161,7 @@ test("household economy functions preserve cash, debt and interest arithmetic", 
   const shortfall = simulateEconomyMonth(createLifeEconomy(0, 100, 150), 1, 456);
   assert.equal(shortfall.cash, 0);
   assert.equal(shortfall.debt, 50.86);
-  assert.ok(shortfall.ledger.some(entry => entry.kind === "debt" && entry.label === "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย" && entry.amount === 50));
+  assert.ok(shortfall.ledger.some(entry => entry.kind === "debt" && entry.label === "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย" && entry.amount === 50.86));
 
   const loan = borrowMoney(createLifeEconomy(5000, 10000, 0), 1000, 0.12);
   assert.equal(loan.ok, true);
