@@ -20,11 +20,13 @@ export type MoneyLedgerEntry = {
   label: string
   amount: number
 }
+export type HouseholdCostBreakdown = { partner: number; children: number; pets: number; householdHelp: number; vehicle: number }
 export type LifeEconomy = {
   cash: number
   monthlyIncome: number
   monthlyExpenses: number
   householdCostMonthly?: number
+  householdCostBreakdown?: HouseholdCostBreakdown
   debt: number
   debtRate: number
   creditAccess: number
@@ -76,7 +78,8 @@ export function simulateEconomyMonth(input: LifeEconomy, absoluteMonth: number, 
   const income = roundBaht(input.monthlyIncome * wageFactor)
   const inflation = 0.001 + seeded(seed + absoluteMonth * 104729) * 0.004
   const expenses = roundBaht(input.monthlyExpenses * (1 + inflation))
-  const householdCosts = roundBaht((input.householdCostMonthly ?? 0) * (1 + inflation))
+  const householdCostBreakdown = input.householdCostBreakdown ? Object.fromEntries(Object.entries(input.householdCostBreakdown).map(([key, value]) => [key, roundBaht(value * (1 + inflation))])) as HouseholdCostBreakdown : undefined
+  const householdCosts = householdCostBreakdown ? roundBaht(Object.values(householdCostBreakdown).reduce((sum, value) => sum + value, 0)) : roundBaht((input.householdCostMonthly ?? 0) * (1 + inflation))
   const rawCash = input.cash + income - expenses - householdCosts
   const shortfall = Math.max(0, -rawCash)
   let next: LifeEconomy = {
@@ -86,6 +89,7 @@ export function simulateEconomyMonth(input: LifeEconomy, absoluteMonth: number, 
     debtRate: shortfall > 0 && input.debtRate === 0 ? 0.12 : input.debtRate,
     monthlyExpenses: expenses,
     householdCostMonthly: householdCosts,
+    ...(householdCostBreakdown ? { householdCostBreakdown } : {}),
     lastSimulatedMonth: absoluteMonth
   }
   next = pushLedger(next, { year: Math.floor((absoluteMonth - 1) / 12), month: ((absoluteMonth - 1) % 12) + 1, kind: "income", label: wageFactor < 0.8 ? "รายได้ลดลง/งานสะดุด" : "รายได้ประจำ", amount: income })
