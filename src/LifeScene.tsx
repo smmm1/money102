@@ -42,7 +42,7 @@ function Sprite({ x, y, person }: { x: number; y: number; person: ScenePerson })
   const labelY = person.stage === "infant" ? 59 : 75
 
   if (person.stage === "infant") {
-    return <g transform={transform} className={className} shapeRendering="crispEdges">
+    return <g transform={transform}><g className={className} shapeRendering="crispEdges">
       <ellipse cx="16" cy="13" rx="10" ry="9" fill="#dca77f" />
       <path d="M7 11 Q8 -1 19 3 Q25 4 26 12 L22 8 L12 8 Z" fill={person.hair} />
       <rect x="11" y="13" width="2" height="2" fill="#493b35" /><rect x="19" y="13" width="2" height="2" fill="#493b35" />
@@ -50,7 +50,7 @@ function Sprite({ x, y, person }: { x: number; y: number; person: ScenePerson })
       <path d="M5 36 Q16 43 29 35" fill="none" stroke="#f5e7c9" strokeWidth="4" />
       <path d="M2 28 Q-2 35 4 39 M30 28 Q36 35 30 39" fill="none" stroke="#dca77f" strokeWidth="4" />
       <text x="16" y={labelY} textAnchor="middle" fontSize="8" fill="#52645a">{person.label}</text>
-    </g>
+    </g></g>
   }
 
   const child = person.stage === "child"
@@ -77,7 +77,7 @@ function Sprite({ x, y, person }: { x: number; y: number; person: ScenePerson })
     {person.activity === "play" && <g aria-hidden="true"><circle cx="38" cy="44" r="5" fill="#e6bd68" stroke="#9e8050" strokeWidth="1.5" /></g>}
     {elder && <g aria-hidden="true"><path d="M34 35 L34 61 Q34 65 39 65" fill="none" stroke="#806b51" strokeWidth="2.5" /><path d="M28 27 Q34 30 32 37" fill="none" stroke="#dca77f" strokeWidth="4" /></g>}
     <text x="16" y={labelY} textAnchor="middle" fontSize="8" fill="#52645a">{person.label}</text>
-  </g>
+    </g></g>
 }
 
 function Cat({ x, y }: { x: number; y: number }) {
