@@ -686,6 +686,12 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   }
   let householdDebt=life.householdDebt
   let economy=life.economy ?? createLifeEconomy(Math.max(0,life.stats.wealth),0,0,life.householdDebt)
+  const careerIncomeBoost:Record<string,number>={"stable-job":0.35,"learn-job":0.20,"work":0.30,"craft":0.25,"small-business":0.40,"promotion":0.20,"reskill":0.15}
+  if(success && occupation!==life.occupation && careerIncomeBoost[choiceId]) {
+    // A new job changes future household cashflow; it is not counted as cash
+    // received immediately, so the higher monthly income starts next year.
+    economy={...economy,monthlyIncome:Math.round(economy.monthlyIncome*(1+careerIncomeBoost[choiceId]))}
+  }
   const wealthDelta=wealthEffect*Math.max(100,Math.round(economy.monthlyIncome*0.05))
   if(choiceId==="borrow-more") {
     const principal=success?25000:40000
