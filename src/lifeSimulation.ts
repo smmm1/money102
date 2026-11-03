@@ -74,7 +74,7 @@ export type LifeRecord = {
   economy?: LifeEconomy
   pendingEvent: LifeEvent | null
   timeline: LifeEntry[]
-  householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; childEducation?:string[]; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
+  householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; childEducation?:string[]; pets:("cat"|"dog")[]; petAges?:number[]; petCare?:string[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
   sceneDecisions?: string[]
   createdAt: string
   endedAt?: string
@@ -483,6 +483,16 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
       choice(`child-listen-${teenChildIndex}`,"เปิดโอกาสให้ลูกลองค้นหาความสนใจ","พูดคุยเรื่องเป้าหมายและหาข้อมูลร่วมกันโดยไม่เร่งตัดสินใจ","ความสัมพันธ์และความเข้าใจในครอบครัวดีขึ้น","อาจต้องใช้เวลาตัดสินใจและวางแผนเพิ่ม",84,{relationships:3,happiness:1},{stress:1})
     ])
   }
+  const petAges=life.householdScene?.petAges ?? life.householdScene?.pets.map(()=>0) ?? []
+  const petCareIndex=petAges.findIndex((age,index)=>age>=1 && !done.has(`pet-care-${index}`))
+  if(petCareIndex>=0) {
+    const petName=life.householdScene?.pets[petCareIndex]==="cat"?"แมว":"สุนัข"
+    return event(`pet-care-${petCareIndex}`,`วางแผนดูแลสุขภาพ${petName}`,`${petName} อยู่กับครอบครัวมาระยะหนึ่งแล้ว ควรทบทวนวัคซีน การป้องกันปรสิต การทำหมันตามความเหมาะสม และเงินสำรองสำหรับการรักษา โดยปรึกษาสัตวแพทย์ตามช่วงวัยและสุขภาพจริง`,[
+      choice(`pet-vet-${petCareIndex}`,"นัดตรวจสุขภาพกับสัตวแพทย์","ตรวจประวัติวัคซีนและขอคำแนะนำเฉพาะตัวสัตว์","มีแผนดูแลต่อเนื่องและพบปัญหาได้เร็วขึ้น","ค่าใช้จ่ายอาจสูงกว่าที่เตรียมไว้",78,{wealth:-2,stress:-1,relationships:1},{wealth:-2,stress:2}),
+      choice(`pet-community-${petCareIndex}`,"หาคลินิกหรือโครงการช่วยเหลือในพื้นที่","สอบถามคลินิกชุมชน หน่วยงานท้องถิ่น และเงื่อนไขบริการก่อนเดินทาง","เข้าถึงบริการที่เหมาะกับงบประมาณมากขึ้น","คิวหรือบริการที่ต้องการอาจไม่พร้อม",72,{skills:1,relationships:1,wealth:-1},{stress:2}),
+      choice(`pet-delay-${petCareIndex}`,"จัดเงินสำรองก่อนแล้วค่อยนัด","เริ่มแยกเงินและตรวจสอบอาการผิดปกติระหว่างรอ โดยไม่ละเลยอาการฉุกเฉิน","ครอบครัววางแผนค่าใช้จ่ายได้ดีขึ้น","การเลื่อนตรวจอาจทำให้พลาดการดูแลที่จำเป็น",66,{wealth:1,skills:1},{stress:2})
+    ])
+  }
   if(life.age>=20 && !done.has("pet")) return event("pet","มีสัตว์เลี้ยงในบ้านหรือไม่?","คุณเริ่มคิดถึงการมีเพื่อนสี่ขาในบ้าน แต่ต้องประเมินเวลา ค่าอาหาร และค่ารักษาพยาบาลระยะยาว",[
     choice("adopt-cat","รับแมวมาเลี้ยง","เตรียมพื้นที่ อาหาร และเงินสำรองสำหรับการดูแล","มีสมาชิกใหม่และความผูกพันเพิ่มขึ้น","การปรับตัวหรือค่าใช้จ่ายอาจมากกว่าที่คิด",68,{happiness:4,relationships:3,wealth:-2},{stress:2,wealth:-2}),
     choice("adopt-dog","รับสุนัขมาเลี้ยง","ต้องมีเวลาเดินเล่น ฝึกพฤติกรรม และดูแลสุขภาพ","ได้เพื่อนและกิจวัตรใหม่ในบ้าน","ดูแลไม่ทั่วถึงหรือมีค่าใช้จ่ายฉุกเฉิน",60,{happiness:5,health:1,wealth:-3},{stress:3,wealth:-3}),
@@ -542,7 +552,8 @@ function advanceHouseholdAges(life:LifeRecord):LifeRecord["householdScene"] {
   return {
     ...scene,
     ...(scene.partner ? {partnerAge:(scene.partnerAge ?? life.age)+1} : {}),
-    childAges:childAges.map(age=>age+1)
+    childAges:childAges.map(age=>age+1),
+    petAges:(scene.petAges ?? scene.pets.map(()=>0)).map(age=>age+1)
   }
 }
 
@@ -612,6 +623,13 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
+    const petCareMatch=choiceId.match(/^pet-(vet|community|delay)-(\\d+)$/)
+    if(petCareMatch){
+      const index=Number(petCareMatch[2])
+      const careLabels:Record<string,string>={vet:"ตรวจสุขภาพแล้ว",community:"ใช้บริการในพื้นที่",delay:"กำลังเตรียมเงินดูแล"}
+      householdScene.petCare=[...(householdScene.petCare??[])]
+      householdScene.petCare[index]=careLabels[petCareMatch[1]]
+    }
     const childEducationMatch=choiceId.match(/^child-(public|private|community|academic|vocational|listen)-(\d+)$/)
     if(childEducationMatch){
       const index=Number(childEducationMatch[2])
@@ -631,8 +649,8 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
       householdScene.partner=true
       householdScene.partnerAge=life.age
     }
-    if(choiceId==="adopt-cat" && !householdScene.pets.includes("cat")) householdScene.pets=[...householdScene.pets,"cat"]
-    if(choiceId==="adopt-dog" && !householdScene.pets.includes("dog")) householdScene.pets=[...householdScene.pets,"dog"]
+    if(choiceId==="adopt-cat" && !householdScene.pets.includes("cat")) { householdScene.pets=[...householdScene.pets,"cat"]; householdScene.petAges=[...(householdScene.petAges??householdScene.pets.slice(0,-1).map(()=>0)),0] }
+    if(choiceId==="adopt-dog" && !householdScene.pets.includes("dog")) { householdScene.pets=[...householdScene.pets,"dog"]; householdScene.petAges=[...(householdScene.petAges??householdScene.pets.slice(0,-1).map(()=>0)),0] }
     if(choiceId==="buy-motorcycle") householdScene.vehicle="motorcycle"
     if(choiceId==="buy-car") householdScene.vehicle="car"
     if(choiceId==="hire-housekeeper") householdScene.housekeeper=true
