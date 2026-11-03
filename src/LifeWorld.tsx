@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { api, useAuth } from "./CloudAuth"
 import {
-  advanceLife, createLife, estimateChoiceChance, resolveLifeChoice, validateLifeRecord,
+  createLife, validateLifeRecord,
   type LifeRecord,
 } from "./lifeSimulation"
 import "./life-simulation.css"
-import LifeScene from "./LifeScene"
+import LifeStoryExperience from "./LifeStoryExperience"
 import LifeEconomyPanel from "./LifeEconomyPanel"
 import { createLifeEconomy } from "./lifeEconomy"
 
@@ -136,13 +136,7 @@ export default function LifeWorld() {
             <div className="life-world-visual"><div className="life-map-glow" /><div className="life-world-circle"><span>TH</span></div><div className="life-world-caption"><span>จุดเริ่มต้นของชีวิต</span><b>{activeLife.region}</b></div></div>
             <div className="life-origin"><span className="life-eyebrow">จุดเริ่มต้นของชีวิต · {activeLife.bornYear + activeLife.age} พ.ศ.</span><h2>{activeLife.family}</h2><p>{activeLife.background}</p><div className="life-facts"><span>จังหวัด <b>{activeLife.province}</b></span><span>พื้นที่ <b>{activeLife.areaType}</b></span><span>เพศ <b>{activeLife.gender}</b></span></div><div className="life-facts"><span>ผู้ปกครอง <b>{activeLife.parents.join(" / ")}</b></span><span>พี่น้อง <b>{activeLife.siblings} คน</b></span></div><div className="life-facts"><span>ฐานะครอบครัว <b>{activeLife.householdIncome}</b></span><span>หนี้ครัวเรือนเริ่มต้น <b>{formatMoney(activeLife.householdDebt)}</b></span></div></div>
           </div>
-          <LifeScene life={activeLife} />
-          <div className="life-section-head"><div><span className="life-eyebrow">LIFE CONDITION</span><h2>สถานะชีวิต</h2></div><small>ค่าต่าง ๆ เปลี่ยนตามการตัดสินใจของคุณ</small></div>
-          <div className="life-stat-grid">
-            {statLabels.map(stat => <div className="life-stat" key={stat.key}><div><span>{stat.icon} &nbsp;{stat.label}</span><b>{activeLife.stats[stat.key]}<small>/100</small></b></div><div className="life-meter"><i style={{ width: `${activeLife.stats[stat.key]}%` }} /></div></div>)}
-            <div className="life-stat wealth"><div><span>◈ &nbsp;ทุนครอบครัวจำลอง</span><b>{formatMoney(activeLife.stats.wealth)}</b></div><small>หน่วยเงินบาทจำลอง · ค่าทรัพย์สินเป็นกลไกเกม ไม่ใช่ข้อมูลเศรษฐกิจจริง</small></div>
-          </div>
-          {activeLife.pendingEvent ? <section className="life-event-card"><span className="life-eyebrow">{activeLife.pendingEvent.type === "historical" ? "เหตุการณ์ประวัติศาสตร์ · มีแหล่งอ้างอิง" : "เหตุการณ์ชีวิตประจำปี"} · อายุ {activeLife.pendingEvent.age} ปี · พ.ศ. {activeLife.pendingEvent.year + 543}</span><h2>{activeLife.pendingEvent.title}</h2><p>{activeLife.pendingEvent.description}</p>{activeLife.pendingEvent.context && <p className="life-event-context">{activeLife.pendingEvent.context}</p>}{activeLife.pendingEvent.sourceTitle && <div className="life-source"><b>ที่มา: </b><a href={activeLife.pendingEvent.sourceUrl} target="_blank" rel="noreferrer">{activeLife.pendingEvent.sourceTitle} ↗</a><small>{activeLife.pendingEvent.sourceNote}</small></div>}<h3>คุณจะรับมืออย่างไร?</h3><div className="life-choices">{activeLife.pendingEvent.choices.map(choice => <button key={choice.id} disabled={saving} onClick={() => void updateLife(resolveLifeChoice(activeLife, choice.id))}><b>{choice.label}</b><span>{choice.description}</span><small>โอกาสสำเร็จโดยประมาณ {estimateChoiceChance(activeLife, choice)}% · คำนวณจากทักษะ การศึกษา ทรัพยากร สุขภาพ และภาระชีวิต</small><em>เลือกทางนี้ ↗</em></button>)}</div></section> : activeLife.status === "alive" ? <section className="life-next"><div><span className="life-eyebrow">THE NEXT CHAPTER</span><h2>พร้อมก้าวไปอีกหนึ่งปีหรือยัง?</h2><p>พ.ศ. {activeLife.bornYear + activeLife.age + 543} · {activeLife.province} · {activeLife.occupation}</p></div><button className="life-primary" disabled={saving} onClick={() => void updateLife(advanceLife(activeLife))}>ใช้ชีวิตต่อ <span>→</span></button></section> : <section className="life-event-card life-ending"><span className="life-eyebrow">THE END OF A LIFE</span><h2>เรื่องราวของ {activeLife.name} จบลงแล้ว</h2><p>ชีวิตนี้เดินทางมาถึงอายุ {activeLife.age} ปี ความทรงจำทั้งหมดถูกเก็บไว้ในเรื่องราวชีวิต</p><button className="life-primary" onClick={() => setView("history")}>อ่านบันทึกชีวิต <span>→</span></button></section>}
+          <LifeStoryExperience life={activeLife} saving={saving} onUpdate={nextLife => void updateLife(nextLife)} onHistory={() => setView("history")} />
           <div className="life-section-head"><div><span className="life-eyebrow">LIFE TIMELINE</span><h2>เส้นทางที่ผ่านมา</h2></div><button className="life-text-button" onClick={() => setView("history")}>ดูทั้งหมด →</button></div>
           <div className="life-timeline">{activeLife.timeline.slice(0,4).map(item => <article key={item.id}><span className="life-timeline-age">{item.age} ปี</span><div><b>{item.title}</b><p>{item.detail}</p>{item.sourceTitle && <a className="life-timeline-source" href={item.sourceUrl} target="_blank" rel="noreferrer">แหล่งอ้างอิง: {item.sourceTitle} ↗</a>}</div><small>พ.ศ. {item.year + 543}</small></article>)}</div>
         </section>}
