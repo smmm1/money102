@@ -6,18 +6,20 @@ import {
 } from "./lifeSimulation"
 import "./life-simulation.css"
 import LifeScene from "./LifeScene"
+import LifeEconomyPanel from "./LifeEconomyPanel"
+import { createLifeEconomy } from "./lifeEconomy"
 
 const LIFE_KEY = "lamoon-life-sim-v1"
 type LifeSnapshot = { version: 1; activeId: string | null; lives: LifeRecord[] }
 type ApiState = { payload?: Record<string, string> | null; updated_at?: string | null }
-type View = "world" | "history" | "about"
+type View = "world" | "economy" | "history" | "about"
 
 function readSnapshot(raw?: string): LifeSnapshot {
   if (!raw) return { version: 1, activeId: null, lives: [] }
   try {
     const parsed = JSON.parse(raw) as Partial<LifeSnapshot>
     if (parsed.version !== 1 || !Array.isArray(parsed.lives)) return { version: 1, activeId: null, lives: [] }
-    return { version: 1, activeId: parsed.activeId ?? null, lives: parsed.lives.filter(validateLifeRecord) }
+    return { version: 1, activeId: parsed.activeId ?? null, lives: parsed.lives.filter(validateLifeRecord).map(life => ({ ...life, economy: life.economy ?? createLifeEconomy(Math.max(0, life.stats.wealth), 0, 0, life.householdDebt) })) }
   } catch {
     return { version: 1, activeId: null, lives: [] }
   }
@@ -115,6 +117,7 @@ export default function LifeWorld() {
       <button className="life-brand" onClick={() => setView("world")}><span className="life-brand-mark">TH</span><span><b>DayTogether</b><small>THAI LIFE SIMULATION</small></span></button>
       <nav className="life-nav" aria-label="เมนูหลัก">
         <button className={view === "world" ? "active" : ""} onClick={() => setView("world")}>โลกของฉัน</button>
+        <button className={view === "economy" ? "active" : ""} onClick={() => setView("economy")}>การเงิน</button>
         <button className={view === "history" ? "active" : ""} onClick={() => setView("history")}>เรื่องราวชีวิต</button>
         <button className={view === "about" ? "active" : ""} onClick={() => setView("about")}>เกี่ยวกับโลกนี้</button>
       </nav>
@@ -144,6 +147,8 @@ export default function LifeWorld() {
           <div className="life-timeline">{activeLife.timeline.slice(0,4).map(item => <article key={item.id}><span className="life-timeline-age">{item.age} ปี</span><div><b>{item.title}</b><p>{item.detail}</p>{item.sourceTitle && <a className="life-timeline-source" href={item.sourceUrl} target="_blank" rel="noreferrer">แหล่งอ้างอิง: {item.sourceTitle} ↗</a>}</div><small>พ.ศ. {item.year + 543}</small></article>)}</div>
         </section>}
       </>}
+
+      {view === "economy" && <section className="life-history">{activeLife ? <><span className="life-eyebrow">MONEY · RISK · CONSEQUENCES</span><h1>เศรษฐกิจครัวเรือน</h1><p>การเงินของตัวละครเปลี่ยนตามรายรับ รายจ่าย หนี้ และการตัดสินใจในแต่ละปี</p><LifeEconomyPanel economy={activeLife.economy ?? createLifeEconomy(Math.max(0, activeLife.stats.wealth), 0, 0, activeLife.householdDebt)} year={activeLife.bornYear + activeLife.age} disabled={saving || activeLife.status !== "alive"} onChange={economy => void updateLife({ ...activeLife, economy })} /></> : <div className="life-empty">เริ่มสร้างชีวิตก่อน จึงจะจัดการการเงินของตัวละครได้</div>}</section>}
 
       {view === "history" && <section className="life-history"><span className="life-eyebrow">EVERY LIFE LEAVES A STORY</span><h1>เรื่องราวที่เคยมีชีวิต</h1><p>ทุกชีวิตมีจุดเริ่มต้น ทางแยก และความทรงจำที่ไม่เหมือนกัน</p>{lives.length === 0 ? <div className="life-empty">ยังไม่มีเรื่องราว เริ่มต้นชีวิตแรกของคุณได้เลย</div> : <div className="life-history-list">{lives.map(life => <article key={life.id}><div className="life-history-number">0{lives.indexOf(life)+1}</div><div className="life-history-copy"><span>ประเทศไทย · {life.province} · พ.ศ. {life.bornYear + 543}</span><h2>{life.name}</h2><p>{life.family} · อายุ {life.age} ปี · {life.areaType}</p></div><span className={life.status === "alive" ? "life-status alive" : "life-status"}>{life.status === "alive" ? "กำลังดำเนินชีวิต" : "จบเรื่องราวแล้ว"}</span><button onClick={() => void selectLife(life.id)}>เปิดเรื่องราว →</button><details className="life-history-timeline"><summary>ดูเหตุการณ์ทั้งหมด ({life.timeline.length})</summary><div>{life.timeline.map(item => <article key={item.id}><span>พ.ศ. {item.year + 543} · อายุ {item.age}</span><b>{item.title}</b><p>{item.detail}</p>{item.sourceTitle && <a href={item.sourceUrl} target="_blank" rel="noreferrer">อ้างอิง: {item.sourceTitle} ↗</a>}</article>)}</div></details></article>)}</div>}</section>}
 
