@@ -15,7 +15,8 @@ export default function LifeEconomyPanel({ economy, year, onChange, disabled = f
   const availableAssets = economy.assets.filter(a => a.kind === "thai-stock" ? year >= 1975 : year >= 2009)
   const selectedAssetId = availableAssets.some(a => a.id === assetId) ? assetId : (availableAssets[0]?.id ?? assetId)
   const selected = availableAssets.find(a => a.id === selectedAssetId)
-  const maxFlow = Math.max(1, economy.monthlyIncome, economy.monthlyExpenses)
+  const totalMonthlyExpenses = economy.monthlyExpenses + (economy.householdCostMonthly ?? 0)
+  const maxFlow = Math.max(1, economy.monthlyIncome, totalMonthlyExpenses)
   const priceHistory = selected?.history ?? []
   const minPrice = Math.min(...priceHistory, selected?.price ?? 0)
   const maxPrice = Math.max(...priceHistory, selected?.price ?? 1)
@@ -31,12 +32,13 @@ export default function LifeEconomyPanel({ economy, year, onChange, disabled = f
       <article><span>เงินสด</span><b>{money(economy.cash)} ฿</b></article>
       <article><span>หนี้คงเหลือ</span><b>{money(economy.debt)} ฿</b></article>
       <article><span>มูลค่าทรัพย์สินสุทธิ</span><b>{money(netWorth(economy))} ฿</b></article>
-      <article><span>รายรับ / รายจ่ายต่อเดือน</span><b>{money(economy.monthlyIncome)} / {money(economy.monthlyExpenses)} ฿</b></article>
+      <article><span>รายรับ / รายจ่ายต่อเดือน</span><b>{money(economy.monthlyIncome)} / {money(totalMonthlyExpenses)} ฿</b></article>
     </div>
     <div className="life-economy-cashflow">
-      <div><span>กระแสเงินสดต่อเดือน</span><b>{money(economy.monthlyIncome - economy.monthlyExpenses)} ฿</b></div>
+      <div><span>กระแสเงินสดต่อเดือน</span><b>{money(economy.monthlyIncome - totalMonthlyExpenses)} ฿</b></div>
       <div className="life-economy-flow-row"><small>รายรับ</small><i><em style={{ width: (economy.monthlyIncome / maxFlow * 100) + "%" }} /></i><b>{money(economy.monthlyIncome)} ฿</b></div>
-      <div className="life-economy-flow-row"><small>รายจ่าย</small><i><em className="expense" style={{ width: (economy.monthlyExpenses / maxFlow * 100) + "%" }} /></i><b>{money(economy.monthlyExpenses)} ฿</b></div>
+      <div className="life-economy-flow-row"><small>รายจ่าย</small><i><em className="expense" style={{ width: (totalMonthlyExpenses / maxFlow * 100) + "%" }} /></i><b>{money(totalMonthlyExpenses)} ฿</b></div>
+      {(economy.householdCostMonthly ?? 0) > 0 && <small>รวมค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน {money(economy.householdCostMonthly ?? 0)} ฿/เดือน (ประมาณการในเกม)</small> }
     </div>
     <div className="life-economy-grid">
       <article><span className="life-eyebrow">LOTTERY · สลากกินแบ่ง</span><h3>ลุ้นโชค</h3>{year < 1939 ? <p>ระบบสลากกินแบ่งรัฐบาลยังไม่เปิดในยุคนี้</p> : <><p>ซื้อสลากมีโอกาสเสียเงินทั้งหมด รางวัลใหญ่มีโอกาสเกิดต่ำมาก ไม่ใช่วิธีสร้างรายได้ที่เชื่อถือได้</p><label>จำนวนใบ <input type="number" min="1" max="20" value={tickets} onChange={e => setTickets(e.target.value)} /></label><button disabled={disabled} onClick={() => apply(buyLotteryTickets(economy, Number(tickets)))}>ซื้อสลาก · ใบละ 80 บาท</button><button className="life-secondary" disabled={disabled || economy.lotteryTickets === 0} onClick={() => apply(drawLottery(economy, year * 100 + economy.lastSimulatedMonth + economy.lotteryTickets))}>ออกรางวัล ({economy.lotteryTickets} ใบ)</button><small>ใช้ไป {money(economy.totalLotterySpent)} ฿ · ถูกรางวัลรวม {money(economy.totalLotteryWon)} ฿</small></>}</article>
