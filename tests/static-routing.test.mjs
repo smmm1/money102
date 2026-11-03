@@ -119,7 +119,7 @@ test("household members create recurring costs that flow through the cash ledger
   for (const feature of ["householdCostMonthly", "householdCostBreakdown", "ค่าใช้จ่ายสมาชิกและทรัพย์สินในบ้าน", "หนี้ฉุกเฉินจากเงินสดไม่พอจ่าย", "const shortfall = Math.max(0, -rawCash)"]) {
     assert.ok(economy.includes(feature), "missing recurring cost accounting: " + feature);
   }
-  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostBreakdown,householdCostMonthly:Object.values(householdCostBreakdown)", "pet-care-followup-", "retryableMilestone", "กำลังเตรียมเงินดูแล", "parentAges", "parentLifespans", "parentAlive", "parent-loss-", "parent-care-", "parent-checkup-", "parent-family-plan-"]) {
+  for (const feature of ["estimateHouseholdCostMonthly", "childAges", "scene.pets.length", "scene.housekeeper", "scene.vehicle", "householdCostBreakdown,householdCostMonthly:Object.values(householdCostBreakdown)", "pathway===\"โรงเรียนเอกชน\"?0.22", "pathway===\"สายอาชีพ\"?0.18", "pet-care-followup-", "retryableMilestone", "กำลังเตรียมเงินดูแล", "parentAges", "parentLifespans", "parentAlive", "parent-loss-", "parent-care-", "parent-checkup-", "parent-family-plan-"]) {
     assert.ok(simulation.includes(feature), "missing household cost driver: " + feature);
   }
   assert.ok(panel.includes("totalMonthlyExpenses") && panel.includes("ประมาณการในเกม") && panel.includes("householdCostLabels") && panel.includes("householdCostBreakdown"));
