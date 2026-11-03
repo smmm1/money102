@@ -484,10 +484,14 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
     ])
   }
   const petAges=life.householdScene?.petAges ?? life.householdScene?.pets.map(()=>0) ?? []
-  const petCareIndex=petAges.findIndex((age,index)=>age>=1 && !done.has(`pet-care-${index}`))
+  const petCareStates=life.householdScene?.petCare ?? []
+  const petCareIndex=petAges.findIndex((age,index)=>age>=1 && (!done.has(`pet-care-${index}`) || (petCareStates[index]==="กำลังเตรียมเงินดูแล" && age>=2 && age%2===0 && !done.has(`pet-care-followup-${index}-${age}`))))
   if(petCareIndex>=0) {
+    const petAge=petAges[petCareIndex]
+    const deferred=petCareStates[petCareIndex]==="กำลังเตรียมเงินดูแล"
+    const petSceneKey=deferred?`pet-care-followup-${petCareIndex}-${petAge}`:`pet-care-${petCareIndex}`
     const petName=life.householdScene?.pets[petCareIndex]==="cat"?"แมว":"สุนัข"
-    return event(`pet-care-${petCareIndex}`,`วางแผนดูแลสุขภาพ${petName}`,`${petName} อยู่กับครอบครัวมาระยะหนึ่งแล้ว ควรทบทวนวัคซีน การป้องกันปรสิต การทำหมันตามความเหมาะสม และเงินสำรองสำหรับการรักษา โดยปรึกษาสัตวแพทย์ตามช่วงวัยและสุขภาพจริง`,[
+    return event(petSceneKey,deferred?`ติดตามแผนดูแลสุขภาพ${petName}`:`วางแผนดูแลสุขภาพ${petName}`,`${petName} อยู่กับครอบครัวมา ${petAge} ปีแล้ว ควรทบทวนวัคซีน การป้องกันปรสิต การทำหมันตามความเหมาะสม และเงินสำรองสำหรับการรักษา โดยปรึกษาสัตวแพทย์ตามช่วงวัยและสุขภาพจริง`,[
       choice(`pet-vet-${petCareIndex}`,"นัดตรวจสุขภาพกับสัตวแพทย์","ตรวจประวัติวัคซีนและขอคำแนะนำเฉพาะตัวสัตว์","มีแผนดูแลต่อเนื่องและพบปัญหาได้เร็วขึ้น","ค่าใช้จ่ายอาจสูงกว่าที่เตรียมไว้",78,{wealth:-2,stress:-1,relationships:1},{wealth:-2,stress:2}),
       choice(`pet-community-${petCareIndex}`,"หาคลินิกหรือโครงการช่วยเหลือในพื้นที่","สอบถามคลินิกชุมชน หน่วยงานท้องถิ่น และเงื่อนไขบริการก่อนเดินทาง","เข้าถึงบริการที่เหมาะกับงบประมาณมากขึ้น","คิวหรือบริการที่ต้องการอาจไม่พร้อม",72,{skills:1,relationships:1,wealth:-1},{stress:2}),
       choice(`pet-delay-${petCareIndex}`,"จัดเงินสำรองก่อนแล้วค่อยนัด","เริ่มแยกเงินและตรวจสอบอาการผิดปกติระหว่างรอ โดยไม่ละเลยอาการฉุกเฉิน","ครอบครัววางแผนค่าใช้จ่ายได้ดีขึ้น","การเลื่อนตรวจอาจทำให้พลาดการดูแลที่จำเป็น",66,{wealth:1,skills:1},{stress:2})
@@ -672,7 +676,8 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
     if(choiceId==="buy-car") householdScene.vehicle="car"
     if(choiceId==="hire-housekeeper") householdScene.housekeeper=true
   }
-  const sceneDecisions = event.sceneKey ? [...new Set([...(life.sceneDecisions ?? []),event.sceneKey])] : (life.sceneDecisions ?? [])
+  const retryableMilestone = !!event.sceneKey && !success && (event.sceneKey.startsWith("child-school-") || event.sceneKey.startsWith("child-path-") || event.sceneKey.startsWith("pet-care-"))
+  const sceneDecisions = event.sceneKey && !retryableMilestone ? [...new Set([...(life.sceneDecisions ?? []),event.sceneKey])] : (life.sceneDecisions ?? [])
   return {...life,stats,occupation,householdDebt,householdScene,sceneDecisions,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
 
