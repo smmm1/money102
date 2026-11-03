@@ -8,6 +8,7 @@ const world = await readFile(new URL("../src/LifeWorld.tsx", import.meta.url), "
 const engine = await readFile(new URL("../src/lifeSimulation.ts", import.meta.url), "utf8");
 const history = await readFile(new URL("../src/thaiHistory.ts", import.meta.url), "utf8");
 const styles = await readFile(new URL("../src/life-simulation.css", import.meta.url), "utf8");
+const story = await readFile(new URL("../src/LifeStoryExperience.tsx", import.meta.url), "utf8");
 
 test("the authenticated app mounts the life simulation and preserves the existing login", () => {
   assert.ok(app.includes('import CloudAuth from "./CloudAuth"'));
@@ -38,14 +39,14 @@ test("historical events are tied to documented Thai years and traceable sources"
   }
   assert.ok(engine.includes("eventForYear") && engine.includes("sourceUrl"));
   assert.equal((history.match(/name: "/g) || []).length, 77, "the province dataset must contain all 77 provinces including Bangkok");
-  assert.ok(world.includes("มีแหล่งอ้างอิง") && world.includes("life-event-context") && world.includes("life-source"));
+  assert.ok(story.includes("life-story-source") && story.includes("life-story-context") && story.includes("event.sourceTitle"));
 });
 
 test("each simulated year produces a personal or historical event with branching risk-aware choices", () => {
   for (const feature of ["advanceLife", "resolveLifeChoice", "failureOutcome", "chance", "successEffects", "failureEffects", "stage", "eraLabel", "makePersonalEvent"]) {
     assert.ok(engine.includes(feature), "missing simulation system: " + feature);
   }
-  assert.ok(world.includes("โอกาสสำเร็จโดยประมาณ") && world.includes("pendingEvent.choices.map"));
+  assert.ok(story.includes("life-story-chance") && story.includes("event.choices.map") && story.includes("estimateChoiceChance(life, choice)"));
 });
 
 test("personal events react to the character's actual life conditions", () => {
@@ -82,7 +83,7 @@ test("life simulation has additional stage-specific situations and state-adjuste
   assert.match(engine, /estimateChoiceChance/);
   assert.match(engine, /life\.stats\.stress>=70/);
   assert.match(engine, /life\.householdDebt>30000/);
-  assert.match(world, /estimateChoiceChance\(activeLife, choice\)/);
+  assert.match(story, /estimateChoiceChance\(life, choice\)/);
 });
 
 test("life scene reflects story milestones for family, pets, vehicles and household help", async () => {
@@ -93,7 +94,7 @@ test("life scene reflects story milestones for family, pets, vehicles and househ
   for (const feature of ["sceneMilestoneEvent", "adopt-cat", "adopt-dog", "start-family", "buy-car", "buy-motorcycle", "hire-housekeeper", "sceneDecisions"]) {
     assert.ok(engine.includes(feature), "missing story-driven scene milestone: " + feature);
   }
-  assert.ok(world.includes('import LifeScene from "./LifeScene"') && world.includes("<LifeScene life={activeLife} />"));
+  assert.ok(story.includes('import LifeScene from "./LifeScene"') && story.includes("<LifeScene life={life} />"));
   assert.ok(styles.includes(".life-scene-frame") && styles.includes(".life-scene-legend"));
   for (const feature of ["lifeStageForAge", "childAges", "partnerAge", "advanceHouseholdAges", "age<=2", "age<=12", "age<=19", "age<65"]) {
     assert.ok(engine.includes(feature), "missing age progression rule: " + feature);
