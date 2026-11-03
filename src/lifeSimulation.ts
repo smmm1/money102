@@ -62,6 +62,8 @@ export type LifeRecord = {
   family: string
   background: string
   parents: string[]
+  parentAges?: number[]
+  parentCare?: string[]
   siblings: number
   householdIncome: string
   householdDebt: number
@@ -483,6 +485,18 @@ function sceneMilestoneEvent(life:LifeRecord,year:number):LifeEvent|null {
       choice(`child-listen-${teenChildIndex}`,"เปิดโอกาสให้ลูกลองค้นหาความสนใจ","พูดคุยเรื่องเป้าหมายและหาข้อมูลร่วมกันโดยไม่เร่งตัดสินใจ","ความสัมพันธ์และความเข้าใจในครอบครัวดีขึ้น","อาจต้องใช้เวลาตัดสินใจและวางแผนเพิ่ม",84,{relationships:3,happiness:1},{stress:1})
     ])
   }
+  const parentAges=life.parentAges ?? []
+  const parentCare=life.parentCare ?? []
+  const parentCareIndex=parentAges.findIndex((age,index)=>age>=60 && !done.has(`parent-care-${index}`))
+  if(parentCareIndex>=0) {
+    const parentName=parentCareIndex===0?"พ่อ":"แม่"
+    const parentAge=parentAges[parentCareIndex]
+    return event(`parent-care-${parentCareIndex}`,`${parentName} เริ่มเข้าสู่วัยสูงอายุ`,`${parentName} อายุ ${parentAge} ปีแล้ว ครอบครัวควรพูดคุยเรื่องสุขภาพ การเดินทางไปใช้บริการ และความช่วยเหลือที่ผู้สูงอายุต้องการ โดยไม่ตัดสินใจแทนเจ้าตัวทั้งหมด`,[
+      choice(`parent-checkup-${parentCareIndex}`,"ชวนไปตรวจสุขภาพตามวัย","สอบถามหน่วยบริการเรื่องการตรวจที่เหมาะสมและประวัติสุขภาพ","ได้แผนติดตามสุขภาพและรู้ช่องทางดูแล","ค่าเดินทางหรือคิวนัดอาจเป็นอุปสรรค",78,{relationships:2,wealth:-2},{stress:2,wealth:-1}),
+      choice(`parent-community-${parentCareIndex}`,"หาข้อมูลบริการผู้สูงอายุในชุมชน","สอบถามหน่วยบริการหรือองค์กรท้องถิ่นเกี่ยวกับบริการในพื้นที่","พบช่องทางช่วยเหลือที่เข้าถึงได้","บริการอาจมีข้อจำกัดด้านพื้นที่หรือจำนวนคน",74,{skills:1,relationships:2},{stress:2}),
+      choice(`parent-family-plan-${parentCareIndex}`,"คุยแบ่งหน้าที่ดูแลกันในครอบครัว","ตกลงเรื่องเวลา การเดินทาง ค่าใช้จ่าย และแผนสำรองร่วมกับผู้สูงอายุ","ภาระไม่ตกกับคนใดคนหนึ่งมากเกินไป","ตารางชีวิตหรือความเห็นของญาติอาจไม่ตรงกัน",76,{relationships:3,stress:-1},{relationships:-2,stress:3})
+    ])
+  }
   const petAges=life.householdScene?.petAges ?? life.householdScene?.pets.map(()=>0) ?? []
   const petCareStates=life.householdScene?.petCare ?? []
   const petCareIndex=petAges.findIndex((age,index)=>age>=1 && (!done.has(`pet-care-${index}`) || (petCareStates[index]==="กำลังเตรียมเงินดูแล" && age>=2 && age%2===0 && !done.has(`pet-care-followup-${index}-${age}`))))
@@ -536,7 +550,7 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   const life:LifeRecord = {
     id:uid(),name:lifeName,gender,country:"ประเทศไทย",region:province.region,province:province.name,areaType,
     family:profile.family,background:`${profile.description} เติบโตใน${areaType}${province.name}`,
-    parents:[parent1,parent2],siblings,householdIncome:profile.income,householdDebt:profile.debt,
+    parents:[parent1,parent2],parentAges:[20+Math.floor(Math.random()*15),20+Math.floor(Math.random()*15)],parentCare:[],siblings,householdIncome:profile.income,householdDebt:profile.debt,
     occupation:"ยังไม่ถึงวัยทำงาน",bornYear,age:0,expectedLifespan:78+Math.floor(Math.random()*18),status:"alive",
     stats:{health:78,happiness:62,education:profile.education,relationships:58,skills:24,wealth:profile.wealth,stress:12},
     economy:createLifeEconomy(profile.wealth, profile.income==="รายได้น้อย"?6500:profile.income==="รายได้พอประทัง"?11000:profile.income==="รายได้ปานกลาง"?22000:42000, profile.income==="รายได้น้อย"?6200:profile.income==="รายได้พอประทัง"?9500:profile.income==="รายได้ปานกลาง"?18000:32000, profile.debt),
@@ -591,7 +605,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
     economy=simulateEconomyMonth(economy,absoluteMonth,life.bornYear*31+life.id.length)
     if(life.bornYear+nextAge>=1975) economy=moveMarkets(economy,absoluteMonth,life.bornYear*97+life.id.length)
   }
-  const nextLife={...life,age:nextAge,economy,householdScene}
+  const nextLife={...life,age:nextAge,economy,householdScene,parentAges:(life.parentAges??[]).map(age=>age+1)}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
@@ -644,6 +658,14 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
+    const parentCareMatch=choiceId.match(/^parent-(checkup|community|family-plan)-(\\d+)$/)
+    if(parentCareMatch){
+      const index=Number(parentCareMatch[2])
+      const careLabels:Record<string,string>={checkup:"วางแผนตรวจสุขภาพ",community:"ค้นหาบริการในชุมชน","family-plan":"แบ่งหน้าที่ดูแลร่วมกัน"}
+      const nextParentCare=[...(life.parentCare??[])]
+      nextParentCare[index]=careLabels[parentCareMatch[1]]
+      life={...life,parentCare:nextParentCare}
+    }
     const petCareMatch=choiceId.match(/^pet-(vet|community|delay)-(\d+)$/)
     if(petCareMatch){
       const index=Number(petCareMatch[2])
@@ -676,7 +698,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
     if(choiceId==="buy-car") householdScene.vehicle="car"
     if(choiceId==="hire-housekeeper") householdScene.housekeeper=true
   }
-  const retryableMilestone = !!event.sceneKey && !success && (event.sceneKey.startsWith("child-school-") || event.sceneKey.startsWith("child-path-") || event.sceneKey.startsWith("pet-care-"))
+  const retryableMilestone = !!event.sceneKey && !success && (event.sceneKey.startsWith("child-school-") || event.sceneKey.startsWith("child-path-") || event.sceneKey.startsWith("pet-care-") || event.sceneKey.startsWith("parent-care-"))
   const sceneDecisions = event.sceneKey && !retryableMilestone ? [...new Set([...(life.sceneDecisions ?? []),event.sceneKey])] : (life.sceneDecisions ?? [])
   return {...life,stats,occupation,householdDebt,householdScene,sceneDecisions,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
