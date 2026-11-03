@@ -26,15 +26,6 @@ function readSnapshot(raw?: string): LifeSnapshot {
 }
 
 const formatMoney = (amount: number) => `${new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 }).format(amount)} หน่วยจำลอง`
-const statLabels = [
-  { key: "health", label: "สุขภาพ", icon: "♡" },
-  { key: "happiness", label: "ความสุข", icon: "☼" },
-  { key: "education", label: "การศึกษา", icon: "⌑" },
-  { key: "relationships", label: "ความสัมพันธ์", icon: "⌂" },
-  { key: "skills", label: "ทักษะ", icon: "✳" },
-  { key: "stress", label: "ความเครียด", icon: "〰" },
-] as const
-
 export default function LifeWorld() {
   const { user, signOut } = useAuth()
   const [view, setView] = useState<View>("world")
