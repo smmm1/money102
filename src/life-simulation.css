@@ -217,3 +217,68 @@ button{cursor:pointer}
 .life-economy-ledger>div b{white-space:nowrap}
 @media(max-width:850px){.life-economy-grid{grid-template-columns:1fr 1fr}.life-economy-summary{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.life-economy-grid{grid-template-columns:1fr}.life-economy-grid p{min-height:0}.life-economy{padding:13px}.life-economy-summary article{padding:12px}}
+
+
+/* Story-first interface: original chapter layout, not a dashboard clone */
+.life-story-experience{margin:22px 0 34px}
+.life-chapter-bar{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:0 2px 15px;border-bottom:1px solid #e4e6dc}
+.life-chapter-bar h2{margin:5px 0 0;color:#243b32;font-family:Georgia,"Noto Serif Thai",serif;font-size:clamp(23px,3vw,32px);font-weight:500;letter-spacing:-.04em}
+.life-chapter-bar h2 i{color:#c27d55;font-style:normal}
+.life-chapter-date{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.life-chapter-date b{font-size:15px;color:#294d40}
+.life-chapter-date span{font-size:11px;color:#89948b}
+.life-story-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(310px,.8fr);gap:18px;align-items:start;margin-top:17px}
+.life-story-world{min-width:0}
+.life-story-scene-top{display:flex;justify-content:space-between;gap:10px;padding:0 3px 9px;color:#7b897e;font-size:11px}
+.life-story-scene-top span:last-child{color:#5f8a70}
+.life-story-world>.life-scene-card{margin:0;padding:12px;background:#f5f4ec;border-color:#e5e3d8;border-radius:17px}
+.life-story-world .life-scene-heading{display:none}
+.life-story-world .life-scene-frame{border-radius:11px}
+.life-story-world .life-scene-frame svg{min-height:0}
+.life-story-world .life-scene-legend{padding:9px 2px 1px}
+.life-story-cast{padding:16px 2px 13px;border-bottom:1px solid #e5e8df}
+.life-story-cast>div{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.life-story-cast>div>span{padding:6px 10px;border:1px solid #e4e7de;border-radius:999px;background:#fff;color:#506b5d;font-size:10px}
+.life-story-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding-top:13px}
+.life-story-stats>div{min-width:0;padding:10px 11px;border:1px solid #e8e9e1;border-radius:10px;background:#fff}
+.life-story-stats>div>span{display:block;color:#7d8b80;font-size:10px}
+.life-story-stats>div>b{display:block;margin-top:5px;color:#304d40;font-size:16px;font-variant-numeric:tabular-nums}
+.life-story-stats>div>b small{margin-left:3px;color:#a0a99f;font-size:9px;font-weight:400}
+.life-story-stats>div>i{display:block;height:3px;margin-top:8px;border-radius:5px;background:#edf0e9;overflow:hidden}
+.life-story-stats>div>i>em{display:block;height:100%;border-radius:5px;background:#779987}
+.life-story-stats>.life-story-cash{grid-column:span 3;display:grid;grid-template-columns:1fr auto;align-items:center;gap:3px 10px;background:#eaf0e8;border-color:#dce7da}
+.life-story-cash b{grid-column:2;grid-row:1/3;font-size:20px!important}
+.life-story-cash small{color:#89968a;font-size:10px}
+.life-story-panel{position:sticky;top:16px;min-width:0;padding:clamp(17px,2.3vw,25px);border:1px solid #e8e3d7;border-radius:17px;background:#fffefa;box-shadow:0 12px 35px rgba(54,66,49,.055)}
+.life-story-kicker{display:flex;justify-content:space-between;gap:8px;padding-bottom:12px;border-bottom:1px solid #ece9df;color:#9b805f;font-size:9px;letter-spacing:.07em}
+.life-story-panel h2{margin:16px 0 10px;color:#263d32;font-family:Georgia,"Noto Serif Thai",serif;font-size:clamp(21px,2.2vw,27px);font-weight:500;line-height:1.45;letter-spacing:-.025em}
+.life-story-description{margin:0;color:#596c60;font-size:13px;line-height:1.9}
+.life-story-context{margin:13px 0 0;padding:11px 12px;border-left:2px solid #d5a27a;background:#f8f4ec;color:#827d6f;font-size:10px;line-height:1.8}
+.life-story-source{display:flex;flex-direction:column;gap:5px;margin-top:14px;padding:11px 12px;border:1px solid #e7e9df;border-radius:9px;background:#f7f8f2}
+.life-story-source>span{color:#899387;font-size:9px}
+.life-story-source a{color:#477b66;font-size:11px;text-decoration:underline;text-underline-offset:3px}
+.life-story-source small{color:#92998f;font-size:9px;line-height:1.6}
+.life-story-choice-heading{display:flex;flex-direction:column;gap:3px;margin:20px 0 9px}
+.life-story-choice-heading span{color:#304c3e;font-size:12px;font-weight:700}
+.life-story-choice-heading small{color:#98a095;font-size:9px}
+.life-story-choices{display:flex;flex-direction:column;gap:8px}
+.life-story-choices>button{display:grid;grid-template-columns:25px minmax(0,1fr) 15px;gap:9px;align-items:start;width:100%;padding:12px 10px;border:1px solid #e7e8df;border-radius:11px;background:#fff;text-align:left;cursor:pointer;transition:border-color .18s,background .18s,transform .18s}
+.life-story-choices>button:hover{border-color:#9ab39f;background:#f8faf5;transform:translateY(-1px)}
+.life-story-choices>button:disabled{opacity:.55;cursor:wait;transform:none}
+.life-story-choice-index{padding-top:1px;color:#bd8967;font-family:Georgia,serif;font-size:13px}
+.life-story-choice-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
+.life-story-choice-copy>b{color:#344d40;font-size:12px;line-height:1.5}
+.life-story-choice-copy>small{color:#7c897f;font-size:10px;line-height:1.65}
+.life-story-choice-copy>i{display:block;height:3px;margin-top:3px;border-radius:5px;background:#edf0e9;overflow:hidden}
+.life-story-choice-copy>i>em{display:block;height:100%;border-radius:5px;background:#779987}
+.life-story-choice-copy>.life-story-chance{color:#9b8b70;font-size:9px}
+.life-story-choice-arrow{padding-top:2px;color:#789582;font-size:12px}
+.life-story-next-facts{display:flex;flex-direction:column;gap:9px;margin:20px 0;padding:14px 0;border-top:1px solid #ebe9e0;border-bottom:1px solid #ebe9e0}
+.life-story-next-facts span{display:flex;justify-content:space-between;gap:10px;color:#929b91;font-size:10px}
+.life-story-next-facts b{color:#536b5c;text-align:right;font-weight:600}
+.life-story-continue{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:20px;padding:14px 16px;border:0;border-radius:10px;background:#315d4d;color:#fff;font:inherit;font-size:12px;cursor:pointer}
+.life-story-continue:disabled{opacity:.5;cursor:wait}
+.life-story-continue span{font-size:17px}
+@media(max-width:900px){.life-story-grid{grid-template-columns:minmax(0,1fr) minmax(275px,.85fr)}.life-story-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.life-story-stats>.life-story-cash{grid-column:span 2}}
+@media(max-width:700px){.life-story-grid{grid-template-columns:1fr}.life-story-panel{position:static}.life-story-world>.life-scene-card{padding:9px}.life-story-panel{padding:17px}.life-chapter-bar h2{font-size:24px}}
+@media(max-width:440px){.life-chapter-bar{align-items:flex-start}.life-chapter-date b{font-size:13px}.life-chapter-date span{max-width:120px;text-align:right;font-size:9px}.life-story-stats>div{padding:9px}.life-story-stats>div>b{font-size:14px}.life-story-cash b{font-size:17px!important}}
