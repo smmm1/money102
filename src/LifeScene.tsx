@@ -1,4 +1,4 @@
-import type { LifeRecord, LifeStage } from "./lifeSimulation"
+import { lifeStageForAge, type LifeRecord, type LifeStage } from "./lifeSimulation"
 
 type SceneActivity = "sleep" | "play" | "read" | "walk" | "rest" | "work"
 type ScenePerson = {
