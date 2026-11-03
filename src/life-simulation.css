@@ -326,3 +326,50 @@ button{cursor:pointer}
 .life-economy-household-costs li{display:flex;justify-content:space-between;gap:8px;color:#89958a;font-size:10px}
 .life-economy-household-costs li b{color:#536b59;font-weight:600;font-variant-numeric:tabular-nums}
 @media(max-width:520px){.life-economy-household-costs ul{grid-template-columns:1fr}}
+
+/* Easy-play pass: put the decision first and keep secondary information folded away. */
+.life-easy-play .life-story-grid{grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);align-items:start;gap:18px}
+.life-easy-play .life-easy-story{grid-column:1;grid-row:1;position:static;padding:clamp(20px,2.6vw,30px);border-radius:18px;background:#fff}
+.life-easy-play .life-story-world{grid-column:2;grid-row:1;min-width:0}
+.life-easy-play .life-story-panel h2{font-family:inherit;font-size:clamp(24px,2.7vw,32px);font-weight:650;line-height:1.35;letter-spacing:-.035em;margin:17px 0 10px}
+.life-easy-play .life-story-description{font-size:14px;line-height:1.85;color:#56675d}
+.life-easy-play .life-story-choice-heading{margin:24px 0 12px}
+.life-easy-play .life-story-choice-heading span{font-size:16px}
+.life-easy-play .life-story-choice-heading small{font-size:11px}
+.life-easy-play .life-story-choices{gap:10px}
+.life-easy-play .life-story-choices>button{grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:12px;padding:15px 14px;border:1px solid #e5e9e1;border-radius:13px;min-height:68px}
+.life-easy-play .life-story-choices>button:hover{background:#f5f8f3;border-color:#9bb6a2;transform:translateY(-1px)}
+.life-easy-play .life-story-choice-index{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:#edf3ed;color:#4b765b;font-family:inherit;font-size:12px;font-weight:700}
+.life-easy-play .life-story-choice-copy{gap:4px}
+.life-easy-play .life-story-choice-copy>b{font-size:14px;line-height:1.45;color:#263f32}
+.life-easy-play .life-story-choice-copy>small{font-size:11px;line-height:1.55;color:#7b887e}
+.life-easy-play .life-easy-chance{padding:5px 8px;border-radius:20px;background:#f1f4ed;color:#6c826f;font-size:10px;font-weight:700;white-space:nowrap}
+.life-easy-hint{margin:12px 2px 0;color:#9a9f94;font-size:10px;line-height:1.7}
+.life-easy-more,.life-easy-family,.life-easy-status{margin-top:13px;border-top:1px solid #ecefe8;padding-top:12px}
+.life-easy-more summary,.life-easy-family summary,.life-easy-status summary{cursor:pointer;list-style:none;color:#67806d;font-size:11px;font-weight:650;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.life-easy-more summary::-webkit-details-marker,.life-easy-family summary::-webkit-details-marker,.life-easy-status summary::-webkit-details-marker{display:none}
+.life-easy-more summary:after,.life-easy-family summary:after,.life-easy-status summary:after{content:"＋";font-size:14px;color:#8ca18e}
+.life-easy-more[open] summary:after,.life-easy-family[open] summary:after,.life-easy-status[open] summary:after{content:"−"}
+.life-easy-more>p{font-size:11px;line-height:1.8;color:#6e7d70;margin:12px 0}
+.life-easy-more .life-story-circumstances{margin:12px 0}
+.life-easy-family>div{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.life-easy-family>div>span{padding:6px 9px;border:1px solid #e5e9e1;border-radius:30px;background:#fff;color:#627969;font-size:10px}
+.life-easy-status .life-story-stats{padding-top:12px}
+.life-easy-play .life-story-world>.life-scene-card{padding:10px}
+.life-easy-play .life-story-scene-top{font-size:10px}
+.life-easy-play .life-story-finance-link{margin-top:12px}
+.life-easy-play .life-story-continue{margin-top:24px;padding:17px 18px;font-size:14px}
+@media(max-width:760px){
+ .life-easy-play .life-story-grid{grid-template-columns:minmax(0,1fr);gap:14px}
+ .life-easy-play .life-easy-story{grid-column:1;grid-row:1}
+ .life-easy-play .life-story-world{grid-column:1;grid-row:2}
+ .life-easy-play .life-story-panel h2{font-size:25px}
+}
+@media(max-width:480px){
+ .life-easy-play .life-easy-story{padding:17px}
+ .life-easy-play .life-story-choices>button{grid-template-columns:25px minmax(0,1fr) auto;gap:9px;padding:13px 10px}
+ .life-easy-play .life-story-choice-copy>b{font-size:13px}
+ .life-easy-play .life-story-choice-copy>small{font-size:10px}
+ .life-easy-play .life-easy-chance{font-size:9px;padding:4px 6px}
+ .life-easy-play .life-chapter-bar{align-items:flex-start}
+}
