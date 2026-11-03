@@ -282,3 +282,18 @@ button{cursor:pointer}
 @media(max-width:900px){.life-story-grid{grid-template-columns:minmax(0,1fr) minmax(275px,.85fr)}.life-story-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.life-story-stats>.life-story-cash{grid-column:span 2}}
 @media(max-width:700px){.life-story-grid{grid-template-columns:1fr}.life-story-panel{position:static}.life-story-world>.life-scene-card{padding:9px}.life-story-panel{padding:17px}.life-chapter-bar h2{font-size:24px}}
 @media(max-width:440px){.life-chapter-bar{align-items:flex-start}.life-chapter-date b{font-size:13px}.life-chapter-date span{max-width:120px;text-align:right;font-size:9px}.life-story-stats>div{padding:9px}.life-story-stats>div>b{font-size:14px}.life-story-cash b{font-size:17px!important}}
+
+
+.life-origin-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:4px 0 2px;padding:13px 15px;border:1px solid #e7e9df;border-radius:12px;background:#f7f8f2}
+.life-origin-strip>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.life-origin-strip small{color:#9aa196;font-size:9px}
+.life-origin-strip b{overflow:hidden;color:#526b5c;font-size:10px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.life-story-finance-link{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;margin-top:10px;padding:12px 14px;border:1px solid #dfe8dd;border-radius:11px;background:#eef3eb;text-align:left;cursor:pointer;transition:background .18s,border-color .18s}
+.life-story-finance-link:hover{border-color:#a8bea9;background:#e7efe4}
+.life-story-finance-link>span{display:flex;flex-direction:column;gap:4px;min-width:0}
+.life-story-finance-link b{color:#385744;font-size:11px}
+.life-story-finance-link small{color:#819083;font-size:9px;line-height:1.5}
+.life-story-finance-link i{flex-shrink:0;color:#527b62;font-size:9px;font-style:normal}
+.life-story-world .life-scene-era{font-size:9px}
+@media(max-width:850px){.life-origin-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.life-origin-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.life-story-finance-link{align-items:flex-start;flex-direction:column}.life-story-finance-link i{align-self:flex-end}}
