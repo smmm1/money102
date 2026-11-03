@@ -656,6 +656,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   const chance=estimateChoiceChance(life,selected)
   const success=Math.random()*100<chance
   const effects=success?selected.successEffects:selected.failureEffects
+  const wealthDelta=effects.wealth ?? 0
   const stats={...life.stats}
   for(const [key,value] of Object.entries(effects)) {
     const statKey=key as keyof LifeStats
@@ -679,7 +680,16 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
     householdDebt=Math.max(0,householdDebt-repayment)
     economy={...economy,cash:economy.cash-repayment,debt:Math.max(0,economy.debt-repayment),ledger:repayment>0?[{year:event.year,month:1,kind:"expense" as const,label:"ชำระคืนเงินต้นจากการปรับโครงสร้างหนี้",amount:-repayment},...economy.ledger].slice(0,240):economy.ledger}
   }
+  if(wealthDelta!==0) {
+    const rawCash=economy.cash+wealthDelta
+    const shortfall=Math.max(0,-rawCash)
+    const cash=Math.max(0,rawCash)
+    householdDebt+=shortfall
+    const entryKind=wealthDelta>0?"income" as const:"expense" as const
+    economy={...economy,cash,debt:householdDebt,debtRate:shortfall>0&&economy.debtRate===0?0.12:economy.debtRate,ledger:[{year:event.year,month:1,kind:entryKind,label:"ผลกระทบเงินสดจากเหตุการณ์",amount:wealthDelta},...economy.ledger].slice(0,240)}
+  }
   economy={...economy,debt:householdDebt}
+  stats.wealth=economy.cash
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
   const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
@@ -726,7 +736,7 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   }
   const retryableMilestone = !!event.sceneKey && !success && (event.sceneKey.startsWith("child-school-") || event.sceneKey.startsWith("child-path-") || event.sceneKey.startsWith("pet-care-") || event.sceneKey.startsWith("parent-care-"))
   const sceneDecisions = event.sceneKey && !retryableMilestone ? [...new Set([...(life.sceneDecisions ?? []),event.sceneKey])] : (life.sceneDecisions ?? [])
-  return {...life,stats,occupation,householdDebt,householdScene,sceneDecisions,pendingEvent:null,timeline:[entry,...life.timeline]}
+  return {...life,stats,occupation,householdDebt,economy,householdScene,sceneDecisions,pendingEvent:null,timeline:[entry,...life.timeline]}
 }
 
 export function validateLifeRecord(value:unknown):value is LifeRecord {
