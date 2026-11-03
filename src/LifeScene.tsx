@@ -177,28 +177,36 @@ export default function LifeScene({ life }: { life: LifeRecord }) {
   const right = 560
   const positions = people.map((_, index) => people.length <= 1 ? 330 : left + index * (right - left) / (people.length - 1))
   const stageSummary = "คุณอยู่ในวัย" + stageLabels[selfStage]
+  const sceneYear = life.bornYear + life.age
+  const rural = /ชนบท|หมู่บ้าน|เกษตร|ชนบท/.test(life.areaType)
+  const earlyEra = sceneYear < 1960
+  const midEra = sceneYear >= 1960 && sceneYear < 1990
+  const sky = earlyEra ? "#d9e5d9" : midEra ? "#dce8e8" : "#dcebe4"
+  const wall = earlyEra ? "#c6a982" : midEra ? "#e1d6bd" : "#f1e3c9"
+  const roof = earlyEra ? "#80634c" : midEra ? "#8d6654" : "#9c6955"
+  const roofLine = earlyEra ? "#654c3d" : "#805444"
 
   return <section className="life-scene-card" aria-label="ภาพจำลองบ้านและสมาชิกในชีวิต">
-    <div className="life-scene-heading"><div><span className="life-eyebrow">A LITTLE WORLD OF YOUR OWN</span><h2>ฉากชีวิตปัจจุบัน</h2></div><span className="life-scene-era">พ.ศ. {life.bornYear + life.age + 543} · {life.province}</span></div>
+    <div className="life-scene-heading"><div><span className="life-eyebrow">A LITTLE WORLD OF YOUR OWN</span><h2>ฉากชีวิตปัจจุบัน</h2></div><span className="life-scene-era">พ.ศ. {life.bornYear + life.age + 543} · {life.province} · {rural ? "ชุมชนชนบท" : "ชุมชนเมือง"}</span></div>
     <div className="life-scene-frame">
       <svg viewBox="0 0 820 390" role="img" aria-label={"ฉากบ้านของ " + life.name + " มีสมาชิกในครอบครัว " + people.length + " คน สัตว์เลี้ยง " + pets.length + " ตัว"}>
-        <rect width="820" height="390" fill="#dcebe4" />
+        <rect width="820" height="390" fill={sky} />
         <rect y="235" width="820" height="155" fill="#9ab79c" />
         <rect y="225" width="820" height="16" fill="#86a98c" />
         <circle className="life-scene-sun" cx="685" cy="65" r="29" fill="#f3d991" />
-        <g className="life-scene-cloud" opacity=".65" fill="#f5faf4"><rect x="70" y="72" width="85" height="17" rx="8"/><rect x="100" y="59" width="45" height="22" rx="10"/><rect x="560" y="105" width="100" height="16" rx="8"/><rect x="595" y="91" width="44" height="21" rx="10"/></g>
+        {!rural && <g opacity=".45" fill={earlyEra ? "#9caeaa" : "#aebfba"} shapeRendering="crispEdges"><rect x="12" y="150" width="55" height="85"/><rect x="20" y="135" width="38" height="15"/><rect x="90" y="165" width="70" height="70"/><rect x="100" y="150" width="50" height="15"/><rect x="650" y="145" width="48" height="90"/><rect x="710" y="165" width="80" height="70"/></g>}\n        <g className="life-scene-cloud" opacity=".65" fill="#f5faf4"><rect x="70" y="72" width="85" height="17" rx="8"/><rect x="100" y="59" width="45" height="22" rx="10"/><rect x="560" y="105" width="100" height="16" rx="8"/><rect x="595" y="91" width="44" height="21" rx="10"/></g>
         <g shapeRendering="crispEdges">
-          <rect x="285" y="112" width="260" height="143" fill="#f1e3c9" />
-          <path d="M265 118 L415 35 L565 118 Z" fill="#9c6955" />
-          <path d="M281 114 L415 49 L549 114" fill="none" stroke="#805444" strokeWidth="8" />
+          <rect x="285" y="112" width="260" height="143" fill={wall} />
+          <path d="M265 118 L415 35 L565 118 Z" fill={roof} />
+          <path d="M281 114 L415 49 L549 114" fill="none" stroke={roofLine} strokeWidth="8" />
           <rect x="312" y="151" width="53" height="48" fill="#91b7b0" stroke="#fff8e9" strokeWidth="7" />
           <rect x="466" y="151" width="53" height="48" fill="#91b7b0" stroke="#fff8e9" strokeWidth="7" />
-          <rect x="390" y="177" width="52" height="78" fill="#936b51" /><rect x="430" y="212" width="4" height="4" fill="#f5d889" />
+          <rect x="390" y="177" width="52" height="78" fill={earlyEra ? "#74533e" : "#936b51"} /><rect x="430" y="212" width="4" height="4" fill="#f5d889" />
           <rect x="274" y="247" width="283" height="10" fill="#c7b18e" />
           <rect x="72" y="185" width="24" height="56" fill="#80634c" /><circle cx="84" cy="166" r="47" fill="#70947a" /><circle cx="54" cy="185" r="28" fill="#83a785" />
           <rect x="720" y="175" width="20" height="58" fill="#80634c" /><circle cx="730" cy="155" r="38" fill="#72967a" />
-          <path d="M0 280 Q180 248 300 285 T600 278 T820 284 V390 H0Z" fill="#86aa88" />
-          <path d="M370 255 Q390 300 405 390" stroke="#d8c6a2" strokeWidth="30" fill="none" />
+          {rural ? <path d="M0 280 Q180 248 300 285 T600 278 T820 284 V390 H0Z" fill="#86aa88" /> : <path d="M0 280 H820 V390 H0Z" fill="#a4aaa0" />}
+          {rural ? <path d="M370 255 Q390 300 405 390" stroke="#d8c6a2" strokeWidth="30" fill="none" /> : <path d="M0 330 H820" stroke="#d7d5c9" strokeWidth="34" fill="none" />}
           <rect x="165" y="248" width="28" height="8" fill="#6e896c"/><rect x="200" y="258" width="16" height="6" fill="#6e896c"/>
         </g>
         {people.map((person, index) => <Sprite key={person.id} x={positions[index]} y={250} person={person} />)}
