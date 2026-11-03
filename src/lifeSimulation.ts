@@ -10,6 +10,8 @@ export type LifeStats = {
   stress: number
 }
 
+export type LifeStage = "infant" | "child" | "teen" | "adult" | "elder"
+
 export type LifeChoice = {
   id: string
   label: string
@@ -70,7 +72,7 @@ export type LifeRecord = {
   stats: LifeStats
   pendingEvent: LifeEvent | null
   timeline: LifeEntry[]
-  householdScene?: { partner:boolean; children:number; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
+  householdScene?: { partner:boolean; partnerAge?:number; children:number; childAges?:number[]; pets:("cat"|"dog")[]; housekeeper:boolean; vehicle:"motorcycle"|"car"|"pickup"|null }
   sceneDecisions?: string[]
   createdAt: string
   endedAt?: string
@@ -88,6 +90,14 @@ const householdProfiles = [
 const pick = <T,>(items:T[]):T => items[Math.floor(Math.random()*items.length)]
 const clamp = (value:number) => Math.max(0,Math.min(100,value))
 const uid = () => crypto.randomUUID()
+
+export function lifeStageForAge(age:number):LifeStage {
+  if(age<=2) return "infant"
+  if(age<=12) return "child"
+  if(age<=19) return "teen"
+  if(age<65) return "adult"
+  return "elder"
+}
 
 function eraLabel(year:number):string {
   if(year < 1941) return "สยามก่อนสงคราม"
@@ -502,6 +512,18 @@ export function createLife(name="",yearFrom=1930,yearTo=2025):LifeRecord {
   return life
 }
 
+function advanceHouseholdAges(life:LifeRecord):LifeRecord["householdScene"] {
+  const scene=life.householdScene
+  if(!scene) return scene
+  const familyEntry=life.timeline.find(entry=>entry.title==="ความสัมพันธ์และการสร้างครอบครัว"&&entry.detail.includes("สร้างครอบครัวและมีลูก"))
+  const childAges=scene.childAges ?? Array.from({length:Math.max(0,scene.children)},()=>Math.max(0,life.age-(familyEntry?.age ?? life.age)))
+  return {
+    ...scene,
+    ...(scene.partner ? {partnerAge:(scene.partnerAge ?? life.age)+1} : {}),
+    childAges:childAges.map(age=>age+1)
+  }
+}
+
 export function advanceLife(life:LifeRecord):LifeRecord {
   if(life.status!=="alive"||life.pendingEvent) return life
   const nextAge=life.age+1
@@ -509,7 +531,7 @@ export function advanceLife(life:LifeRecord):LifeRecord {
   if(nextAge>=life.expectedLifespan) {
     return {...life,age:nextAge,status:"ended",endedAt:new Date().toISOString(),timeline:[{id:uid(),age:nextAge,year,title:"เรื่องราวชีวิตเดินทางมาถึงปลายทาง",detail:"ชีวิตหนึ่งได้สิ้นสุดลง เหลือไว้ซึ่งความทรงจำและผลของการตัดสินใจ"},...life.timeline]}
   }
-  const nextLife={...life,age:nextAge}
+  const nextLife={...life,age:nextAge,householdScene:advanceHouseholdAges(life)}
   const event=eventForYear(nextLife,year) ?? sceneMilestoneEvent(nextLife,year) ?? makePersonalEvent(nextLife,year)
   return {...nextLife,pendingEvent:event}
 }
@@ -560,10 +582,20 @@ export function resolveLifeChoice(life:LifeRecord,choiceId:string):LifeRecord {
   if(choiceId==="refinance"&&success) householdDebt=Math.max(0,householdDebt-5000)
   const detail=`${selected.label} — ${result} (โอกาสสำเร็จโดยประมาณในเกม ${chance}%)`
   const entry:LifeEntry={id:uid(),age:life.age,year:event.year,title:event.title,detail,sourceTitle:event.sourceTitle,sourceUrl:event.sourceUrl,sourceNote:event.sourceNote}
-  const householdScene = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
+  const householdScene:NonNullable<LifeRecord["householdScene"]> = {...(life.householdScene ?? {partner:false,children:0,pets:[],housekeeper:false,vehicle:null})}
   if(success){
-    if(choiceId==="start-family"){householdScene.partner=true;householdScene.children=Math.max(1,householdScene.children)}
-    if(choiceId==="partner-first") householdScene.partner=true
+    if(choiceId==="start-family"){
+      householdScene.partner=true
+      householdScene.partnerAge=life.age
+      if(householdScene.children<1){
+        householdScene.children=1
+        householdScene.childAges=[...(householdScene.childAges ?? []),0]
+      }
+    }
+    if(choiceId==="partner-first"){
+      householdScene.partner=true
+      householdScene.partnerAge=life.age
+    }
     if(choiceId==="adopt-cat" && !householdScene.pets.includes("cat")) householdScene.pets=[...householdScene.pets,"cat"]
     if(choiceId==="adopt-dog" && !householdScene.pets.includes("dog")) householdScene.pets=[...householdScene.pets,"dog"]
     if(choiceId==="buy-motorcycle") householdScene.vehicle="motorcycle"
