@@ -644,7 +644,8 @@ export function estimateChoiceChance(life:LifeRecord,selected:LifeChoice):number
   chance+=Math.round((life.stats.education-40)*0.08)
   const resourceSensitive=["university","tutor","better-school","small-business","craft","move","borrow-more","refinance","support","checkup","room-share","near-work","short-course"]
   if(resourceSensitive.includes(selected.id)) {
-    chance+=Math.max(-8,Math.min(8,Math.round((life.stats.wealth-12000)/6000)))
+    const availableCash=life.economy?.cash ?? life.stats.wealth
+    chance+=Math.max(-8,Math.min(8,Math.round((availableCash-12000)/6000)))
     if(life.householdDebt>30000) chance-=5
   }
   if(["family-help","grandparents","share-care","take-care","check-relatives","protect-family","stay-connected","shared-support","care-plan","family-schedule"].includes(selected.id)) {
