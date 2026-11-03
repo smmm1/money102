@@ -130,3 +130,13 @@ test("household members create recurring costs that flow through the cash ledger
   }
   assert.ok(story.includes("parentAlive") && story.includes("ถึงแก่กรรม"), "story cast must distinguish living and deceased parents");
 });
+
+test("loan drawdowns are recorded as debt rather than earned income", async () => {
+  const economy = await readFile(new URL("../src/lifeEconomy.ts", import.meta.url), "utf8");
+  const start = economy.indexOf("export function borrowMoney(");
+  const end = economy.indexOf("\nexport function netWorth(", start);
+  assert.ok(start >= 0 && end > start, "borrowMoney implementation must exist");
+  const borrowMoney = economy.slice(start, end);
+  assert.match(borrowMoney, /kind: "debt"/);
+  assert.doesNotMatch(borrowMoney, /kind: "income"/);
+});
