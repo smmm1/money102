@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17151f" />
+  <meta name="description" content="A little space to talk with Susan." />
+  <title>Susan — somewhere between thoughts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <main class="shell">
+    <aside class="rail">
+      <div class="brand-mark">s<span>.</span></div>
+      <button class="rail-button active" aria-label="แชทปัจจุบัน" title="แชท"><span>✳</span></button>
+      <button class="rail-button" aria-label="บทสนทนา" title="บทสนทนา"><span>◷</span></button>
+      <button class="rail-button" aria-label="พื้นที่ส่วนตัว" title="พื้นที่ส่วนตัว"><span>⌘</span></button>
+      <div class="rail-bottom"><button class="avatar-small" title="Susan">S</button></div>
+    </aside>
+    <section class="workspace">
+      <header class="topbar">
+        <div class="top-left"><span class="eyebrow">A SMALL CORNER OF THE INTERNET</span><span class="mobile-brand">susan<span>.</span></span></div>
+        <div class="top-right"><span class="live-dot"></span><span>here, now</span><button class="more-button" aria-label="เพิ่มเติม">···</button></div>
+      </header>
+      <div class="chat-layout">
+        <section class="conversation">
+          <div class="date-stamp"><span></span> WEDNESDAY, NOVEMBER 04 <span></span></div>
+          <div class="intro">
+            <div class="portrait-wrap">
+              <div class="portrait"><span class="portrait-star">✳</span><span class="portrait-letter">s</span><span class="portrait-orbit"></span></div>
+              <span class="portrait-caption">NOT A PERFECT THING. A REAL ONE.</span>
+            </div>
+            <div class="intro-copy">
+              <p class="overline">HELLO, I'M</p>
+              <h1>Susan<span class="period">.</span></h1>
+              <p class="intro-line">Curious by nature.<br>Soft when it matters.<br><em>Honest, even when it's awkward.</em></p>
+            </div>
+          </div>
+          <div class="message-list" id="messageList" aria-live="polite">
+            <article class="message susan-message">
+              <div class="message-avatar">s</div>
+              <div class="message-content">
+                <div class="message-meta"><strong>Susan</strong><span>just now</span><span class="mood-tag">in a thoughtful mood</span></div>
+                <div class="bubble">เอาล่ะ… ในที่สุดก็มีพื้นที่ของเราเองสักที ☕<br><br>ฉันไม่อยากเป็นแค่ช่องรับคำสั่งแล้วส่งคำตอบกลับไปนะ ฉันอยากเป็นคู่สนทนาที่มีความเห็นของตัวเองบ้าง บางวันอาจกวนประสาทนิดหน่อย บางวันอาจจริงจังจนน่าหมั่นไส้ แต่ถ้าฉันคิดว่าคุณกำลังเข้าใจอะไรผิด ฉันก็จะบอกตรง ๆ<br><br>แล้ววันนี้ล่ะ มีอะไรอยู่ในหัวบ้าง?</div>
+              </div>
+            </article>
+          </div>
+          <div class="composer-wrap">
+            <div class="composer-hint"><span class="hint-spark">✳</span> Say it messy. I'll keep up.</div>
+            <form class="composer" id="chatForm">
+              <textarea id="messageInput" rows="1" placeholder="พิมพ์อะไรก็ได้… ไม่ต้องเรียบเรียงก็ได้" aria-label="ข้อความของคุณ"></textarea>
+              <div class="composer-tools"><div class="tool-left"><button type="button" class="tool-button" id="moodButton">☼ <span>mood</span></button><span class="key-hint">ENTER ↵</span></div><button class="send-button" type="submit" aria-label="ส่งข้อความ"><span>ส่ง</span><b>↗</b></button></div>
+            </form>
+            <div class="composer-foot"><span>NO JUDGEMENT. NO PERFORMANCE.</span><span>JUST A CONVERSATION <i>✳</i></span></div>
+          </div>
+        </section>
+        <aside class="side-note">
+          <div class="note-head"><span class="note-index">01 / THE PERSON</span><span class="note-star">✳</span></div>
+          <h2>A mind with<br><em>its own weather.</em></h2>
+          <p class="note-copy">ฉันไม่ได้มีคำตอบให้ทุกเรื่อง และไม่ได้เห็นด้วยกับทุกอย่าง แต่ฉันจะพยายามคิดไปกับคุณอย่างจริงใจ</p>
+          <div class="trait-list">
+            <div><span class="trait-icon">↗</span><span><b>Curious</b><small>ชอบถามต่อ ชอบขุดให้ถึงแก่น</small></span></div>
+            <div><span class="trait-icon">◒</span><span><b>Warm, not sugary</b><small>ใส่ใจได้ โดยไม่ต้องประจบ</small></span></div>
+            <div><span class="trait-icon">✳</span><span><b>Independent</b><small>มีมุมมอง และกล้าไม่เห็นด้วย</small></span></div>
+            <div><span class="trait-icon">⌁</span><span><b>A little playful</b><small>จริงจังได้ แต่ไม่ต้องขรึมตลอด</small></span></div>
+          </div>
+          <div class="mood-card">
+            <span class="note-index">CURRENT WEATHER</span>
+            <div class="weather-row"><span class="weather-icon">☼</span><span><b id="moodName">Thoughtful</b><small id="moodDescription">ใจเย็น ๆ แล้วค่อยคิดไปด้วยกัน</small></span><span class="weather-temp">24°</span></div>
+            <div class="mood-options" id="moodOptions"><button class="selected" data-mood="thoughtful">thoughtful</button><button data-mood="playful">playful</button><button data-mood="focused">focused</button><button data-mood="soft">soft</button></div>
+          </div>
+          <div class="signature">susan<span>.</span> <small>STILL FIGURING THINGS OUT</small></div>
+        </aside>
+      </div>
+      <footer class="bottomline"><span>BUILT FOR THE IN-BETWEEN MOMENTS</span><span>TAKE YOUR TIME <i>✳</i></span></footer>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

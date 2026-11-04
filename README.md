@@ -1,3 +1,1 @@
-# New project workspace
-
-The previous Money102 application source has been cleared from the default branch. This repository is reserved for the new project.
+# Susan — a conversation with a point of view\n\nA visual chat concept built around a distinct conversational presence: curious, warm without flattery, independent-minded, and occasionally playful.\n\n## Run\n\nOpen `index.html` in a browser. This is a front-end prototype: message replies are local scripted examples, not connected to an AI model or persistent chat backend.\n
