@@ -40,6 +40,7 @@ test("story API authenticates users and stores world state and turns in D1", () 
   assert.match(worker, /story_turns/);
   assert.match(worker, /AI_API_KEY/);
   assert.match(worker, /generativelanguage\.googleapis\.com/);
+  assert.match(worker, /state\.memories = \[\.\.\.memories/);
   assert.match(migration, /REFERENCES app_users\(id\)/);
   assert.match(migration, /FOREIGN KEY\(world_id,user_id\)/);
 });
