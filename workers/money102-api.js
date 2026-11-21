@@ -202,7 +202,7 @@ export default {
           try { parsed = JSON.parse(raw.replace(/^\x60{3}(?:json)?/i,"").replace(/\x60{3}$/,"").trim()); } catch { parsed = {narration:raw,speaker:"ผู้บรรยาย",scene:"",memory:"",state_updates:{}}; }
           const narration = typeof parsed.narration==="string" ? parsed.narration.slice(0,10000) : raw.slice(0,10000);
           const speaker = typeof parsed.speaker==="string" ? parsed.speaker.slice(0,100) : "ผู้บรรยาย";
-          const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.slice(0,1500):""};
+          const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.trim().slice(0,1500):"",characterId:selectedCharacter.id,characterName:selectedCharacter.name};
           let state = {};
           try { state = JSON.parse(world.state_json || "{}"); } catch {}
           if (parsed.state_updates && typeof parsed.state_updates==="object" && !Array.isArray(parsed.state_updates)) state = {...state,...parsed.state_updates};
@@ -216,7 +216,7 @@ export default {
           const narratorTurn = toBase64Url(randomBytes(18));
           const narratorTime = new Date(Date.now()+1).toISOString();
           await env.DB.batch([
-            env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'player',?,'{}',?)").bind(playerTurn,worldId,user.id,message,now),
+            env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'player',?,?,?)").bind(playerTurn,worldId,user.id,message,JSON.stringify({characterId:selectedCharacter.id,characterName:selectedCharacter.name}),now),
             env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'narrator',?,?,?)").bind(narratorTurn,worldId,user.id,narration,JSON.stringify(metadata),narratorTime),
             env.DB.prepare("UPDATE story_worlds SET state_json=?,updated_at=? WHERE id=? AND user_id=?").bind(JSON.stringify(state),now,worldId,user.id)
           ]);
