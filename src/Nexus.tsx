@@ -68,7 +68,7 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
       setWorld(selected);const nextState=parse(selected.state_json,{}) as WorldState;setState(nextState)
       const img=parse(selected.image_settings_json,'{"enabled":false,"auto":false}')
       setImageEnabled(Boolean(img.enabled));setImageAuto(Boolean(img.auto))
-      const history=await api("/api/story/worlds/"+chosen.id+"/turns?limit=100")
+      const history=await api("/api/story/worlds/"+chosen.id+"/turns?limit=100"+(nextState.activeCharacterId?"&characterId="+encodeURIComponent(nextState.activeCharacterId):""))
       setTurns((history.turns||[]).map((t:any)=>({...t,metadata:parse(t.metadata_json||"{}",{})})))
     }catch(e){setError(e instanceof Error?e.message:String(e))}
     finally{setLoading(false)}
@@ -100,7 +100,7 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
     catch(e){setError(e instanceof Error?e.message:String(e))}
   }
   async function switchCharacter(characterId:string){
-    try{await persistState({...state,activeCharacterId:characterId});setTurns([]);const h=await api("/api/story/worlds/"+world?.id+"/turns?limit=100");setTurns((h.turns||[]).map((t:any)=>({...t,metadata:parse(t.metadata_json||"{}",{})})))}
+    try{await persistState({...state,activeCharacterId:characterId});setTurns([]);const h=await api("/api/story/worlds/"+world?.id+"/turns?limit=100&characterId="+encodeURIComponent(characterId));setTurns((h.turns||[]).map((t:any)=>({...t,metadata:parse(t.metadata_json||"{}",{})})))}
     catch(e){setError(e instanceof Error?e.message:String(e))}
   }
   async function send(event?:FormEvent){
