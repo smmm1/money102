@@ -6,4 +6,4 @@ await access("dist/404.html");
 const fallback = await readFile("dist/404.html", "utf8");
 assert.match(fallback, /window\.location\.replace\(["']\/["']\)/);
 assert.doesNotMatch(fallback, /DayTogether|__route=/);
-console.log("Money102 login-only static build verified.");
+console.log("NEXUS static build and SPA routing verified.");
