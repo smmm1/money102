@@ -96,7 +96,7 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   async function addCharacter(event:FormEvent){
     event.preventDefault();if(!world||!characterName.trim())return
     const character:Character={id:id(),name:characterName.trim(),age:characterAge.trim()||"ยังไม่ระบุ",className:characterClass.trim()||"ยังไม่ระบุ",rank:"ยังไม่ผ่านการประเมิน",titles:[],attributes:{strength:"ยังไม่ประเมิน",agility:"ยังไม่ประเมิน",vitality:"ยังไม่ประเมิน",intelligence:"ยังไม่ประเมิน",mana:"ยังไม่ประเมิน",perception:"ยังไม่ประเมิน"},resources:{hp:"ยังไม่ประเมิน",mp:"ยังไม่ประเมิน",stamina:"ยังไม่ประเมิน"},skills:[],equipment:[],money:"ยังไม่ระบุ",injuries:[],guildId:null}
-    try{const next={...state,characters:[...characters,character],activeCharacterId:character.id};await persistState(next);setCharacterOpen(false);setCharacterName("");setCharacterAge("");setCharacterClass("")}
+    try{const next={...state,characters:[...characters,character],activeCharacterId:character.id};await persistState(next);setTurns([]);setCharacterOpen(false);setCharacterName("");setCharacterAge("");setCharacterClass("")}
     catch(e){setError(e instanceof Error?e.message:String(e))}
   }
   async function switchCharacter(characterId:string){
