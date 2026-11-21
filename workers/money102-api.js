@@ -165,12 +165,12 @@ export default {
           if (!world) return json(request, env, {error:"ไม่พบโลกนี้"},404);
           if (!env.AI_API_KEY) return json(request,env,{error:"ยังไม่ได้ตั้งค่า Gemini API Key ใน Cloudflare Worker",code:"AI_NOT_CONFIGURED"},503);
           const recent = await env.DB.prepare("SELECT role,content FROM story_turns WHERE world_id=? AND user_id=? ORDER BY created_at DESC LIMIT 18").bind(worldId,user.id).all();
-          const history = (recent.results || []).reverse().map(row => (row.role==="player" ? "ผู้เล่น: " : "ผู้บรรยาย: ") + row.content).join("\n");
+          const history = (recent.results || []).reverse().map(row => (row.role==="player" ? "ผู้เล่น: " : "ผู้บรรยาย: ") + String(row.content || "").slice(-1800)).join("\n");
           const prompt = [
             "คุณคือ Game Master ของเกมโรลเพลย์ภาษาไทยแบบอิสระ ผู้เล่นเป็นผู้กำหนดการกระทำเอง ห้ามเสนอเมนู A/B/C เว้นแต่ผู้เล่นขอ",
             "โลก: " + world.title,
             "การตั้งค่าโลก: " + world.setting_json,
-            "สถานะโลกที่บันทึกไว้: " + world.state_json,
+            "สถานะโลกที่บันทึกไว้: " + String(world.state_json || "{}").slice(0,12000),
             "ประวัติล่าสุด: " + (history || "นี่คือการเริ่มเล่น"),
             "การกระทำล่าสุดของผู้เล่น: " + message,
             "กติกา: NPC มีเจตจำนงและบุคลิกของตัวเอง ไม่เห็นด้วยกับผู้เล่นได้ การกระทำมีผลตามเหตุผล ห้ามควบคุมคำพูดหรือการตัดสินใจแทนผู้เล่น รักษาความต่อเนื่องของชื่อ ความสัมพันธ์ อุปกรณ์ เงิน และเหตุการณ์ ห้ามยกระดับพลังหรือความสนิทโดยไม่มีเหตุการณ์รองรับ",
@@ -196,6 +196,11 @@ export default {
           let state = {};
           try { state = JSON.parse(world.state_json || "{}"); } catch {}
           if (parsed.state_updates && typeof parsed.state_updates==="object" && !Array.isArray(parsed.state_updates)) state = {...state,...parsed.state_updates};
+          if (typeof parsed.memory==="string" && parsed.memory.trim()) {
+            const memories = Array.isArray(state.memories) ? state.memories : [];
+            state.memories = [...memories, parsed.memory.trim().slice(0,1500)].slice(-40);
+          }
+          if (metadata.scene) state.last_scene = metadata.scene;
           const now = new Date().toISOString();
           const playerTurn = toBase64Url(randomBytes(18));
           const narratorTurn = toBase64Url(randomBytes(18));
