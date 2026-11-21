@@ -318,37 +318,63 @@ export default {
           const model = env.AI_MODEL || "gemini-3.5-flash-lite";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
           let aiResponse;
-          try {
-            aiResponse = await fetch(endpoint,{
-              method:"POST",
-              headers:{"Content-Type":"application/json"},
-              body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1100,responseMimeType:"application/json"}}),
-              signal:AbortSignal.timeout(40000)
-            });
-          } catch (error) {
-            const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
-            console.error("Gemini request transport failed",timedOut?"timeout":String(error?.name || "network_error"));
-            return json(request,env,{
-              error:timedOut?"AI ใช้เวลาตอบนานเกิน 40 วินาที กรุณาลองส่งอีกครั้ง":"เชื่อมต่อ Gemini ไม่สำเร็จ กรุณาลองใหม่",
-              code:timedOut?"AI_TIMEOUT":"AI_NETWORK_ERROR"
-            },timedOut?504:502);
+          let transportError = null;
+          let providerDetail = "";
+          // Retry only transient provider/network failures once. Do not retry invalid
+          // keys, unsupported models, or exhausted quota.
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              aiResponse = await fetch(endpoint,{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1100,responseMimeType:"application/json"}}),
+                signal:AbortSignal.timeout(30000)
+              });
+              transportError = null;
+            } catch (error) {
+              transportError = error;
+              const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+              console.error("Gemini transport attempt failed",attempt+1,timedOut?"timeout":String(error?.name || "network_error"));
+              if (attempt === 0) {
+                await new Promise(resolve => setTimeout(resolve,700));
+                continue;
+              }
+              return json(request,env,{
+                error:timedOut?"Gemini ใช้เวลาตอบนานเกินไป แม้ลองเชื่อมต่อซ้ำแล้ว กรุณาลองอีกครั้ง":"เชื่อมต่อ Gemini ไม่สำเร็จหลังลองซ้ำ กรุณาลองใหม่",
+                code:timedOut?"AI_TIMEOUT":"AI_NETWORK_ERROR",
+                retryable:true
+              },timedOut?504:502);
+            }
+            if (aiResponse.ok) break;
+            providerDetail = await aiResponse.text();
+            const retryableStatus = aiResponse.status >= 500 && aiResponse.status <= 599;
+            const rateLimited = aiResponse.status === 429 && /RATE_LIMIT_EXCEEDED|rate.?limit|too many requests/i.test(providerDetail);
+            if (attempt === 0 && (retryableStatus || rateLimited)) {
+              console.error("Gemini transient provider error; retrying",aiResponse.status,providerDetail.slice(0,180));
+              await new Promise(resolve => setTimeout(resolve,rateLimited?1200:800));
+              continue;
+            }
+            break;
           }
-          if (!aiResponse.ok) {
-            const detail = await aiResponse.text();
-            console.error("Gemini request failed",aiResponse.status,detail.slice(0,300));
-            const status = aiResponse.status;
+          if (!aiResponse?.ok) {
+            const status = aiResponse?.status || 502;
+            console.error("Gemini request failed",status,providerDetail.slice(0,300));
+            let providerCode = "";
+            try { providerCode = JSON.parse(providerDetail)?.error?.status || ""; } catch {}
             const messages = {
               400:"คำขอไปยัง Gemini ไม่ถูกต้อง",
               401:"Gemini API Key ไม่ถูกต้องหรือหมดอายุ",
               403:"Gemini API Key ไม่มีสิทธิ์ใช้โมเดลนี้",
               404:"ไม่พบโมเดล Gemini ที่ตั้งค่าไว้",
-              429:"Gemini ใช้โควตาหรือส่งคำขอถี่เกินไป กรุณาลองใหม่ภายหลัง"
+              429:"Gemini ใช้โควตาหรือจำกัดจำนวนคำขอ กรุณารอสักครู่แล้วลองใหม่"
             };
+            const transient = status >= 500 || providerCode === "UNAVAILABLE" || providerCode === "DEADLINE_EXCEEDED";
             return json(request,env,{
-              error:messages[status] || (status>=500?"Gemini ขัดข้องชั่วคราว กรุณาลองใหม่":"Gemini ตอบกลับไม่สำเร็จ"),
-              code:status===429?"AI_QUOTA":status===401||status===403?"AI_AUTH_ERROR":status===404?"AI_MODEL_NOT_FOUND":"AI_PROVIDER_ERROR",
-              providerStatus:status
-            },status===429?429:status===401||status===403?502:status===404?502:status>=500?503:502);
+              error:messages[status] || (transient?"Gemini ยังไม่พร้อมให้บริการหลังลองเชื่อมต่อซ้ำ กรุณาลองอีกครั้ง":"Gemini ตอบกลับไม่สำเร็จ"),
+              code:status===429?"AI_QUOTA":status===401||status===403?"AI_AUTH_ERROR":status===404?"AI_MODEL_NOT_FOUND":transient?"AI_PROVIDER_UNAVAILABLE":"AI_PROVIDER_ERROR",
+              providerStatus:status,
+              retryable:transient || status===429
+            },status===429?429:status===401||status===403?502:status===404?502:transient?503:502);
           }
           const aiBody = await aiResponse.json();
           const raw = aiBody?.candidates?.[0]?.content?.parts?.map(part=>part.text || "").join("").trim();
