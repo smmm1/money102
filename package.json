@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node --test tests/*.test.mjs && tsc --noEmit && vite build && node scripts/verify-static-routing.mjs",
+    "build": "node --check workers/money102-api.js && node --test tests/*.test.mjs && tsc --noEmit && vite build && node scripts/verify-static-routing.mjs",
     "preview": "vite preview",
     "format": "oxfmt",
     "test": "node --test tests/*.test.mjs",
