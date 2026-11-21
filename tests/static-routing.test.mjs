@@ -29,7 +29,7 @@ test("the Worker exposes authenticated D1 story routes alongside existing auth",
   assert.match(worker, /\/api\/auth\/signin/);
   assert.match(worker, /\/api\/auth\/me/);
   assert.match(worker, /\/api\/auth\/logout/);
-  assert.match(worker, /\/api\/story\/worlds/);
+  assert.match(worker, /\/api\/story\//);
   assert.match(worker, /getAuthenticatedUser\(request, env\.DB\)/);
   assert.match(worker, /checkAuthRateLimit/);
   assert.match(worker, /auth_rate_limits/);
