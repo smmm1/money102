@@ -3,7 +3,7 @@ const PASSWORD_ITERATIONS = 100_000;
 
 function corsHeaders(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const allowed = new Set([env.APP_ORIGIN, "https://money102.onrender.com", "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean));
+  const allowed = new Set([env.APP_ORIGIN, "https://money102.onrender.com", "https://nexus-story-world-preview.onrender.com", "http://localhost:5173", "http://127.0.0.1:5173"].filter(Boolean));
   const headers = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
