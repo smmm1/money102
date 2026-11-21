@@ -26,6 +26,7 @@ async function ensureSchema(db) {
   await db.prepare("CREATE INDEX IF NOT EXISTS idx_story_worlds_user_updated ON story_worlds(user_id,updated_at DESC)").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS story_turns (id TEXT PRIMARY KEY,world_id TEXT NOT NULL,user_id TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,role TEXT NOT NULL CHECK(role IN ('player','narrator')),content TEXT NOT NULL CHECK(length(content)<=12000),metadata_json TEXT NOT NULL DEFAULT '{}' CHECK(json_valid(metadata_json)),created_at TEXT NOT NULL,FOREIGN KEY(world_id,user_id) REFERENCES story_worlds(id,user_id) ON DELETE CASCADE)").run();
   await db.prepare("CREATE INDEX IF NOT EXISTS idx_story_turns_world_created ON story_turns(world_id,user_id,created_at)").run();
+  await db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_story_turns_request_id ON story_turns(world_id,user_id,json_extract(metadata_json,'$.requestId')) WHERE role='player' AND json_extract(metadata_json,'$.requestId') IS NOT NULL").run();
 
   await db.prepare("CREATE TABLE IF NOT EXISTS app_users (id TEXT PRIMARY KEY,email TEXT NOT NULL UNIQUE,password_salt TEXT NOT NULL,password_hash TEXT NOT NULL,created_at TEXT NOT NULL)").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS app_sessions (token_hash TEXT PRIMARY KEY,user_id TEXT NOT NULL,expires_at INTEGER NOT NULL,created_at TEXT NOT NULL)").run();
@@ -272,6 +273,16 @@ export default {
           const playerCharacters = Array.isArray(currentState.characters) ? currentState.characters : [];
           const selectedCharacter = playerCharacters.find(character => character && character.id === body.characterId);
           if (!selectedCharacter) return json(request,env,{error:"กรุณาเลือกตัวละครที่มีอยู่ในโลกนี้ก่อนเริ่มเล่น"},400);
+          const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : "";
+          if (!requestId) return json(request,env,{error:"ไม่พบรหัสคำขอ กรุณาส่งข้อความอีกครั้ง",code:"REQUEST_ID_REQUIRED"},400);
+          const prior = await env.DB.prepare("SELECT id,role,content,metadata_json,created_at FROM story_turns WHERE world_id=? AND user_id=? AND role='narrator' AND json_extract(metadata_json,'$.requestId')=? LIMIT 1").bind(worldId,user.id,requestId).first();
+          if (prior) {
+            let priorState = {};
+            let priorMetadata = {};
+            try { priorState = JSON.parse(world.state_json || "{}"); } catch {}
+            try { priorMetadata = JSON.parse(prior.metadata_json || "{}"); } catch {}
+            return json(request,env,{turn:{...prior,metadata:priorMetadata},state:priorState,replayed:true});
+          }
           if (!env.AI_API_KEY) return json(request,env,{error:"ยังไม่ได้ตั้งค่า Gemini API Key ใน Cloudflare Worker",code:"AI_NOT_CONFIGURED"},503);
           const recent = await env.DB.prepare("SELECT role,content,metadata_json FROM story_turns WHERE world_id=? AND user_id=? ORDER BY created_at DESC LIMIT 80").bind(worldId,user.id).all();
           const history = (recent.results || []).reverse().filter(row => {
@@ -343,7 +354,7 @@ export default {
           try { parsed = JSON.parse(raw.replace(/^\x60{3}(?:json)?/i,"").replace(/\x60{3}$/,"").trim()); } catch { parsed = {narration:raw,speaker:"ผู้บรรยาย",scene:"",memory:"",state_updates:{}}; }
           const narration = typeof parsed.narration==="string" ? parsed.narration.slice(0,10000) : raw.slice(0,10000);
           const speaker = typeof parsed.speaker==="string" ? parsed.speaker.slice(0,100) : "ผู้บรรยาย";
-          const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.trim().slice(0,1500):"",characterId:selectedCharacter.id,characterName:selectedCharacter.name};
+          const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.trim().slice(0,1500):"",characterId:selectedCharacter.id,characterName:selectedCharacter.name,requestId};
           let state = {};
           try { state = JSON.parse(world.state_json || "{}"); } catch {}
           state = applyStateUpdates(state, parsed.state_updates, selectedCharacter.id);
@@ -356,11 +367,24 @@ export default {
           const playerTurn = toBase64Url(randomBytes(18));
           const narratorTurn = toBase64Url(randomBytes(18));
           const narratorTime = new Date(Date.now()+1).toISOString();
-          await env.DB.batch([
-            env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'player',?,?,?)").bind(playerTurn,worldId,user.id,message,JSON.stringify({characterId:selectedCharacter.id,characterName:selectedCharacter.name}),now),
-            env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'narrator',?,?,?)").bind(narratorTurn,worldId,user.id,narration,JSON.stringify(metadata),narratorTime),
-            env.DB.prepare("UPDATE story_worlds SET state_json=?,updated_at=? WHERE id=? AND user_id=?").bind(JSON.stringify(state),now,worldId,user.id)
-          ]);
+          try {
+            await env.DB.batch([
+              env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'player',?,?,?)").bind(playerTurn,worldId,user.id,message,JSON.stringify({characterId:selectedCharacter.id,characterName:selectedCharacter.name,requestId}),now),
+              env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'narrator',?,?,?)").bind(narratorTurn,worldId,user.id,narration,JSON.stringify(metadata),narratorTime),
+              env.DB.prepare("UPDATE story_worlds SET state_json=?,updated_at=? WHERE id=? AND user_id=?").bind(JSON.stringify(state),now,worldId,user.id)
+            ]);
+          } catch (saveError) {
+            const committed = await env.DB.prepare("SELECT id,role,content,metadata_json,created_at FROM story_turns WHERE world_id=? AND user_id=? AND role='narrator' AND json_extract(metadata_json,'$.requestId')=? LIMIT 1").bind(worldId,user.id,requestId).first();
+            if (committed) {
+              const latestWorld = await env.DB.prepare("SELECT state_json FROM story_worlds WHERE id=? AND user_id=?").bind(worldId,user.id).first();
+              let committedState = {};
+              let committedMetadata = {};
+              try { committedState = JSON.parse(latestWorld?.state_json || "{}"); } catch {}
+              try { committedMetadata = JSON.parse(committed.metadata_json || "{}"); } catch {}
+              return json(request,env,{turn:{...committed,metadata:committedMetadata},state:committedState,replayed:true});
+            }
+            throw saveError;
+          }
           return json(request,env,{turn:{id:narratorTurn,role:"narrator",content:narration,metadata,created_at:narratorTime},state});
         }
         return json(request,env,{error:"Not found"},404);
