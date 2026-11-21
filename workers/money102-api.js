@@ -177,7 +177,7 @@ export default {
             "เขียนภาษาไทยแบบนิยายภาพ มีบทพูด บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
             "ตอบเป็น JSON object เท่านั้น มี keys: narration (string), speaker (string), scene (string), memory (string), state_updates (object). narration เป็นเนื้อเรื่อง; speaker เป็นชื่อผู้พูดหรือผู้บรรยาย; scene เป็นคำอธิบายฉาก; memory เป็นข้อเท็จจริงใหม่; state_updates เป็นข้อมูลสถานะที่เปลี่ยนไป"
           ].join("\n\n");
-          const model = env.AI_MODEL || "gemini-2.5-flash";
+          const model = env.AI_MODEL || "gemini-3.6-flash";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
           const aiResponse = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.9,maxOutputTokens:1400,responseMimeType:"application/json"}})});
           if (!aiResponse.ok) {
