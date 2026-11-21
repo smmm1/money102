@@ -1,12 +1,12 @@
 services:
   - type: web
     runtime: static
-    name: daytogether-phase2-preview
+    name: money102
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: VITE_CLOUDFLARE_API_URL
-        value: https://daytogether-api-staging.s2mtha16.workers.dev
+        value: https://money102-api.s2mtha16.workers.dev
     routes:
       - type: rewrite
         source: /*
