@@ -273,7 +273,7 @@ export default {
           const playerCharacters = Array.isArray(currentState.characters) ? currentState.characters : [];
           const selectedCharacter = playerCharacters.find(character => character && character.id === body.characterId);
           if (!selectedCharacter) return json(request,env,{error:"กรุณาเลือกตัวละครที่มีอยู่ในโลกนี้ก่อนเริ่มเล่น"},400);
-          const requestId = typeof body.requestId === "string" && /^[0-9a-f-]{36}$/i.test(body.requestId) ? body.requestId : "";
+          const requestId = typeof body.requestId === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(body.requestId) ? body.requestId : "";
           if (!requestId) return json(request,env,{error:"ไม่พบรหัสคำขอ กรุณาส่งข้อความอีกครั้ง",code:"REQUEST_ID_REQUIRED"},400);
           const prior = await env.DB.prepare("SELECT id,role,content,metadata_json,created_at FROM story_turns WHERE world_id=? AND user_id=? AND role='narrator' AND json_extract(metadata_json,'$.requestId')=? LIMIT 1").bind(worldId,user.id,requestId).first();
           if (prior) {
