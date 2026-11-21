@@ -301,9 +301,9 @@ export default {
             "เขียนภาษาไทยแบบนิยายภาพ มีบทพูด บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
             "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates อาจมี location, worldTime, currentSceneCharacterIds, dossiers, guilds, characters, activeGuildId, sharedEvents; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์; dossiers แสดงเฉพาะข้อมูลที่ผู้เล่นตัวนี้รู้แล้ว; characters ต้องคง id เดิม"
           ].join("\n\n");
-          const model = env.AI_MODEL || "gemini-2.5-flash";
+          const model = env.AI_MODEL || "gemini-3.8-flash";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
-          const aiResponse = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.9,maxOutputTokens:1400,responseMimeType:"application/json"}})});
+          const aiResponse = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1400,responseMimeType:"application/json"}})});
           if (!aiResponse.ok) {
             const detail = await aiResponse.text();
             console.error("Gemini request failed",aiResponse.status,detail.slice(0,500));
