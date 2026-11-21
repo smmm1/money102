@@ -127,7 +127,7 @@ function applyStateUpdates(current, updates, characterId) {
   if (location !== undefined) next.location = location;
   if (worldTime !== undefined) next.worldTime = worldTime;
   if (Array.isArray(updates.currentSceneCharacterIds)) {
-    next.currentSceneCharacterIds = updates.currentSceneCharacterIds.filter(x => typeof x === "string").slice(0, 40);
+    next.currentSceneCharacterIds = [...new Set(updates.currentSceneCharacterIds.filter(x => typeof x === "string").map(x => x.slice(0,100)))].slice(0, 40);
   }
   if (Array.isArray(updates.sharedEvents)) {
     const existing = Array.isArray(next.sharedEvents) ? next.sharedEvents : [];
@@ -153,6 +153,9 @@ function applyStateUpdates(current, updates, characterId) {
         rank: cleanText(item.rank, 40) ?? prior.rank,
         guild: cleanText(item.guild, 100) ?? prior.guild,
         relationship: cleanText(item.relationship, 100) ?? prior.relationship,
+        location: cleanText(item.location, 160) ?? prior.location,
+        status: cleanText(item.status, 160) ?? prior.status,
+        condition: cleanText(item.condition, 160) ?? prior.condition,
         observedSkills: cleanList(item.observedSkills, 20, 100) ?? prior.observedSkills,
         known
       });
@@ -304,16 +307,23 @@ export default {
             "การตั้งค่าโลกและกติกากลางเท่านั้น ไม่ใช่ประวัติเรื่อง: " + world.setting_json,
             "ตัวละครผู้เล่นที่กำลังควบคุม: " + JSON.stringify(selectedCharacter),
             "สถานะโลกที่บันทึกไว้: " + String(world.state_json || "{}").slice(0,10000),
-            "เหตุการณ์สาธารณะร่วมของโลก: " + String(currentState.sharedEvents || "[]"),
+            "เหตุการณ์สาธารณะร่วมของโลก: " + JSON.stringify(currentState.sharedEvents || []),
+            "บุคคลที่ผู้เล่นเคยพบและข้อมูลที่รู้แล้ว: " + JSON.stringify(currentState.dossiers || []),
             "ประวัติล่าสุด: " + (history || "นี่คือการเริ่มเล่นใหม่ ห้ามสร้างเหตุการณ์ก่อนหน้าขึ้นเอง"),
             "การกระทำล่าสุดของผู้เล่น: " + message,
             "ห้ามนำเรื่องราวจากแชทอื่นหรือเหตุการณ์ที่ไม่ได้อยู่ใน state มาเป็นอดีต ห้ามสร้างกิลด์เริ่มต้น ภารกิจเริ่มต้น NPC เริ่มต้น หรือข้อตกลงใด ๆ โดยไม่มีเหตุการณ์รองรับ",
             "ตัวละครผู้เล่นหลายตัวอยู่ในจักรวาลเดียวกัน แต่ละตัวมีตัวตนและสถานะของตนเอง พวกเขาจะพบกันได้เมื่อเวลา สถานที่ และเหตุการณ์สมเหตุสมผล ห้ามบังคับให้เป็นปาร์ตี้ตั้งแต่ต้น",
-            "NPC มีเจตจำนงและบุคลิกของตัวเอง ไม่เห็นด้วยกับผู้เล่นได้ โลกเดินต่อได้แม้ผู้เล่นไม่ทำอะไร การกระทำมีผลตามเหตุผล ห้ามควบคุมคำพูด ความคิด หรือการตัดสินใจแทนผู้เล่น",
+            "NPC มีเจตจำนง เป้าหมาย และการตัดสินใจของตัวเอง ไม่เห็นด้วยหรือปฏิเสธผู้เล่นได้ เมื่อผู้เล่นพูดกับ NPC ให้ NPC ที่อยู่ในเหตุการณ์ตอบด้วยเสียงและบุคลิกของตน ไม่ใช้ผู้บรรยายพูดแทนทุกครั้ง",
             "ข้อมูลบุคคลในฉากต้องเปิดเผยเท่าที่ตัวละครผู้เล่นได้เห็น ได้ยิน หรือเรียนรู้แล้วเท่านั้น แยกความสนิทสนมออกจากความรู้ ห้ามเปิดเผยข้อมูลที่ยังไม่รู้",
-            "อัปเดตค่าสถานะ เงิน บาดเจ็บ อุปกรณ์ ทักษะ ความสัมพันธ์ กิลด์ และความทรงจำเฉพาะเมื่อมีเหตุการณ์รองรับ ห้ามเพิ่มพลังหรือความสนิทเอง",
-            "เขียนภาษาไทยแบบนิยายภาพ มีบทพูด บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
-            "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates อาจมี location, worldTime, currentSceneCharacterIds, dossiers, guilds, characters, activeGuildId, sharedEvents; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์; dossiers แสดงเฉพาะข้อมูลที่ผู้เล่นตัวนี้รู้แล้ว; characters ต้องคง id เดิม"
+            "ทุกการกระทำต้องประเมินผลต่อโลกจริงในเรื่อง: เวลาในโลก สถานที่ บุคคลที่อยู่ในฉาก สภาพร่างกาย ทรัพยากร เงิน อุปกรณ์ ทักษะ ความสัมพันธ์ และกิลด์ เปลี่ยนเฉพาะสิ่งที่มีเหตุการณ์รองรับ ห้ามสุ่มเพิ่มหรือลดค่า",
+            "ห้ามปล่อย state_updates ว่างหรือหายไป ทุกคำตอบต้องส่ง state_updates ที่สะท้อนสถานะล่าสุด แม้บางค่าไม่เปลี่ยนให้ส่งค่าปัจจุบันกลับมา",
+            "currentSceneCharacterIds ต้องเป็นรายการ ID ของ NPC/บุคคลที่อยู่ในฉากตอนจบของเหตุการณ์นี้ โดยทุก ID ต้องตรงกับ id ใน dossiers; เอาคนที่เดินออกจากฉากออกจากรายการ แต่เก็บ dossier ไว้เป็นความทรงจำ",
+            "dossiers ต้องรวมข้อมูลบุคคลที่อยู่ในฉากตอนจบทุกคน ใช้ ID เดิมเมื่อเป็นบุคคลเดิม ห้ามสร้าง dossier ซ้ำ และบันทึกเฉพาะสิ่งที่ผู้เล่นรู้แล้ว โดยแต่ละคนควรมี id,name,role,rank,guild,relationship,location,status,condition,known,observedSkills",
+            "ถ้าไม่มี NPC อยู่ในฉาก ให้ส่ง currentSceneCharacterIds เป็น [] ห้ามสร้างคนขึ้นมาเพื่อเติมข้อมูล",
+            "worldTime ต้องเดินหน้าเมื่อมีการใช้เวลา เช่น เดินทาง สนทนานาน ต่อสู้ พักผ่อน; การกระทำสั้นมากอาจคงเวลาเดิมได้ ห้ามย้อนเวลา",
+            "characters ต้องคง id เดิมและส่งข้อมูลตัวละครผู้เล่นที่กำลังควบคุมพร้อมค่าล่าสุด; ห้ามเปลี่ยนตัวละครอื่นหรือสร้างตัวละครผู้เล่นใหม่",
+            "เขียนภาษาไทยแบบนิยายภาพ มีบทสนทนาโดยตรง บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
+            "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates ต้องมี location, worldTime, currentSceneCharacterIds, dossiers, characters และอาจมี guilds, activeGuildId, sharedEvents; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์"
           ].join("\n\n");
           const model = env.AI_MODEL || "gemini-3.5-flash-lite";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
