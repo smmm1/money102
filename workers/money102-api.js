@@ -299,7 +299,7 @@ export default {
             "ข้อมูลบุคคลในฉากต้องเปิดเผยเท่าที่ตัวละครผู้เล่นได้เห็น ได้ยิน หรือเรียนรู้แล้วเท่านั้น แยกความสนิทสนมออกจากความรู้ ห้ามเปิดเผยข้อมูลที่ยังไม่รู้",
             "อัปเดตค่าสถานะ เงิน บาดเจ็บ อุปกรณ์ ทักษะ ความสัมพันธ์ กิลด์ และความทรงจำเฉพาะเมื่อมีเหตุการณ์รองรับ ห้ามเพิ่มพลังหรือความสนิทเอง",
             "เขียนภาษาไทยแบบนิยายภาพ มีบทพูด บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
-            "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates อาจมี location, worldTime, currentSceneCharacterIds, dossiers, guilds, characters, activeGuildId; dossiers แสดงเฉพาะข้อมูลที่ผู้เล่นตัวนี้รู้แล้ว; characters ต้องคง id เดิม"
+            "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates อาจมี location, worldTime, currentSceneCharacterIds, dossiers, guilds, characters, activeGuildId, sharedEvents; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์; dossiers แสดงเฉพาะข้อมูลที่ผู้เล่นตัวนี้รู้แล้ว; characters ต้องคง id เดิม"
           ].join("\n\n");
           const model = env.AI_MODEL || "gemini-2.5-flash";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
