@@ -51,6 +51,8 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   const [storyTitle,setStoryTitle]=useState(""),[characterName,setCharacterName]=useState(""),[characterAge,setCharacterAge]=useState(""),[characterClass,setCharacterClass]=useState("")
   const [imageEnabled,setImageEnabled]=useState(false),[imageAuto,setImageAuto]=useState(false)
   const transcript=useRef<HTMLDivElement>(null),composer=useRef<HTMLTextAreaElement>(null)
+  const loadSequence=useRef(0)
+  const pendingRequest=useRef<{message:string;requestId:string}|null>(null)
   const characters=state.characters||[]
   const activeCharacter=characters.find(c=>c.id===state.activeCharacterId)||characters[0]
   const currentSceneIds=state.currentSceneCharacterIds||[]
@@ -59,36 +61,42 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   const latestScene=[...turns].reverse().find(t=>t.role==="narrator"&&typeof t.metadata?.scene==="string")?.metadata?.scene as string|undefined
 
   const loadWorlds=useCallback(async(selectedId?:string)=>{
+    const sequence=++loadSequence.current
     setLoading(true);setError("")
     try{
-      const result=await api("/api/story/worlds");const list=(result.worlds||[]) as World[];setWorlds(list)
+      const result=await api("/api/story/worlds")
+      if(sequence!==loadSequence.current)return
+      const list=(result.worlds||[]) as World[];setWorlds(list)
       if(!list.length){setWorld(null);setTurns([]);setState({});return}
       const chosen=list.find(w=>w.id===selectedId)||list.find(w=>w.id===world?.id)||list[0]
-      const detail=await api("/api/story/worlds/"+chosen.id);const selected=detail.world as World
-      setWorld(selected);const nextState=parse(selected.state_json,{}) as WorldState;setState(nextState)
+      const detail=await api("/api/story/worlds/"+chosen.id)
+      if(sequence!==loadSequence.current)return
+      const selected=detail.world as World
+      const nextState=parse(selected.state_json,{}) as WorldState
       const img=parse(selected.image_settings_json,'{"enabled":false,"auto":false}')
-      setImageEnabled(Boolean(img.enabled));setImageAuto(Boolean(img.auto))
       const history=await api("/api/story/worlds/"+chosen.id+"/turns?limit=100"+(nextState.activeCharacterId?"&characterId="+encodeURIComponent(nextState.activeCharacterId):""))
+      if(sequence!==loadSequence.current)return
+      setWorld(selected);setState(nextState)
+      setImageEnabled(Boolean(img.enabled));setImageAuto(Boolean(img.auto))
       setTurns((history.turns||[]).map((t:any)=>({...t,metadata:parse(t.metadata_json||"{}",{})})))
-    }catch(e){setError(e instanceof Error?e.message:String(e))}
-    finally{setLoading(false)}
+    }catch(e){if(sequence===loadSequence.current)setError(e instanceof Error?e.message:String(e))}
+    finally{if(sequence===loadSequence.current)setLoading(false)}
   },[world?.id])
   useEffect(()=>{void loadWorlds()},[])
   useEffect(()=>{if(transcript.current)transcript.current.scrollTop=transcript.current.scrollHeight},[turns,sending])
   async function persistState(next:WorldState){
     if(!world)return
-    setState(next)
-    await api("/api/story/worlds/"+world.id,{method:"PUT",body:JSON.stringify({state:next})})
+    const result=await api("/api/story/worlds/"+world.id,{method:"PUT",body:JSON.stringify({state:next})})
+    setState(result.world?.state_json?parse(result.world.state_json,next) as WorldState:next)
   }
   async function createWorld(event:FormEvent){
     event.preventDefault();if(!storyTitle.trim()||!characterName.trim())return
     setLoading(true);setError("")
     try{
-      const created=await api("/api/story/worlds",{method:"POST",body:JSON.stringify({title:storyTitle.trim(),setting:WORLD_SETTING,state:{characters:[],dossiers:[],guilds:[],memories:[],currentSceneCharacterIds:[]},imageSettings:{enabled:false,auto:false}})})
-      const w=created.world as World
       const character:Character={id:id(),name:characterName.trim(),age:characterAge.trim()||"ยังไม่ระบุ",className:characterClass.trim()||"ยังไม่ระบุ",rank:"ยังไม่ผ่านการประเมิน",titles:[],attributes:{strength:"ยังไม่ประเมิน",agility:"ยังไม่ประเมิน",vitality:"ยังไม่ประเมิน",intelligence:"ยังไม่ประเมิน",mana:"ยังไม่ประเมิน",perception:"ยังไม่ประเมิน"},resources:{hp:"ยังไม่ประเมิน",mp:"ยังไม่ประเมิน",stamina:"ยังไม่ประเมิน"},skills:[],equipment:[],money:"ยังไม่ระบุ",injuries:[],guildId:null}
       const next={characters:[character],activeCharacterId:character.id,dossiers:[],guilds:[],memories:[],currentSceneCharacterIds:[]}
-      await api("/api/story/worlds/"+w.id,{method:"PUT",body:JSON.stringify({state:next})})
+      const created=await api("/api/story/worlds",{method:"POST",body:JSON.stringify({title:storyTitle.trim(),setting:WORLD_SETTING,state:next,imageSettings:{enabled:false,auto:false}})})
+      const w=created.world as World
       setStoryTitle("");setCharacterName("");setCharacterAge("");setCharacterClass("");setCreateOpen(false)
       await loadWorlds(w.id)
     }catch(e){setError(e instanceof Error?e.message:String(e));setLoading(false)}
@@ -106,19 +114,24 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   async function send(event?:FormEvent){
     event?.preventDefault();const message=draft.trim()
     if(!message||sending||!world||!activeCharacter)return
+    const requestId=pendingRequest.current?.message===message?pendingRequest.current.requestId:id()
+    pendingRequest.current={message,requestId}
     setDraft("");setSending(true);setError("")
     try{
-      const result=await api("/api/story/worlds/"+world.id+"/turns",{method:"POST",body:JSON.stringify({message,characterId:activeCharacter.id})})
-      setTurns(old=>[...old,{id:id(),role:"player",content:message,created_at:new Date().toISOString(),metadata:{characterId:activeCharacter.id}},result.turn])
+      const result=await api("/api/story/worlds/"+world.id+"/turns",{method:"POST",body:JSON.stringify({message,characterId:activeCharacter.id,requestId})})
+      pendingRequest.current=null
+      setTurns(old=>old.some(t=>t.id===result.turn.id)?old:[...old,{id:requestId,role:"player",content:message,created_at:new Date().toISOString(),metadata:{characterId:activeCharacter.id,characterName:activeCharacter.name,requestId}},result.turn])
       if(result.state){setState(result.state as WorldState)}
       setWorlds(old=>old.map(w=>w.id===world.id?{...w,updated_at:new Date().toISOString()}:w))
     }catch(e){setDraft(message);setError(e instanceof Error?e.message:String(e))}
     finally{setSending(false);composer.current?.focus()}
   }
   async function saveImages(enabled:boolean,auto:boolean){
-    setImageEnabled(enabled);setImageAuto(auto)
-    try{await api("/api/story/worlds/"+world?.id,{method:"PUT",body:JSON.stringify({imageSettings:{enabled,auto}})})}
-    catch(e){setError(e instanceof Error?e.message:String(e))}
+    if(!world)return
+    try{
+      await api("/api/story/worlds/"+world.id,{method:"PUT",body:JSON.stringify({imageSettings:{enabled,auto}})})
+      setImageEnabled(enabled);setImageAuto(auto)
+    }catch(e){setError(e instanceof Error?e.message:String(e))}
   }
   const attr=activeCharacter?.attributes||{},resources=activeCharacter?.resources||{}
   return <main className="nexus-app">
