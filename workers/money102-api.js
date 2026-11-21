@@ -403,6 +403,8 @@ export default {
           }
           if (metadata.scene) state.last_scene = metadata.scene;
           const now = new Date().toISOString();
+          state.worldTick = Math.max(0, Number(state.worldTick) || 0) + 1;
+          state.lastWorldUpdateAt = now;
           const playerTurn = toBase64Url(randomBytes(18));
           const narratorTurn = toBase64Url(randomBytes(18));
           const narratorTime = new Date(Date.now()+1).toISOString();
