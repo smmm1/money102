@@ -63,7 +63,7 @@ async function parseBody(request) {
   if (length > 16_384) return null;
   try {
     const raw = await request.text();
-    if (raw.length > 16_384) return null;
+    if (raw.length > 65_536) return null;
     const value = JSON.parse(raw);
     return value && typeof value === "object" && !Array.isArray(value) ? value : null;
   } catch { return null; }
@@ -154,7 +154,10 @@ export default {
           const world = await env.DB.prepare("SELECT id FROM story_worlds WHERE id=? AND user_id=?").bind(worldId,user.id).first();
           if (!world) return json(request, env, {error:"ไม่พบโลกนี้"},404);
           const limit = Math.min(100,Math.max(1,Number(url.searchParams.get("limit") || 60)));
-          const result = await env.DB.prepare("SELECT id,role,content,metadata_json,created_at FROM story_turns WHERE world_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?").bind(worldId,user.id,limit).all();
+          const characterId = url.searchParams.get("characterId");
+          const result = characterId
+            ? await env.DB.prepare("SELECT id,role,content,metadata_json,created_at FROM story_turns WHERE world_id=? AND user_id=? AND json_extract(metadata_json,'$.characterId')=? ORDER BY created_at DESC LIMIT ?").bind(worldId,user.id,characterId,limit).all()
+            : await env.DB.prepare("SELECT id,role,content,metadata_json,created_at FROM story_turns WHERE world_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?").bind(worldId,user.id,limit).all();
           return json(request, env, {turns:(result.results || []).reverse()});
         }
         if (parts[2] === "worlds" && worldId && parts[4] === "turns" && parts.length === 5 && request.method === "POST") {
@@ -169,14 +172,24 @@ export default {
           const selectedCharacter = playerCharacters.find(character => character && character.id === body.characterId);
           if (!selectedCharacter) return json(request,env,{error:"กรุณาเลือกตัวละครที่มีอยู่ในโลกนี้ก่อนเริ่มเล่น"},400);
           if (!env.AI_API_KEY) return json(request,env,{error:"ยังไม่ได้ตั้งค่า Gemini API Key ใน Cloudflare Worker",code:"AI_NOT_CONFIGURED"},503);
-          const recent = await env.DB.prepare("SELECT role,content FROM story_turns WHERE world_id=? AND user_id=? ORDER BY created_at DESC LIMIT 18").bind(worldId,user.id).all();
-          const history = (recent.results || []).reverse().map(row => (row.role==="player" ? "ผู้เล่น: " : "ผู้บรรยาย: ") + String(row.content || "").slice(-1800)).join("\n");
+          const recent = await env.DB.prepare("SELECT role,content,metadata_json FROM story_turns WHERE world_id=? AND user_id=? ORDER BY created_at DESC LIMIT 80").bind(worldId,user.id).all();
+          const history = (recent.results || []).reverse().filter(row => {
+            let metadata = {};
+            try { metadata = JSON.parse(row.metadata_json || "{}"); } catch {}
+            return metadata.characterId === selectedCharacter.id || metadata.shared === true;
+          }).slice(-18).map(row => {
+            let metadata = {};
+            try { metadata = JSON.parse(row.metadata_json || "{}"); } catch {}
+            const who = row.role === "player" ? (metadata.characterName || selectedCharacter.name) : (metadata.speaker || "ผู้บรรยาย");
+            return (row.role === "player" ? who + ": " : "ผู้บรรยาย (" + who + "): ") + String(row.content || "").slice(-1800);
+          }).join("\n");
           const prompt = [
             "คุณคือ Game Master ของเกมโรลเพลย์ภาษาไทยแบบอิสระ ผู้เล่นเป็นผู้กำหนดการกระทำเอง ห้ามเสนอเมนู A/B/C เว้นแต่ผู้เล่นขอ",
             "โลก: " + world.title,
             "การตั้งค่าโลกและกติกากลางเท่านั้น ไม่ใช่ประวัติเรื่อง: " + world.setting_json,
             "ตัวละครผู้เล่นที่กำลังควบคุม: " + JSON.stringify(selectedCharacter),
             "สถานะโลกที่บันทึกไว้: " + String(world.state_json || "{}").slice(0,16000),
+            "เหตุการณ์สาธารณะร่วมของโลก: " + String(currentState.sharedEvents || "[]"),
             "ประวัติล่าสุด: " + (history || "นี่คือการเริ่มเล่นใหม่ ห้ามสร้างเหตุการณ์ก่อนหน้าขึ้นเอง"),
             "การกระทำล่าสุดของผู้เล่น: " + message,
             "ห้ามนำเรื่องราวจากแชทอื่นหรือเหตุการณ์ที่ไม่ได้อยู่ใน state มาเป็นอดีต ห้ามสร้างกิลด์เริ่มต้น ภารกิจเริ่มต้น NPC เริ่มต้น หรือข้อตกลงใด ๆ โดยไม่มีเหตุการณ์รองรับ",
