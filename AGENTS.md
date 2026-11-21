@@ -2,20 +2,21 @@
 
 ## Current product scope
 
-Money102 is intentionally reduced to a private login shell:
-- Keep the sign-in flow and session validation working.
+Money102 is intentionally a private, single-owner login shell:
+- Keep sign-in, session validation, and sign-out working.
 - Keep public sign-up disabled.
 - After sign-in, show only an empty authenticated screen and a sign-out action.
-- Do not restore savings, health, notes, split-bill, BBQ, simulation, or other former app modules unless the user explicitly requests them.
+- Do not restore former savings, health, notes, split-bill, BBQ, simulation, or other app modules unless explicitly requested.
 
 ## Infrastructure
 
-- Static frontend: Render.
-- Authentication API and database: existing Cloudflare Worker + D1.
+- Static frontend: Render at `https://money102.onrender.com`.
+- Authentication API and account/session records: existing Cloudflare Worker + D1.
 - Do not introduce Vercel or Supabase.
 
 ## Safety
 
-- Do not delete or reset the production D1 database, owner account, password hash, or sessions as part of frontend cleanup.
+- Do not delete or reset production D1, the owner account, password hashes, sessions, or stored records as part of code cleanup.
+- Keep historical database migrations immutable; they may already be applied in production.
 - Never claim a production deploy succeeded without checking the live Render service/deploy status.
-- Keep changes focused and verify the production build before reporting completion.
+- Verify the production build before reporting completion.

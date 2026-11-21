@@ -1,14 +1,14 @@
 # Money102
 
-Money102 is currently a private, single-owner login shell.
+Money102 is a private, single-owner login shell.
 
 ## Current scope
 
-- The public frontend contains only the sign-in screen.
+- The frontend contains only the sign-in screen.
 - After a successful sign-in, the app shows an empty authenticated screen with a sign-out action.
 - Public sign-up is disabled.
-- Authentication is handled by the existing Cloudflare Worker API.
-- Account and session data remain in Cloudflare D1.
+- The Cloudflare Worker exposes only health, sign-in, session validation, and sign-out endpoints.
+- Authentication records remain in the existing Cloudflare D1 database.
 - The static frontend is built with Vite and deployed on Render.
 
 ## Configuration
@@ -23,6 +23,6 @@ npm run build
 npm run preview
 ```
 
-## Important
+## Data safety
 
-This cleanup removes obsolete DayTogether application code and documentation from the active repository. It does not delete the existing Cloudflare D1 database, user account, password hash, or login sessions.
+The cleanup removes obsolete application routes, validation logic, and unused Worker source from the active code. It does not delete or reset Cloudflare D1, the owner account, password hashes, existing sessions, historical migration files, or stored records. Historical migrations are retained because they document the database schema already applied in production.
