@@ -23,6 +23,8 @@ test("the login shell preserves authentication and mounts NEXUS after sign-in", 
   assert.match(auth, /เข้าสู่ระบบ/);
   assert.doesNotMatch(auth, /\/api\/state|\/api\/auth\/signup/);
   assert.match(nexus, /onSignOut/);
+  assert.match(nexus, /characterId=/);
+  assert.match(nexus, /setTurns\(\[\]\)/);
 });
 
 test("the Worker exposes authenticated D1 story routes alongside existing auth", () => {
