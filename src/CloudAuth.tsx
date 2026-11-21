@@ -84,7 +84,7 @@ export default function CloudAuth() {
 
   return <main className="auth-page">
     <form className="auth-form" onSubmit={signIn}>
-      <h1>DayTogether</h1>
+      <h1>Money102</h1>
       <p>เข้าสู่ระบบพื้นที่ส่วนตัว</p>
       <label htmlFor="auth-email">อีเมล</label>
       <input id="auth-email" type="email" autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} required />
