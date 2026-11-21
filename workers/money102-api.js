@@ -278,18 +278,18 @@ export default {
             let metadata = {};
             try { metadata = JSON.parse(row.metadata_json || "{}"); } catch {}
             return metadata.characterId === selectedCharacter.id || metadata.shared === true;
-          }).slice(-18).map(row => {
+          }).slice(-12).map(row => {
             let metadata = {};
             try { metadata = JSON.parse(row.metadata_json || "{}"); } catch {}
             const who = row.role === "player" ? (metadata.characterName || selectedCharacter.name) : (metadata.speaker || "ผู้บรรยาย");
-            return (row.role === "player" ? who + ": " : "ผู้บรรยาย (" + who + "): ") + String(row.content || "").slice(-1800);
+            return (row.role === "player" ? who + ": " : "ผู้บรรยาย (" + who + "): ") + String(row.content || "").slice(-1200);
           }).join("\n");
           const prompt = [
             "คุณคือ Game Master ของเกมโรลเพลย์ภาษาไทยแบบอิสระ ผู้เล่นเป็นผู้กำหนดการกระทำเอง ห้ามเสนอเมนู A/B/C เว้นแต่ผู้เล่นขอ",
             "โลก: " + world.title,
             "การตั้งค่าโลกและกติกากลางเท่านั้น ไม่ใช่ประวัติเรื่อง: " + world.setting_json,
             "ตัวละครผู้เล่นที่กำลังควบคุม: " + JSON.stringify(selectedCharacter),
-            "สถานะโลกที่บันทึกไว้: " + String(world.state_json || "{}").slice(0,16000),
+            "สถานะโลกที่บันทึกไว้: " + String(world.state_json || "{}").slice(0,10000),
             "เหตุการณ์สาธารณะร่วมของโลก: " + String(currentState.sharedEvents || "[]"),
             "ประวัติล่าสุด: " + (history || "นี่คือการเริ่มเล่นใหม่ ห้ามสร้างเหตุการณ์ก่อนหน้าขึ้นเอง"),
             "การกระทำล่าสุดของผู้เล่น: " + message,
@@ -301,13 +301,40 @@ export default {
             "เขียนภาษาไทยแบบนิยายภาพ มีบทพูด บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
             "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates อาจมี location, worldTime, currentSceneCharacterIds, dossiers, guilds, characters, activeGuildId, sharedEvents; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์; dossiers แสดงเฉพาะข้อมูลที่ผู้เล่นตัวนี้รู้แล้ว; characters ต้องคง id เดิม"
           ].join("\n\n");
-          const model = env.AI_MODEL || "gemini-3.8-flash";
+          const model = env.AI_MODEL || "gemini-3.5-flash-lite";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
-          const aiResponse = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1400,responseMimeType:"application/json"}})});
+          let aiResponse;
+          try {
+            aiResponse = await fetch(endpoint,{
+              method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1100,responseMimeType:"application/json"}}),
+              signal:AbortSignal.timeout(40000)
+            });
+          } catch (error) {
+            const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+            console.error("Gemini request transport failed",timedOut?"timeout":String(error?.name || "network_error"));
+            return json(request,env,{
+              error:timedOut?"AI ใช้เวลาตอบนานเกิน 40 วินาที กรุณาลองส่งอีกครั้ง":"เชื่อมต่อ Gemini ไม่สำเร็จ กรุณาลองใหม่",
+              code:timedOut?"AI_TIMEOUT":"AI_NETWORK_ERROR"
+            },timedOut?504:502);
+          }
           if (!aiResponse.ok) {
             const detail = await aiResponse.text();
-            console.error("Gemini request failed",aiResponse.status,detail.slice(0,500));
-            return json(request,env,{error:aiResponse.status===429?"Gemini ใช้โควตาฟรีครบชั่วคราว ลองใหม่ภายหลัง":"Gemini ตอบกลับไม่สำเร็จ กรุณาตรวจสอบ API Key และโมเดล",code:aiResponse.status===429?"AI_QUOTA":"AI_PROVIDER_ERROR"},aiResponse.status===429?429:502);
+            console.error("Gemini request failed",aiResponse.status,detail.slice(0,300));
+            const status = aiResponse.status;
+            const messages = {
+              400:"คำขอไปยัง Gemini ไม่ถูกต้อง",
+              401:"Gemini API Key ไม่ถูกต้องหรือหมดอายุ",
+              403:"Gemini API Key ไม่มีสิทธิ์ใช้โมเดลนี้",
+              404:"ไม่พบโมเดล Gemini ที่ตั้งค่าไว้",
+              429:"Gemini ใช้โควตาหรือส่งคำขอถี่เกินไป กรุณาลองใหม่ภายหลัง"
+            };
+            return json(request,env,{
+              error:messages[status] || (status>=500?"Gemini ขัดข้องชั่วคราว กรุณาลองใหม่":"Gemini ตอบกลับไม่สำเร็จ"),
+              code:status===429?"AI_QUOTA":status===401||status===403?"AI_AUTH_ERROR":status===404?"AI_MODEL_NOT_FOUND":"AI_PROVIDER_ERROR",
+              providerStatus:status
+            },status===429?429:status===401||status===403?502:status===404?502:status>=500?503:502);
           }
           const aiBody = await aiResponse.json();
           const raw = aiBody?.candidates?.[0]?.content?.parts?.map(part=>part.text || "").join("").trim();
