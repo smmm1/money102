@@ -107,6 +107,107 @@ async function getAuthenticatedUser(request, db) {
     .bind(tokenHash, now).first();
 }
 
+function cleanText(value, max = 160) {
+  return typeof value === "string" ? value.trim().slice(0, max) : undefined;
+}
+function cleanList(value, maxItems = 30, maxText = 160) {
+  return Array.isArray(value) ? value.filter(item => typeof item === "string").slice(0, maxItems).map(item => item.trim().slice(0, maxText)).filter(Boolean) : undefined;
+}
+function cleanValue(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") return value.slice(0, 80);
+  return undefined;
+}
+function applyStateUpdates(current, updates, characterId) {
+  if (!updates || typeof updates !== "object" || Array.isArray(updates)) return current;
+  const next = { ...current };
+  const location = cleanText(updates.location, 200);
+  const worldTime = cleanText(updates.worldTime, 80);
+  if (location !== undefined) next.location = location;
+  if (worldTime !== undefined) next.worldTime = worldTime;
+  if (Array.isArray(updates.currentSceneCharacterIds)) {
+    next.currentSceneCharacterIds = updates.currentSceneCharacterIds.filter(x => typeof x === "string").slice(0, 40);
+  }
+  if (Array.isArray(updates.sharedEvents)) {
+    const existing = Array.isArray(next.sharedEvents) ? next.sharedEvents : [];
+    next.sharedEvents = [...new Set([...existing, ...cleanList(updates.sharedEvents, 40, 500)])].slice(-60);
+  }
+  if (Array.isArray(updates.dossiers)) {
+    const existing = Array.isArray(next.dossiers) ? next.dossiers : [];
+    const byId = new Map(existing.filter(x => x && typeof x.id === "string").map(x => [x.id, x]));
+    for (const item of updates.dossiers.slice(0, 40)) {
+      if (!item || typeof item.id !== "string" || typeof item.name !== "string") continue;
+      const prior = byId.get(item.id) || {};
+      const known = { ...(prior.known || {}) };
+      if (item.known && typeof item.known === "object" && !Array.isArray(item.known)) {
+        for (const [key, value] of Object.entries(item.known).slice(0, 20)) {
+          if (typeof value === "string" && value.trim()) known[key.slice(0, 40)] = value.trim().slice(0, 220);
+        }
+      }
+      byId.set(item.id, {
+        ...prior,
+        id: item.id.slice(0, 100),
+        name: cleanText(item.name, 100) || prior.name,
+        role: cleanText(item.role, 100) ?? prior.role,
+        rank: cleanText(item.rank, 40) ?? prior.rank,
+        guild: cleanText(item.guild, 100) ?? prior.guild,
+        relationship: cleanText(item.relationship, 100) ?? prior.relationship,
+        observedSkills: cleanList(item.observedSkills, 20, 100) ?? prior.observedSkills,
+        known
+      });
+    }
+    next.dossiers = [...byId.values()].slice(-100);
+  }
+  if (Array.isArray(updates.guilds)) {
+    const existing = Array.isArray(next.guilds) ? next.guilds : [];
+    const byId = new Map(existing.filter(x => x && typeof x.id === "string").map(x => [x.id, x]));
+    for (const item of updates.guilds.slice(0, 30)) {
+      if (!item || typeof item.id !== "string" || typeof item.name !== "string") continue;
+      const prior = byId.get(item.id) || {};
+      byId.set(item.id, {
+        ...prior, id: item.id.slice(0, 100), name: cleanText(item.name, 120) || prior.name,
+        emblem: cleanText(item.emblem, 20) ?? prior.emblem,
+        leader: cleanText(item.leader, 100) ?? prior.leader,
+        rank: cleanText(item.rank, 40) ?? prior.rank,
+        members: cleanValue(item.members) ?? prior.members,
+        funds: cleanText(item.funds, 100) ?? prior.funds,
+        notes: cleanText(item.notes, 500) ?? prior.notes
+      });
+    }
+    next.guilds = [...byId.values()].slice(-50);
+  }
+  if (Array.isArray(updates.characters)) {
+    const incoming = updates.characters.find(x => x && x.id === characterId);
+    const existing = Array.isArray(next.characters) ? next.characters : [];
+    next.characters = existing.map(character => {
+      if (!character || character.id !== characterId || !incoming) return character;
+      const merged = { ...character };
+      for (const key of ["age", "className", "rank", "money"]) {
+        const value = cleanText(incoming[key], key === "money" ? 100 : 80);
+        if (value !== undefined) merged[key] = value;
+      }
+      for (const key of ["attributes", "resources"]) {
+        if (incoming[key] && typeof incoming[key] === "object" && !Array.isArray(incoming[key])) {
+          const values = { ...(character[key] || {}) };
+          for (const [name, value] of Object.entries(incoming[key]).slice(0, 20)) {
+            const safe = cleanValue(value);
+            if (safe !== undefined) values[name.slice(0, 40)] = safe;
+          }
+          merged[key] = values;
+        }
+      }
+      if (Array.isArray(incoming.titles)) merged.titles = cleanList(incoming.titles, 20, 100);
+      if (Array.isArray(incoming.injuries)) merged.injuries = cleanList(incoming.injuries, 30, 160);
+      if (Array.isArray(incoming.skills)) merged.skills = incoming.skills.slice(0, 50).filter(x => x && typeof x.name === "string").map(x => ({ name: cleanText(x.name, 100), type: cleanText(x.type, 60), mastery: cleanText(x.mastery, 60), description: cleanText(x.description, 240) }));
+      if (Array.isArray(incoming.equipment)) merged.equipment = incoming.equipment.slice(0, 50).filter(x => x && typeof x.name === "string").map(x => ({ name: cleanText(x.name, 100), slot: cleanText(x.slot, 60), description: cleanText(x.description, 240) }));
+      if (incoming.guildId === null || typeof incoming.guildId === "string") merged.guildId = incoming.guildId;
+      return merged;
+    });
+  }
+  if (updates.activeGuildId === null || typeof updates.activeGuildId === "string") next.activeGuildId = updates.activeGuildId;
+  return next;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -218,7 +319,7 @@ export default {
           const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.trim().slice(0,1500):"",characterId:selectedCharacter.id,characterName:selectedCharacter.name};
           let state = {};
           try { state = JSON.parse(world.state_json || "{}"); } catch {}
-          if (parsed.state_updates && typeof parsed.state_updates==="object" && !Array.isArray(parsed.state_updates)) state = {...state,...parsed.state_updates};
+          state = applyStateUpdates(state, parsed.state_updates, selectedCharacter.id);
           if (typeof parsed.memory==="string" && parsed.memory.trim()) {
             const memories = Array.isArray(state.memories) ? state.memories : [];
             state.memories = [...memories, parsed.memory.trim().slice(0,1500)].slice(-40);
