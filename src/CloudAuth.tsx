@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 import "./auth.css"
+import Nexus from "./Nexus"
 
 type AppUser = { id: string; email: string }
 const TOKEN_KEY = "money102_auth_token"
@@ -80,7 +81,7 @@ export default function CloudAuth() {
 
   if (checking) return <main className="auth-state" aria-live="polite">กำลังตรวจสอบเซสชัน…</main>
   if (connectionError) return <main className="auth-state"><p>เชื่อมต่อระบบยืนยันตัวตนไม่ได้</p><p>{connectionError}</p><button type="button" onClick={() => window.location.reload()}>ลองอีกครั้ง</button></main>
-  if (user) return <main className="auth-empty"><span>เข้าสู่ระบบแล้ว</span><button type="button" onClick={() => void signOut()}>ออกจากระบบ</button></main>
+  if (user) return <Nexus user={user} onSignOut={() => void signOut()} />
 
   return <main className="auth-page">
     <form className="auth-form" onSubmit={signIn}>
