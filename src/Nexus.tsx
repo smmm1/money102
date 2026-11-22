@@ -47,16 +47,16 @@ const labels:Record<string,string>={strength:"พละกำลัง",agility:
 
 function renderNarrative(content:string,names:string[]){
   const known=[...new Set(names.filter(Boolean))].sort((a,b)=>b.length-a.length);
-  const escaped=known.map(n=>n.replace(/[.*+?^${}()|[\\]\\\\]/g,"\\\\const labels:Record<string,string>={strength:"พละกำลัง",agility:"ความคล่องตัว",vitality:"ความทนทาน",intelligence:"สติปัญญา",mana:"มานา",perception:"การรับรู้"}
-"));
-  const namePattern=escaped.length?new RegExp(`(${escaped.join("|")})`,"g"):null;
-  const paragraphs=content.split(/\\n\\s*\\n|\\r\\n\\s*\\r\\n/).map(x=>x.trim()).filter(Boolean);
+  const escaped=known.map(name=>name.replace(/[|\\{}()[\]^$+*?.-]/g,"\\$&"));
+  const namePattern=escaped.length?new RegExp("(" + escaped.join("|") + ")","g"):null;
+  const paragraphs=content.split(/\r?\n\s*\r?\n/).map(part=>part.trim()).filter(Boolean);
   return paragraphs.map((paragraph,index)=>{
-    const isDialogue=/^[“”「『\"‘’]/.test(paragraph);
+    const isDialogue=/^[“「『"‘]/.test(paragraph);
     const parts=namePattern?paragraph.split(namePattern):[paragraph];
     return <p className={isDialogue?"nx-story-dialogue":"nx-story-paragraph"} key={index}>{parts.map((part,i)=>known.includes(part)?<strong className="nx-story-name" key={i}>{part}</strong>:part)}</p>;
   });
 }
+
 export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   const [worlds,setWorlds]=useState<World[]>([]),[world,setWorld]=useState<World|null>(null),[state,setState]=useState<WorldState>({})
   const [turns,setTurns]=useState<Turn[]>([]),[draft,setDraft]=useState(""),[loading,setLoading]=useState(true),[sending,setSending]=useState(false),[error,setError]=useState("")
