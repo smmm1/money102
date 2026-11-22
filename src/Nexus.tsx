@@ -44,6 +44,19 @@ async function api(path:string, init:RequestInit={}) {
 const id=()=>crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(36).slice(2)
 const parse=(value:string,fallback:any)=>{try{return JSON.parse(value)}catch{return fallback}}
 const labels:Record<string,string>={strength:"พละกำลัง",agility:"ความคล่องตัว",vitality:"ความทนทาน",intelligence:"สติปัญญา",mana:"มานา",perception:"การรับรู้"}
+
+function renderNarrative(content:string,names:string[]){
+  const known=[...new Set(names.filter(Boolean))].sort((a,b)=>b.length-a.length);
+  const escaped=known.map(name=>name.replace(/[|\\{}()[\]^$+*?.-]/g,"\\$&"));
+  const namePattern=escaped.length?new RegExp("(" + escaped.join("|") + ")","g"):null;
+  const paragraphs=content.split(/\r?\n\s*\r?\n/).map(part=>part.trim()).filter(Boolean);
+  return paragraphs.map((paragraph,index)=>{
+    const isDialogue=/^[“「『"‘]/.test(paragraph);
+    const parts=namePattern?paragraph.split(namePattern):[paragraph];
+    return <p className={isDialogue?"nx-story-dialogue":"nx-story-paragraph"} key={index}>{parts.map((part,i)=>known.includes(part)?<strong className="nx-story-name" key={i}>{part}</strong>:part)}</p>;
+  });
+}
+
 export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   const [worlds,setWorlds]=useState<World[]>([]),[world,setWorld]=useState<World|null>(null),[state,setState]=useState<WorldState>({})
   const [turns,setTurns]=useState<Turn[]>([]),[draft,setDraft]=useState(""),[loading,setLoading]=useState(true),[sending,setSending]=useState(false),[error,setError]=useState("")
@@ -154,7 +167,7 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
         </div>
         <div className="nx-log-head"><div><span className="nx-overline">STORY LOG</span><h2>{activeCharacter?activeCharacter.name+" · มุมมองตัวละคร":"เรื่องราว"}</h2></div><button onClick={()=>void loadWorlds(world?.id)}>↻ รีเฟรช</button></div>
         <div className="nx-transcript" ref={transcript}>
-          {loading?<div className="nx-empty">กำลังโหลดความทรงจำ…</div>:!activeCharacter?<div className="nx-empty">เพิ่มตัวละครเพื่อเริ่มเล่น</div>:turns.length===0?<div className="nx-empty nx-opening"><span>NO STORY EVENTS YET</span><h3>โลกยังไม่เริ่มเคลื่อนไหว</h3><p>ไม่มีภารกิจหรือกิลด์ถูกกำหนดไว้ล่วงหน้า เริ่มต้นด้วยการบอกว่าตัวละครของคุณอยู่ที่ไหน กำลังทำอะไร หรืออยากเริ่มต้นชีวิตฮันเตอร์อย่างไร</p></div>:turns.map(t=>t.role==="player"?<div className="nx-player-turn" key={t.id}><small>{String(t.metadata?.characterName||activeCharacter.name)} · PLAYER</small><p>{t.content}</p></div>:<article className="nx-narrator" key={t.id}><span>✦</span><div><small>{String(t.metadata?.speaker||"ผู้บรรยาย")}</small><p>{t.content}</p>{typeof t.metadata?.memory==="string"&&t.metadata.memory&&<em>บันทึก: {String(t.metadata.memory)}</em>}</div></article>)}
+          {loading?<div className="nx-empty">กำลังโหลดความทรงจำ…</div>:!activeCharacter?<div className="nx-empty">เพิ่มตัวละครเพื่อเริ่มเล่น</div>:turns.length===0?<div className="nx-empty nx-opening"><span>NO STORY EVENTS YET</span><h3>โลกยังไม่เริ่มเคลื่อนไหว</h3><p>ไม่มีภารกิจหรือกิลด์ถูกกำหนดไว้ล่วงหน้า เริ่มต้นด้วยการบอกว่าตัวละครของคุณอยู่ที่ไหน กำลังทำอะไร หรืออยากเริ่มต้นชีวิตฮันเตอร์อย่างไร</p></div>:turns.map(t=>t.role==="player"?<div className="nx-player-turn" key={t.id}><small>{String(t.metadata?.characterName||activeCharacter.name)} · PLAYER</small><p>{t.content}</p></div>:<article className="nx-narrator" key={t.id}><span>✦</span><div><small>{String(t.metadata?.speaker||"ผู้บรรยาย")}</small><div className="nx-story-content">{renderNarrative(t.content,[activeCharacter.name,...sceneDossiers.map(d=>d.name)])}</div>{typeof t.metadata?.memory==="string"&&t.metadata.memory&&<em>บันทึก: {String(t.metadata.memory)}</em>}</div></article>)}
           {sending&&<div className="nx-narrator"><span>✦</span><div><small>โลกกำลังตอบสนอง</small><p>…</p></div></div>}
         </div>
         <form className="nx-composer" onSubmit={send}><div><span>YOUR ACTION</span><small>พิมพ์อิสระ · ผู้บรรยายไม่ตัดสินใจแทนคุณ</small></div><textarea ref={composer} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void send()}}} placeholder="พิมพ์การกระทำ คำพูด หรือความคิดของตัวละคร…" rows={3} maxLength={3000}/><footer><small>{draft.length}/3,000</small><button className="nx-primary" disabled={!draft.trim()||sending||!activeCharacter}>{sending?"กำลังดำเนินเรื่อง…":"ส่งการกระทำ ↗"}</button></footer></form>
