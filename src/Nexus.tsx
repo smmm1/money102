@@ -47,25 +47,16 @@ const labels:Record<string,string>={strength:"พละกำลัง",agility:
 
 function renderNarrative(content:string,names:string[],defaultSpeaker="ผู้บรรยาย"){
   const known=[...new Set(names.filter(Boolean))].sort((a,b)=>b.length-a.length);
-  const escaped=known.map(name=>name.replace(/[|\\{}()[\]^$+*?.-]/g,"\\function renderNarrative(content:string,names:string[]){
-  const known=[...new Set(names.filter(Boolean))].sort((a,b)=>b.length-a.length);
   const escaped=known.map(name=>name.replace(/[|\\{}()[\]^$+*?.-]/g,"\\$&"));
+  const speakerPattern=escaped.length?new RegExp("^(" + escaped.join("|") + ")\\s*(?::|：|พูดว่า|กล่าวว่า|พูด|กล่าว)\\s*(.*)$","s"):null;
   const namePattern=escaped.length?new RegExp("(" + escaped.join("|") + ")","g"):null;
   const paragraphs=content.split(/\r?\n\s*\r?\n/).map(part=>part.trim()).filter(Boolean);
   return paragraphs.map((paragraph,index)=>{
-    const isDialogue=/^[“「『"‘]/.test(paragraph);
-    const parts=namePattern?paragraph.split(namePattern):[paragraph];
-    return <p className={isDialogue?"nx-story-dialogue":"nx-story-paragraph"} key={index}>{parts.map((part,i)=>known.includes(part)?<strong className="nx-story-name" key={i}>{part}</strong>:part)}</p>;
-  });
-}"));
-  const namePattern=escaped.length?new RegExp("^(" + escaped.join("|") + ")\\s*(?::|：|พูดว่า|กล่าวว่า|พูด|กล่าว)\\s*(.*)$","s"):null;
-  const paragraphs=content.split(/\r?\n\s*\r?\n/).map(part=>part.trim()).filter(Boolean);
-  return paragraphs.map((paragraph,index)=>{
-    const match=namePattern?.exec(paragraph);
+    const match=speakerPattern?.exec(paragraph);
     const speaker=match?.[1]||defaultSpeaker;
     const spoken=Boolean(match)||/^[“「『"‘]/.test(paragraph);
     const body=match?match[2]:paragraph;
-    const parts=body.split(known.length?new RegExp("(" + escaped.join("|") + ")","g"):/\\b$^/);
+    const parts=namePattern?body.split(namePattern):[body];
     return <section className={"nx-story-beat "+(spoken?"nx-story-beat-dialogue":"nx-story-beat-narration")} key={index}>
       <small className={"nx-beat-speaker "+(spoken?"is-speaking":"is-narrating")}>{speaker}</small>
       <p className={spoken?"nx-story-dialogue":"nx-story-paragraph"}>{parts.map((part,i)=>known.includes(part)?<strong className="nx-story-name" key={i}>{part}</strong>:part)}</p>
