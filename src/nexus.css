@@ -16,6 +16,7 @@
 .nx-story-content .nx-story-paragraph{padding-left:1px}
 .nx-story-content .nx-story-dialogue{margin:17px 0 18px;padding:9px 14px 10px 16px;border-left:2px solid #b99566;background:linear-gradient(90deg,#b9956614,transparent 90%);color:#f2dfc2;border-radius:0 5px 5px 0}
 .nx-story-name{color:#e8c58f;font-weight:700}
+.nx-story-beat{margin:0 0 13px}.nx-beat-speaker{display:inline-flex;align-items:center;margin:0 0 4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.02em}.nx-beat-speaker.is-speaking{color:#f2d7ad;background:#8b684022;border:1px solid #98764e66}.nx-beat-speaker.is-narrating{color:#91a3b8;background:#26364a88;border:1px solid #52647a55}.nx-story-beat .nx-story-dialogue,.nx-story-beat .nx-story-paragraph{margin:0}
 .nx-player-turn p{font-size:14px;line-height:2}
 @media(max-width:720px){.nx-story-content{font-size:16px;line-height:2.12}.nx-story-content p{margin-bottom:17px}.nx-story-content .nx-story-dialogue{padding:10px 12px;margin:16px 0}.nx-narrator{gap:9px}.nx-narrator>span{width:25px;height:25px}}
 
