@@ -63,9 +63,10 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   const [createOpen,setCreateOpen]=useState(false),[characterOpen,setCharacterOpen]=useState(false),[settingsOpen,setSettingsOpen]=useState(false),[sidebarOpen,setSidebarOpen]=useState(false),[mobileInfoOpen,setMobileInfoOpen]=useState(false)
   const [storyTitle,setStoryTitle]=useState(""),[characterName,setCharacterName]=useState(""),[characterAge,setCharacterAge]=useState(""),[characterClass,setCharacterClass]=useState("")
   const [imageEnabled,setImageEnabled]=useState(false),[imageAuto,setImageAuto]=useState(false)
+  const [inputMode,setInputMode]=useState<"play"|"director">("play")
   const transcript=useRef<HTMLDivElement>(null),composer=useRef<HTMLTextAreaElement>(null)
   const loadSequence=useRef(0)
-  const pendingRequest=useRef<{message:string;requestId:string}|null>(null)
+  const pendingRequest=useRef<{message:string;requestId:string;mode:"play"|"director"}|null>(null)
   const characters=state.characters||[]
   const activeCharacter=characters.find(c=>c.id===state.activeCharacterId)||characters[0]
   const currentSceneIds=state.currentSceneCharacterIds||[]
@@ -127,13 +128,14 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
   async function send(event?:FormEvent){
     event?.preventDefault();const message=draft.trim()
     if(!message||sending||!world||!activeCharacter)return
-    const requestId=pendingRequest.current?.message===message?pendingRequest.current.requestId:id()
-    pendingRequest.current={message,requestId}
+    const requestId=pendingRequest.current?.message===message&&pendingRequest.current.mode===inputMode?pendingRequest.current.requestId:id()
+    const mode=inputMode
+    pendingRequest.current={message,requestId,mode}
     setDraft("");setSending(true);setError("")
     try{
-      const result=await api("/api/story/worlds/"+world.id+"/turns",{method:"POST",body:JSON.stringify({message,characterId:activeCharacter.id,requestId})})
+      const result=await api("/api/story/worlds/"+world.id+"/turns",{method:"POST",body:JSON.stringify({message,characterId:activeCharacter.id,requestId,mode})})
       pendingRequest.current=null
-      setTurns(old=>old.some(t=>t.id===result.turn.id)?old:[...old,{id:requestId,role:"player",content:message,created_at:new Date().toISOString(),metadata:{characterId:activeCharacter.id,characterName:activeCharacter.name,requestId}},result.turn])
+      setTurns(old=>old.some(t=>t.id===result.turn.id)?old:[...old,{id:requestId,role:"player",content:message,created_at:new Date().toISOString(),metadata:{characterId:activeCharacter.id,characterName:activeCharacter.name,requestId,mode}},result.turn])
       if(result.state){setState(result.state as WorldState)}
       setWorlds(old=>old.map(w=>w.id===world.id?{...w,updated_at:new Date().toISOString()}:w))
     }catch(e){setDraft(message);setError(e instanceof Error?e.message:String(e))}
@@ -167,10 +169,10 @@ export default function Nexus({user,onSignOut}:{user:User;onSignOut:()=>void}) {
         </div>
         <div className="nx-log-head"><div><span className="nx-overline">STORY LOG</span><h2>{activeCharacter?activeCharacter.name+" · มุมมองตัวละคร":"เรื่องราว"}</h2></div><button onClick={()=>void loadWorlds(world?.id)}>↻ รีเฟรช</button></div>
         <div className="nx-transcript" ref={transcript}>
-          {loading?<div className="nx-empty">กำลังโหลดความทรงจำ…</div>:!activeCharacter?<div className="nx-empty">เพิ่มตัวละครเพื่อเริ่มเล่น</div>:turns.length===0?<div className="nx-empty nx-opening"><span>NO STORY EVENTS YET</span><h3>โลกยังไม่เริ่มเคลื่อนไหว</h3><p>ไม่มีภารกิจหรือกิลด์ถูกกำหนดไว้ล่วงหน้า เริ่มต้นด้วยการบอกว่าตัวละครของคุณอยู่ที่ไหน กำลังทำอะไร หรืออยากเริ่มต้นชีวิตฮันเตอร์อย่างไร</p></div>:turns.map(t=>t.role==="player"?<div className="nx-player-turn" key={t.id}><small>{String(t.metadata?.characterName||activeCharacter.name)} · PLAYER</small><p>{t.content}</p></div>:<article className="nx-narrator" key={t.id}><span>✦</span><div><small>{String(t.metadata?.speaker||"ผู้บรรยาย")}</small><div className="nx-story-content">{renderNarrative(t.content,[activeCharacter.name,...sceneDossiers.map(d=>d.name)])}</div>{typeof t.metadata?.memory==="string"&&t.metadata.memory&&<em>บันทึก: {String(t.metadata.memory)}</em>}</div></article>)}
+          {loading?<div className="nx-empty">กำลังโหลดความทรงจำ…</div>:!activeCharacter?<div className="nx-empty">เพิ่มตัวละครเพื่อเริ่มเล่น</div>:turns.length===0?<div className="nx-empty nx-opening"><span>NO STORY EVENTS YET</span><h3>โลกยังไม่เริ่มเคลื่อนไหว</h3><p>ไม่มีภารกิจหรือกิลด์ถูกกำหนดไว้ล่วงหน้า เริ่มต้นด้วยการบอกว่าตัวละครของคุณอยู่ที่ไหน กำลังทำอะไร หรืออยากเริ่มต้นชีวิตฮันเตอร์อย่างไร</p></div>:turns.map(t=>t.role==="player"?<div className={"nx-player-turn "+(t.metadata?.mode==="director"?"nx-director-turn":"")} key={t.id}><small>{t.metadata?.mode==="director"?"✦ STORY DIRECTOR · คำสั่งนอกเกม":String(t.metadata?.characterName||activeCharacter.name)+" · PLAYER"}</small><p>{t.content}</p></div>:<article className="nx-narrator" key={t.id}><span>✦</span><div><small>{String(t.metadata?.speaker||"ผู้บรรยาย")}</small><div className="nx-story-content">{renderNarrative(t.content,[activeCharacter.name,...sceneDossiers.map(d=>d.name)])}</div>{typeof t.metadata?.memory==="string"&&t.metadata.memory&&<em>บันทึก: {String(t.metadata.memory)}</em>}</div></article>)}
           {sending&&<div className="nx-narrator"><span>✦</span><div><small>โลกกำลังตอบสนอง</small><p>…</p></div></div>}
         </div>
-        <form className="nx-composer" onSubmit={send}><div><span>YOUR ACTION</span><small>พิมพ์อิสระ · ผู้บรรยายไม่ตัดสินใจแทนคุณ</small></div><textarea ref={composer} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void send()}}} placeholder="พิมพ์การกระทำ คำพูด หรือความคิดของตัวละคร…" rows={3} maxLength={3000}/><footer><small>{draft.length}/3,000</small><button className="nx-primary" disabled={!draft.trim()||sending||!activeCharacter}>{sending?"กำลังดำเนินเรื่อง…":"ส่งการกระทำ ↗"}</button></footer></form>
+        <form className={"nx-composer "+(inputMode==="director"?"nx-composer-director":"")} onSubmit={send}><div className="nx-composer-heading"><span>{inputMode==="director"?"STORY DIRECTOR":"YOUR ACTION"}</span><small>{inputMode==="director"?"คำสั่งนอกบทบาท · แก้สถานะโลกที่บันทึกจริง":"พิมพ์อิสระ · ผู้บรรยายไม่ตัดสินใจแทนคุณ"}</small></div><div className="nx-mode-switch" role="group" aria-label="โหมดการส่งข้อความ"><button type="button" className={inputMode==="play"?"active":""} onClick={()=>setInputMode("play")}>เล่นในโลก</button><button type="button" className={inputMode==="director"?"active director-active":""} onClick={()=>setInputMode("director")}>แก้เนื้อเรื่อง</button></div>{inputMode==="director"&&<p className="nx-director-hint">โหมดนี้ใช้แก้ข้อมูลโลกจริง เช่น ความสัมพันธ์ NPC กฎโลก และทิศทางเรื่อง โดยไม่ถือเป็นการกระทำของตัวละคร</p>}<textarea ref={composer} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void send()}}} placeholder={inputMode==="director"?"เช่น เปลี่ยนความสัมพันธ์ของอัศวินคนนี้ให้เป็นพันธมิตร และบันทึกไว้ในโลก…":"พิมพ์การกระทำ คำพูด หรือความคิดของตัวละคร…"} rows={3} maxLength={3000}/><footer><small>{draft.length}/3,000</small><button className="nx-primary" disabled={!draft.trim()||sending||!activeCharacter}>{sending?(inputMode==="director"?"กำลังแก้ไขโลก…":"กำลังดำเนินเรื่อง…"):(inputMode==="director"?"ใช้คำสั่งแก้โลก ↗":"ส่งการกระทำ ↗")}</button></footer></form>
         {error&&<div className="nx-error" role="alert">{error}{(error as string).includes("API Key")&&<small>ต้องตั้งค่า AI_API_KEY ใน Cloudflare Worker ก่อนจึงจะเริ่มเล่นด้วย AI ได้</small>}</div>}
       </section>
       <aside className={"nx-right "+(mobileInfoOpen?"mobile-open":"")}>
