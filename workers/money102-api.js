@@ -316,7 +316,8 @@ export default {
             mode === "director"
               ? "โหมด STORY DIRECTOR: ข้อความล่าสุดเป็นคำสั่งนอกบทบาทจากเจ้าของโลก ไม่ใช่การกระทำของตัวละคร ให้แก้ไขโลกตามคำขอโดยตรง ห้ามให้ NPC ปฏิเสธคำสั่งแก้ไข ห้ามจำลองฉากหรือเดินเวลาในโลกเพื่อแทนการแก้ไข ต้องปรับ state_updates ให้สะท้อนการเปลี่ยนแปลงจริง พร้อมสรุปสิ่งที่แก้และผลกระทบต่อเนื่องใน narration หากคำสั่งกำกวม ให้เลือกการแก้ไขที่แคบและปลอดภัยที่สุด ห้ามลบข้อมูลหรือเหตุการณ์เดิม เว้นแต่ผู้เล่นสั่งชัดเจน"
               : "โหมด PLAY: ข้อความล่าสุดเป็นการกระทำหรือคำพูดของตัวละครในโลก ให้จำลองตามเหตุและผล NPC มีสิทธิปฏิเสธ และห้ามตีความเป็นคำสั่งแก้โลกนอกบทบาท",
-            "แนวทางแก้ไขโลกในโหมด STORY DIRECTOR: ใช้ ID เดิมของตัวละครและ NPC; แก้ความสัมพันธ์ผ่าน dossiers[].relationship; แก้สถานะและตำแหน่งผ่าน dossiers[].status/location/condition; แก้ข้อมูลตัวละครผู้เล่นผ่าน characters โดยคง id เดิม; เพิ่ม/แก้กฎระยะยาวผ่าน worldDirectives (array of strings); เปลี่ยนทิศทางเรื่องผ่าน storyDirection; เปลี่ยนโทนผ่าน worldTone; หากสั่งให้นำ NPC ออกจากฉากให้แก้ currentSceneCharacterIds แต่เก็บ dossier ไว้ เว้นแต่สั่งลบประวัติตัวละครโดยตรง",
+            "แนวทางแก้ไขโลกในโหมด STORY DIRECTOR: ใช้ ID เดิมของตัวละครและ NPC; แก้ความสัมพันธ์ผ่าน dossiers[].relationship; แก้สถานะและตำแหน่งผ่าน dossiers[].status/location/condition; แก้ข้อมูลตัวละครผู้เล่นผ่าน characters โดยคง id เดิม; เพิ่ม/แก้กฎระยะยาวผ่าน worldDirectives (array of strings); เปลี่ยนทิศทางเรื่องผ่าน storyDirection; เปลี่ยนโทนผ่าน worldTone; หากสั่งให้นำ NPC ออกจากฉากให้แก้ currentSceneCharacterIds แต่เก็บ dossier ไว้ เว้นแต่สั่งลบประวัติตัวละครโดยตรง; ต้องคง dossiers เดิมทุกคนและแก้เฉพาะรายการที่ผู้เล่นสั่ง ห้ามทำข้อมูลเดิมสูญหาย; worldDirectives ต้องรวมกฎเดิมไว้ด้วย เว้นแต่ผู้เล่นสั่งยกเลิกข้อใดโดยชัดเจน",
+
             "โลก: " + world.title,
             "การตั้งค่าโลกและกติกากลางเท่านั้น ไม่ใช่ประวัติเรื่อง: " + world.setting_json,
             "ตัวละครผู้เล่นที่กำลังควบคุม: " + JSON.stringify(selectedCharacter),
@@ -337,7 +338,7 @@ export default {
             "currentSceneCharacterIds ต้องเป็นรายการ ID ของ NPC/บุคคลที่อยู่ในฉากตอนจบของเหตุการณ์นี้ โดยทุก ID ต้องตรงกับ id ใน dossiers; เอาคนที่เดินออกจากฉากออกจากรายการ แต่เก็บ dossier ไว้เป็นความทรงจำ",
             "dossiers ต้องรวมข้อมูลบุคคลที่อยู่ในฉากตอนจบทุกคน ใช้ ID เดิมเมื่อเป็นบุคคลเดิม ห้ามสร้าง dossier ซ้ำ และบันทึกเฉพาะสิ่งที่ผู้เล่นรู้แล้ว โดยแต่ละคนควรมี id,name,role,rank,guild,relationship,location,status,condition,known,observedSkills",
             "ถ้าไม่มี NPC อยู่ในฉาก ให้ส่ง currentSceneCharacterIds เป็น [] ห้ามสร้างคนขึ้นมาเพื่อเติมข้อมูล",
-            "worldTime ต้องเดินหน้าเมื่อมีการใช้เวลา เช่น เดินทาง สนทนานาน ต่อสู้ พักผ่อน; การกระทำสั้นมากอาจคงเวลาเดิมได้ ห้ามย้อนเวลา",
+            mode === "director" ? "ในโหมด STORY DIRECTOR ห้ามเปลี่ยน worldTime หรือจำลองเวลาผ่านไป เว้นแต่ผู้เล่นสั่งแก้เวลาโดยตรง" : "worldTime ต้องเดินหน้าเมื่อมีการใช้เวลา เช่น เดินทาง สนทนานาน ต่อสู้ พักผ่อน; การกระทำสั้นมากอาจคงเวลาเดิมได้ ห้ามย้อนเวลา",
             "characters ต้องคง id เดิมและส่งข้อมูลตัวละครผู้เล่นที่กำลังควบคุมพร้อมค่าล่าสุด; ห้ามเปลี่ยนตัวละครอื่นหรือสร้างตัวละครผู้เล่นใหม่",
             "เขียนภาษาไทยแบบนิยายภาพ มีบทสนทนาโดยตรง บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
             "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates ต้องมี location, worldTime, currentSceneCharacterIds, dossiers, characters และอาจมี guilds, activeGuildId, sharedEvents, worldDirectives, storyDirection, worldTone; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์. ในโหมด STORY DIRECTOR ต้องส่งค่าที่แก้ไขจริงใน state_updates ห้ามตอบรับด้วยคำบรรยายอย่างเดียว"
@@ -414,7 +415,7 @@ export default {
           let state = {};
           try { state = JSON.parse(world.state_json || "{}"); } catch {}
           state = applyStateUpdates(state, parsed.state_updates, selectedCharacter.id);
-          if (typeof parsed.memory==="string" && parsed.memory.trim()) {
+          if (mode !== "director" && typeof parsed.memory==="string" && parsed.memory.trim()) {
             const memories = Array.isArray(state.memories) ? state.memories : [];
             state.memories = [...memories, parsed.memory.trim().slice(0,1500)].slice(-40);
           }
@@ -431,7 +432,7 @@ export default {
           const narratorTime = new Date(Date.now()+1).toISOString();
           try {
             await env.DB.batch([
-              env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'player',?,?,?)").bind(playerTurn,worldId,user.id,message,JSON.stringify({characterId:selectedCharacter.id,characterName:selectedCharacter.name,requestId}),now),
+              env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'player',?,?,?)").bind(playerTurn,worldId,user.id,message,JSON.stringify({characterId:selectedCharacter.id,characterName:selectedCharacter.name,requestId,mode}),now),
               env.DB.prepare("INSERT INTO story_turns(id,world_id,user_id,role,content,metadata_json,created_at) VALUES(?,?,?,'narrator',?,?,?)").bind(narratorTurn,worldId,user.id,narration,JSON.stringify(metadata),narratorTime),
               env.DB.prepare("UPDATE story_worlds SET state_json=?,updated_at=? WHERE id=? AND user_id=?").bind(JSON.stringify(state),now,worldId,user.id)
             ]);
