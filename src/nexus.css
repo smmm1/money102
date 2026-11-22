@@ -18,3 +18,16 @@
 .nx-story-name{color:#e8c58f;font-weight:700}
 .nx-player-turn p{font-size:14px;line-height:2}
 @media(max-width:720px){.nx-story-content{font-size:16px;line-height:2.12}.nx-story-content p{margin-bottom:17px}.nx-story-content .nx-story-dialogue{padding:10px 12px;margin:16px 0}.nx-narrator{gap:9px}.nx-narrator>span{width:25px;height:25px}}
+
+/* Story Director: explicit out-of-character world editing */
+.nx-composer-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nx-mode-switch{display:flex;gap:6px;margin:10px 0 2px}
+.nx-mode-switch button{border:1px solid #34475e;border-radius:5px;background:#172638;color:#aab8c9;padding:6px 11px;font:600 10px 'IBM Plex Sans Thai',sans-serif;cursor:pointer}
+.nx-mode-switch button.active{border-color:#8caa9b;background:#1b332e;color:#bce3cb}
+.nx-mode-switch button.director-active{border-color:#b99566;background:#3a2d20;color:#f2d7ad}
+.nx-composer-director{border-color:#98764e;box-shadow:0 0 0 1px #98764e22}
+.nx-composer-director .nx-composer-heading>span{color:#e8c58f}
+.nx-director-hint{margin:7px 0 0;color:#c9ae87;font-size:10px;line-height:1.7}
+.nx-director-turn{border-color:#806747;background:linear-gradient(120deg,#30271e,#1b2634)}
+.nx-director-turn small{color:#e8c58f}
+@media(max-width:720px){.nx-composer-heading{align-items:flex-start;flex-direction:column;gap:2px}.nx-mode-switch button{flex:1;padding:8px}}
