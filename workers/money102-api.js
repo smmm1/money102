@@ -209,6 +209,14 @@ function applyStateUpdates(current, updates, characterId) {
     });
   }
   if (updates.activeGuildId === null || typeof updates.activeGuildId === "string") next.activeGuildId = updates.activeGuildId;
+  if (Array.isArray(updates.worldDirectives)) next.worldDirectives = cleanList(updates.worldDirectives, 40, 500) || [];
+  if (typeof updates.storyDirection === "string") next.storyDirection = updates.storyDirection.trim().slice(0, 1200);
+  if (typeof updates.worldTone === "string") next.worldTone = updates.worldTone.trim().slice(0, 500);
+  if (Array.isArray(updates.removeDossierIds)) {
+    const removeIds = new Set(updates.removeDossierIds.filter(x => typeof x === "string").map(x => x.slice(0,100)));
+    next.dossiers = (Array.isArray(next.dossiers) ? next.dossiers : []).filter(item => !removeIds.has(item?.id));
+    next.currentSceneCharacterIds = (Array.isArray(next.currentSceneCharacterIds) ? next.currentSceneCharacterIds : []).filter(id => !removeIds.has(id));
+  }
   return next;
 }
 
@@ -269,6 +277,7 @@ export default {
           const body = await parseBody(request);
           const message = typeof body?.message === "string" ? body.message.trim() : "";
           if (!message || message.length > 3000) return json(request, env, {error:"ข้อความต้องมีความยาว 1–3,000 ตัวอักษร"},400);
+          const mode = body?.mode === "director" ? "director" : "play";
           const world = await env.DB.prepare("SELECT id,title,setting_json,state_json FROM story_worlds WHERE id=? AND user_id=?").bind(worldId,user.id).first();
           if (!world) return json(request, env, {error:"ไม่พบโลกนี้"},404);
           let currentState = {};
@@ -299,18 +308,26 @@ export default {
             let metadata = {};
             try { metadata = JSON.parse(row.metadata_json || "{}"); } catch {}
             const who = row.role === "player" ? (metadata.characterName || selectedCharacter.name) : (metadata.speaker || "ผู้บรรยาย");
+            if (metadata.mode === "director") return (row.role === "player" ? "คำสั่งผู้กำกับ: " : "ผลจากผู้กำกับ: ") + String(row.content || "").slice(-1200);
             return (row.role === "player" ? who + ": " : "ผู้บรรยาย (" + who + "): ") + String(row.content || "").slice(-1200);
           }).join("\n");
           const prompt = [
             "คุณคือ Game Master ของเกมโรลเพลย์ภาษาไทยแบบอิสระ ผู้เล่นเป็นผู้กำหนดการกระทำเอง ห้ามเสนอเมนู A/B/C เว้นแต่ผู้เล่นขอ",
+            mode === "director"
+              ? "โหมด STORY DIRECTOR: ข้อความล่าสุดเป็นคำสั่งนอกบทบาทจากเจ้าของโลก ไม่ใช่การกระทำของตัวละคร ให้แก้ไขโลกตามคำขอโดยตรง ห้ามให้ NPC ปฏิเสธคำสั่งแก้ไข ห้ามจำลองฉากหรือเดินเวลาในโลกเพื่อแทนการแก้ไข ต้องปรับ state_updates ให้สะท้อนการเปลี่ยนแปลงจริง พร้อมสรุปสิ่งที่แก้และผลกระทบต่อเนื่องใน narration หากคำสั่งกำกวม ให้เลือกการแก้ไขที่แคบและปลอดภัยที่สุด ห้ามลบข้อมูลหรือเหตุการณ์เดิม เว้นแต่ผู้เล่นสั่งชัดเจน"
+              : "โหมด PLAY: ข้อความล่าสุดเป็นการกระทำหรือคำพูดของตัวละครในโลก ให้จำลองตามเหตุและผล NPC มีสิทธิปฏิเสธ และห้ามตีความเป็นคำสั่งแก้โลกนอกบทบาท",
+            "แนวทางแก้ไขโลกในโหมด STORY DIRECTOR: ใช้ ID เดิมของตัวละครและ NPC; แก้ความสัมพันธ์ผ่าน dossiers[].relationship; แก้สถานะและตำแหน่งผ่าน dossiers[].status/location/condition; แก้ข้อมูลตัวละครผู้เล่นผ่าน characters โดยคง id เดิม; เพิ่ม/แก้กฎระยะยาวผ่าน worldDirectives (array of strings); เปลี่ยนทิศทางเรื่องผ่าน storyDirection; เปลี่ยนโทนผ่าน worldTone; หากสั่งให้นำ NPC ออกจากฉากให้แก้ currentSceneCharacterIds แต่เก็บ dossier ไว้ เว้นแต่สั่งลบประวัติตัวละครโดยตรง",
             "โลก: " + world.title,
             "การตั้งค่าโลกและกติกากลางเท่านั้น ไม่ใช่ประวัติเรื่อง: " + world.setting_json,
             "ตัวละครผู้เล่นที่กำลังควบคุม: " + JSON.stringify(selectedCharacter),
             "สถานะโลกที่บันทึกไว้: " + String(world.state_json || "{}").slice(0,10000),
+            "คำสั่งและทิศทางโลกที่ผู้กำกับกำหนดไว้: " + JSON.stringify(currentState.worldDirectives || []),
+            "ทิศทางเรื่องปัจจุบัน: " + String(currentState.storyDirection || ""),
+            "โทนเรื่องปัจจุบัน: " + String(currentState.worldTone || ""),
             "เหตุการณ์สาธารณะร่วมของโลก: " + JSON.stringify(currentState.sharedEvents || []),
             "บุคคลที่ผู้เล่นเคยพบและข้อมูลที่รู้แล้ว: " + JSON.stringify(currentState.dossiers || []),
             "ประวัติล่าสุด: " + (history || "นี่คือการเริ่มเล่นใหม่ ห้ามสร้างเหตุการณ์ก่อนหน้าขึ้นเอง"),
-            "การกระทำล่าสุดของผู้เล่น: " + message,
+            (mode === "director" ? "คำสั่งแก้ไขโลกจากผู้กำกับ: " : "การกระทำล่าสุดของผู้เล่น: ") + message,
             "ห้ามนำเรื่องราวจากแชทอื่นหรือเหตุการณ์ที่ไม่ได้อยู่ใน state มาเป็นอดีต ห้ามสร้างกิลด์เริ่มต้น ภารกิจเริ่มต้น NPC เริ่มต้น หรือข้อตกลงใด ๆ โดยไม่มีเหตุการณ์รองรับ",
             "ตัวละครผู้เล่นหลายตัวอยู่ในจักรวาลเดียวกัน แต่ละตัวมีตัวตนและสถานะของตนเอง พวกเขาจะพบกันได้เมื่อเวลา สถานที่ และเหตุการณ์สมเหตุสมผล ห้ามบังคับให้เป็นปาร์ตี้ตั้งแต่ต้น",
             "NPC มีเจตจำนง เป้าหมาย และการตัดสินใจของตัวเอง ไม่เห็นด้วยหรือปฏิเสธผู้เล่นได้ เมื่อผู้เล่นพูดกับ NPC ให้ NPC ที่อยู่ในเหตุการณ์ตอบด้วยเสียงและบุคลิกของตน ไม่ใช้ผู้บรรยายพูดแทนทุกครั้ง",
@@ -323,7 +340,7 @@ export default {
             "worldTime ต้องเดินหน้าเมื่อมีการใช้เวลา เช่น เดินทาง สนทนานาน ต่อสู้ พักผ่อน; การกระทำสั้นมากอาจคงเวลาเดิมได้ ห้ามย้อนเวลา",
             "characters ต้องคง id เดิมและส่งข้อมูลตัวละครผู้เล่นที่กำลังควบคุมพร้อมค่าล่าสุด; ห้ามเปลี่ยนตัวละครอื่นหรือสร้างตัวละครผู้เล่นใหม่",
             "เขียนภาษาไทยแบบนิยายภาพ มีบทสนทนาโดยตรง บรรยากาศ และรายละเอียดพอดี อย่าตอบเหมือนแชตบอต",
-            "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates ต้องมี location, worldTime, currentSceneCharacterIds, dossiers, characters และอาจมี guilds, activeGuildId, sharedEvents; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์"
+            "ตอบเป็น JSON object เท่านั้น มี keys: narration, speaker, scene, memory, state_updates. state_updates ต้องมี location, worldTime, currentSceneCharacterIds, dossiers, characters และอาจมี guilds, activeGuildId, sharedEvents, worldDirectives, storyDirection, worldTone; เหตุการณ์สาธารณะที่ตัวละครอื่นอาจรับรู้ได้ให้บันทึกใน sharedEvents ส่วนเหตุการณ์ส่วนตัวห้ามแชร์. ในโหมด STORY DIRECTOR ต้องส่งค่าที่แก้ไขจริงใน state_updates ห้ามตอบรับด้วยคำบรรยายอย่างเดียว"
           ].join("\n\n");
           const model = env.AI_MODEL || "gemini-3.5-flash-lite";
           const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent?key=" + encodeURIComponent(env.AI_API_KEY);
@@ -393,7 +410,7 @@ export default {
           try { parsed = JSON.parse(raw.replace(/^\x60{3}(?:json)?/i,"").replace(/\x60{3}$/,"").trim()); } catch { parsed = {narration:raw,speaker:"ผู้บรรยาย",scene:"",memory:"",state_updates:{}}; }
           const narration = typeof parsed.narration==="string" ? parsed.narration.slice(0,10000) : raw.slice(0,10000);
           const speaker = typeof parsed.speaker==="string" ? parsed.speaker.slice(0,100) : "ผู้บรรยาย";
-          const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.trim().slice(0,1500):"",characterId:selectedCharacter.id,characterName:selectedCharacter.name,requestId};
+          const metadata = {speaker,scene:typeof parsed.scene==="string"?parsed.scene.slice(0,500):"",memory:typeof parsed.memory==="string"?parsed.memory.trim().slice(0,1500):"",characterId:selectedCharacter.id,characterName:selectedCharacter.name,requestId,mode};
           let state = {};
           try { state = JSON.parse(world.state_json || "{}"); } catch {}
           state = applyStateUpdates(state, parsed.state_updates, selectedCharacter.id);
@@ -403,7 +420,11 @@ export default {
           }
           if (metadata.scene) state.last_scene = metadata.scene;
           const now = new Date().toISOString();
-          state.worldTick = Math.max(0, Number(state.worldTick) || 0) + 1;
+          if (mode === "director") {
+            state.worldRevision = Math.max(0, Number(state.worldRevision) || 0) + 1;
+          } else {
+            state.worldTick = Math.max(0, Number(state.worldTick) || 0) + 1;
+          }
           state.lastWorldUpdateAt = now;
           const playerTurn = toBase64Url(randomBytes(18));
           const narratorTurn = toBase64Url(randomBytes(18));
